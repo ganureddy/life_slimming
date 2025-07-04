@@ -1,0 +1,13 @@
+{
+ "creation": "2023-03-29 10:07:41.540787",
+ "docstatus": 0,
+ "doctype": "Dashboard Chart Source",
+ "idx": 0,
+ "modified": "2023-04-05 11:20:10.974796",
+ "modified_by": "Administrator",
+ "module": "life_slimming",
+ "name": "Concern wise Lead",
+ "owner": "Administrator",
+ "source_name": "Concern wise Lead",
+ "timeseries": 1
+}

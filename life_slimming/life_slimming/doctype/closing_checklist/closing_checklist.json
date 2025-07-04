@@ -1,0 +1,682 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{CCL}-{branch}-{date}",
+ "creation": "2023-08-02 09:42:30.246432",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "date",
+  "branch",
+  "column_break_2menq",
+  "todays_total_sales",
+  "section_break_qrpwn",
+  "description",
+  "sales__petty_cash_properly_locked",
+  "service_rooms_are_perpared_for_next_day",
+  "machine_turned_off_and_cleaned",
+  "reception_cleaned_for_the_next_day",
+  "washroom_cleaned",
+  "slimming_station_cleaned_and_arranged",
+  "auto_timer_on_for_sinage_boards",
+  "daily_planning_pipeline_is_updated",
+  "opening_keys_handed_over_to_the_concern_person",
+  "main_switch_turned_off",
+  "all_divya_agarbathi_are_extingushed",
+  "dustbin_and_garbage_details",
+  "duty_roaster_updated_for_the_next_day",
+  "column_break_5dcdj",
+  "completed1",
+  "yes5",
+  "yes6",
+  "yes7",
+  "yes8",
+  "yes9",
+  "yes10",
+  "yes11",
+  "yes12",
+  "yes13",
+  "yes14",
+  "yes15",
+  "yes16",
+  "yes17",
+  "day_end_process",
+  "day_end_process1",
+  "sales_cash_tally__denomination",
+  "petty_cash_tally__denomination",
+  "credit_debit_card_reconsilation",
+  "appointment_reconfirmation_for_the_next_day",
+  "service_consumption_for_the_same_day",
+  "column_break_ddds4",
+  "completed",
+  "yes",
+  "yes1",
+  "yes2",
+  "yes3",
+  "yes4",
+  "section_break_7bgkb",
+  "sales_cash_denominations",
+  "five_hundred",
+  "two_hundred",
+  "hundred",
+  "fifty",
+  "column_break_az4fz",
+  "count",
+  "count1",
+  "count2",
+  "count3",
+  "count4",
+  "column_break_jbawa",
+  "amount",
+  "amount1",
+  "amount2",
+  "amount3",
+  "amount4",
+  "column_break_nqg92",
+  "petty_cash_denominations",
+  "five_hundred1",
+  "two_hundred1",
+  "hundred1",
+  "fifty1",
+  "twenty",
+  "ten",
+  "column_break_4u1xj",
+  "count5",
+  "count6",
+  "count7",
+  "count8",
+  "count9",
+  "count10",
+  "count11",
+  "column_break_zgddq",
+  "amount5",
+  "amount6",
+  "amount7",
+  "amount8",
+  "amount9",
+  "amount10",
+  "amount11",
+  "section_break_5avcz",
+  "credit_and_debit_card_payments",
+  "section_break_xgyem",
+  "total_amount",
+  "column_break_gzpbr",
+  "coins"
+ ],
+ "fields": [
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "hidden": 1,
+   "label": "Date"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "section_break_qrpwn",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "day_end_process",
+   "fieldtype": "Tab Break",
+   "label": "Day End Process"
+  },
+  {
+   "fieldname": "sales_cash_tally__denomination",
+   "fieldtype": "Heading",
+   "label": "1. Sales cash tally & denomination"
+  },
+  {
+   "fieldname": "petty_cash_tally__denomination",
+   "fieldtype": "Heading",
+   "label": "2. Petty cash tally & denomination"
+  },
+  {
+   "fieldname": "credit_debit_card_reconsilation",
+   "fieldtype": "Heading",
+   "label": "3.Credit & debit card  reconciliation"
+  },
+  {
+   "fieldname": "appointment_reconfirmation_for_the_next_day",
+   "fieldtype": "Heading",
+   "label": "4. Appointment reconfirmation for the next day"
+  },
+  {
+   "fieldname": "service_consumption_for_the_same_day",
+   "fieldtype": "Heading",
+   "label": "5. Service consumption for the same day"
+  },
+  {
+   "fieldname": "completed1",
+   "fieldtype": "Heading",
+   "label": "Completed"
+  },
+  {
+   "fieldname": "section_break_7bgkb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval:doc.yes == \"1\"",
+   "fieldname": "sales_cash_denominations",
+   "fieldtype": "Heading",
+   "label": "Sales Cash Denominations"
+  },
+  {
+   "default": "500",
+   "depends_on": "eval:doc.yes == \"1\"",
+   "fieldname": "five_hundred",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "default": "200",
+   "depends_on": "eval:doc.yes == \"1\"",
+   "fieldname": "two_hundred",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "default": "100",
+   "depends_on": "eval:doc.yes == \"1\"",
+   "fieldname": "hundred",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "default": "50",
+   "depends_on": "eval:doc.yes == \"1\"",
+   "fieldname": "fifty",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_az4fz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.yes == \"1\"",
+   "fieldname": "count",
+   "fieldtype": "Heading",
+   "label": "Count"
+  },
+  {
+   "depends_on": "eval:doc.yes == \"1\"",
+   "fieldname": "count1",
+   "fieldtype": "Data"
+  },
+  {
+   "depends_on": "eval:doc.yes == \"1\"",
+   "fieldname": "count2",
+   "fieldtype": "Data"
+  },
+  {
+   "depends_on": "eval:doc.yes == \"1\"",
+   "fieldname": "count3",
+   "fieldtype": "Data"
+  },
+  {
+   "depends_on": "eval:doc.yes == \"1\"",
+   "fieldname": "count4",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "column_break_jbawa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.yes == \"1\"",
+   "fieldname": "amount",
+   "fieldtype": "Heading",
+   "label": "Amount"
+  },
+  {
+   "fieldname": "amount1",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount2",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount3",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount4",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_nqg92",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.yes1 == \"1\"",
+   "fieldname": "petty_cash_denominations",
+   "fieldtype": "Heading",
+   "label": "Petty Cash Denominations"
+  },
+  {
+   "default": "500",
+   "depends_on": "eval:doc.yes1 == \"1\"",
+   "fieldname": "five_hundred1",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "default": "200",
+   "depends_on": "eval:doc.yes1 == \"1\"",
+   "fieldname": "two_hundred1",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "default": "100",
+   "depends_on": "eval:doc.yes1 == \"1\"",
+   "fieldname": "hundred1",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "default": "50",
+   "depends_on": "eval:doc.yes1 == \"1\"",
+   "fieldname": "fifty1",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "default": "20",
+   "depends_on": "eval:doc.yes1 == \"1\"",
+   "fieldname": "twenty",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "default": "10",
+   "depends_on": "eval:doc.yes1 == \"1\"",
+   "fieldname": "ten",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_4u1xj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.yes1 == \"1\"",
+   "fieldname": "count5",
+   "fieldtype": "Heading",
+   "label": "Count"
+  },
+  {
+   "depends_on": "eval:doc.yes1 == \"1\"",
+   "fieldname": "count7",
+   "fieldtype": "Data"
+  },
+  {
+   "depends_on": "eval:doc.yes1 == \"1\"",
+   "fieldname": "count8",
+   "fieldtype": "Data"
+  },
+  {
+   "depends_on": "eval:doc.yes1 == \"1\"",
+   "fieldname": "count9",
+   "fieldtype": "Data"
+  },
+  {
+   "depends_on": "eval:doc.yes1 == \"1\"",
+   "fieldname": "count10",
+   "fieldtype": "Data"
+  },
+  {
+   "depends_on": "eval:doc.yes1 == \"1\"",
+   "fieldname": "count11",
+   "fieldtype": "Data"
+  },
+  {
+   "depends_on": "eval:doc.yes1 == \"1\"",
+   "fieldname": "count6",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "column_break_ddds4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "completed",
+   "fieldtype": "Heading",
+   "label": "Completed"
+  },
+  {
+   "fieldname": "column_break_zgddq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.yes1 == \"1\"",
+   "fieldname": "amount5",
+   "fieldtype": "Heading",
+   "label": "Amount"
+  },
+  {
+   "fieldname": "amount6",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount7",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount8",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount9",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount10",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount11",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_5avcz",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Data",
+   "label": "Total Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_gzpbr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "coins",
+   "fieldtype": "Data",
+   "label": "Coins"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Heading",
+   "label": "Description :"
+  },
+  {
+   "fieldname": "sales__petty_cash_properly_locked",
+   "fieldtype": "Heading",
+   "label": "1. Sales & petty cash properly locked."
+  },
+  {
+   "fieldname": "service_rooms_are_perpared_for_next_day",
+   "fieldtype": "Heading",
+   "label": "2. Service rooms are prepared for next day."
+  },
+  {
+   "fieldname": "machine_turned_off_and_cleaned",
+   "fieldtype": "Heading",
+   "label": "3. All the machines are turned off and properly cleaned/sterilzed."
+  },
+  {
+   "fieldname": "reception_cleaned_for_the_next_day",
+   "fieldtype": "Heading",
+   "label": "4. Reception cleaned for the next day."
+  },
+  {
+   "fieldname": "washroom_cleaned",
+   "fieldtype": "Heading",
+   "label": "5. Wash rooms are cleaned for the next day."
+  },
+  {
+   "fieldname": "slimming_station_cleaned_and_arranged",
+   "fieldtype": "Heading",
+   "label": "6. Slimming station is cleaned and arranged properly."
+  },
+  {
+   "fieldname": "auto_timer_on_for_sinage_boards",
+   "fieldtype": "Heading",
+   "label": "7. Auto timer ON for sinage boards."
+  },
+  {
+   "fieldname": "daily_planning_pipeline_is_updated",
+   "fieldtype": "Heading",
+   "label": "8. Daily planning & pipeline is updated."
+  },
+  {
+   "fieldname": "opening_keys_handed_over_to_the_concern_person",
+   "fieldtype": "Heading",
+   "label": "9. Opening keys handed over to the concern person."
+  },
+  {
+   "fieldname": "main_switch_turned_off",
+   "fieldtype": "Heading",
+   "label": "10. Main switch turned off."
+  },
+  {
+   "fieldname": "all_divya_agarbathi_are_extingushed",
+   "fieldtype": "Heading",
+   "label": "11. All divya & agarbathi are extingushed."
+  },
+  {
+   "fieldname": "dustbin_and_garbage_details",
+   "fieldtype": "Heading",
+   "label": "12. All the dustbins cleaned and garbage kept outside the branch "
+  },
+  {
+   "fieldname": "duty_roaster_updated_for_the_next_day",
+   "fieldtype": "Heading",
+   "label": "13. Duty roaster updated for the next day"
+  },
+  {
+   "fieldname": "column_break_5dcdj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "yes",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "yes1",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "yes2",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "yes3",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "yes4",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "yes5",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "yes6",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "yes7",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "yes8",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "yes9",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "yes10",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "yes11",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "yes12",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "yes13",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "yes14",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "yes15",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "yes16",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "yes17",
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "column_break_2menq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "todays_total_sales",
+   "fieldtype": "Currency",
+   "label": "Today's Total Sales"
+  },
+  {
+   "fieldname": "day_end_process1",
+   "fieldtype": "Heading",
+   "label": "Day End Process Deatails :"
+  },
+  {
+   "depends_on": "eval:doc.yes2 == \"1\"",
+   "fieldname": "credit_and_debit_card_payments",
+   "fieldtype": "Table",
+   "label": "Credit And Debit Card Payments",
+   "options": "Credit And Debit Card Payments"
+  },
+  {
+   "fieldname": "section_break_xgyem",
+   "fieldtype": "Section Break"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2023-10-13 10:00:43.144086",
+ "modified_by": "Administrator",
+ "module": "life_slimming",
+ "name": "Closing Checklist",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "All",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Guest",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

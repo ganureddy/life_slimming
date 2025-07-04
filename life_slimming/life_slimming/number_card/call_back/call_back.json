@@ -1,0 +1,23 @@
+{
+ "color": "#ECAD4B",
+ "creation": "2023-03-17 16:54:17.045563",
+ "docstatus": 0,
+ "doctype": "Number Card",
+ "filters_config": "[{\n    fieldname:\"company\",\n    label: __(\"Company\"),\n    filedtype: \"Link\",\n    options: \"Company\",\n    default: frappe.defaults.get_user_default(\"Company\"),\n    reqd: 1\n},\n{\n    filedname: \"from_date\",\n    label: __(\"From Date\"),\n    fieldtype: \"Date\",\n    default: frappe.datetime.add_months(frappe.datetime.get_today(), -1)\n    reqd: 1\n},\n{\n    fieldname: \"to_date\",\n    label: __(\"To Date\"),\n    fieldtype: \"Date\",\n    default: frappe.datetime.get_today(),\n    reqd: 1\n}]",
+ "filters_json": "{\"company\":\"Life Slimming and Cosmetic Pvt Ltd\",\"undefined\":\"2023-03-17\"}",
+ "function": "Count",
+ "idx": 0,
+ "is_public": 1,
+ "is_standard": 1,
+ "label": "Call Back",
+ "method": "life_slimming.events.call_back_status",
+ "modified": "2023-03-20 17:54:07.609269",
+ "modified_by": "Administrator",
+ "module": "life_slimming",
+ "name": "Call Back",
+ "owner": "Administrator",
+ "report_function": "Sum",
+ "show_percentage_stats": 1,
+ "stats_time_interval": "Daily",
+ "type": "Custom"
+}

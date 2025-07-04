@@ -1,0 +1,67 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-12-14 11:12:53.487599",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "healthcare_practitioner",
+  "prectitioner_name",
+  "designation",
+  "sharing_percentage",
+  "amount",
+  "branch"
+ ],
+ "fields": [
+  {
+   "fieldname": "healthcare_practitioner",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Healthcare Practitioner",
+   "options": "Healthcare Practitioner"
+  },
+  {
+   "fieldname": "sharing_percentage",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Sharing Percentage"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Int",
+   "label": "Amount",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "healthcare_practitioner.practitioner_name",
+   "fieldname": "prectitioner_name",
+   "fieldtype": "Data",
+   "label": "Prectitioner Name"
+  },
+  {
+   "fetch_from": "healthcare_practitioner.designation",
+   "fieldname": "designation",
+   "fieldtype": "Data",
+   "label": "Designation"
+  },
+  {
+   "fetch_from": "healthcare_practitioner.branch",
+   "fieldname": "branch",
+   "fieldtype": "Data",
+   "label": "Branch"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2023-12-19 12:31:34.961723",
+ "modified_by": "Administrator",
+ "module": "life_slimming",
+ "name": "Sharing",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

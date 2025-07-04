@@ -1,0 +1,68 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-02-16 14:55:11.165928",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "modified1",
+  "followup_by_person",
+  "followup_next_date",
+  "time",
+  "followup_remarks",
+  "followup_by_person_name"
+ ],
+ "fields": [
+  {
+   "fieldname": "followup_by_person",
+   "fieldtype": "Link",
+   "label": "Followup By Person",
+   "options": "User"
+  },
+  {
+   "fieldname": "followup_next_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Followup By Next Date"
+  },
+  {
+   "fieldname": "time",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Followup Next Time"
+  },
+  {
+   "fieldname": "followup_remarks",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Followup Remarks"
+  },
+  {
+   "default": "now",
+   "fieldname": "modified1",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Modified To"
+  },
+  {
+   "fieldname": "followup_by_person_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Followup By Person Name"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2023-05-26 16:13:39.534842",
+ "modified_by": "Administrator",
+ "module": "life_slimming",
+ "name": "Followup",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

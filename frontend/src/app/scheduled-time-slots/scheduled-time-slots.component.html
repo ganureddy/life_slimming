@@ -1,0 +1,523 @@
+<div class="container-fluid" style="padding: 2px 100px;">
+    <div class="schedular-filters">
+        <div class="vehicle-type">
+            <select class="form-select select full" [(ngModel)]="selectedBranch" ngModel (ngModelChange)="changeFilters()">
+                <option value="" disabled>Select Branch</option>
+                <option [value]="item?.name" *ngFor="let item of branchList">{{item?.name}}</option>
+            </select>
+        </div><!-- Vehicle Type -->
+      
+        
+        <div class="d-flex">
+            <div>
+                <button class="btn btn-sm btn-primary m-1" (click)="editModel(editAppointmentModel,'','','new')">Create Appointment</button>
+            </div>
+            <div>
+                <input class="form-control" type="date" [(ngModel)]="selectedDate" (ngModelChange)="changeFilters()">
+            </div>
+           
+        </div><!-- Date Picker -->
+        <!-- <div class="btn-group d-flex text-dark " ngbDropdown>
+            <h5 class="adm-menu text-white" ngbDropdownToggle>
+                <strong>{{this.userDetails?.username.substring(0,1).toUpperCase()}}</strong>
+            </h5>
+            <div class="dropdown-menu log-drop text-center p-0" ngbDropdownMenu>
+                <div class="card p-4 m-0">
+                    <div class="card-body logout-w">
+                        <div class="d-flex justify-content-center ">
+                            <h5 class="adm-menu text-white">
+                                <strong>{{this.userDetails?.username.substring(0,1).toUpperCase()}}</strong>
+                            </h5>
+                        </div>
+                        <h6 class="text-center mt-2 mb-0">{{userDetails?.username}}</h6>
+                        <p *ngIf="userDetails?.username.toLowerCase() != 'administrator'"
+                            class="text-center m-0"><small>{{userDetails?.email}}</small></p>
+                        <button [routerLink]="['/']" (click)="logout()"
+                            class="btn btn-outline-primary text-center rounded mt-3 logoutbtn" ngbDropdownItem
+                            (click)="logout()"><i class="ri-login-box-line"></i> Logout</button>
+
+                    </div>
+                </div>
+            </div>
+        </div> -->
+    </div> <!-- Schedular Filters -->
+
+    <div class="schedular-body">
+
+        <div class="main-schedular">
+            <div #scrollableTable1 class="table-responsive">
+                <table class="table">
+                    <thead>
+                        
+                        <tr>
+                            <th>
+                                <div class="vi">Slots</div>
+                            </th>
+                            <th [id]="item?.name" *ngFor="let item of finalDataForBookedSlots?.columns">
+                                <div class="head">
+                                    <p [title]="item?.name">{{item?.name}}</p>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody >
+                        
+                        <tr *ngFor="let item of finalDataForBookedSlots?.data;" [id]="item?.slot">
+                            <td>
+                                <!-- <div class="m-1">
+                                    <div class="car">
+                                        <div class="car-bottom">
+                                            <h5>{{item?.slot}}</h5>
+                                        </div>
+                                    </div>
+                                </div> -->
+                                <div class="mx-2 my-1">
+                                    <div class="create-card" style="width: 128px;">
+                                        <!-- <div class="car-top"> <span>T76768 : 2015</span> <i>42H</i> </div> -->
+                                        <div class="car-bottom-1">
+                                            <h5 class="plus text-center text-slot">{{item?.slot}}</h5>
+                                        </div>
+                                    </div>
+                                </div>
+                               
+                            </td>
+                            <ng-container *ngFor="let appo of item?.appointments;let index=index" >
+                                
+                                <td>
+                                    <!-- {{appo.date+' '+appo.slot}} -->
+                                   <!-- {{moment(appo.date+''+ appo.slot, "yyyy-MM-DD hh:mm A").isBefore(moment())}} -->
+                                   <!-- {{moment(appo.date+' '+appo.slot, "yyyy-MM-DD hh:mm A").format('DD/MM/yyyy hh:mm A')}} -->
+                                   <!-- {{moment(appo.date+' '+ appo.slot, "yyyy-MM-DD hh:mm A").isAfter(moment())}} -->
+                                    <div *ngIf="moment(appo.date+' '+ appo.slot, 'yyyy-MM-DD hh:mm A').isAfter(moment())" (click)="addModel(addAppointmentModel,appo,item)">
+                                        <div class="create-card">
+                                            <div class="car-bottom-1">
+                                                <h5 class="plus text-center">+</h5>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div *ngIf="!moment(appo.date+' '+ appo.slot, 'yyyy-MM-DD hh:mm A').isAfter(moment())">
+                                        <div class="create-card disable-card">
+                                            <div class="car-bottom-1">
+                                                <h5 class="plus text-center">+</h5>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div *ngIf="appo?.bookedDetails?.length" style="margin-top: -56px;height: 53px;;">
+                                        <!-- <div class="booked-layer" [ngStyle]="{'width':((45/30)*100)+'%'}">
+                                            <div class="car-bottom-1">
+                                                <h5 class="plus text-center">+</h5>
+                                            </div>
+                                        </div> -->
+                                        <div class="booked-layer  car-1-su position-relative" [ngClass]="(app?.call_back_status=='Not Answering')?'NotAnswering':(app?.call_back_status=='Closed')?'Closed':(app?.call_back_status=='Re-Confirm')?'Re-Confirm':(app?.call_back_status=='Re-Scheduled')?'Re-Scheduled':(app?.call_back_status=='Scheduled')?'Scheduled':( app?.call_back_status=='Cancel')?'Cancel':''" [ngStyle]="{'height':(((app?.duration/30)*100)+((app?.duration/30)*15))+'%'}" *ngFor="let app of appo?.bookedDetails">
+                                            <div style="height: 100%;overflow: hidden;">
+                                                <p><strong class="pass-name">{{app?.patient}}</strong></p>
+                                                <p><span class="pass-loc">{{app?.concern}}</span></p>
+                                            </div>
+                                            <div ngbDropdown class="d-inline-block" >
+                                                <p class="m-0" ngbDropdownToggle><i class="ri-arrow-right-line"></i></p>
+                                               
+                                                <div class="dropdown-menu" aria-labelledby="sortMenu" ngbDropdownMenu>
+                                                    <div class="car-1-hover" [ngClass]="(app?.call_back_status=='Not Answering')?'NotAnswering':(app?.call_back_status=='Closed')?'Closed':(app?.call_back_status=='Re-Confirm')?'Re-Confirm':(app?.call_back_status=='Re-Scheduled')?'Re-Scheduled':(app?.call_back_status=='Scheduled')?'Scheduled':''">
+                                                        <div class="car-bottom-hover" *ngFor="let app of appo?.bookedDetails">
+                                                            <p><strong class="pass-name">{{app?.patient}}</strong></p>
+                                                            <p><span class="label">Appointment : </span><strong class="pass-name">{{moment(app?.appointment_date).format('DD/MM/yyyy')}}</strong> ({{moment(app?.appointment_time,'HH:mm:ss').format('hh:mm A')}}-{{moment(app?.custom_duration_time,'HH:mm:ss').format('hh:mm A')}})</p>
+                                                            <p><span class="label">Gender : </span><span class="pass-contact"> {{app?.patient_sex}}</span></p>
+                                                            <p><span class="label">Service Unit : </span><span class="pass-contact"> {{app?.service_unit}}</span></p>
+                                                            <p><span class="label">Concern : </span><span class="pass-loc">{{app?.concern}}</span></p>
+                                                            <p><span class="label">Service Room : </span><span class="pass-contact">{{app?.service_room}}</span></p>
+                                                            <p><span class="label">Mobile : </span><span class="pass-loc">{{app?.custom_client_mobile_no}}</span></p>
+                                                            <p><span class="label">Duration : </span><span class="pass-loc">{{app?.duration}} Min</span></p>
+                                                        </div>
+                                                        <div class="edit-btn" (click)="editModel(editAppointmentModel,appo,app,'edit')">
+                                                            Edit
+                                                        </div>
+                                                    </div>
+                                                    
+                                                </div>
+                                              </div>
+                                              <p class="status" *ngIf="app?.call_back_status=='Not Answering'">Not Answering</p>
+                                              <p class="status" *ngIf="app?.call_back_status=='Closed'">Closed</p>
+                                              <p class="status" *ngIf="app?.call_back_status=='Re-Confirm'">Re-Confirm</p>
+                                              <p class="status" *ngIf="app?.call_back_status=='Re-Scheduled'">Re-Scheduled</p>
+                                              <p class="status" *ngIf="app?.call_back_status=='Scheduled'">Scheduled</p>
+                                              <p class="status" *ngIf="app?.call_back_status=='Cancel'">Cancel</p>
+                                        </div>
+                                        
+                                    </div>
+                                    <!-- <div *ngIf="appo?.bookedDetails?.length">
+                                        <div class="car-1-su position-relative">
+                                            <div class="car-bottom-1-su" *ngFor="let app of appo?.bookedDetails">
+                                                <p><strong class="pass-name">{{app?.patient}}</strong></p>
+                                                <p><span class="pass-loc">{{app?.concern}}</span></p>
+                                            </div>
+                                            <div ngbDropdown class="d-inline-block">
+                                                <p class="m-0" ngbDropdownToggle><i class="ri-arrow-right-line"></i></p>
+                                               
+                                                <div class="dropdown-menu" aria-labelledby="sortMenu" ngbDropdownMenu>
+                                                    <div class="car-1-hover" >
+                                                        <div class="car-bottom-hover" *ngFor="let app of appo?.bookedDetails">
+                                                            <p><strong class="pass-name">{{app?.patient}}</strong></p>
+                                                            <p><span class="pass-contact">{{app?.service_unit}}</span></p>
+                                                            <p><span class="pass-loc">{{app?.concern}}</span></p>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                </div>
+                                              </div>
+                                           
+                                        </div>
+                                    
+                                    </div> -->
+                                   
+                                </td>
+                            </ng-container>
+                            
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+   
+
+
+<div class="ride-menu ride-opts">
+    <div class="ride-options">
+        <ul>
+            <li><a class="edit-ride" href="#" title=""><i class="ion-edit"></i> Edit Ride</a></li>
+            <li><a class="delete-ride" href="#" title=""><i class="ion-android-remove-circle"></i> Delete Ride</a></li>
+        </ul>
+    </div><!-- Ride Options -->
+</div>
+
+
+<ng-template #addAppointmentModel let-modal>
+    <div class="modal-header p-2" style="border-bottom: solid 1px #cdcdcd;">
+        <div class="d-flex justify-content-between flex-grow-1">
+          <h5 id="modal-basic-title flex-grow-1" class="m-0">Add Appointment</h5>
+        </div>
+  
+        <button type="button" class="close mx-0" aria-label="Close" (click)="modal.close()">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form #form="ngForm" (ngSubmit)="saveTheForm(form)">
+            <p class="serviceId">{{newAppointmentData['serviceId']}}</p>
+            <p class="timeslot">{{moment(selectedDate).format('DD/MM/yyyy')}} ({{newAppointmentData['timeSlot']}})</p>
+            <div class="form-group">
+                <label for="customer">Client</label>
+                <ng-select  id="customer" class="custom" #customer="ngModel" ngModel name="customer" bindLabel="customer" bindValue="customer" [clearable]="true" [searchable]="true" (search)="searchClient($event)" required>
+                    <ng-option *ngFor="let item of clientsList" [value]="item.name"   required>
+                      <div class="line1" title="{{item.customer}}">{{item?.customer?item?.customer:'---'}}</div>
+                    </ng-option>
+                 </ng-select>
+            </div>
+            <div class="form-group">
+                <label for="customer">Service Unit</label>
+                <ng-select  id="serviceUnit" class="custom" #serviceUnit="ngModel" ngModel name="serviceUnit" bindLabel="serviceUnit" bindValue="serviceUnit" [clearable]="true" [searchable]="true" required (ngModelChange)="serviceUnitChange(serviceUnit.value)">
+                    <ng-option *ngFor="let item of categoriesList" [value]="item.name"   required>
+                      <div class="line1" title="{{item.name}}">{{item?.name?item?.name:'---'}}</div>
+                    </ng-option>
+                 </ng-select>
+            </div>
+            <div class="form-group">
+                <label for="concern">Concern</label>
+                <ng-select  id="concern" class="custom" #concern="ngModel" ngModel name="concern" bindLabel="concern" bindValue="concern" [clearable]="true" [searchable]="true" required (search)="searchConcern($event)" required>
+                    <ng-option *ngFor="let item of concernList" [value]="item.name"   required>
+                      <div class="line1" title="{{item.name}}">{{item?.name?item?.name:'---'}}</div>
+                    </ng-option>
+                 </ng-select>
+            </div>
+            <div class="d-flex justify-content-end my-3">
+                <div>
+                    <button class="btn btn-outline-primary btn-sm save-btn" type="submit">Save</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</ng-template>
+
+<ng-template #editAppointmentModel let-modal>
+    <div class="modal-header p-2" style="border-bottom: solid 1px #e0e0e0;">
+        <div class="d-flex justify-content-between flex-grow-1">
+          <h5 id="modal-basic-title flex-grow-1" class="m-0">{{openModelType=='edit'?'Edit':'Create'}} Appointment</h5>
+        </div>
+  
+        <button type="button" class="close mx-0" aria-label="Close" (click)="modal.close()">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form #form="ngForm" (ngSubmit)="openModelType=='edit'?updateAppointment(form):createAppointmentForm(form)">
+            <div *ngIf="openModelType=='edit'">
+                <p class="serviceId">{{newAppointmentData['serviceId']}}</p>
+                <p class="timeslot">{{moment(selectedDate).format('DD/MM/yyyy')}} ({{newAppointmentData['timeSlot']}})</p>
+            </div>
+            
+            <div class="row">
+                <ng-container *ngIf="openModelType=='edit'">
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="customer">Client</label>
+                            <input type="text" name="customer" disabled class="form-control disable-field" id="customer" [value]="newAppointmentData.slotDetails.patient">
+                            <!-- <ng-select  id="customer" class="custom" #customer="ngModel" ngModel name="customer" bindLabel="customer" bindValue="customer" [clearable]="true" [searchable]="true" (search)="searchClient($event)" required>
+                                <ng-option *ngFor="let item of clientsList" [value]="item.name"   required>
+                                  <div class="line1" title="{{item.customer}}">{{item?.customer?item?.customer:'---'}}</div>
+                                </ng-option>
+                             </ng-select> -->
+                        </div>
+                       </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="service_unit">Service Unit</label>
+                                <input type="text" name="service_unit" disabled class="form-control disable-field" id="service_unit" [value]="newAppointmentData.slotDetails.service_unit">
+                                <!-- <ng-select  id="serviceUnit" class="custom" #serviceUnit="ngModel" ngModel name="serviceUnit" bindLabel="serviceUnit" bindValue="serviceUnit" [clearable]="true" [searchable]="true" required (ngModelChange)="serviceUnitChange(serviceUnit.value)">
+                                    <ng-option *ngFor="let item of categoriesList" [value]="item.name"   required>
+                                      <div class="line1" title="{{item.name}}">{{item?.name?item?.name:'---'}}</div>
+                                    </ng-option>
+                                 </ng-select> -->
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="concern">Concern</label>
+                                <input type="text" name="concern" disabled class="form-control disable-field" id="concern" [value]="newAppointmentData.slotDetails.concern">
+                                <!-- <ng-select  id="concern" class="custom" #concern="ngModel" ngModel name="concern" bindLabel="concern" bindValue="concern" [clearable]="true" [searchable]="true" required (search)="searchConcern($event)" required>
+                                    <ng-option *ngFor="let item of concernList" [value]="item.name"   required>
+                                      <div class="line1" title="{{item.name}}">{{item?.name?item?.name:'---'}}</div>
+                                    </ng-option>
+                                 </ng-select> -->
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="call_back_status">Confirmation Status</label>
+                                <select name="call_back_status" id="call_back_status" class="form-control" [(ngModel)]="editSlotData.call_back_status" required>
+                                    <option value="Scheduled">Scheduled</option>
+                                    <option value="Not Answering">Not Answering</option>
+                                    <option value="Re-Confirm">Re-Confirm</option>
+                                    <option value="Re-Scheduled">Re-Scheduled</option>
+                                    <option value="Closed">Closed</option>
+                                    <option value="Cancel">Cancel</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group mt-2" *ngIf="editSlotData.call_back_status=='Re-Scheduled'">
+                                <label for="appointment_date">Appointment Date</label>
+                                <input type="date" class="form-control" min="{{today |date:'yyyy-MM-dd'}}" name="appointment_date" id="appointment_date" [(ngModel)]="editSlotData.appointment_date" required (ngModelChange)="appDateChange()">
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap justify-content-center" style="margin: 16px 0px;" *ngIf="editSlotData.call_back_status=='Re-Scheduled'">
+                            <div class="tags" *ngFor="let item of availableSlots?.avail_slot" (click)="selectTimeSlot(item)" [ngClass]="item?.checked?'checkedtag':''"  [ngClass]="(item?.disabled=='Yes')?'disabled-slot':''" >
+                                {{item?.from_time}}
+                            </div>
+                        </div>
+                    </ng-container>
+                
+               
+                <ng-container *ngIf="openModelType!='edit'">
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="customer">Client</label>
+                            <ng-select  id="customer" class="custom" #customer="ngModel" ngModel name="customer" bindLabel="customer" bindValue="customer" [clearable]="true" [searchable]="true" (search)="searchClient($event)" required>
+                                <ng-option *ngFor="let item of clientsList" [value]="item.name"   required>
+                                  <div class="line1" title="{{item.customer}}">{{item?.customer?item?.customer:'---'}}</div>
+                                </ng-option>
+                             </ng-select>
+                        </div>
+                    </div>
+                    
+                    
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="customer">Service Unit</label>
+                            <ng-select  id="serviceUnit" class="custom" #serviceUnit="ngModel" ngModel name="serviceUnit" bindLabel="serviceUnit" bindValue="serviceUnit" [clearable]="true" [searchable]="true" required (ngModelChange)="serviceUnitChange(serviceUnit.value)">
+                                <ng-option *ngFor="let item of categoriesList" [value]="item.name"   required>
+                                  <div class="line1" title="{{item.name}}">{{item?.name?item?.name:'---'}}</div>
+                                </ng-option>
+                             </ng-select>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="concern">Concern</label>
+                            <ng-select  id="concern" class="custom" #concern="ngModel" ngModel name="concern" bindLabel="concern" bindValue="concern" [clearable]="true" [searchable]="true" (search)="searchConcern($event)" required>
+                                <ng-option *ngFor="let item of concernList" [value]="item.name"   required>
+                                  <div class="line1" title="{{item.name}}">{{item?.name?item?.name:'---'}}</div>
+                                </ng-option>
+                             </ng-select>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="service_room">Service Room</label>
+                            <ng-select  id="service_room" class="custom" #service_room="ngModel" ngModel name="service_room" bindLabel="service_room" [(ngModel)]="editSlotData.service_room" bindValue="service_room" [clearable]="true" [searchable]="true" required (change)="changeserviceroom()">
+                                <ng-option *ngFor="let item of allRoomsDataByBranchName" [value]="item.name"   required>
+                                  <div class="line1" title="{{item.name}}">{{item?.name?item?.name:'---'}}</div>
+                                </ng-option>
+                             </ng-select>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-group mt-2">
+                            <label for="appointment_date">Appointment Date</label>
+                            <input type="date" class="form-control" min="{{today |date:'yyyy-MM-dd'}}" name="appointment_date" id="appointment_date" [(ngModel)]="editSlotData.appointment_date" required (ngModelChange)="appDateChange()">
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap justify-content-center" style="margin: 16px 0px;">
+                        <div class="tags" *ngFor="let item of availableSlots?.avail_slot" (click)="selectTimeSlot(item)" [ngClass]="item?.checked?'checkedtag':''" [ngClass]="(item?.disabled=='Yes')?'disabled-slot':''">
+                            {{item?.from_time}}
+                        </div>
+                    </div>
+                </ng-container>
+                
+                
+               
+               
+            </div>
+           
+           
+           
+            <div class="d-flex justify-content-end my-3">
+                <div>
+                    <button class="btn btn-outline-primary btn-sm  save-btn" type="submit">Save</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</ng-template>
+<!-- New Ride  -->
+<div class="modal custom-modal" id="add-new">
+<div class="modal-dialog">
+<div class="modal-content">
+<form class="custom-form" id="add-ride" name="Form">
+  <div class="modal-header">
+      <div class="modal-title">
+        <h4>New Ride</h4>
+        <span>Fill The Form Below To Add A New Ride</span>
+      </div>
+  </div>
+  <div class="modal-body">
+        <div class="form-group row">
+            <label class="col-lg-5 col-md-12  col-form-label">Passenger's Name</label>
+            <div class="col-lg-7 col-md-12">
+                <input id="pass-name" type="text" class="form-control" required>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-lg-5 col-md-12  col-form-label">Contact #:</label>
+            <div class="col-lg-7 col-md-12">
+                <input id="pass-contact" type="text" class="form-control" required>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-lg-5 col-md-12  col-form-label">Pickup Location:</label>
+            <div class="col-lg-7 col-md-12">
+                <textarea id="pass-loc" required></textarea>
+            </div>
+        </div>
+  </div>
+  <div class="modal-footer">
+    <button class="custom-btn ride-cancel color2"><i class="ion-android-cancel"></i> Cancel Ride</button>
+    <button class="custom-btn add-ride-btn" type="submit"><i class="ion-android-add-circle"></i> Add A Ride</button>
+    <button class="custom-btn hidden edit-ride-btn" type="submit"><i class="ion-android-add-circle"></i> Edit Ride</button>
+  </div>
+</form>
+</div>
+</div>
+</div>
+
+
+<!-- Assign Driver  -->
+<div class="modal custom-modal" id="assign-driver">
+<div class="modal-dialog">
+<div class="modal-content">
+<form class="custom-form" id="select-driver">
+  <div class="modal-header">
+      <div class="modal-title">
+        <h4>Assign A Driver</h4>
+        <span>Assign Driver To This Ride</span>
+      </div>
+    <button type="button" class="close" data-dismiss="modal">&times;</button>
+  </div>
+  <div class="modal-body">
+        <table class="table driver-selector custom-table style2">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Name</th>
+                    <th>License</th>
+                    <th>Weekly Earnings</th>
+                    <th>Working Days</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="console-driver-img"><img src="https://picsum.photos/100/100" style="width:30px"></td>
+                    <td class="console-driver" drivername="John Smith">John Smith</td>
+                    <td>4/5/20</td>
+                    <td>$345</td>
+                    <td>Mon-Tues-Wed-Thurs</td>
+                </tr>
+                <tr>
+                    <td class="console-driver-img"><img src="https://picsum.photos/100/100" style="width:30px"></td>
+                    <td class="console-driver" drivername="Bale Disel">Bale Disel</td>
+                    <td>5/15/19</td>
+                    <td>$564</td>
+                    <td>Fri-Sat-Sun</td>
+                </tr>
+                <tr>
+                    <td class="console-driver-img"><img src="https://picsum.photos/100/100" style="width:30px"></td>
+                    <td class="console-driver" drivername="Macelo Benz">Macelo Benz</td>
+                    <td>12/30/20</td>
+                    <td>$543</td>
+                    <td>Mon-Tues-Wed-Thurs</td>
+                </tr>
+            </tbody>
+        </table>
+  </div>
+  <div class="modal-footer">
+    <a href="#" title="" class="custom-btn cancel-popup color2" data-dismiss="modal"><i class="ion-android-cancel"></i> Cancel</a>
+    <button class="custom-btn" type="submit"><i class="ion-android-add-circle"></i> Assign</button>
+  </div>
+</form>
+</div>
+</div>
+</div>
+
+
+<!-- Assign Driver  -->
+<div class="modal custom-modal" id="change-ride">
+<div class="modal-dialog">
+<div class="modal-content">
+<form class="custom-form" id="ride-changer">
+  <div class="modal-header">
+      <div class="modal-title">
+        <h4>Edit Ride</h4>
+        <span>Edit The Following Ride</span>
+      </div>
+    <button type="button" class="close" data-dismiss="modal">&times;</button>
+  </div>
+  <div class="modal-body">
+        <div class="form-group row">
+            <label class="col-lg-5 col-md-12  col-form-label">Edit This Ride</label>
+            <div class="col-lg-7 col-md-12">
+                <select class="select change-ride">
+                    <option value="return">Return</option>
+                    <option value="maintenance">Maintenance</option>
+                    <option value="preparation">Preparation</option>
+                    <option value="service">Service</option>
+                </select>
+            </div>
+        </div>
+  </div>
+  <div class="modal-footer">
+    <a href="#" title="" class="custom-btn color2" data-dismiss="modal"><i class="ion-android-cancel"></i> Cancel</a>
+    <button class="custom-btn" type="submit"><i class="ion-android-add-circle"></i> Edit</button>
+  </div>
+</form>
+</div>
+</div>
+</div>
+

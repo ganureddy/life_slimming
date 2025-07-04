@@ -1,0 +1,58 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-07-24 14:35:52.767506",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "service_room",
+  "schedule",
+  "service_unit",
+  "branch"
+ ],
+ "fields": [
+  {
+   "fetch_from": "service_room.branch",
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "service_room",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Service Room",
+   "options": "Service Room"
+  },
+  {
+   "fieldname": "schedule",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Schedule",
+   "options": "Practitioner Schedule"
+  },
+  {
+   "fetch_from": "service_room.branch",
+   "fieldname": "service_unit",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Service Unit",
+   "options": "Healthcare Service Unit"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2023-08-03 12:34:53.646235",
+ "modified_by": "Administrator",
+ "module": "life_slimming",
+ "name": "Room Wise Slots",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,108 @@
+{
+ "cards": [
+  {
+   "card": "Total Lead"
+  },
+  {
+   "card": "Walk Ins"
+  },
+  {
+   "card": "Future Appointment"
+  },
+  {
+   "card": "Join"
+  },
+  {
+   "card": "Lead"
+  },
+  {
+   "card": "Open"
+  },
+  {
+   "card": "Call Back"
+  },
+  {
+   "card": "Get Back"
+  },
+  {
+   "card": "Consultation Done"
+  },
+  {
+   "card": "DND"
+  },
+  {
+   "card": "NID"
+  },
+  {
+   "card": "Interested"
+  },
+  {
+   "card": "Appointment Booked"
+  },
+  {
+   "card": "Not Interested"
+  },
+  {
+   "card": "Not Response"
+  },
+  {
+   "card": "Existing Client"
+  },
+  {
+   "card": "Wrong Call"
+  },
+  {
+   "card": "Switch Off"
+  },
+  {
+   "card": "Not Enquired"
+  },
+  {
+   "card": "Appointment No Response"
+  },
+  {
+   "card": "TNA"
+  },
+  {
+   "card": "Out of Service"
+  },
+  {
+   "card": "Not Reachable"
+  }
+ ],
+ "chart_options": "",
+ "charts": [
+  {
+   "chart": "Status Wise Leads",
+   "width": "Full"
+  },
+  {
+   "chart": "Concern wise Lead",
+   "width": "Full"
+  },
+  {
+   "chart": "Lead Source",
+   "width": "Full"
+  },
+  {
+   "chart": "Branch Dashboard Chart",
+   "width": "Full"
+  },
+  {
+   "chart": "User Wise Assign",
+   "width": "Full"
+  }
+ ],
+ "creation": "2023-03-16 14:05:50.874323",
+ "dashboard_name": "CRM Dashboard",
+ "docstatus": 0,
+ "doctype": "Dashboard",
+ "idx": 0,
+ "is_default": 0,
+ "is_standard": 1,
+ "modified": "2023-04-05 12:07:52.464955",
+ "modified_by": "Administrator",
+ "module": "life_slimming",
+ "name": "CRM Dashboard",
+ "owner": "Administrator"
+}

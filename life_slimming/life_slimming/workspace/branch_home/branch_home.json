@@ -1,0 +1,97 @@
+{
+ "charts": [
+  {
+   "chart_name": "Three Months Sales Comparision",
+   "label": "Three Months Sales Comparision"
+  },
+  {
+   "chart_name": "Three Months Sessions Comparision",
+   "label": "Three Months Sessions Comparision"
+  }
+ ],
+ "content": "[{\"id\":\"fma5mjAXDx\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Branch Home</span>\",\"col\":12}},{\"id\":\"-DEwLAutUO\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Opening Checklist\",\"col\":3}},{\"id\":\"WJBiYz9D-I\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Closing Checklist\",\"col\":3}},{\"id\":\"bpUy4y8Zyd\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Report\",\"col\":3}},{\"id\":\"U4zptlX9uO\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Payment Modes Report\",\"col\":3}},{\"id\":\"YAYlqVsEaU\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Payment Mode\",\"col\":3}},{\"id\":\"hIf1XYlEmu\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Employees Sharing Details\",\"col\":3}},{\"id\":\"OvQb3BHI6p\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Doctor Sharing Details\",\"col\":3}},{\"id\":\"d8Z0cwVyKN\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Three Months Sales Comparision\",\"col\":12}},{\"id\":\"K7IcdIn6HX\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Three Months Sessions Comparision\",\"col\":12}}]",
+ "creation": "2023-10-16 17:28:46.399259",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "tool",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "Branch Home",
+ "links": [],
+ "modified": "2024-02-06 16:19:52.514799",
+ "modified_by": "Administrator",
+ "module": "life_slimming",
+ "name": "Branch Home",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "Branch Sales Invoice"
+  },
+  {
+   "role": "Sales User"
+  },
+  {
+   "role": "Accounts User"
+  }
+ ],
+ "sequence_id": 29.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Employees Sharing Details",
+   "link_to": "Employees Sharing Details",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Opening Checklist",
+   "link_to": "Opening Checklist",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Doctor Sharing Details",
+   "link_to": "Doctor Sharing Details",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Payment Mode",
+   "link_to": "Payment Mode Groupby",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Sales Report",
+   "link_to": "Branch Wise Sales Report",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Closing Checklist",
+   "link_to": "Closing Checklist",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Payment Modes Report",
+   "link_to": "Lifescc Mode of Payments Report",
+   "type": "Report"
+  }
+ ],
+ "title": "Branch Home"
+}

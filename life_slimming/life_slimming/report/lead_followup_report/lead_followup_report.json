@@ -1,0 +1,38 @@
+{
+ "add_total_row": 0,
+ "columns": [],
+ "creation": "2023-02-11 14:49:40.262429",
+ "disable_prepared_report": 0,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "modified": "2023-03-09 13:12:34.261220",
+ "modified_by": "Administrator",
+ "module": "life_slimming",
+ "name": "Lead Followup Report",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Lead",
+ "report_name": "Lead Followup Report",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "Sales User"
+  },
+  {
+   "role": "Sales Manager"
+  },
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Lead Admin"
+  },
+  {
+   "role": "Branch Role"
+  }
+ ]
+}

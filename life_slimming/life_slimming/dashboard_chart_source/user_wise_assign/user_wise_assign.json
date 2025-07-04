@@ -1,0 +1,13 @@
+{
+ "creation": "2023-04-05 11:19:54.905139",
+ "docstatus": 0,
+ "doctype": "Dashboard Chart Source",
+ "idx": 0,
+ "modified": "2023-04-05 11:19:54.905139",
+ "modified_by": "Administrator",
+ "module": "life_slimming",
+ "name": "User Wise Assign",
+ "owner": "Administrator",
+ "source_name": "User Wise Assign",
+ "timeseries": 1
+}

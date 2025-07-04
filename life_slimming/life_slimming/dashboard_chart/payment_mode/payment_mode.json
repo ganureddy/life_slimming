@@ -1,0 +1,34 @@
+{
+ "chart_name": "Payment Mode",
+ "chart_type": "Report",
+ "creation": "2023-12-15 10:52:44.790573",
+ "custom_options": "{\"x_field\": \"mode_of_payment\", \"chart_type\": \"Bar\", \"y_axis_fields\": [{\"idx\": 1, \"__islocal\": true, \"name\": \"row 1\", \"y_field\": \"paid_amount\", \"color\": \"#8d95b5\"}], \"y_fields\": [\"paid_amount\"], \"colors\": [\"#8d95b5\"]}",
+ "docstatus": 0,
+ "doctype": "Dashboard Chart",
+ "dynamic_filters_json": "",
+ "filters_json": "{\"from_date\":\"2023-12-04\",\"to_date\":\"2024-01-04\"}",
+ "group_by_type": "Count",
+ "idx": 0,
+ "is_public": 0,
+ "is_standard": 1,
+ "modified": "2024-01-04 16:48:59.791125",
+ "modified_by": "Administrator",
+ "module": "life_slimming",
+ "name": "Payment Mode",
+ "number_of_groups": 0,
+ "owner": "Administrator",
+ "report_name": "Payment Mode Groupby",
+ "roles": [],
+ "time_interval": "Yearly",
+ "timeseries": 0,
+ "timespan": "Last Year",
+ "type": "Bar",
+ "use_report_chart": 0,
+ "x_field": "mode_of_payment",
+ "y_axis": [
+  {
+   "color": "#8d95b5",
+   "y_field": "paid_amount"
+  }
+ ]
+}

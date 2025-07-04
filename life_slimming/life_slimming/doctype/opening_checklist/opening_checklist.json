@@ -1,0 +1,215 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{OCL}-{branch}-{date}",
+ "creation": "2023-08-01 11:41:52.185006",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "branch",
+  "date",
+  "section_break_lamar",
+  "opening_checklist_details",
+  "sinage_board_clean",
+  "outside_entrance_clean",
+  "reception_treament_room_clean",
+  "consultation_room_celan_organised",
+  "washrooms_cleaned",
+  "sales_petty_cash_tallied",
+  "generator_condition_with_desile",
+  "machine_condition",
+  "completed_column",
+  "completed1",
+  "completed2",
+  "completed3",
+  "completed4",
+  "completed5",
+  "completed6",
+  "completed7",
+  "completed8"
+ ],
+ "fields": [
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "hidden": 1,
+   "label": "Date"
+  },
+  {
+   "fieldname": "section_break_lamar",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "opening_checklist_details",
+   "fieldtype": "Heading",
+   "label": "Opening Checklist Details :"
+  },
+  {
+   "fieldname": "sinage_board_clean",
+   "fieldtype": "Heading",
+   "label": "1. Sinage board is clean."
+  },
+  {
+   "fieldname": "outside_entrance_clean",
+   "fieldtype": "Heading",
+   "label": "2. Area outside the entrance is clean."
+  },
+  {
+   "fieldname": "reception_treament_room_clean",
+   "fieldtype": "Heading",
+   "label": "3. Reception area & treament rooms are neat & Clean."
+  },
+  {
+   "fieldname": "consultation_room_celan_organised",
+   "fieldtype": "Heading",
+   "label": "4. Consultation rooms are cleaned & organised for consultation."
+  },
+  {
+   "fieldname": "washrooms_cleaned",
+   "fieldtype": "Heading",
+   "label": "5. Washrooms are cleaned properly."
+  },
+  {
+   "fieldname": "sales_petty_cash_tallied",
+   "fieldtype": "Heading",
+   "label": "6. Sales & petty cash inhand tallied."
+  },
+  {
+   "fieldname": "generator_condition_with_desile",
+   "fieldtype": "Heading",
+   "label": "7. Generator is in working condition & is having enough desile."
+  },
+  {
+   "fieldname": "machine_condition",
+   "fieldtype": "Heading",
+   "label": "8. All the machines are checked for working condition."
+  },
+  {
+   "fieldname": "completed_column",
+   "fieldtype": "Column Break",
+   "label": "Completed"
+  },
+  {
+   "default": "0",
+   "fieldname": "completed1",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "completed2",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "completed3",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "completed4",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "completed5",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "completed6",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "completed7",
+   "fieldtype": "Check"
+  },
+  {
+   "default": "0",
+   "fieldname": "completed8",
+   "fieldtype": "Check"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2023-10-13 10:10:52.382475",
+ "modified_by": "Administrator",
+ "module": "life_slimming",
+ "name": "Opening Checklist",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "All",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Guest",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

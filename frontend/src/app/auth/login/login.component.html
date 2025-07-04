@@ -1,0 +1,105 @@
+<!-- <section class="bg-login">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-7 my-auto">
+                <div class="logo mb-3">
+                    <img class="img-fluid" src="assets/images/logo.svg" alt="logo">
+                </div>
+                <div class="content">
+                    <h3 class="mb-0">We Prepare. You file.</h3>
+                    <p>Tailor made GSTR filing Solution for hospitality <br/>industry.</p>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="card p-2 mb-4">
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <h3>Welcome to Ezy GST</h3>
+                                <p class="text-muted">Sign in  using your valid credentials</p>
+                            </div>
+
+                        </div>
+                        <form #form="ngForm" (ngSubmit)="onSubmit(form)">
+                            <div class="form-group has-float-label">
+                                <input type="email" name="email" id="email" class="form-control" autocomplete="off" placeholder="Enter Email id" ngModel #name="ngModel" required />
+                                <label for="email" class="form-label">Email</label> -->
+<!-- <span class="mail-icon"><em class="ri-mail-line"></em></span> -->
+<!-- <small class="text-danger" *ngIf="form.submitted && name?.errors?.required">Required</small>
+                            </div>
+                            <div class="form-group has-float-label">
+                                <input type="password" name="password" id="password" class="form-control" autocomplete="off" placeholder="Enter Password" ngModel #password="ngModel" required />
+                                <label for="password" class="form-label">Password</label> -->
+<!-- <span class="mail-icon"><em class="ri-lock-line"></em></span> -->
+<!-- <span class="pass-icon" (click)="showPassword()"><em class="ri-eye-off-line"></em></span> -->
+<!-- <small class="text-danger" *ngIf="form.submitted && password?.errors?.required">Required</small>
+                            </div>
+                            <div class="d-grid mt-5">
+                                <button class="btn btn-primary" type="submit">Sign In</button>
+                              </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section> -->
+<div class="main">
+    <div class="container login-con">
+        <div class="row">
+            <!-- <div class="col-lg-7 col-md-6">
+                
+            </div> -->
+            <div class="col-lg-12 col-md-12">
+                <div class="div-1">
+                    <!-- <img class="ezy-logo" src="../../../assets/images/ezy-logo.png" alt=""> -->
+                    <div>
+                        <h3 class="prepare-text mb-4">My <span class="prep">Appointments</span><br></h3>
+                        <!-- <p class="m-0 sub-text">Tailor made GSTR filing solution for hospitality industry.</p> -->
+                    </div>
+                </div>
+                <div class="login-div">
+                    <div class="forn-head">
+                        <h5 class="mb-2 head fw-bold ">Hey, Welcome Back!</h5>
+                        <p class="sign-text">Sign in using your valid credentials</p>
+                    </div>
+                    <div class="mt-4">
+                        <form #form="ngForm" (ngSubmit)="onSubmit(form)">
+                            <div class="input-group mb-4 position-relative ">
+                                <img class="control-img" src="../../../assets/images/email-img.png" alt="">
+                                <input type="email" placeholder="Enter Email Id" class="form-control" name="email"
+                                    id="email" autocomplete="off" ngModel #name="ngModel" required>
+                            </div>
+                            <small class="text-danger err-msg"
+                                *ngIf="form.submitted && name?.errors?.['required']">Required</small>
+                            <div class="input-group mb-5">
+                                <img class="control-img" src="../../../assets/images/pass-img.png" alt="">
+                                <input [type]="inputType" name="password" id="password" class="form-control"
+                                    autocomplete="off" placeholder="Enter Password" ngModel #password="ngModel"
+                                    required>
+                                <!-- <img  src="../../../assets/images/eye-img.png" alt=""> -->
+                                <i (click)="showPassword()" *ngIf="inputType=='text'" class="ri-eye-line eye-img"></i>
+                                <i (click)="showPassword()" *ngIf="inputType=='password'"
+                                    class="ri-eye-off-line eye-img"></i>
+
+                            </div>
+                            <small class="text-danger err-msg-1"
+                                *ngIf="form.submitted && password?.errors?.['required']">Required</small>
+                            <button *ngIf="!spinner" type="submit"
+                                class="btn sign-btn d-flex align-items-center justify-content-between ">Sign In <img
+                                    src="../../../assets/images/right-arrow.png" alt=""></button>
+                            <div *ngIf="spinner" class="d-flex align-items-center justify-content-center sign-btn-div">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="thunder-div"><img src="../../../assets/images/thunder.png" alt=""></div>
+</div>

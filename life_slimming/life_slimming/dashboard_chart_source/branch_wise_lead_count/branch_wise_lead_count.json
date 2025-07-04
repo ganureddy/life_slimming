@@ -1,0 +1,13 @@
+{
+ "creation": "2023-03-16 18:58:15.191414",
+ "docstatus": 0,
+ "doctype": "Dashboard Chart Source",
+ "idx": 0,
+ "modified": "2023-03-17 11:41:26.647150",
+ "modified_by": "Administrator",
+ "module": "life_slimming",
+ "name": "Branch wise Lead Count",
+ "owner": "Administrator",
+ "source_name": "Branch wise Lead Count",
+ "timeseries": 0
+}

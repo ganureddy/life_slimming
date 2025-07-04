@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include life_slimming *.css
+recursive-include life_slimming *.csv
+recursive-include life_slimming *.html
+recursive-include life_slimming *.ico
+recursive-include life_slimming *.js
+recursive-include life_slimming *.json
+recursive-include life_slimming *.md
+recursive-include life_slimming *.png
+recursive-include life_slimming *.py
+recursive-include life_slimming *.svg
+recursive-include life_slimming *.txt
+recursive-exclude life_slimming *.pyc

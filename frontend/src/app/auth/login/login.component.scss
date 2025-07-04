@@ -1,0 +1,371 @@
+// .bg-login {
+//     padding: 150px 100px 160px;
+//     background: linear-gradient(90deg, #1CD8D2 0%, #93EDC7 100%);
+//     height: 100vh;
+
+//     .logo {
+//         width: 120px;
+//     }
+
+//     .content {
+//         h3 {
+//             color: #183153;
+//             font-size: 52px;
+//             line-height: 71px;
+//             font-weight: 700;
+//         }
+
+//         p {
+//             color: #183153;
+//             font-weight: 400;
+//             font-size: 26px;
+//             line-height: 35px;
+//         }
+
+
+//     }
+
+
+//     .card {
+//         box-shadow: -4px 1px 9px 1px rgba(0, 0, 0, 0.04);
+//         -moz-box-shadow: -4px 1px 9px 1px rgba(0, 0, 0, 0.04);
+//         -o-box-shadow: -4px 1px 9px 1px rgba(0, 0, 0, 0.04);
+
+//         h3 {
+//             color: #183153;
+//             ;
+//             font-weight: 700;
+//             font-size: 17px;
+//             line-height: 23px;
+//             margin-bottom: 5px;
+//         }
+
+//         p {
+//             font-weight: 400;
+//             font-size: 15px;
+//             line-height: 20px;
+//             color: rgba(24, 49, 83, 0.8);
+//             ;
+//         }
+
+//         .btn-primary {
+//             background-color: #7F0EC5;
+//             padding: 0.7rem 0.75rem;
+//             font-weight: 700;
+//             border: none;
+//         }
+
+//         .btn-primary:hover {
+//             background-color: #500281;
+//         }
+
+//         .form-group {
+//             margin-bottom: 20px;
+//             position: relative
+//         }
+
+//         .form-control {
+//             background-color: #F1F4FF;
+//             outline: 0;
+//             padding: 0.7rem 0.75rem;
+//         }
+
+//         .form-label {
+//             margin-bottom: 1px;
+//             color: #8d8d8d;
+//             font-size: 15px;
+//         }
+
+//         .form-control:focus {
+//             box-shadow: none;
+//         }
+
+//         .has-float-label .form-control:placeholder-shown:not(:focus)+* {
+//             top: 1.1em;
+//         }
+
+//         .mail-icon {
+//             position: absolute;
+//             top: 18px;
+//             left: 11px;
+//         }
+
+//         .mail-icon em,
+//         .pass-icon em {
+//             color: rgba(0, 0, 0, 0.6);
+//             font-size: 17px;
+//         }
+
+//         .pass-icon {
+//             position: absolute;
+//             top: 38px;
+//             right: 11px;
+//         }
+
+
+//     }
+// }
+
+// .form-select,
+// .form-control {
+//     height: 46px !important
+// }
+
+.ezy-logo {
+    margin-bottom: 110px;
+
+}
+
+.login-con {
+    padding-top: 35px;
+    // margin: 0px 40px 0px 70px;
+}
+
+.prepare-img {
+    width: 200px;
+}
+
+.sign-btn {
+    background-color: #EF4F5F;
+    color: white;
+    width: 100%;
+    text-align: start;
+    font-weight: bold;
+    color: #FFF;
+    font-family: Montserrat !important;
+    font-size: 17px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+    padding: 10px 20px;
+}
+
+.sign-btn:hover {
+    background-color: #E33442;
+}
+
+.form-control {
+    height: 52px;
+}
+
+.input-group-text,
+.form-control {
+    background-color: #FBFCFF;
+    border: none;
+    padding: 10px;
+
+}
+
+.input-group {
+    border: 1px solid #D6D1D1;
+    border-radius: 5px;
+    display: flex;
+}
+
+.right-arrow {
+    font-size: 20px;
+}
+
+.form-control {
+    border-radius: 4px;
+    border: 1px solid #D6D1D1;
+    background: white !important;
+    padding-left: 40px;
+    border-top-left-radius: 5px !important;
+    border-bottom-left-radius: 5px !important;
+    border-top-right-radius: 5px !important;
+    border-bottom-right-radius: 5px !important;
+}
+
+.form-control:focus-within {
+    border: 1px solid black !important;
+    background-color: #F4F5F5 !important;
+}
+
+.login-div {
+    padding: 38px 34px 38px 32px;
+    margin-top: 70px;
+    border-radius: 10px;
+    border: 1px solid #E8DBDB;
+    background: #FFF;
+    // box-shadow: -5px 7px 20px #0000003b;
+    filter: drop-shadow(-9px 13px 8px rgba(0, 0, 0, 0.05));
+    width: 37%;
+    margin: auto;
+}
+
+.err-msg {
+    color: red !important;
+    font-size: 12px;
+    font-weight: 400;
+    position: relative;
+    bottom: 24px;
+}
+
+.err-msg-1 {
+    color: red !important;
+    font-size: 12px;
+    font-weight: 400;
+    position: relative;
+    bottom: 47px;
+}
+
+.sign-btn-div {
+    // background-color: #EF4F5F !important;
+    background-color: #EF4F5F;
+    color: white;
+    width: 100%;
+    text-align: start;
+    font-weight: bold;
+    color: #FFF;
+    font-family: Montserrat !important;
+    font-size: 17px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+    padding: 10px 20px;
+    border-radius: 5px;
+}
+
+.spinner-border {
+    width: 24px;
+    height: 24px;
+}
+
+.control-img {
+    position: absolute;
+    left: 0px;
+    z-index: 10;
+    width: 20px;
+    top: 15px;
+    left: 10px;
+}
+
+.eye-img {
+    position: absolute;
+    right: 13px;
+    top: 15px;
+    z-index: 10;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.main {
+    width: 100vw;
+    height: 100vh;
+}
+
+.prep {
+    color: #E33442;
+}
+
+.form-head h5 {
+    color: #20212C;
+    font-family: Montserrat;
+    font-size: 24px !important;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+}
+
+.prepare-text {
+    color: #1E1F2A;
+    font-size: 52px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+    text-align: center;
+}
+
+.sub-text {
+    font-size: 20px;
+    color: #1e1f2abf !important;
+}
+
+.sing-text {
+    color: #20212C;
+    // font-family: Montserrat;
+    font-size: 15px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+}
+
+.thunder-div {
+    position: absolute;
+    top: 0px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: -webkit-fill-available;
+    z-index: -1;
+}
+
+.thunder-div img {
+    height: 100vh;
+}
+
+
+@media (max-width:992px) {
+    .prepare-text {
+        color: #1E1F2A;
+        font-size: 40px;
+        font-style: normal;
+        font-weight: 700;
+        line-height: normal;
+    }
+
+    .login-con {
+        margin: auto;
+    }
+
+    .ezy-logo {
+        margin-bottom: 70px;
+    }
+
+    .sub-text {
+        font-size: 17px;
+        color: #1e1f2abf !important;
+    }
+
+    .head {
+        font-size: 18px !important;
+    }
+
+    .sign-text {
+        font-size: 14px !important;
+    }
+
+    .eye-img,
+    .control-img {
+        width: 18px !important;
+        font-size: 16px !important;
+    }
+
+    // .sign-btn {
+    //     background-color: #EF4F5F;
+    //     color: white;
+    //     width: 100%;
+    //     text-align: start;
+    //     font-weight: bold;
+    //     color: #FFF;
+    //     font-family: Nunito Sans;
+    //     font-size: 15px;
+    //     font-style: normal;
+    //     font-weight: 800;
+    //     line-height: normal;
+    //     padding: 5px 15px;
+    // }
+
+    .sign-btn img {
+        width: 18px;
+    }
+}
+
+@media (min-width:1440px) {
+    .login-con {
+        padding-top: 130px;
+        // margin: 0px 40px 0px 70px;
+    }
+
+}
