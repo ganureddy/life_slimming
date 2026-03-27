@@ -1,15 +1,15 @@
 {
  "charts": [
   {
-   "chart_name": "Three Months Sales Comparision",
-   "label": "Three Months Sales Comparision"
+   "chart_name": "Three Months Sales Comparison",
+   "label": "Three Months Sales Comparison"
   },
   {
-   "chart_name": "Three Months Sessions Comparision",
-   "label": "Three Months Sessions Comparision"
+   "chart_name": "Payment Mode",
+   "label": "Payment Mode"
   }
  ],
- "content": "[{\"id\":\"fma5mjAXDx\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Branch Home</span>\",\"col\":12}},{\"id\":\"-DEwLAutUO\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Opening Checklist\",\"col\":3}},{\"id\":\"WJBiYz9D-I\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Closing Checklist\",\"col\":3}},{\"id\":\"bpUy4y8Zyd\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Report\",\"col\":3}},{\"id\":\"U4zptlX9uO\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Payment Modes Report\",\"col\":3}},{\"id\":\"YAYlqVsEaU\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Payment Mode\",\"col\":3}},{\"id\":\"hIf1XYlEmu\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Employees Sharing Details\",\"col\":3}},{\"id\":\"OvQb3BHI6p\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Doctor Sharing Details\",\"col\":3}},{\"id\":\"d8Z0cwVyKN\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Three Months Sales Comparision\",\"col\":12}},{\"id\":\"K7IcdIn6HX\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Three Months Sessions Comparision\",\"col\":12}}]",
+ "content": "[{\"id\":\"-DEwLAutUO\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Opening Checklist\",\"col\":3}},{\"id\":\"WJBiYz9D-I\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Closing Checklist\",\"col\":3}},{\"id\":\"YXKOt7JINs\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Employee Sales\",\"col\":3}},{\"id\":\"fW-c1erXR6\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Appointment Slots\",\"col\":3}},{\"id\":\"bpUy4y8Zyd\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Report\",\"col\":3}},{\"id\":\"oofJbKaY8c\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Services Sale\",\"col\":3}},{\"id\":\"U4zptlX9uO\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Payment Modes Report\",\"col\":3}},{\"id\":\"YAYlqVsEaU\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Payment Mode\",\"col\":3}},{\"id\":\"77tSmPBzRb\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Doctor Sales Therapy wise\",\"col\":3}},{\"id\":\"qW7Wna6Rjt\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Mode of Payments 5% gst\",\"col\":3}},{\"id\":\"G_lqeaFism\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Payment Mode\",\"col\":12}},{\"id\":\"vPoHD0AsqB\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Three Months Sales Comparison\",\"col\":12}}]",
  "creation": "2023-10-16 17:28:46.399259",
  "custom_blocks": [],
  "docstatus": 0,
@@ -21,7 +21,7 @@
  "is_hidden": 0,
  "label": "Branch Home",
  "links": [],
- "modified": "2024-02-06 16:19:52.514799",
+ "modified": "2026-03-14 19:42:08.971917",
  "modified_by": "Administrator",
  "module": "life_slimming",
  "name": "Branch Home",
@@ -41,13 +41,13 @@
    "role": "Accounts User"
   }
  ],
- "sequence_id": 29.0,
+ "sequence_id": 31.0,
  "shortcuts": [
   {
    "color": "Grey",
    "doc_view": "List",
-   "label": "Employees Sharing Details",
-   "link_to": "Employees Sharing Details",
+   "label": "Mode of Payments 5% gst",
+   "link_to": "Mode of Payments 5%",
    "type": "Report"
   },
   {
@@ -60,8 +60,15 @@
   {
    "color": "Grey",
    "doc_view": "List",
-   "label": "Doctor Sharing Details",
-   "link_to": "Doctor Sharing Details",
+   "label": "Appointment Slots",
+   "type": "URL",
+   "url": "https://portal.lifescc.com/frontend"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Doctor Sales Therapy wise",
+   "link_to": "Doctor Sales Therapy wise",
    "type": "Report"
   },
   {
@@ -76,6 +83,20 @@
    "doc_view": "List",
    "label": "Sales Report",
    "link_to": "Branch Wise Sales Report",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Employee Sales",
+   "link_to": "Employee Wise Sales",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Services Sale",
+   "link_to": "Service Wise Sales",
    "type": "Report"
   },
   {

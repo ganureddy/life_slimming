@@ -1,0 +1,67 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"uz2itXpRM0\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">KP Team CC</span>\",\"col\":12}},{\"id\":\"q_ottzvlm8\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"KPCC Leads\",\"col\":3}},{\"id\":\"No9KbBt7mz\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Appointment\",\"col\":3}},{\"id\":\"N0JnXd8FRG\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"KP \u2013 Daily Summary\",\"col\":12}},{\"id\":\"fRE27OPx9o\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"KP TEAM APPOINTMENTS UI\",\"col\":12}},{\"id\":\"rsROLqhI4V\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"KP \u2013 Branch Leads\",\"col\":5}},{\"id\":\"r08eBWjAge\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"LEAD CATEGORY DASHBOARD\",\"col\":5}}]",
+ "creation": "2025-12-30 13:43:57.293810",
+ "custom_blocks": [
+  {
+   "custom_block_name": "KP \u2013 Daily Summary",
+   "label": "KP \u2013 Daily Summary"
+  },
+  {
+   "custom_block_name": "KP \u2013 Branch Leads",
+   "label": "KP \u2013 Branch Leads"
+  },
+  {
+   "custom_block_name": "LEAD CATEGORY DASHBOARD",
+   "label": "LEAD CATEGORY DASHBOARD"
+  },
+  {
+   "custom_block_name": "KP TEAM APPOINTMENTS UI",
+   "label": "KP TEAM APPOINTMENTS UI"
+  }
+ ],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "share-people",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "KP Team CC",
+ "links": [],
+ "modified": "2025-12-31 14:21:32.839574",
+ "modified_by": "Administrator",
+ "module": "KP TEAM CC",
+ "name": "KP Team CC",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "Patient"
+  }
+ ],
+ "sequence_id": 33.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "format": "{}",
+   "label": "KPCC Leads",
+   "link_to": "Kpcc Leads",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Appointment",
+   "link_to": "Appointment",
+   "stats_filter": "[]",
+   "type": "DocType"
+  }
+ ],
+ "title": "KP Team CC"
+}

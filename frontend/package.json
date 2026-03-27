@@ -3,10 +3,10 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start-ui":"./node_modules/http-server/bin/http-server ./dist/lifescc",
+    "start-ui": "./node_modules/http-server/bin/http-server ./dist/lifescc",
     "start": "node --max_old_space_size=2048 ./node_modules/@angular/cli/bin/ng serve",
     "build": "./node_modules/@angular/cli/bin/ng build --prod --deploy-url=/assets/life_slimming/frontend/ && yarn copy-html-entry",
-		"copy-html-entry": "cp ../life_slimming/public/frontend/index.html ../life_slimming/www/frontend.html",
+    "copy-html-entry": "cp ../life_slimming/public/frontend/index.html ../life_slimming/www/frontend.html",
     "test": "./node_modules/@angular/cli/bin/ng test",
     "lint": "./node_modules/@angular/cli/bin/ng lint",
     "e2e": "./node_modules/@angular/cli/bin/ng e2e",

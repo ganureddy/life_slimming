@@ -277,6 +277,9 @@ doc_events = {
             "after_insert":"life_slimming.events.new_lead_doc",
             "before_save": "life_slimming.events.duplicate_lead_details"
         },
+    # "Contact": {
+    #     "on_update": "life_slimming.user_wise_roles.send_whatsapp_on_change"
+    # },
 # "Purchase Order":{
 #     "before_submit":"life_slimming.purchase_order_custom.check_purchase_order_validate"
 #     },
@@ -298,14 +301,17 @@ doc_events = {
     "before_save": "life_slimming.events.restrict_therapy_session_without_payment",
     "before_submit":"life_slimming.book_appointment.create_appointment_through_therapy_s",
     "on_submit":["life_slimming.book_appointment.change_status",
-                 "life_slimming.book_appointment.issue_consumed_items_from_stock"
+                 "life_slimming.book_appointment.issue_consumed_items_from_stock",
+                 "life_slimming.user_wise_roles.send_whatsapp_session_completion_to_client"
                  ]
     },
 "Sales Invoice":{
     "on_cancel":"life_slimming.book_appointment.to_check_narration"
+},
+"Payment Entry":{
+    "on_submit":"life_slimming.user_wise_roles.send_payment_details_to_customer"
 }
 }
-
 # }
 
 # Scheduled Tasks

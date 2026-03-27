@@ -182,7 +182,7 @@ def get_data(cond,filters):
         
         row_data = frappe.db.sql(
         """SELECT
-            si.service_unit,ROUND(SUM(pe.paid_amount*100/118),0) as net_sales,
+            si.service_unit,ROUND(SUM(pe.paid_amount*100/105),0) as net_sales,
             si.branch
         FROM
             `tabPayment Entry` as pe,
@@ -214,8 +214,8 @@ def get_data(cond,filters):
             si.ref_practitioner,
             si.custom_referring_name,
             si.custom_incentive_employee_name,
-            ROUND((pe.paid_amount*100)/118,0) as net_paid_amount,
-            ROUND((pe.paid_amount*18)/118,0) as net_tax_amount,
+            ROUND((pe.paid_amount*100)/105,0) as net_paid_amount,
+            ROUND((pe.paid_amount*5)/105,0) as net_tax_amount,
             pe.paid_amount,
             per.reference_name as sales_invoice_id,
             per.total_amount,
@@ -242,8 +242,8 @@ def get_data(cond,filters):
         row_data = frappe.db.sql(
         """SELECT
             pe.branch,
-            ROUND(SUM((pe.paid_amount*100)/118),0) as net_paid_amount,
-            ROUND(SUM((pe.paid_amount*18)/118),0) as net_tax_amount,
+            ROUND(SUM((pe.paid_amount*100)/105),0) as net_paid_amount,
+            ROUND(SUM((pe.paid_amount*5)/105),0) as net_tax_amount,
             Sum(pe.paid_amount) as paid_amount
         FROM
             `tabPayment Entry` as pe,
