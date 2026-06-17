@@ -1,20 +1,21 @@
 {
- "add_total_row": 0,
+ "add_total_row": 1,
+ "add_translate_data": 0,
  "columns": [],
  "creation": "2025-11-03 11:24:24.778469",
- "disable_prepared_report": 0,
  "disabled": 0,
  "docstatus": 0,
  "doctype": "Report",
  "filters": [],
- "idx": 0,
+ "idx": 49,
  "is_standard": "Yes",
- "modified": "2025-11-03 11:30:21.348243",
+ "letter_head": null,
+ "modified": "2026-06-01 15:56:07.920150",
  "modified_by": "Administrator",
  "module": "life_slimming",
  "name": "Mode of Payments 5%",
  "owner": "Administrator",
- "prepared_report": 1,
+ "prepared_report": 0,
  "ref_doctype": "Payment Entry",
  "report_name": "Mode of Payments 5%",
  "report_type": "Script Report",
@@ -28,5 +29,6 @@
   {
    "role": "Sales User"
   }
- ]
+ ],
+ "timeout": 0
 }

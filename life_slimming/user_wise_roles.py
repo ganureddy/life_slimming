@@ -296,6 +296,11 @@ def send_whatsapp_on_session_update(doc, method):
 import frappe
 import requests
 from frappe.utils import getdate, get_url
+from frappe.utils.file_manager import save_file
+
+# Print format used to render the payment receipt PDF. Re-rendered on every
+# Payment Entry submit so paid / outstanding amounts reflect the latest payment.
+PAYMENT_RECEIPT_PRINT_FORMAT = "Consultaion Patient Sales Invoice"
 
 
 def send_payment_details_to_customer(doc, method):
@@ -333,22 +338,37 @@ def send_payment_details_to_customer(doc, method):
             client_number = "91" + client_number
 
         # -------------------------------------------------
-        # Fetch PDF attachment from File doctype
+        # Generate a FRESH receipt PDF now (after this payment is submitted)
+        # so the paid / outstanding amounts are up to date. The stale PDF that
+        # was attached when the Sales Invoice was submitted is not used.
         # -------------------------------------------------
-        pdf_url = frappe.db.get_value(
-            "File",
-            {
-                "attached_to_doctype": "Sales Invoice",
-                "attached_to_name": invoice_name,
-                "file_type": "PDF"
-            },
-            "file_url",
-            order_by="creation desc"
-        )
+        pdf_url = ""
+        try:
+            pdf_data = frappe.get_print(
+                "Sales Invoice",
+                invoice_name,
+                print_format=PAYMENT_RECEIPT_PRINT_FORMAT,
+                as_pdf=True,
+            )
 
-        if pdf_url:
-            pdf_url = get_url(pdf_url)
-        else:
+            # Unique random 20-char file name
+            unique_name = f"{frappe.generate_hash(length=20)}.pdf"
+
+            # Save as a public file so WATI can fetch it without authentication
+            file_doc = save_file(
+                unique_name,
+                pdf_data,
+                "Sales Invoice",
+                invoice_name,
+                is_private=0,
+            )
+
+            pdf_url = get_url(file_doc.file_url)
+        except Exception:
+            frappe.log_error(
+                frappe.get_traceback(),
+                "Payment Entry Receipt PDF Generation Failed",
+            )
             pdf_url = ""
 
         # -------------------------------------------------
