@@ -316,6 +316,14 @@ doc_events = {
 
 # Scheduled Tasks
 # ---------------
+scheduler_events = {
+       "cron": {
+           "30 20 * * *": [
+               "life_slimming.daily_sales_appointments_report.run_daily_report"
+           ]
+       }
+   }
+
 
 #scheduler_events = {
     # "cron":{

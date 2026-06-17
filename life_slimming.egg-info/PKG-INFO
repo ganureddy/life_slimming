@@ -1,6 +1,14 @@
-Metadata-Version: 2.1
-Name: life-slimming
+Metadata-Version: 2.4
+Name: life_slimming
 Version: 0.0.1
 Summary: Life slimming
 Author: swathi
 Author-email: swathi.bollineni27@caratred.com
+Requires-Dist: fontTools
+Requires-Dist: mail-parser
+Requires-Dist: email-listener
+Requires-Dist: tools
+Dynamic: author
+Dynamic: author-email
+Dynamic: requires-dist
+Dynamic: summary

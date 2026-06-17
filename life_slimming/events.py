@@ -944,7 +944,10 @@ def create_si_item_from_therapy_type(name):
         for i in sii_data:
             theray_type_item_code = frappe.db.get_value('Therapy Type',i['therapy_type'], 'item_code')
             item_detali = frappe.db.get_list('Item',{'item_code':theray_type_item_code},['item_code','stock_uom','description'])
-            i.update(item_detali[0])
+            if item_detali:
+                i.update(item_detali[0])
+            else:
+                frappe.throw("No Item Detail found for Therapy Type")
         return sii_data
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
