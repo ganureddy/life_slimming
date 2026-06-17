@@ -301,8 +301,8 @@ doc_events = {
     "before_save": "life_slimming.events.restrict_therapy_session_without_payment",
     "before_submit":"life_slimming.book_appointment.create_appointment_through_therapy_s",
     "on_submit":["life_slimming.book_appointment.change_status",
-                 "life_slimming.book_appointment.issue_consumed_items_from_stock",
-                 "life_slimming.user_wise_roles.send_whatsapp_session_completion_to_client"
+                 "life_slimming.book_appointment.issue_consumed_items_from_stock"
+                #  "life_slimming.user_wise_roles.send_whatsapp_session_completion_to_client"
                  ]
     },
 "Sales Invoice":{
@@ -317,6 +317,19 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
+
+scheduler_events = {
+    "cron": {
+        # Morning closing report — yesterday's full data
+        "0 10 * * *": [
+            "life_slimming.daily_sales_appointments_report.run_morning_report"
+        ],
+        # Evening live update — today's same-day data
+        "30 20 * * *": [
+            "life_slimming.daily_sales_appointments_report.run_evening_report"
+        ],
+    }
+}
 #scheduler_events = {
     # "cron":{
     
