@@ -316,28 +316,28 @@ doc_events = {
 
 # Scheduled Tasks
 # ---------------
-scheduler_events = {
-       "cron": {
-           "30 20 * * *": [
-               "life_slimming.daily_sales_appointments_report.run_daily_report"
-           ]
-       }
-   }
+# scheduler_events = {
+#        "cron": {
+#            "30 20 * * *": [
+#                "life_slimming.daily_sales_appointments_report.run_daily_report"
+#            ]
+#        }
+#    }
 
 
 
-scheduler_events = {
-    "cron": {
-        # Morning closing report — yesterday's full data
-        "0 10 * * *": [
-            "life_slimming.daily_sales_appointments_report.run_morning_report"
-        ],
-        # Evening live update — today's same-day data
-        "30 20 * * *": [
-            "life_slimming.daily_sales_appointments_report.run_evening_report"
-        ],
-    }
-}
+# scheduler_events = {
+#     "cron": {
+#         # Morning closing report — yesterday's full data
+#         "0 10 * * *": [
+#             "life_slimming.daily_sales_appointments_report.run_morning_report"
+#         ],
+#         # Evening live update — today's same-day data
+#         "30 20 * * *": [
+#             "life_slimming.daily_sales_appointments_report.run_evening_report"
+#         ],
+#     }
+# }
 #scheduler_events = {
     # "cron":{
     
