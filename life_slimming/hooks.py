@@ -244,6 +244,8 @@ fixtures = [
 # ---------------
 # Override standard doctype classes
 
+send_token_via_sms = "life_slimming.two_factor.send_otp_via_msg91"
+
 override_doctype_class = {
 	# "ToDo": "custom_app.overrides.CustomToDo"
     "Patient Appointment":"life_slimming.get_availability_data.Validate_Patient_Appointment"
