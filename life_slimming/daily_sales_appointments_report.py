@@ -699,6 +699,19 @@
 #     """Manual evening trigger."""
 #     return run_evening_report()
 
+
+
+# RECIPIENT_NUMBERS = [
+#     "919014416162",
+#     "919604238978",
+#     "917416026677",
+#     "919553722285",
+#     "919705170170",
+#     "919502025252",
+#     "918099931463"
+
+# ]
+
 """
 Daily Sales + Appointments Consolidated Report
 ==============================================
@@ -767,9 +780,13 @@ WHATSAPP_ENABLED = True
 RECIPIENT_NUMBERS = [
     "919014416162",
     "919604238978",
+    "917416026677",
+    "919553722285",
+    "919705170170",
+    "919502025252",
+    "918099931463",
+    "919666158152"
 ]
-
-# Ordered branches with display codes (must match the templates)
 BRANCHES = [
     ("Chandanagar",  "CN"),
     ("SR Nagar",     "SN"),
@@ -1173,11 +1190,11 @@ def build_pdf_html(report_date, targets, sales, appts, summary):
 
         <div class="summary">
             <b>Overall Summary:</b><br/>
-            T Sales: <b>Rs. {_money(summary['total_today_sales'])}</b>
-            &nbsp;(T Sales [WOG]: <b>Rs. {_money(summary['total_today_sales_excl_gst'])}</b>)
-            &nbsp;|&nbsp; Invoice Count: <b>{summary['total_invoices']}</b><br/>
-            Monthly Sales: <b>Rs. {_money(summary['total_mtd_sales'])}</b>
-            &nbsp;(Monthly Sales [WOG]: <b>Rs. {_money(summary['total_mtd_sales_excl_gst'])}</b>)<br/>
+            Total Sales (Day): <b>Rs. {_money(summary['total_today_sales'])}</b>
+            &nbsp;(excl. GST: <b>Rs. {_money(summary['total_today_sales_excl_gst'])}</b>)
+            &nbsp;|&nbsp; Total Invoices: <b>{summary['total_invoices']}</b><br/>
+            Cycle Total: <b>Rs. {_money(summary['total_mtd_sales'])}</b>
+            &nbsp;(excl. GST: <b>Rs. {_money(summary['total_mtd_sales_excl_gst'])}</b>)<br/>
             Overall Target Achievement: <b>{summary['overall_pct']:.1f}%</b> &nbsp;|&nbsp;
             Top Branch: <b>{summary['top_branch']}</b> &nbsp;|&nbsp;
             Lowest Branch: <b>{summary['lowest_branch']}</b><br/>
@@ -1205,11 +1222,11 @@ def build_pdf_html(report_date, targets, sales, appts, summary):
             <thead>
                 <tr>
                     <th>Branch</th>
-                    <th>T Sales</th>
-                    <th>T Sales (WOG)</th>
-                    <th>Invoice Count</th>
-                    <th>Monthly Sales</th>
-                    <th>Monthly Sales (WOG)</th>
+                    <th>Today Sales</th>
+                    <th>Today Sales (excl. GST)</th>
+                    <th>Today Invoices</th>
+                    <th>Cycle Sales</th>
+                    <th>Cycle Sales (excl. GST)</th>
                     <th>Target</th>
                     <th>Achieved %</th>
                     <th>Pending to Target</th>
