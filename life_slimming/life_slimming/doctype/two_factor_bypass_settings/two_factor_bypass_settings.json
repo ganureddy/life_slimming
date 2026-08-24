@@ -1,0 +1,62 @@
+{
+ "actions": [],
+ "creation": "2026-08-24 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "enabled",
+  "warning_html",
+  "users_section",
+  "users"
+ ],
+ "fields": [
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enable 2FA Bypass",
+   "description": "Master switch. When unticked every user below is asked for an OTP again."
+  },
+  {
+   "fieldname": "warning_html",
+   "fieldtype": "HTML",
+   "options": "<div class=\"alert alert-warning\" style=\"margin-bottom:0\">Users listed here can sign in with only their password, even while Two Factor Authentication is enabled in System Settings. Keep this list as short as possible.</div>"
+  },
+  {
+   "fieldname": "users_section",
+   "fieldtype": "Section Break",
+   "label": "Exempt Users"
+  },
+  {
+   "fieldname": "users",
+   "fieldtype": "Table",
+   "label": "Users",
+   "options": "Two Factor Bypass User"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-08-24 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "life_slimming",
+ "name": "Two Factor Bypass Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

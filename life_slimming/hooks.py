@@ -244,7 +244,13 @@ fixtures = [
 # ---------------
 # Override standard doctype classes
 
-send_token_via_sms = "life_slimming.two_factor.send_otp_via_msg91"
+# send_token_via_sms = "life_slimming.two_factor.send_otp_via_msg91"
+
+# Two Factor Authentication bypass
+# --------------------------------
+# Wraps frappe.twofactor.two_factor_is_enabled_for_ so users listed in
+# "Two Factor Bypass Settings" log in without an OTP. See two_factor_bypass.py.
+before_request = ["life_slimming.two_factor_bypass.install"]
 
 override_doctype_class = {
 	# "ToDo": "custom_app.overrides.CustomToDo"
@@ -312,6 +318,10 @@ doc_events = {
 },
 "Payment Entry":{
     "on_submit":"life_slimming.user_wise_roles.send_payment_details_to_customer"
+},
+"User":{
+    "after_rename":"life_slimming.two_factor_bypass.clear_bypass_cache",
+    "on_trash":"life_slimming.two_factor_bypass.clear_bypass_cache"
 }
 }
 # }
@@ -453,3 +463,11 @@ website_redirects = [
     # {"source": "/frontend", "target": "/frontend/timeslots"},
     # {"source": "/login", "target": "/frontend"},
 ]
+
+
+
+try:
+    from life_slimming.two_factor import patch as _patch_msg91_2fa
+    _patch_msg91_2fa()
+except Exception:
+    pass
