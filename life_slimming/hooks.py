@@ -464,6 +464,11 @@ website_redirects = [
     # {"source": "/login", "target": "/frontend"},
 ]
 
+# Keep the Vue SPA fallback confined to its own namespace.
+website_route_rules = [
+    {"from_route": "/life_portal/<path:app_path>", "to_route": "life_portal"},
+]
+
 
 
 try:

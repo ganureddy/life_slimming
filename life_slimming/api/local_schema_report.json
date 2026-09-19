@@ -1,0 +1,196 @@
+{
+  "site": "mysite.local",
+  "settings": {
+    "disable_user_pass_login": "0",
+    "enable_two_factor_auth": "0",
+    "two_factor_method": "OTP App"
+  },
+  "custom_portal_role_exists": false,
+  "schema_check": "Static DocType names only; dynamic names, custom fields and records need page-level validation.",
+  "missing_by_api": {
+    "all_approvals_report_data": [
+      "Client Package Conversion Client To Client",
+      "Discount Approval Request",
+      "LIFE Client Package Conversion Same Client Package To Package"
+    ],
+    "apply_invoice_discount_net_final_v2": [
+      "Discount Approval Request"
+    ],
+    "life_audit_branch_access": [
+      "Branch Audit"
+    ],
+    "life_audit_topic_approval": [
+      "Branch Audit",
+      "Branch Audit Item",
+      "Branch Audit Section"
+    ],
+    "life_get_expenditure_branch_employees": [
+      "Employee Branches"
+    ],
+    "branch_cluster_target_achievement_api": [
+      "Week Achive",
+      "Week Target vs Achive With Cuttings"
+    ],
+    "branch_command_center": [
+      "Grievance Ticket",
+      "Week Achive",
+      "Week Target vs Achive With Cuttings"
+    ],
+    "cc_walkin_update": [
+      "PD Form"
+    ],
+    "cc_worksheet": [
+      "CC Worksheet"
+    ],
+    "get_package_details": [
+      "Client Package Conversion Client To Client"
+    ],
+    "send_refund_step_email": [
+      "Client Refund Request Form"
+    ],
+    "send_request_complaint_step_email": [
+      "Client Request And Complaint Form"
+    ],
+    "send_client_transfer_step_email": [
+      "Client Transfer Request Form"
+    ],
+    "create_multiple_discount_approval_requests_v2": [
+      "Discount Approval Request",
+      "Discount Approver Master"
+    ],
+    "create_discount_approval_request": [
+      "Discount Approval Request"
+    ],
+    "dues_recovery_data": [
+      "Dues Recovery Update"
+    ],
+    "dues_recovery_save": [
+      "Dues Recovery Update"
+    ],
+    "fetch_branch_data": [
+      "Week Target vs Achive With Cuttings"
+    ],
+    "apply_invoice_discount_net_final": [
+      "Discount Approval Request"
+    ],
+    "followup_master_api": [
+      "LIFE Diet Chart",
+      "LIFE Followup"
+    ],
+    "get_branch_approvers": [
+      "Discount Approval Request",
+      "Discount Approver Master"
+    ],
+    "get_branch_consultants": [
+      "Practitioner Branches"
+    ],
+    "lead_assignment_configuration": [
+      "Lead Agent Config",
+      "Lead Assignment Settings"
+    ],
+    "lead_assignment_preview": [
+      "Lead Agent Config",
+      "Lead Assignment Settings"
+    ],
+    "send_same_client_conversion_step_email": [
+      "LIFE Client Package Conversion Same Client Package To Package"
+    ],
+    "life_convox_call_popup": [
+      "ConVox Call Event"
+    ],
+    "life_convox_call_status": [
+      "ConVox Call Event"
+    ],
+    "life_convox_frontend": [
+      "ConVox Call Event"
+    ],
+    "life_data_correction_api": [
+      "LIFE Data Correction Request",
+      "LIFE Data Correction Rule"
+    ],
+    "life_office_approval_action": [
+      "Discount Approver Master"
+    ],
+    "life_wati_daily_reports": [
+      "LIFE WATI Daily Report"
+    ],
+    "life_discount_invoice_report": [
+      "Discount Approval Request"
+    ],
+    "life_get_template_offer_price": [
+      "LIFE Stock Receipt Adjustment Item",
+      "LIFE Stock Receipt Adjustment Request",
+      "LIFE Stock Request Settings",
+      "Special Material Request Detail"
+    ],
+    "life_hrms_360_api": [
+      "Employee Announcement",
+      "Employee HR Record",
+      "HR Employee Onboarding"
+    ],
+    "life_stores_360_live_api": [
+      "LIFE Stock Receipt Adjustment Item",
+      "LIFE Stock Receipt Adjustment Request",
+      "LIFE Stock Request Settings",
+      "Special Material Request Detail"
+    ],
+    "lifescc_billing_bootstrap": [
+      "Discount Approval Request",
+      "Discount Approver Master"
+    ],
+    "lifescc_billing_bootstrap_test": [
+      "Discount Approver Master"
+    ],
+    "lifescc_billing_create_plan_and_invoice": [
+      "Web Coupon"
+    ],
+    "lifescc_billing_create_plan_and_invoice_test": [
+      "Web Coupon"
+    ],
+    "lifescc_billing_submit_invoice": [
+      "Discount Approval Request"
+    ],
+    "life_get_machinery_transfers": [
+      "Machinery Request",
+      "Machinery Transfer"
+    ],
+    "life_get_machinery_requests": [
+      "Machinery Request"
+    ],
+    "life_mark_machinery_transfer_ready": [
+      "Machinery Transfer"
+    ],
+    "md_accounts_api": [
+      "Week Achive",
+      "Week Target vs Achive With Cuttings"
+    ],
+    "md_approvals_api": [
+      "Discount Approval Request"
+    ],
+    "md_audit_api": [
+      "Branch Audit",
+      "Branch Audit Section Score"
+    ],
+    "md_command_center_api": [
+      "Client Package Conversion Client To Client",
+      "Discount Approval Request",
+      "LIFE Client Package Conversion Same Client Package To Package"
+    ],
+    "md_my_approvals_api": [
+      "Client Package Conversion Client To Client",
+      "Discount Approval Request",
+      "LIFE Client Package Conversion Same Client Package To Package"
+    ],
+    "md_target_daily_api": [
+      "Week Achive",
+      "Week Target vs Achive With Cuttings"
+    ],
+    "report_master_api": [
+      "Week Achive",
+      "Week Target vs Achive With Cuttings"
+    ],
+    "validate_coupon": [
+      "Web Coupon"
+    ]
+  }
+}
