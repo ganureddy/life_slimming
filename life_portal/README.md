@@ -2,6 +2,14 @@
 
 Separate Vue 3 SPA inside `life_slimming`. Angular remains in `frontend/`.
 
+The 2026-09-20 page migration connects 36 additional menu entries to 35 original
+ERP Web Page sources, plus local client-registration and conversion forms.
+See [PAGE_MIGRATION.md](PAGE_MIGRATION.md) for source routes, branch-selection
+checks, validation and the 14 entries that are also unwired in the original ERP.
+Those notes supersede the initial placeholder-only migration boundary below.
+Run the local Frappe server alongside Vite: imported pages use authenticated
+`/life_portal_module` frames and the local site's APIs.
+
 ## Run
 
 From `apps/life_slimming`:
@@ -170,3 +178,26 @@ Validation: `../../env/bin/python -m unittest life_slimming.tests.test_remote_er
 from the app directory; browser tests in `tests/branch.browser.cjs` use mocked
 ERP responses and test-only credentials. Authenticated production totals still
 require a real user's ERP sign-in; they were not verified using the connector.
+
+### Shared API domain
+
+Edit `life_slimming/public/js/portal_config.js` relative to the app root.
+`apiBase: ""` uses the current site. Set an HTTPS origin such as
+`apiBase: "https://erp.example.com"` to target another API domain. Vue API
+calls, Billing uploads, and embedded module requests share this runtime
+setting. Refresh the browser and invalidate any asset cache after changing
+it; no frontend rebuild is required. `legacyOrigin` only identifies old
+exported links and is not the API destination.
+
+Same-origin hosting or a reverse proxy is recommended for Frappe sessions.
+A separate API origin requires credentialed CORS, compatible session cookies,
+and CSRF tokens for that backend. Embedded pages remain served and
+authenticated by the local Frappe site; changing the API domain does not
+migrate users, permissions, or the database.
+
+Workspace layout tokens, including `--header-height`, `--sidebar`, spacing,
+and colors, are in `src/style.css`. Executable console calls are removed
+from portal-owned source and exported page scripts. Production builds also
+strip console and debugger statements; existing UI error messages remain.
+
+Checks: `node --test tests/api-config.test.cjs tests/portal-bridge.test.cjs tests/control.test.cjs`.

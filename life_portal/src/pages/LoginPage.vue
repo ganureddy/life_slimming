@@ -27,7 +27,6 @@ const deadline = ref(0);
 const now = ref(Date.now());
 const retryAt = ref(0);
 const challengeSeconds = ref(300);
-const logoAvailable = ref(true);
 let clock;
 let alive = true;
 const remaining = computed(() =>
@@ -231,40 +230,35 @@ onUnmounted(() => {
         ></a
       >
       <div class="login-story-copy">
-        <p class="login-kicker">ONE TEAM. ONE WORKSPACE.</p>
+        <p class="login-kicker">THE LIFE WORKSPACE</p>
         <h1>
-          A little more focus.<br />
-          A lot more <em>life.</em>
+          Great care.<br />
+          Stronger teams.<br />
+          <em>Every day.</em>
         </h1>
         <p>
-          Your people, your branches, your everyday work.<br />All connected in
-          one place.
+          A simpler start to your day. Bring your clients, your team, and your
+          branch together in one thoughtful workspace.
         </p>
         <div class="login-story-tags">
-          <span>Client care</span><span>Branch operations</span
-          ><span>Teamwork</span>
+          <span><b>01</b> Care for your clients</span>
+          <span><b>02</b> Connect with your team</span>
+          <span><b>03</b> Keep your branch moving</span>
         </div>
       </div>
       <div class="login-story-footer">
-        <span>LIFE ENTERPRISE PORTAL</span><span>Built around you ↗</span>
+        <span>LIFE ENTERPRISE PORTAL</span><span>Care starts here ↗</span>
       </div>
       <div class="login-orbit orbit-one" aria-hidden="true"></div>
       <div class="login-orbit orbit-two" aria-hidden="true"></div>
     </section>
     <section class="login-form-side">
       <div class="login-topline">
-        <span>Welcome to your workspace</span
+        <span>LIFE / TEAM PORTAL</span
         ><span class="login-secure">◈ Secure sign-in</span>
       </div>
       <div class="login-card">
-        <img
-          v-if="logoAvailable"
-          :src="'/files/life-logo.png'"
-          alt="LIFE Clinics"
-          class="login-logo"
-          @error="logoAvailable = false"
-        />
-        <div v-else class="login-wordmark">LIFE<span>ERP PORTAL</span></div>
+        <div class="login-wordmark">LIFE<span>ERP PORTAL</span></div>
         <div v-if="initializing" class="login-loading" role="status">
           Preparing your secure sign-in…
         </div>
@@ -280,9 +274,11 @@ onUnmounted(() => {
             v-else-if="stage === 'credentials'"
             @submit.prevent="submitCredentials"
           >
-            <p class="login-step">LET’S GET STARTED</p>
+            <p class="login-step">YOUR DAY STARTS HERE</p>
             <h2>Good to see you.</h2>
-            <p class="login-intro">Sign in with your LIFE ERP account.</p>
+            <p class="login-intro">
+              Welcome back. Sign in to your LIFE workspace.
+            </p>
             <label for="login-username">Email or username</label
             ><input
               id="login-username"

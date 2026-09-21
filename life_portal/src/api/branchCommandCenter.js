@@ -1,4 +1,5 @@
 import { request } from "./http";
+import { dataApi } from "./index";
 import { session } from "../lib/session";
 
 export async function getBranches(signal) {
@@ -16,19 +17,11 @@ export async function getBranches(signal) {
 }
 
 export async function getBranchCommandCenter(params, signal) {
-  const body = await request("branch_command_center", {
-    args: params,
-    csrfToken: session.csrf_token,
-    signal,
-  });
+  const body = await dataApi("branch_command_center", params, { signal });
   return body.message || {};
 }
 
 export async function getRosterEmployees(branch = "ALL", signal) {
-  const body = await request("roster_employees", {
-    args: { branch },
-    csrfToken: session.csrf_token,
-    signal,
-  });
+  const body = await dataApi("roster_employees", { branch }, { signal });
   return Array.isArray(body.message) ? body.message : [];
 }

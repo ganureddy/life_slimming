@@ -1,0 +1,45 @@
+{
+  "rows": [
+    {
+      "name": "SINV-26-06751",
+      "customer": "Manoj Kumar",
+      "patient": "Manoj Kumar",
+      "branch": "Banjara Hills",
+      "date": "2026-09-20",
+      "grand_total": 40125.12,
+      "paid": 0.0,
+      "outstanding": 40125.0,
+      "status": "Unpaid"
+    },
+    {
+      "name": "SINV-26-06750",
+      "customer": "Ayesha Azeema",
+      "patient": "Ayesha Azeema",
+      "branch": "Himayathnagar",
+      "date": "2026-09-20",
+      "grand_total": 10499.0,
+      "paid": 0.0,
+      "outstanding": 0.0,
+      "status": "Paid"
+    },
+    {
+      "name": "SINV-26-04410",
+      "customer": "Parveen Mekala",
+      "patient": "Parveen Mekala",
+      "branch": "Vijayawada",
+      "date": "2026-06-28",
+      "grand_total": 29393.0,
+      "paid": 0.0,
+      "outstanding": 19393.0,
+      "status": "Overdue"
+    }
+  ],
+  "as_of": "2026-09-20",
+  "metrics": {
+    "today_collection": 0.0,
+    "today_invoices": 2,
+    "total_pending": 59518.0,
+    "snapshot_value": 80017.12,
+    "pending_bills": 2
+  }
+}

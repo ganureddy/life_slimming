@@ -1781,8 +1781,8 @@
       "source_name": "LIFE Data Correction API",
       "legacy_method": "life_data_correction_api",
       "method": "life_slimming.api.server_scripts.life_data_correction_api.run",
-      "source_modified": "2026-09-19 12:04:22.858793",
-      "source_sha256": "198cecea07c595b39bdf730e28f6fbee21d9dea0e8b91e5f835284cc53a5f803",
+      "source_modified": "2026-09-19 18:23:28.448666",
+      "source_sha256": "61a5392dd578241531a3c30ac18e6412d4d2db503db44abf69c9c923ac1c5bf1",
       "allow_guest": false,
       "source_allow_guest": false,
       "http_methods": [

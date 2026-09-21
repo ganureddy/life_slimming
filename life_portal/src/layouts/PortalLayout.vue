@@ -8,7 +8,6 @@ const route = useRoute();
 const collapsed = ref(false);
 const mobileOpen = ref(false);
 const account = ref(null);
-const logoAvailable = ref(true);
 watch(
   () => route.fullPath,
   () => {
@@ -35,7 +34,7 @@ watch(
           ☰
         </button>
         <a
-          class="icon-button"
+          class="icon-button healthcare-link"
           href="/app/healthcare"
           aria-label="Go to Healthcare"
           title="Go to Healthcare"
@@ -46,28 +45,30 @@ watch(
           class="brand"
           aria-label="LIFE Portal Home"
         >
-          <img
-            v-if="logoAvailable"
-            :src="'/files/logo%20lifew.png'"
-            alt="LIFE"
-            @error="logoAvailable = false"
-          />
-          <span v-else class="brand-word"
+          <span class="brand-word"
             >LIFE<span>SLIMMING &amp; COSMETIC CLINIC</span></span
           >
         </RouterLink>
       </div>
-      <button
-        class="user-profile"
-        @click="account.open()"
-        aria-label="Account options"
-      >
-        <span class="avatar">{{ initials }}</span
-        ><span class="user-info"
-          ><strong>{{ session.full_name }}</strong
-          ><small>{{ roleLabel }}</small></span
-        ><span>⋮</span>
-      </button>
+      <div class="header-context">
+        <span>Workspace</span><strong>{{ route.meta.title }}</strong>
+      </div>
+      <div class="header-actions">
+        <span class="workspace-badge"
+          ><i aria-hidden="true"></i> LIFE Portal</span
+        >
+        <button
+          class="user-profile"
+          @click="account.open()"
+          aria-label="Account options"
+        >
+          <span class="avatar">{{ initials }}</span
+          ><span class="user-info"
+            ><strong>{{ session.full_name }}</strong
+            ><small>{{ roleLabel }}</small></span
+          ><span aria-hidden="true">⌄</span>
+        </button>
+      </div>
     </header>
     <button
       v-if="mobileOpen"

@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeUnmount, onMounted } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 import {
   getBranchCommandCenter,
   getBranches,
@@ -8,6 +8,7 @@ import {
 import "../styles/branch-command-center.css";
 
 let controller;
+const noBranches = ref(false);
 
 function setText(id, value) {
   const el = document.getElementById(id);
@@ -165,7 +166,15 @@ function renderEmployeeSales(rows) {
 function renderDashboard(data) {
   const achieved = num(data.achieved);
   const target = num(data.target);
-  const pending = num(data.pend_total || (Array.isArray(data.pend) ? data.pend.reduce((sum, row) => sum + num(row.due), 0) : 0));
+  const pendingTotal = data.pend_total;
+  const pending = num(
+    (pendingTotal && typeof pendingTotal === "object"
+      ? pendingTotal.due
+      : pendingTotal)
+    ?? (Array.isArray(data.pend)
+      ? data.pend.reduce((sum, row) => sum + num(row.due), 0)
+      : 0)
+  );
   const apToday = data.ap_today || {};
   const apCycle = data.ap_cycle || {};
   const leads = data.leads || {};
@@ -228,6 +237,16 @@ async function loadBranchesAndDashboard() {
   if (!branchSel) return;
   try {
     const branches = (await getBranches(controller?.signal)).filter((name) => name !== "Head Office" && name !== "Testing Branch");
+    noBranches.value = branches.length === 0;
+    branchSel.disabled = noBranches.value;
+    if (rosterSel) rosterSel.disabled = noBranches.value;
+
+    if (noBranches.value) {
+      branchSel.innerHTML = '<option value="">No clinic branches</option>';
+      if (rosterSel) rosterSel.innerHTML = branchSel.innerHTML;
+      setText("lastUpd", "No clinic branches available");
+      return;
+    }
     branchSel.innerHTML = branches.map((name) => '<option value="' + esc(name) + '">' + esc(name) + "</option>").join("");
     if (rosterSel) rosterSel.innerHTML = '<option value="">Select Branch</option>' + branchSel.innerHTML;
     const selected = branchSel.value || branches[0];
@@ -257,17 +276,23 @@ onBeforeUnmount(() => {
 
 <template>
 <div class="lbcc" id="lbccRoot">
+<p v-if="noBranches" role="status"
+   style="margin:16px;padding:20px;background:#fff;border:1px solid #d5e5d5;border-radius:12px;">
+  No clinic branches are available on this site. Head Office and Testing Branch
+  are excluded from this dashboard. Add or import clinic branch records to
+  load the dashboard.
+</p>
 <div class="hdr"><div class="hdr-in">
   <div class="hdr-left"><div class="logo"><div><small>LIFE · BRANCH OPERATIONS</small><h1>Branch Command Center</h1></div></div></div>
-  <a class="bcc-billing" href="https://portal.lifescc.com/billing-v2?view=billing" target="_blank" rel="noopener noreferrer" aria-label="Billing — opens a new window">🧾 Billing <span aria-hidden="true">↗</span></a><a class="bcc-billing bcc3-client-link" href="https://portal.lifescc.com/client-360-Bhuvan" target="_blank" rel="noopener noreferrer" aria-label="Client 360 — opens a new window">👤 Client 360 ↗</a><button class="bcc-billing bcc4-walk-button" type="button" data-bcc-jump="bcc-walkins">📣 CC Walk-in UPDATE ↗</button><button class="bcc-billing bcc5-roster-button" type="button" data-bcc-jump="bcc-roster">📅 Employee Roster ↗</button><div class="hdr-center"><div class="live-chip"><span class="pulse"></span><span id="lastUpd">Loading…</span></div><div class="br-filter"><label class="br-label" for="branchSel">Branch</label><select id="branchSel" aria-label="Branch"></select></div></div>
+  <a class="bcc-billing" href="/life_portal/billing" target="_blank" rel="noopener noreferrer" aria-label="Billing — opens a new window">🧾 Billing <span aria-hidden="true">↗</span></a><a class="bcc-billing bcc3-client-link" href="/life_portal/cliinfo" target="_blank" rel="noopener noreferrer" aria-label="Client 360 — opens a new window">👤 Client 360 ↗</a><button class="bcc-billing bcc4-walk-button" type="button" data-bcc-jump="bcc-walkins">📣 CC Walk-in UPDATE ↗</button><button class="bcc-billing bcc5-roster-button" type="button" data-bcc-jump="bcc-roster">📅 Employee Roster ↗</button><div class="hdr-center"><div class="live-chip"><span class="pulse"></span><span id="lastUpd">Loading…</span></div><div class="br-filter"><label class="br-label" for="branchSel">Branch</label><select id="branchSel" aria-label="Branch"></select></div></div>
 </div><nav class="bcc-nav" aria-label="Page sections"><button type="button" data-bcc-jump="bcc-ho-appointments">HO-CC Appointments</button><button type="button" data-bcc-jump="bcc-attendance">Today Attendance</button><button type="button" data-bcc-jump="bcc-dues">Pending Dues</button><button type="button" data-bcc-jump="bcc-dashboard">Dashboard</button><button type="button" data-bcc-jump="bcc-walkins">Walk-ins</button><button type="button" data-bcc-jump="bcc-operations">Operations</button><button type="button" data-bcc-jump="bcc-people">People</button><button type="button" data-bcc-jump="bcc-roster">Employee Roster</button><button type="button" data-bcc-jump="bcc-offers">Events & Offers</button><button type="button" class="bcc-reset-layout" data-bcc-reset>Reset layout</button></nav></div>
-<div class="wrap bcc-panel-stack" data-bcc-stack="main"><section class="bcc-panel bcc-slate" id="bcc-offers" data-bcc-panel="offers" aria-labelledby="bcc-title-offers" tabindex="-1">
+<div v-show="!noBranches" class="wrap bcc-panel-stack" data-bcc-stack="main"><section class="bcc-panel bcc-slate" id="bcc-offers" data-bcc-panel="offers" aria-labelledby="bcc-title-offers" tabindex="-1">
   <header class="bcc-panel-head"><div><h2 id="bcc-title-offers">Events & Offer Packages</h2><p>Today’s events and active offers</p></div><div class="bcc-panel-actions" data-bcc-controls></div></header>
   <div class="bcc-panel-body" id="bcc-body-offers"><div class="life-container"><div class="life-dashboard"><div class="life-event-panel"><div class="panel-tag">Today Events</div><div id="today-display"><h1 id="today-date">--</h1><p id="today-month-year">--</p><div class="today-occasion" id="today-occasion">No special occasion today</div><div class="today-wish" id="today-wish">Have a Great Day!</div></div><div class="next-event-strip"><span class="next-lbl">UPCOMING EVENTS</span><div class="next-details"><span id="next-event-date">--</span><span id="next-event-name">--</span></div></div><div class="life-leaf-icon">🌿</div></div><div class="life-gallery-panel"><div class="gallery-header"><div><h3>Offer Packages</h3><p id="offer-count-text">Loading offers...</p></div><div class="gallery-controls"><button class="nav-arrow" id="btn-prev" type="button" aria-label="Previous offer">‹</button><button class="nav-arrow" id="btn-next" type="button" aria-label="Next offer">›</button></div></div><div class="gallery-viewport"><div class="gallery-track" id="offer-track"></div></div><div class="life-timer-box"><div class="timer-bg"><div class="timer-line" id="progress-bar"></div></div><span class="timer-label" id="timer-label">Next offer in 15s</span></div></div></div></div></div>
 </section><section class="bcc-panel bcc-green" id="bcc-attendance" data-bcc-panel="attendance" aria-labelledby="bcc-title-attendance" tabindex="-1">
   <header class="bcc-panel-head"><div><h2 id="bcc-title-attendance">Branch Today Attendance</h2><p>Live employee attendance for the selected branch</p></div><div class="bcc-panel-actions" data-bcc-controls></div></header>
   <div class="bcc-panel-body" id="bcc-body-attendance"><div class="card bcc-att-card"><h3>Live Attendance · Punch In → Out <span id="attSum" class="wk-pend"></span></h3><div id="attWrap" class="att-scroll"></div><div id="bcc-manager-visits" class="bcc-manager-visits" aria-live="polite"></div></div></div>
-</section><section class="bcc-panel bcc-gold" id="bcc-dues" data-bcc-panel="dues" aria-labelledby="bcc-title-dues" tabindex="-1"><header class="bcc-panel-head"><div><h2 id="bcc-title-dues">Pending Dues & Recovery</h2><p>Branch balances · scheduled dues · employee accountability</p></div><div class="bcc-panel-actions" data-bcc-controls></div></header><div class="bcc-panel-body" id="bcc-body-dues"><div class="bcc-dues-tools"><div><b id="bcc-dues-branch">Selected branch</b><span id="bcc-dues-updated" role="status" aria-live="polite">Loading recovery data…</span></div><div><button type="button" id="bcc-dues-refresh">↻ Refresh dues</button><a href="https://portal.lifescc.com/pending-balances-updates-Bhuvan" target="_blank" rel="noopener noreferrer">Open Dues Recovery ↗</a></div></div><div id="bcc-dues-content" aria-busy="true"></div></div></section><section class="bcc-panel bcc-gold" id="bcc-dashboard" data-bcc-panel="dashboard" aria-labelledby="bcc-title-dashboard" tabindex="-1">
+</section><section class="bcc-panel bcc-gold" id="bcc-dues" data-bcc-panel="dues" aria-labelledby="bcc-title-dues" tabindex="-1"><header class="bcc-panel-head"><div><h2 id="bcc-title-dues">Pending Dues & Recovery</h2><p>Branch balances · scheduled dues · employee accountability</p></div><div class="bcc-panel-actions" data-bcc-controls></div></header><div class="bcc-panel-body" id="bcc-body-dues"><div class="bcc-dues-tools"><div><b id="bcc-dues-branch">Selected branch</b><span id="bcc-dues-updated" role="status" aria-live="polite">Loading recovery data…</span></div><div><button type="button" id="bcc-dues-refresh">↻ Refresh dues</button><a href="/life_portal/pendbal" target="_blank" rel="noopener noreferrer">Open Dues Recovery ↗</a></div></div><div id="bcc-dues-content" aria-busy="true"></div></div></section><section class="bcc-panel bcc-gold" id="bcc-dashboard" data-bcc-panel="dashboard" aria-labelledby="bcc-title-dashboard" tabindex="-1">
   <header class="bcc-panel-head"><div><h2 id="bcc-title-dashboard">Dashboard & Money Summary</h2><p>Collections, outstanding balances and target realisation</p></div><div class="bcc-panel-actions" data-bcc-controls></div></header>
   <div class="bcc-panel-body" id="bcc-body-dashboard"><div class="card bcc-range" id="globalRangeCard">
   <div class="bcc-range-caption"><b>Date Range</b><span>Billing cycle: 6th → 5th</span></div>

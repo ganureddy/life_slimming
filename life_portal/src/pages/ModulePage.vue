@@ -20,7 +20,7 @@ const allowed = computed(() =>
       <h1>{{ route.meta.title }}</h1>
       <p>{{ route.meta.description }}</p>
       <p class="muted">
-        This page is not available in the new portal yet.
+        Not wired yet in the original ERP portal.
       </p></template
     >
     <template v-else

@@ -1,0 +1,18 @@
+{% extends "templates/base.html" %}
+{% block navbar %}{% endblock %}
+{% block banner %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block style %}<style>body { margin: 0; } {{ module_css }}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap">
+<style>body, body * { font-family: "Poppins", sans-serif !important; }</style>{% endblock %}
+{% block content %}
+<script>frappe.boot = {{ boot | json }}; frappe.sys_defaults = frappe.boot.sysdefaults;</script>
+{{ include_script('frappe-web.bundle.js') }}
+<script>window.lifePortalModule = {{ module_config | json }};</script>
+<script src="/assets/life_slimming/js/portal_config.js"></script>
+<script src="/assets/life_slimming/js/portal_module_bridge.js"></script>
+{{ module_html }}
+{{ module_scripts }}
+<script>{{ module_javascript }}</script>
+{% endblock %}
+{% block base_scripts %}{% endblock %}

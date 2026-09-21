@@ -13,7 +13,7 @@ export const session = reactive({
   csrf_token: "",
   access_config: null,
 });
-const labels = {
+export const labels = {
   IT: "IT Admin",
   MD: "MD",
   CEO: "CEO",
@@ -31,7 +31,7 @@ const labels = {
   Dietitian: "Dietitian",
   STORES: "Stores",
 };
-const groupRoles = {
+export const groupRoles = {
   CEO: [
     "MAIN",
     "BRANCH HOME",

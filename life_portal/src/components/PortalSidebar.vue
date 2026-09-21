@@ -27,14 +27,17 @@ function toggle(label) {
 </script>
 
 <template>
-  <aside class="sidebar">
+  <aside class="sidebar" aria-label="Workspace menu">
     <div class="sidebar-card">
+      <div class="sidebar-heading">
+        <span>WORKSPACE</span><span class="sidebar-edition">LIFE</span>
+      </div>
       <div class="menu-search">
         <span aria-hidden="true">⌕</span
         ><input
           v-model="search"
           aria-label="Filter menu"
-          placeholder="Filter menu…"
+          placeholder="Find a module…"
         /><button
           class="mobile-toggle"
           aria-label="Close navigation"
@@ -54,11 +57,13 @@ function toggle(label) {
         >
           <button
             class="group-heading"
-            :aria-expanded="!closed.has(group.label)"
+            :aria-expanded="
+              Boolean(props.collapsed || search || !closed.has(group.label))
+            "
             @click="toggle(group.label)"
           >
-            <span>{{ group.icon }} &nbsp; {{ group.label }}</span
-            ><span>{{ closed.has(group.label) ? "+" : "−" }}</span>
+            <span>{{ group.label }}</span
+            ><span>{{ closed.has(group.label) ? "›" : "⌄" }}</span>
           </button>
           <div v-show="props.collapsed || search || !closed.has(group.label)">
             <RouterLink

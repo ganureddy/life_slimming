@@ -1,3 +1,4 @@
+import { apiUrl, apiCredentials } from "./config";
 // Frappe login returns tmp_id/verification at the envelope level.
 // Data APIs generally return { message: ... }; retain both through this client.
 export class ApiError extends Error {
@@ -13,9 +14,9 @@ export async function request(
 ) {
   let response;
   try {
-    response = await fetch("/api/method/" + method, {
+    response = await fetch(apiUrl("/api/method/" + method), {
       method: httpMethod || (args === undefined ? "GET" : "POST"),
-      credentials: "same-origin",
+      credentials: apiCredentials(),
       signal,
       headers: {
         Accept: "application/json",

@@ -1,0 +1,202 @@
+{
+  "stores360": {
+    "route": "stores-360",
+    "source": "stores-360",
+    "modified": "2026-09-10 12:00:57.646273"
+  },
+  "tasks": {
+    "route": "task-management",
+    "source": "task-management",
+    "modified": "2026-08-17 17:25:34.069904"
+  },
+  "conv": {
+    "route": "branch-home-target",
+    "source": "branch-home-target",
+    "modified": "2026-08-18 19:42:50.920730"
+  },
+  "empsale": {
+    "route": "employee-sale-master-data",
+    "source": "employee-sale-master-data",
+    "modified": "2026-09-04 18:48:09.850544"
+  },
+  "salemaster": {
+    "route": "sales-master-data",
+    "source": "sales-master-data",
+    "modified": "2026-08-18 17:44:48.747400"
+  },
+  "audit": {
+    "route": "audit",
+    "source": "audit",
+    "modified": "2026-08-18 14:40:04.103719"
+  },
+  "bexp": {
+    "route": "branch-expenditure-entry",
+    "source": "branch-expenditure-entry",
+    "modified": "2026-09-19 14:41:54.149358"
+  },
+  "leads": {
+    "route": "cc-new-dash",
+    "source": "cc-new-dash",
+    "modified": "2026-09-17 16:54:18.211549"
+  },
+  "ccvisit": {
+    "route": "branch-visit-report",
+    "source": "branch-visit-report",
+    "modified": "2026-09-18 00:42:25.034290"
+  },
+  "clireg": {
+    "route": "new-client-registration",
+    "source": "new-client-registration",
+    "modified": "2026-08-18 14:09:50.126561"
+  },
+  "cliinfo": {
+    "route": "client-info",
+    "source": "client-info",
+    "modified": "2026-09-20 13:43:00.945051"
+  },
+  "wlres": {
+    "route": "client-weight-loss-info",
+    "source": "client-weight-loss-info",
+    "modified": "2026-08-18 17:13:36.399207"
+  },
+  "discountaudit": {
+    "route": "life-audit-report",
+    "source": "life-audit-report",
+    "modified": "2026-09-07 20:41:21.714308"
+  },
+  "appt": {
+    "route": "appointment-shedular",
+    "source": "appointment-shedular",
+    "modified": "2026-08-14 13:58:57.003983"
+  },
+  "accounts": {
+    "route": "accounts-command-center",
+    "source": "accounts-command-center",
+    "modified": "2026-08-20 23:57:51.482100"
+  },
+  "pendbal": {
+    "route": "pending-balances-updates",
+    "source": "pending-balances-updates",
+    "modified": "2026-09-18 00:15:57.994469"
+  },
+  "payables": {
+    "route": "payables-planner",
+    "source": "payables-planner",
+    "modified": "2026-08-18 19:30:14.767258"
+  },
+  "receivables": {
+    "route": "pending-balances-updates",
+    "source": "pending-balances-updates",
+    "modified": "2026-09-18 00:15:57.994469"
+  },
+  "assets": {
+    "route": "asset-master",
+    "source": "asset-master",
+    "modified": "2026-08-19 18:50:34.036057"
+  },
+  "pricelist": {
+    "route": "price-list",
+    "source": "price-list",
+    "modified": "2026-09-18 17:42:55.957582"
+  },
+  "stock": {
+    "route": "stock-dashboard",
+    "source": "stock-dashboard",
+    "modified": "2026-09-15 19:42:35.304289"
+  },
+  "approvals": {
+    "route": "approvals-report",
+    "source": "approvals-report",
+    "modified": "2026-09-08 20:49:56.837310"
+  },
+  "documents": {
+    "route": "Documents",
+    "source": "v",
+    "modified": "2026-09-10 13:08:58.838955"
+  },
+  "employees": {
+    "route": "hrms-dashbaord",
+    "source": "hrms-dashbaord",
+    "modified": "2026-07-19 08:25:38.017126"
+  },
+  "attend": {
+    "route": "hrms-dashbaord",
+    "source": "hrms-dashbaord",
+    "modified": "2026-07-19 08:25:38.017126"
+  },
+  "payroll": {
+    "route": "hrms-dashbaord",
+    "source": "hrms-dashbaord",
+    "modified": "2026-07-19 08:25:38.017126"
+  },
+  "repmaster": {
+    "route": "life-master-report",
+    "source": "life-master-report",
+    "modified": "2026-08-12 15:48:08.178415"
+  },
+  "approvalsreport": {
+    "route": "approvals-report",
+    "source": "approvals-report",
+    "modified": "2026-09-08 20:49:56.837310"
+  },
+  "execdash": {
+    "route": "coo-dashboard",
+    "source": "coo-dashboard",
+    "modified": "2026-08-16 10:57:42.630222"
+  },
+  "mis": {
+    "route": "md-dashboard",
+    "source": "md-dashboard",
+    "modified": "2026-09-18 15:09:50.764182"
+  },
+  "clusterhome": {
+    "route": "cluster-head-dashboard",
+    "source": "cluster-head-dashboard",
+    "modified": "2026-08-27 12:45:10.817449"
+  },
+  "control": {
+    "route": "contols-command",
+    "source": "contols-command",
+    "modified": "2026-08-01 13:15:17.290029"
+  },
+  "hrpol": {
+    "route": "knowledge-centre",
+    "source": "knowledge-centre",
+    "modified": "2026-08-19 18:02:36.400096"
+  },
+  "knowledge": {
+    "route": "knowledge-centre",
+    "source": "knowledge-centre",
+    "modified": "2026-08-19 18:02:36.400096"
+  },
+  "riseprog": {
+    "route": "glp-programme",
+    "source": "glp-programme",
+    "modified": "2026-09-01 12:13:05.827427"
+  },
+  "service": {
+    "route": "operations-&-service-module",
+    "source": "operations-service-module",
+    "modified": "2026-09-16 16:44:52.182250"
+  },
+  "followup": {
+    "route": "followup-master",
+    "source": "followup-master",
+    "modified": "2026-08-25 11:07:49.335659"
+  },
+  "p2p": {
+    "route": "package-conversion-for-p2p",
+    "source": "package-conversion-for-p2p",
+    "modified": "2026-09-08 00:18:14.222655"
+  },
+  "c2c": {
+    "route": "package-conversion-C2C",
+    "source": "package-conversion-c2c",
+    "modified": "2026-09-09 17:48:44.275707"
+  },
+  "b2b": {
+    "route": "b2b-testing",
+    "source": "b2b-testing",
+    "modified": "2026-09-16 17:49:30.931101"
+  }
+}
