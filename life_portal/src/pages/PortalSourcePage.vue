@@ -25,7 +25,7 @@ watch(source, () => { loading.value = true; });
 </template>
 
 <style scoped>
-.portal-source-page{margin:-30px -32px -48px;position:relative;height:calc(100dvh - var(--header-height));min-height:560px;background:#f3faf6}
+.portal-source-page{margin:-24px -28px -40px;position:relative;height:calc(100dvh - var(--header-height));min-height:560px;background:#f6f7f9}
 iframe{display:block;width:100%;height:100%;border:0;background:white}
 .source-loading{position:absolute;top:12px;left:20px;padding:8px 16px;border-radius:8px;background:white;z-index:1}
 @media(max-width:980px){.portal-source-page{margin:-25px}}

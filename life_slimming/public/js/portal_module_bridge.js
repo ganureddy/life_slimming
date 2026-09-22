@@ -8,6 +8,14 @@
   const apiOrigin = new URL(apiBase || location.origin).origin;
   frappe.csrf_token = config.csrf_token;
   frappe.session = { ...(frappe.session || {}), user: config.user };
+  frappe.user_roles = config.roles || [];
+  // Embedded dashboards have no code snippets; do not initialize the legacy highlighter.
+  if (frappe.highlight_code_blocks) {
+    const highlightCode = frappe.highlight_code_blocks.bind(frappe);
+    frappe.highlight_code_blocks = () => {
+      if (document.querySelector("pre code")) highlightCode();
+    };
+  }
   const originalCall = frappe.call.bind(frappe);
   frappe.call = function (options, args, callback) {
     const opts =

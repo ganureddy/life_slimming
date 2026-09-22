@@ -76,6 +76,7 @@ export default defineConfig(({ command }) => ({
     proxy: Object.fromEntries(
       [
         "/life_portal_module",
+        "/website_script.js",
         "/api",
         "/login",
         "/update-password",

@@ -84,8 +84,8 @@
       {
         "id": "leads",
         "icon": "◎",
-        "label": "Leads",
-        "description": "Raw & quality leads"
+        "label": "CC Dashboard",
+        "description": "Leads, follow-ups & agent performance"
       },
       {
         "id": "ccvisit",
@@ -252,8 +252,8 @@
       {
         "id": "employees",
         "icon": "🧑‍💼",
-        "label": "Employees",
-        "description": "Staff master"
+        "label": "HRMS Dashboard",
+        "description": "HR overview & employee management"
       },
       {
         "id": "attend",

@@ -1,5 +1,6 @@
 import { createApp } from "vue";
 import "./style.css";
+import "../../life_slimming/public/css/portal_theme.css";
 import App from "./App.vue";
 import router from "./router";
 

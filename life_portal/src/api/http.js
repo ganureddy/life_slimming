@@ -8,6 +8,15 @@ export class ApiError extends Error {
     this.code = code;
   }
 }
+export function serverMessage(body) {
+  try {
+    const messages = JSON.parse(body._server_messages || '[]');
+    return messages.map(value => {
+      const item = typeof value === 'string' ? JSON.parse(value) : value;
+      return typeof item?.message === 'string' ? item.message.replace(/<[^>]*>/g, '') : '';
+    }).filter(Boolean).join('\n');
+  } catch { return ''; }
+}
 export async function request(
   method,
   { args, csrfToken = "", signal, httpMethod } = {},
@@ -48,11 +57,13 @@ export async function request(
     else if (response.status === 401 || code === "AuthenticationError")
       message =
         "The credentials or verification code are incorrect. Please try again.";
+    else if (code === "CSRFTokenError")
+      message = "Your session changed. Refresh the page and try again.";
     else if (response.status === 403)
       message =
         "Your session expired or you do not have permission. Please sign in again.";
-    else if (code === "CSRFTokenError")
-      message = "Your session changed. Refresh the page and try again.";
+    if (['ValidationError', 'MandatoryError', 'PermissionError', 'DoesNotExistError'].includes(code))
+      message = serverMessage(body) || message;
     throw new ApiError(message, response.status, code);
   }
   return body;

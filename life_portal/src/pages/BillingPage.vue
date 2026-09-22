@@ -4,6 +4,7 @@ import billingSource from "../data/billingV2LiveSource.json";
 import { apiUrl, apiCredentials } from "../api/config";
 import endpoints from "../api/endpoints.json";
 import { session } from "../lib/session";
+import billingPolish from "../styles/billing.css?inline";
 
 const host = ref(null);
 const loadError = ref("");
@@ -86,13 +87,48 @@ function extractBillingApp() {
     element.removeAttribute("value");
     if (element.tagName === "TEXTAREA") element.textContent = "";
   });
+  const labels = {
+    q: "Search clients by name, mobile number or client ID",
+    "mini-q": "Search another client",
+    scope: "Branch",
+    "rec-q": "Search recent bills",
+    "rec-status": "Invoice status",
+    "rec-from": "Recent bills from date",
+    "rec-to": "Recent bills to date",
+  };
+  for (const [id, label] of Object.entries(labels)) {
+    app.querySelector(`#${id}`)?.setAttribute("aria-label", label);
+  }
   return app.outerHTML;
 }
 
 function adaptCode(code) {
   return code
+    .replaceAll("document.body.appendChild(", "document.querySelector('.billing-compat-page').appendChild(")
     .replaceAll("getElementById('app')", "getElementById('billing-v2-app')")
     .replaceAll('getElementById("app")', 'getElementById("billing-v2-app")');
+}
+
+// The exported page includes global resets and classes shared with the portal.
+// Scope parsed CSS rules, including nested media rules, but leave keyframes alone.
+function scopedBillingCss(code) {
+  const sheet = new CSSStyleSheet();
+  sheet.replaceSync(code.replaceAll("#app", "#billing-v2-app"));
+  function scope(rules) {
+    for (const rule of rules) {
+      if (rule.type === CSSRule.STYLE_RULE) {
+        const selector = rule.selectorText
+          .replaceAll(":root", ".billing-compat-page")
+          .replace(/(^|[\s>+~,(])(?:html|body)(?=$|[\s>+~.#:[,)])/g, "$1.billing-compat-page");
+        // Match the wrapper itself as well as descendants (for root variables).
+        rule.selectorText = `:is(.billing-compat-page, .billing-compat-page *):is(${selector})`;
+      } else if (rule.cssRules && rule.type !== CSSRule.KEYFRAMES_RULE) {
+        scope(rule.cssRules);
+      }
+    }
+  }
+  scope(sheet.cssRules);
+  return Array.from(sheet.cssRules, (rule) => rule.cssText).join("\n");
 }
 
 async function mountBilling() {
@@ -102,11 +138,15 @@ async function mountBilling() {
   for (const block of billingSource.css) {
     const style = document.createElement("style");
     style.dataset.lifeBillingV2 = String(block.index);
-    style.textContent = block.code
-      .replaceAll("#app", "#billing-v2-app");
+    style.textContent = scopedBillingCss(block.code);
     document.head.appendChild(style);
     injected.push(style);
   }
+
+  const polish = document.createElement("style");
+  polish.textContent = billingPolish;
+  document.head.appendChild(polish);
+  injected.push(polish);
 
   await nextTick();
   for (const block of billingSource.javascript) {

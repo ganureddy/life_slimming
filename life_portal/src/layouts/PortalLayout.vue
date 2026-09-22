@@ -3,6 +3,7 @@ import { ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import PortalSidebar from "../components/PortalSidebar.vue";
 import AccountDialog from "../components/AccountDialog.vue";
+import ConvoxPhone from "../components/ConvoxPhone.vue";
 import { session, initials, roleLabel } from "../lib/session";
 const route = useRoute();
 const collapsed = ref(false);
@@ -33,13 +34,13 @@ watch(
         >
           ☰
         </button>
-        <a
+        <!-- <a
           class="icon-button healthcare-link"
           href="/app/healthcare"
           aria-label="Go to Healthcare"
           title="Go to Healthcare"
-          >←</a
-        >
+          >←</a -->
+        <!-- > -->
         <RouterLink
           :to="{ name: 'home' }"
           class="brand"
@@ -85,5 +86,6 @@ watch(
       <RouterView />
     </main>
     <AccountDialog ref="account" />
+    <ConvoxPhone />
   </div>
 </template>

@@ -1,0 +1,97 @@
+body:has(.lifeaudit-root) { background: #f6f7f9; }
+body:has(.lifeaudit-root) .container { width: 100%; max-width: none; padding: 0; }
+body:has(.lifeaudit-root) .page_content { padding: 0; }
+body .lifeaudit-root {
+  min-height: 100vh;
+  border-radius: 0;
+  background: #f6f7f9;
+  font-family: var(--portal-font-family);
+  color: #283a32;
+}
+.lifeaudit-root .la-hdr,
+.lifeaudit-root .la-ftr { display: none; }
+.lifeaudit-root .la-tabs {
+  padding: 0 24px;
+  gap: 20px;
+  background: #fff;
+  border-bottom: 1px solid #e2e6eb;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+}
+.lifeaudit-root .la-tab {
+  flex: 0 0 auto;
+  min-height: 50px;
+  padding: 12px 0;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #637168;
+  font-size: var(--portal-text-control);
+}
+.lifeaudit-root .la-tab.on {
+  color: #164c3f;
+  border-bottom-color: #27755a;
+  background: transparent;
+  box-shadow: none;
+}
+.lifeaudit-root .la-wrap { padding: 20px 24px 32px; }
+.lifeaudit-root .la-card {
+  padding: 18px 0;
+  margin-bottom: 12px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #e2e6eb;
+  border-radius: 0;
+  box-shadow: none;
+  min-width: 0;
+}
+.lifeaudit-root .la-card h3 { margin-bottom: 14px; color: #283a32; }
+.lifeaudit-root .la-lbl,
+.lifeaudit-root .la-kpi span {
+  font-size: var(--portal-text-small);
+  font-weight: var(--portal-weight-medium);
+  text-transform: none;
+  letter-spacing: 0;
+}
+body .lifeaudit-root :is(input, select, textarea) { max-width: 100%; min-height: 38px; border: 1px solid #cdd6d1; border-radius: 6px; }
+.lifeaudit-root :is(input[type="checkbox"], input[type="radio"]) { min-height: 0; }
+.lifeaudit-root .la-btn { min-height: 38px; border-radius: 6px; box-shadow: none; font-size: var(--portal-text-control); }
+.lifeaudit-root .la-btn-g { background: #21684f; box-shadow: none; }
+.lifeaudit-root .la-btn-o { border: 1px solid #cdd6d1; color: #305849; }
+.lifeaudit-root .la-kpi { border-radius: 8px; box-shadow: none; border-color: #e2e6eb; }
+.lifeaudit-root .la-asec { border-radius: 8px; box-shadow: none; border-color: #dce4df; }
+.lifeaudit-root .la-asec-h { flex-wrap: wrap; gap: 8px; text-align: left; min-height: 48px; }
+.lifeaudit-root .la-scorebar { background: #164c3f; border-radius: 8px; box-shadow: none; }
+.lifeaudit-root .la-scorebar .lb { font-size: var(--portal-text-small); letter-spacing: 0; text-transform: none; }
+.lifeaudit-root.la-no-checklist [data-view="conduct"] > .la-card { display: none !important; }
+.lifeaudit-root .la-scorebar:empty { display: none; }
+.lifeaudit-root .la-tbl { background: white; }
+.lifeaudit-root .la-tbl th { background: #edf2f0; text-transform: none; }
+.lifeaudit-root .la-empty { padding: 48px 16px; text-align: center; color: #637168; }
+.lifeaudit-root .la-empty h3 { display: block; margin-bottom: 8px; }
+.lifeaudit-root .la-empty p { max-width: 480px; margin: 0 auto; }
+.lifeaudit-root .la-load-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 24px;
+  background: #edf3f8;
+  color: #31556d;
+  border-bottom: 1px solid #d6e1eb;
+}
+.lifeaudit-root .la-load-status[hidden] { display: none; }
+.lifeaudit-root .la-load-status[role="alert"] { background: #fff3ef; color: #873d30; border-color: #ead4cd; }
+.lifeaudit-root .la-load-status button { flex-shrink: 0; }
+@media (max-width: 600px) {
+  .lifeaudit-root .la-tabs { padding-inline: 16px; gap: 18px; }
+  .lifeaudit-root .la-wrap { padding: 12px 16px 24px; }
+  .lifeaudit-root .la-card { padding: 14px 0; }
+  .lifeaudit-root .la-load-status { padding: 14px 16px; align-items: flex-start; }
+  .lifeaudit-root .la-kgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lifeaudit-root .la-aud-list { grid-template-columns: minmax(0, 1fr); }
+  .lifeaudit-root .la-master-filter,
+  .lifeaudit-root .la-master-filter-wide { width: 100%; min-width: 0; }
+}

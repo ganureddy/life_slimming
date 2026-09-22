@@ -1,5 +1,6 @@
 """Authenticated, local copies of the ERP portal's embedded pages."""
 
+import hashlib
 import json
 import re
 from collections import Counter
@@ -67,8 +68,17 @@ def get_context(context):
         "module_scripts": "\n".join(scripts),
         "module_javascript": source["javascript"],
         "module_config": {
-            "methods": methods, "routes": routes,
+            "module": module, "methods": methods, "routes": routes,
+            "cc_asset_version": hashlib.sha256(
+                (root / "public/js/convox_cc_bridge.js").read_bytes() +
+                (root / "public/js/cc_notifications.js").read_bytes()
+            ).hexdigest()[:16] if module == "leads" else "",
             "csrf_token": get_csrf_token(),
             "user": frappe.session.user,
+            "roles": frappe.get_roles(),
+            "optional_read_access": {
+                doctype: bool(frappe.has_permission(doctype, "read"))
+                for doctype in ("Employee", "Attendance", "Duplicate Lead")
+            } if module == "leads" else {},
         },
     })

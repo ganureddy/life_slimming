@@ -12,7 +12,7 @@
   --green: #236d38;
   --muted: #6b8070;
   --line: #dce8db;
-  --sidebar: 278px;
+  --sidebar: var(--portal-sidebar-width);
 }
 * {
   box-sizing: border-box;
@@ -1527,7 +1527,7 @@ p {
 
 /* Shared workspace layout and spacing. */
 :root {
-  --sidebar: 272px;
+  --sidebar: var(--portal-sidebar-width);
   --header-height: 72px;
   --space-1: 4px;
   --space-2: 8px;
@@ -2089,4 +2089,87 @@ p {
   .portal .home-heading {
     padding: 18px;
   }
+}
+
+/* Readable, flexible workspace controls across native portal pages. */
+.portal .main-content, .portal .main-content > * { min-width: 0; }
+.portal .nav-item { font-size: 12px; }
+.portal .group-heading { font-size: 10px; }
+.portal :is(select, textarea):focus-visible { outline: 3px solid #b69438; outline-offset: 3px; }
+.portal .life-toolbar { flex-wrap: wrap; }
+.portal .life-toolbar label { flex: 1 1 190px; min-width: 0; }
+.portal .life-module-tabs button { flex-shrink: 0; min-height: 44px; }
+.portal .life-module-hero { border-radius: 14px 14px 0 0; }
+.portal :is(.life-card-head, .panel-headline) { flex-wrap: wrap; }
+.portal :is(.life-card-head > div:last-child, .life-hero-actions) { flex-wrap: wrap; }
+.portal :is(.life-kpis, .module-kpis) strong { overflow-wrap: anywhere; }
+.portal .life-data-card td { font-size: 12px; }
+.portal :is(.life-card-head p, .life-kpis small, .life-kpis span) { font-size: 12px; }
+.portal .life-toolbar label { font-size: 11px; }
+.portal .life-module button { font-size: 12px; min-height: 42px; }
+@media (max-width: 600px) {
+  .portal .life-toolbar label { width: 100%; }
+  .portal .user-profile > span:last-child:not(.avatar) { display: none; }
+  .portal :is(.life-toolbar, .module-toolbar) :is(input, select) { font-size: 16px; min-height: 44px; }
+}
+
+/* Compact navigation and a quiet, consistent workspace. */
+.portal {
+  --canvas: #f6f7f9;
+  --line: #e2e6eb;
+  --muted: #637168;
+  color: #283a32;
+}
+.portal .sidebar-heading { padding: 20px 16px 6px; letter-spacing: 0; }
+.portal .menu-search { margin: 10px 12px 14px; }
+.portal .sidebar nav { padding-inline: 8px; }
+.portal .nav-group { margin-bottom: 12px; }
+.portal .group-heading {
+  font-size: var(--portal-text-small);
+  padding-inline: 8px;
+  gap: 8px;
+}
+.portal .nav-item {
+  font-size: var(--portal-text-control);
+  font-weight: var(--portal-weight-normal);
+  padding: 9px 10px;
+  gap: 8px;
+  min-height: 42px;
+  border-radius: 6px;
+}
+.portal .nav-item.selected { font-weight: var(--portal-weight-semibold); }
+.portal .sidebar-footer { margin-inline: 12px; padding: 14px 4px; }
+.portal :is(.user-profile, .module-card, .module-icon, .avatar, .welcome-banner) {
+  border-radius: 8px;
+}
+.portal .home-heading {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0 0 18px;
+  border-bottom: 1px solid var(--line);
+}
+.portal .welcome-banner {
+  padding: 18px 20px;
+  margin-bottom: 24px;
+}
+.portal .module-card { min-height: 92px; padding: 16px; }
+.portal .module-card > div { min-width: 0; overflow-wrap: anywhere; }
+.portal .module-card h3 { font-size: var(--portal-text-heading); }
+.portal .module-card p { line-height: 1.5; }
+.portal .section-title { font-size: var(--portal-text-small); letter-spacing: 0; }
+.portal .brand-word { letter-spacing: 0; }
+.portal .header-context > span { font-size: var(--portal-text-small); }
+.portal .header-context strong { font-size: var(--portal-text-body); }
+.portal .user-info strong { font-size: var(--portal-text-small); }
+@media (min-width: 981px) {
+  .portal .main-content { padding: 24px 28px 40px; }
+}
+@media (max-width: 980px) {
+  .portal .sidebar { width: min(280px, calc(100vw - 48px)); }
+}
+@media (max-width: 600px) {
+  .portal .home-heading { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .portal .welcome-banner { padding: 16px; }
+  .portal .header-context > span { font-size: var(--portal-text-small); }
 }

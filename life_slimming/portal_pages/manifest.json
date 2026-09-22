@@ -115,19 +115,19 @@
     "modified": "2026-09-10 13:08:58.838955"
   },
   "employees": {
-    "route": "hrms-dashbaord",
-    "source": "hrms-dashbaord",
-    "modified": "2026-07-19 08:25:38.017126"
+    "route": "hrms-dashboard---copy",
+    "source": "hrms-dashboard---copy",
+    "modified": ""
   },
   "attend": {
-    "route": "hrms-dashbaord",
-    "source": "hrms-dashbaord",
-    "modified": "2026-07-19 08:25:38.017126"
+    "route": "hrms-dashboard---copy",
+    "source": "hrms-dashboard---copy",
+    "modified": ""
   },
   "payroll": {
-    "route": "hrms-dashbaord",
-    "source": "hrms-dashbaord",
-    "modified": "2026-07-19 08:25:38.017126"
+    "route": "hrms-dashboard---copy",
+    "source": "hrms-dashboard---copy",
+    "modified": ""
   },
   "repmaster": {
     "route": "life-master-report",
