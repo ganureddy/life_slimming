@@ -19,16 +19,9 @@ const selectedLead = ref('');
 const target = ref(null);
 const targetError = ref('');
 const manualLogin = ref(false);
-const externalPhone = ref(false);
-function openExternalPhone(event) {
-  if (url.value && !window.confirm('Switch to the separate ConVox tab? This closes the embedded phone and may interrupt an active call.')) {
-    event.preventDefault();
-    return;
-  }
-  url.value = '';
-  externalPhone.value = true;
-  notice.value = 'Sign in as your mapped agent in the ConVox tab and set it to Idle. Keep that tab open while calling from this lead workspace.';
-}
+const phoneConfirmed = ref(false);
+const readinessInput = ref(null);
+const embeddedMicrophoneAvailable = window.isSecureContext && Boolean(navigator.mediaDevices?.getUserMedia);
 const frameVersion = ref(0);
 const preferManual = ref(false);
 function loginPreferenceKey() { return `life-convox-manual:${session.user}`; }
@@ -41,25 +34,62 @@ const events = ref([]);
 const incoming = ref(null);
 const launcher = ref(null);
 const panel = ref(null);
+const position = ref(null);
+const wide = ref(false);
+const dragging = ref(false);
+let dragOrigin;
+const panelStyle = computed(() => position.value ? { left: `${position.value.x}px`, top: `${position.value.y}px`, right: 'auto', bottom: 'auto' } : {});
+function clampPosition(x, y) {
+  const rect = panel.value?.getBoundingClientRect();
+  return { x: Math.max(8, Math.min(x, window.innerWidth - (rect?.width || 560) - 8)),
+    y: Math.max(8, Math.min(y, window.innerHeight - (rect?.height || 600) - 8)) };
+}
+function startDrag(event) {
+  if (event.button !== 0 || event.target.closest('button')) return;
+  const rect = panel.value.getBoundingClientRect();
+  dragOrigin = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+  dragging.value = true;
+  event.currentTarget.setPointerCapture(event.pointerId);
+}
+function moveDrag(event) {
+  if (dragging.value) position.value = clampPosition(event.clientX - dragOrigin.x, event.clientY - dragOrigin.y);
+}
+function stopDrag() { dragging.value = false; }
+function fitPanel() {
+  if (position.value) position.value = clampPosition(position.value.x, position.value.y);
+}
+async function toggleWidth() { wide.value = !wide.value; await nextTick(); fitPanel(); }
+function resetPosition() { position.value = null; }
+
 const visible = computed(() => permitted.value && (route.name === 'leads' || Boolean(url.value)));
 const controller = new AbortController();
 let stopped = false, timer, cursor = '';
+let sessionGeneration = 0;
+let pollingGeneration = null;
 const dashboardCallPending = ref(false);
 const callRequests = createCallRequests();
 const seen = new Set();
 
 async function loadConfig() {
+  const generation = sessionGeneration;
   error.value = '';
   try {
-    settings.value = await convoxApi.config(controller.signal);
-    cursor = settings.value.server_time;
-    if (settings.value.callbacks_ready && !timer) timer = setTimeout(pollEvents, 5000);
+    const result = await convoxApi.config(controller.signal);
+    if (stopped || generation !== sessionGeneration) return;
+    settings.value = result;
+    if (!cursor) cursor = settings.value.server_time;
+    if (!settings.value.callbacks_ready) { clearTimeout(timer); timer = undefined; }
+    if (settings.value.callbacks_ready && !timer && pollingGeneration !== generation) timer = setTimeout(pollEvents, 5000);
   } catch (e) { if (e.name !== 'AbortError') error.value = e.message; }
 }
 async function pollEvents() {
+  const generation = sessionGeneration;
   timer = undefined;
+  if (stopped || !settings.value?.callbacks_ready || pollingGeneration === generation) return;
+  pollingGeneration = generation;
   try {
     const result = await convoxApi.poll(cursor, controller.signal);
+    if (stopped || generation !== sessionGeneration || !settings.value?.callbacks_ready) return;
     cursor = result.cursor;
     for (const event of result.events || []) {
       const key = `${event.name}:${event.received_on}`;
@@ -78,11 +108,12 @@ async function pollEvents() {
     while (seen.size > 500) seen.delete(seen.values().next().value);
     pollError.value = '';
   } catch (e) {
-    if (e.name === 'AbortError') return;
+    if (e.name === 'AbortError' || stopped || generation !== sessionGeneration) return;
     pollError.value = 'Call updates are temporarily unavailable. Calling controls remain in the ConVox phone.';
     if ([401, 403].includes(e.status)) return;
   }
-  if (!stopped) timer = setTimeout(pollEvents, pollError.value ? 15000 : 5000);
+  finally { if (pollingGeneration === generation) pollingGeneration = null; }
+  if (!stopped && generation === sessionGeneration && settings.value?.callbacks_ready && !timer) timer = setTimeout(pollEvents, pollError.value ? 15000 : 5000);
 }
 async function showPhone() {
   open.value = true;
@@ -95,15 +126,18 @@ function minimize() {
   launcher.value?.focus();
 }
 async function connect(manual = preferManual.value, reconnect = false) {
-  if (starting.value || (url.value && !manual && !reconnect)) return;
+  if (starting.value || (url.value && !reconnect)) return;
   if (url.value && !window.confirm('Reload the phone for sign-in? This will disconnect any active phone session.')) return;
+  const generation = sessionGeneration;
   starting.value = true;
+  phoneConfirmed.value = false;
   error.value = '';
   try {
+    const user = session.user;
     const result = await convoxApi.widgetSession(controller.signal, manual);
+    if (stopped || generation !== sessionGeneration || user !== session.user) return;
     if (!validWidgetUrl(result.url)) throw new Error('The phone returned an unexpected address. Contact your administrator.');
     url.value = result.url;
-    externalPhone.value = false;
     manualLogin.value = result.mode === 'manual';
     preferManual.value = manual;
     try {
@@ -111,14 +145,21 @@ async function connect(manual = preferManual.value, reconnect = false) {
       else localStorage.removeItem(loginPreferenceKey());
     } catch { /* Storage can be disabled. */ }
     frameVersion.value++;
-    notice.value = 'Allow microphone access when prompted. Sign in and set your agent to Idle before calling.';
+    notice.value = '';
   } catch (e) { if (e.name !== 'AbortError') error.value = e.message; }
-  finally { starting.value = false; }
+  finally { if (generation === sessionGeneration) starting.value = false; }
 }
 async function callSelected(lead = selectedLead.value) {
   if (calling.value) return { success: false, status: 'BUSY', message: 'A call request is already in progress.' };
-  if (!lead || (!url.value && !externalPhone.value) || !settings.value?.click_to_call_ready) {
+  if (!lead || !url.value || !settings.value?.click_to_call_ready) {
     return { success: false, status: 'SETUP_REQUIRED', message: 'Complete the phone setup before calling.' };
+  }
+  if (!phoneConfirmed.value) {
+    open.value = true;
+    await nextTick();
+    readinessInput.value?.scrollIntoView({ block: 'nearest' });
+    readinessInput.value?.focus({ preventScroll: true });
+    return { success: false, status: 'PHONE_NOT_READY', message: 'Tick “Phone Registered, agent Idle” above the phone, then click Start Call again. No call was sent.' };
   }
   calling.value = true;
   error.value = '';
@@ -127,7 +168,8 @@ async function callSelected(lead = selectedLead.value) {
   const requestId = callRequests.forLead(lead);
   try {
     const result = await convoxApi.callLead(lead, requestId, controller.signal);
-    if (result.success) notice.value = result.message;
+    if (['CL003', 'CL004', 'CL005', 'CL006'].includes(result.status)) phoneConfirmed.value = false;
+    if (result.success) notice.value = `${result.message}${result.refno ? ` Reference: ${result.refno}.` : ''}`;
     else error.value = result.message;
     // UNKNOWN is deliberately sticky: check the phone before choosing another call.
     callRequests.settle(lead, requestId, result.status);
@@ -155,8 +197,8 @@ async function callFromDashboard(event) {
       reply({ success: false, status: 'SETUP_REQUIRED', message: 'ConVox setup is incomplete. Check the phone panel for the missing settings.' });
       return;
     }
-    if (!url.value && !externalPhone.value) await connect();
-    if (!url.value && !externalPhone.value) {
+    if (!url.value) await connect();
+    if (!url.value) {
       reply({ success: false, status: 'SETUP_REQUIRED', message: error.value || 'Open and sign in to the ConVox phone before calling.' });
       return;
     }
@@ -186,10 +228,10 @@ function findCaller(event) {
   minimize();
 }
 watch(() => route.name, () => { selectedLead.value = ''; });
-watch(selectedLead, async lead => {
+watch([selectedLead, () => settings.value?.enabled], async ([lead, enabled]) => {
   target.value = null;
   targetError.value = '';
-  if (!lead) return;
+  if (!lead || !enabled) return;
   try {
     const result = await convoxApi.callTarget(lead, controller.signal);
     if (selectedLead.value === lead) target.value = result;
@@ -197,20 +239,54 @@ watch(selectedLead, async lead => {
     if (selectedLead.value === lead && e.name !== 'AbortError') targetError.value = e.message;
   }
 });
+// Keep the iframe alive while ERP refreshes the same user's session data.
+const phoneIdentity = computed(previous => {
+  if (session.loading) return previous || '';
+  return session.user && session.user !== 'Guest' && permitted.value ? session.user : '';
+});
+watch(phoneIdentity, async (user, _, onCleanup) => {
+  sessionGeneration++;
+  starting.value = false;
+  let cancelled = false;
+  onCleanup(() => { cancelled = true; });
+  url.value = '';
+  phoneConfirmed.value = false;
+  settings.value = null;
+  selectedLead.value = '';
+  events.value = [];
+  incoming.value = null;
+  seen.clear();
+  cursor = '';
+  pollError.value = '';
+  clearTimeout(timer);
+  timer = undefined;
+  if (!user) return;
+  await loadConfig();
+  if (!cancelled && settings.value?.enabled) await connect();
+}, { immediate: true });
+function warnBeforeLeaving(event) {
+  if (!url.value) return;
+  event.preventDefault();
+  event.returnValue = '';
+}
 onMounted(() => {
   window.addEventListener('message', receive);
-  if (permitted.value) loadConfig();
+  window.addEventListener('resize', fitPanel);
+  window.addEventListener('beforeunload', warnBeforeLeaving);
 });
 onBeforeUnmount(() => {
   stopped = true;
   clearTimeout(timer);
   controller.abort();
   window.removeEventListener('message', receive);
+  window.removeEventListener('resize', fitPanel);
+  window.removeEventListener('beforeunload', warnBeforeLeaving);
 });
 </script>
 
 <template>
   <div v-if="visible" class="convox-phone">
+    <div v-if="dragging" class="convox-drag-shield" aria-hidden="true"></div>
     <aside v-if="incoming && !open" class="convox-incoming" role="status">
       <strong>Incoming call</strong><span>{{ incoming.mobile_number }}</span>
       <div><button @click="showPhone">Open phone</button><button aria-label="Dismiss incoming call notification" @click="incoming = null">Dismiss</button></div>
@@ -220,8 +296,11 @@ onBeforeUnmount(() => {
       <span v-if="events.length" class="convox-count">{{ events.length }}</span>
     </button>
     <!-- v-show preserves the softphone session while minimized and across portal routes. -->
-    <section v-show="open" id="convox-panel" ref="panel" class="convox-panel" tabindex="-1" aria-label="ConVox calling panel" @keydown.esc.stop="minimize">
-      <header><div><strong>ConVox phone</strong><small>{{ settings?.agent_id ? `Agent ${settings.agent_id}` : 'Call centre workspace' }}</small></div><button aria-label="Minimize ConVox phone" @click="minimize">−</button></header>
+    <section v-show="open" id="convox-panel" ref="panel" :style="panelStyle" :class="{ wide, dragging }" class="convox-panel" tabindex="-1" aria-label="ConVox calling panel" @keydown.esc.stop="minimize">
+      <header @pointerdown="startDrag" @pointermove="moveDrag" @pointerup="stopDrag" @pointercancel="stopDrag" @lostpointercapture="stopDrag">
+        <div><strong>ConVox phone</strong><small>{{ settings?.agent_id ? `Agent ${settings.agent_id}` : 'Call centre workspace' }} · Drag to move</small></div>
+        <div class="convox-tools"><button aria-label="Reset phone position" title="Reset position" @click="resetPosition">↺</button><button :aria-label="wide ? 'Narrow phone panel' : 'Widen phone panel'" :aria-pressed="wide" @click="toggleWidth">{{ wide ? '↙' : '↗' }}</button><button aria-label="Minimize ConVox phone" @click="minimize">−</button></div>
+      </header>
       <div class="convox-body">
         <p v-if="error" class="convox-error" role="alert">{{ error }}</p>
         <p v-if="notice" class="convox-note" role="status">{{ notice }}</p>
@@ -229,34 +308,26 @@ onBeforeUnmount(() => {
         <template v-if="!settings"><p>Loading phone settings…</p><button v-if="error" @click="loadConfig">Try again</button></template>
         <div v-if="settings?.setup_issues?.length" class="convox-setup">
           <strong>Connect your ConVox account</strong>
-          <p>Calling is not ready yet. Your administrator needs to complete these settings on this local site:</p>
+          <p>Complete setup to enable calls:</p>
           <ul><li v-for="issue in settings.setup_issues" :key="issue">{{ issue }}</li></ul>
-          <ol v-if="settings.can_manage" class="convox-steps">
-            <li><a href="/app/system-settings" target="_blank" rel="noopener">Open System Settings</a> → ConVox integration. Use automatic token retrieval with the vendor’s token-generation key, enter the confirmed dial prefix, then enable ConVox and save.</li>
-            <li><a :href="settings.user_settings_url" target="_blank" rel="noopener">Open your User account</a> → ConVox agent mapping. Enter your real ConVox agent ID, enable ConVox for this user and save.</li>
-            <li>For encrypted sign-in, enter the vendor-confirmed SSO secret, IV and IV interpretation in System Settings. Set your mapped email in your User account, then enable SSO.</li>
-          </ol>
-          <p>Then click <strong>Check again</strong>, open the phone, sign in and set your agent to Idle before clicking Start Call.</p>
+          <p v-if="settings.can_manage"><a href="/app/system-settings" target="_blank" rel="noopener">Settings</a> · <a :href="settings.user_settings_url" target="_blank" rel="noopener">Agent mapping</a></p>
           <button @click="loadConfig">Check again</button>
         </div>
         <template v-if="settings && !settings.enabled && !settings.setup_issues?.length"><p>ConVox is not enabled for your account yet. Ask your administrator to finish the phone setup.</p><button @click="loadConfig">Check again</button></template>
         <template v-else-if="settings?.enabled">
-          <p><a :href="`${CONVOX_ORIGIN}/ConVoxCCS/`" target="_blank" rel="noopener noreferrer" @click="openExternalPhone">Open ConVox in new tab ↗</a></p>
-          <p v-if="externalPhone" class="convox-hint">Phone controls are in the ConVox tab. This portal cannot verify whether that tab is signed in.</p>
-          <div v-if="!url" class="convox-connect"><p>Make and receive calls alongside your lead workspace.</p><button :disabled="starting" @click="connect()">{{ starting ? 'Opening phone…' : settings.sso_ready && !preferManual ? 'Connect phone securely' : 'Open ConVox sign-in' }}</button></div>
-          <div v-if="settings.sso_ready && !manualLogin" class="convox-connect"><p>If encrypted sign-in is rejected, try your ConVox credentials using manual sign-in.</p><button :disabled="starting || calling" @click="connect(true)">Use manual sign-in</button></div>
-          <button v-if="settings.sso_ready" :disabled="starting || calling || dashboardCallPending" @click="connect(false, true)">Sign in with SSO</button>
-          <p v-if="url" class="convox-hint">Sign-in mode: {{ manualLogin ? 'Manual credentials' : 'Encrypted SSO' }}</p>
-          <iframe v-if="url" :key="frameVersion" :src="url" :allow="`microphone ${CONVOX_ORIGIN}`" referrerpolicy="no-referrer" title="ConVox agent softphone" class="convox-widget"></iframe>
-          <button v-if="url && manualLogin" :disabled="starting || calling" @click="connect(true)">Reload manual sign-in</button>
-          <p v-if="url" class="convox-hint">Minimizing keeps the phone connected. Reloading this page may interrupt a call.</p>
-          <div v-if="(url || externalPhone) && route.name === 'leads'" class="convox-call">
-            <span>{{ selectedLead ? `Selected lead: ${selectedLead}` : 'Open a lead summary or follow-up to select a client.' }}</span>
+          <p v-if="!embeddedMicrophoneAvailable" class="convox-error">Microphone unavailable. Open the portal using HTTPS or localhost.</p>
+          <div v-if="!url" class="convox-connect"><button :disabled="starting" @click="connect()">{{ starting ? 'Opening phone…' : settings.sso_ready && !preferManual ? 'Connect phone securely' : 'Open ConVox sign-in' }}</button></div>
+          <details class="convox-login-options"><summary>Sign-in options</summary>
+            <div class="convox-tools"><button :disabled="starting || calling" @click="connect(true, true)">Manual sign-in</button><button v-if="settings.sso_ready" :disabled="starting || calling || dashboardCallPending" @click="connect(false, true)">Retry automatic sign-in</button></div>
+          </details>
+          <label v-if="url && selectedLead && route.name === 'leads'" class="convox-ready"><input ref="readinessInput" type="checkbox" v-model="phoneConfirmed" :disabled="calling || starting"> <span>Phone Registered, agent Idle — I confirm.</span></label>
+          <iframe @load="phoneConfirmed = false" v-if="url" :key="frameVersion" :src="url" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups" :allow="`microphone ${CONVOX_ORIGIN}`" referrerpolicy="no-referrer" title="ConVox agent softphone" class="convox-widget"></iframe>
+          <div v-if="url && route.name === 'leads'" class="convox-call">
+            <span>{{ selectedLead ? `Selected lead: ${selectedLead}` : 'Select a lead to call.' }}</span>
             <strong v-if="target">Call to: {{ target.phone_number }}</strong>
             <small v-else-if="selectedLead">{{ targetError || 'Checking saved lead number…' }}</small>
-            <small v-if="target">Uses the saved lead number. Save any mobile number changes before calling.</small>
-            <button :disabled="!selectedLead || !settings.click_to_call_ready || calling || dashboardCallPending" @click="callSelected()">{{ calling ? 'Requesting call…' : 'Call selected lead' }}</button>
-            <small v-if="!settings.click_to_call_ready">Click-to-call setup is pending. You can use the phone’s manual dialer.</small>
+            <button :disabled="!phoneConfirmed || !selectedLead || !settings.click_to_call_ready || calling || dashboardCallPending" @click="callSelected()">{{ calling ? 'Requesting call…' : 'Call selected lead' }}</button>
+            <small v-if="!settings.click_to_call_ready">Calling setup incomplete.</small>
           </div>
         </template>
         <div v-if="events.length" class="convox-events"><h3>Recent call updates</h3><article v-for="event in events" :key="event.name"><strong>{{ event.call_status || event.call_type || event.event_type }}</strong><span>{{ event.mobile_number }} <span v-if="event.disposition">· {{ event.disposition }}</span></span><button v-if="route.name === 'leads' && event.mobile_number" @click="findCaller(event)">Find caller in leads</button></article></div>
@@ -268,4 +339,22 @@ onBeforeUnmount(() => {
 <style scoped>
 .convox-setup p{margin-top:10px}.convox-setup ul,.convox-steps{padding-left:20px}.convox-setup li{margin:10px 0;line-height:1.55}.convox-setup a{color:#145b45;text-decoration:underline;font-weight:700}
 .convox-phone{position:fixed;right:24px;bottom:20px;z-index:110;font-size:13px;color:#183d2b}.convox-launch{display:flex;align-items:center;gap:9px;background:#164c3f;color:white;border-color:#b8901f;box-shadow:0 5px 22px #12332525;min-height:46px}.convox-incoming{display:grid;gap:8px;background:#fffdf7;border:1px solid #dcd8c9;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 8px 24px #0a281e25}.convox-incoming>div{display:flex;gap:8px}.convox-count{background:#f1d476;color:#173d2b;border-radius:20px;padding:2px 7px}.convox-panel{position:absolute;right:0;bottom:58px;width:min(430px,calc(100vw - 32px));max-height:calc(100dvh - 160px);background:#fffdf7;border:1px solid #dcd8c9;border-radius:15px;box-shadow:0 18px 50px #0a281e40;overflow:auto}.convox-panel>header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 18px;background:#164c3f;color:white;position:sticky;top:0;z-index:1}.convox-panel header small{display:block;color:#d3e8d7;font-size:11px;margin-top:3px}.convox-panel header button{color:white;background:#ffffff14;padding:4px 12px;font-size:22px}.convox-body{padding:14px}.convox-body p{margin:0 0 12px}.convox-error{padding:10px;background:#fff0e9;color:#8e351d;border-radius:8px}.convox-note{padding:10px;background:#e8f3ec;color:#245c3e;border-radius:8px}.convox-connect button,.convox-call>button{background:#164c3f;color:white;min-height:44px}.convox-widget{width:100%;height:510px;border:1px solid #dde6dc;border-radius:8px;background:white}.convox-hint{font-size:11px;color:#627769;margin-top:8px!important}.convox-call{display:grid;gap:10px;padding:12px 0;border-top:1px solid #e3e7df;overflow-wrap:anywhere}.convox-call small{color:#617566}.convox-events h3{font-size:14px;margin:12px 0}.convox-events article{display:grid;gap:6px;padding:12px 0;border-top:1px solid #e3e7df;overflow-wrap:anywhere}.convox-events article button{justify-self:start}.convox-events article span{color:#52675a;font-size:12px}@media(max-width:600px){.convox-phone{right:12px;bottom:12px}.convox-panel{max-height:calc(100dvh - 135px);bottom:56px}.convox-widget{height:480px}.convox-body{padding:10px}}
+
+.convox-panel{position:fixed;right:24px;bottom:80px;width:min(580px,calc(100vw - 24px));max-height:calc(100dvh - 96px);overflow:hidden;display:flex;flex-direction:column;background:#fff}
+.convox-panel.wide{width:min(880px,calc(100vw - 24px))}
+.convox-panel>header{flex-shrink:0;cursor:grab;touch-action:none;user-select:none;padding:16px 20px}
+.convox-panel.dragging>header{cursor:grabbing}
+.convox-panel.dragging iframe{pointer-events:none}
+.convox-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.convox-tools button{min-width:36px;min-height:36px}
+.convox-body{overflow:auto;padding:18px;line-height:1.5;min-height:0}
+.convox-widget{display:block;box-sizing:border-box;height:clamp(360px,62dvh,720px);border-radius:12px}
+.convox-login-options{padding:12px 14px;border:1px solid #dce7e0;border-radius:10px;margin-bottom:14px;background:#f5f9f6}
+.convox-login-options summary{cursor:pointer;font-weight:600}
+.convox-login-options p{margin-top:12px}
+.convox-call{margin-top:16px;padding:16px;background:#f5f9f6;border:1px solid #dce7e0;border-radius:12px}
+.convox-call strong{font-size:20px;font-variant-numeric:tabular-nums}
+@media(max-width:600px){.convox-panel{right:12px;bottom:70px;max-height:calc(100dvh - 86px)}.convox-body{padding:12px}}
+.convox-ready{display:flex;align-items:flex-start;gap:12px;padding:14px;margin:0 0 12px;border:1px solid #dce7e0;border-radius:10px;background:#f5f9f6;cursor:pointer}.convox-ready input{margin-top:4px;width:18px;height:18px;flex-shrink:0}.convox-ready small{display:block;color:#627769;margin-top:5px}
+.convox-drag-shield{position:fixed;inset:0;z-index:0;cursor:grabbing}.convox-panel{z-index:1}
 </style>

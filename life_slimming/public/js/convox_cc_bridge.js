@@ -17,7 +17,7 @@
     if (typeof id !== 'string' || !id || id.length > 140) {
       return Promise.resolve({ success: false, message: 'Select a lead before calling.' });
     }
-    const request_id = crypto.randomUUID().replaceAll('-', '');
+    const request_id = Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, '0')).join('');
     return new Promise(resolve => {
       const timeout = setTimeout(() => {
         requests.delete(request_id);

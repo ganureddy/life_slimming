@@ -15,8 +15,13 @@ export const convoxApi = {
   callLead: (lead_id, request_id, signal) => call('click_to_call', { lead_id, request_id }, signal),
 };
 export const CONVOX_ORIGIN = 'https://lifeslimming.deepijatel.in';
+export function createRequestId() {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
 // Keep uncertain requests tied to their lead even when the agent navigates away.
-export function createCallRequests(makeId = () => crypto.randomUUID().replaceAll('-', '')) {
+export function createCallRequests(makeId = createRequestId) {
   const pending = new Map();
   return {
     forLead(lead) {
@@ -31,7 +36,7 @@ export function createCallRequests(makeId = () => crypto.randomUUID().replaceAll
 export function validWidgetUrl(value) {
   try {
     const url = new URL(value);
-    return url.origin === CONVOX_ORIGIN && url.pathname === '/ConVoxCCS/'
+    return url.origin === CONVOX_ORIGIN && url.pathname === '/ConVoxCCS/ExternalIndex'
       && !url.username && !url.password && !url.hash;
   } catch { return false; }
 }

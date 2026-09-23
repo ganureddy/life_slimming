@@ -35,6 +35,19 @@ class ConvoxTest(unittest.TestCase):
 
     def tearDown(self): frappe.destroy()
 
+    def test_unreadable_secret_does_not_add_response_messages(self):
+        frappe.local.message_log = []
+        settings = Mock()
+        def unreadable(*args, **kwargs):
+            try:
+                frappe.throw('Encryption key is invalid')
+            except frappe.ValidationError:
+                return None
+        settings.get_password.side_effect = unreadable
+        self.assertEqual(convox._secret(settings, 'custom_convox_callback_token'), '')
+        self.assertEqual(frappe.local.message_log, [])
+        self.assertFalse(frappe.flags.mute_messages)
+
     def test_encryption_matches_independent_openssl_for_both_iv_modes(self):
         secret, username = 'test-only-key-not-a-production-secret', 'agent@example.test'
         iv_value = base64.b64encode(b'1234567890123456').decode()
@@ -50,7 +63,7 @@ class ConvoxTest(unittest.TestCase):
             response = convox.widget_session()
         body = json.loads(response.get_data())['message']
         self.assertEqual(response.headers['Cache-Control'], 'no-store')
-        self.assertTrue(body['url'].startswith(convox.WIDGET_URL+'?ExternalUserName='))
+        self.assertTrue(body['url'].startswith(convox.ORIGIN+'/ConVoxCCS/ExternalIndex?ExternalUserName='))
         self.assertNotIn('agent@example.test', body['url'])
         self.assertNotIn('fixture-secret', response.get_data(as_text=True))
 
@@ -192,7 +205,7 @@ class ConvoxTest(unittest.TestCase):
                 with self.assertRaises(frappe.ValidationError): convox._access_token(self.settings)
 
     def test_destination_cannot_be_private_ip_or_arbitrary_url(self):
-        for url in ['http://192.168.0.193/ConVoxCCS/rest/api','https://attacker.test/ConVoxCCS/rest/api',convox.API_URL+'?token=secret',convox.ORIGIN+'/ConVoxCCS/index']:
+        for url in ['http://192.168.0.193/ConVoxCCS/rest/api','https://attacker.test/ConVoxCCS/rest/api',convox.API_URL+'?token=secret',convox.ORIGIN+'/ConVoxCCS/ExternalIndex']:
             with self.assertRaises(frappe.ValidationError):convox._url(url,'/ConVoxCCS/rest/api')
 
     def test_callback_rejects_missing_token_before_any_storage(self):

@@ -34,7 +34,7 @@ const fs = require('node:fs'), assert = require('node:assert/strict');
       if (url.includes('login_context')) result = { authenticated: true };
       else if (url.includes('portal.bootstrap')) result = { user: 'Administrator', full_name: 'Test Agent', roles: ['System Manager'], csrf_token: 'fixture-csrf' };
       else if (url.includes('convox.config')) result = { enabled, agent_id: enabled ? 'AGENT1' : '', sso_ready: true, click_to_call_ready: enabled, callbacks_ready: false, can_manage: true, user_settings_url: '/app/user/Administrator', setup_issues: enabled ? [] : ['Enable ConVox in System Settings.', 'Enter your ConVox agent ID in your User account.'], server_time: '2026-09-21 10:00:00' };
-      else if (url.includes('convox.widget_session')) result = { url: 'https://lifeslimming.deepijatel.in/ConVoxCCS/?ExternalUserName=fixture-ciphertext', mode: 'sso' };
+      else if (url.includes('convox.widget_session')) result = { url: 'https://lifeslimming.deepijatel.in/ConVoxCCS/ExternalIndex?ExternalUserName=fixture-ciphertext', mode: 'sso' };
       else if (url.includes('convox.click_to_call')) {
         calls.push(JSON.parse(request.postData));
         result = { success: callStatus === 'CL000', status: callStatus, refno: 'LIFE12345678', message: callStatus === 'CL000' ? 'Call request accepted.' : 'Call outcome is unconfirmed. Check the phone.' };

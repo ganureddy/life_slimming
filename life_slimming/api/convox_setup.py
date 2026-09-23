@@ -11,7 +11,7 @@ def install():
     system = [
         field("section", "ConVox integration", "Section Break"),
         field("integration_enabled", "Enable ConVox", "Check", default="0"),
-        field("widget_url", "ConVox widget URL", default="https://lifeslimming.deepijatel.in/ConVoxCCS/"),
+        field("widget_url", "ConVox widget URL", default="https://lifeslimming.deepijatel.in/ConVoxCCS/ExternalIndex"),
         field("api_url", "ConVox click-to-call URL", default="https://lifeslimming.deepijatel.in/ConVoxCCS/rest/api"),
         field("access_token", "ConVox access token", "Password"),
         field("auto_token_enabled", "Retrieve calling token automatically", "Check", default="0"),

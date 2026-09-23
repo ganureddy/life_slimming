@@ -15,7 +15,7 @@ function setup() {
   const parent = { postMessage: (data, origin) => messages.push({ data, origin }) };
   const context = {
     location: { origin: 'https://portal.test' }, parent,
-    crypto: { randomUUID: () => (++seq).toString(16).padStart(32, '0') },
+    crypto: { getRandomValues: bytes => { bytes.fill(0); bytes[15] = ++seq; return bytes; } },
     document: {
       createElement: () => ({ setAttribute() {}, addEventListener() {} }),
       querySelector: () => null,

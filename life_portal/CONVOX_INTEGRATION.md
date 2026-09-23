@@ -1,5 +1,9 @@
 # ConVox integration for the CC dashboard
 
+The vendor confirmed `/ConVoxCCS/ExternalIndex` as the widget endpoint.
+SSO appends `ExternalUserName` encrypted from the current ERP user’s mapped email;
+never hardcode the vendor’s example ciphertext. Manual mode uses the same base endpoint.
+
 ## Current local configuration — 2026-09-22
 
 Following the user's vendor call, the vendor permits any three-digit dial prefix;
@@ -81,7 +85,7 @@ commands and sample credentials were not executed or installed.
 
 ## Addresses
 
-- Public widget: `https://lifeslimming.deepijatel.in/ConVoxCCS/`
+- Public widget: `https://lifeslimming.deepijatel.in/ConVoxCCS/ExternalIndex`
 - Click-to-call: `https://lifeslimming.deepijatel.in/ConVoxCCS/rest/api`
 - Supplied private server: `192.168.0.193`. The browser uses the HTTPS domain,
   not this private address or the general `/ConVoxCCS/index` page.

@@ -16,7 +16,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from frappe.utils import now_datetime
 
 ORIGIN = "https://lifeslimming.deepijatel.in"
-WIDGET_URL = ORIGIN + "/ConVoxCCS/"
+WIDGET_URL = ORIGIN + "/ConVoxCCS/ExternalIndex"
 API_URL = ORIGIN + "/ConVoxCCS/rest/api"
 MANAGERS = {"System Manager", "Sales Manager", "Call Center Export"}
 ROLES = MANAGERS | {"Sales User", "Branch Sales Invoice"}
@@ -49,7 +49,14 @@ STATUS_MESSAGES = {
 
 
 def _secret(settings, field):
-    return settings.get_password(field, raise_exception=False) or ""
+    # Frappe suppresses the exception for unreadable passwords, but otherwise
+    # leaves its decryption error in the successful response's message log.
+    previous = frappe.flags.mute_messages
+    frappe.flags.mute_messages = True
+    try:
+        return settings.get_password(field, raise_exception=False) or ""
+    finally:
+        frappe.flags.mute_messages = previous
 
 
 def _identity():
@@ -144,12 +151,13 @@ def config():
     return {"enabled": enabled, "agent_id": agent or "", "setup_issues": issues,
             "can_manage": can_manage,
             "user_settings_url": "/app/user/" + quote(user.name, safe="") if can_manage else None,
-            "widget_url": _url(settings.get("custom_convox_widget_url"), "/ConVoxCCS/"),
+            "widget_url": _url(settings.get("custom_convox_widget_url"), "/ConVoxCCS/ExternalIndex"),
             "sso_ready": enabled and sso_ready,
             "click_to_call_ready": enabled and unique_agent and token_ready and prefix_ready
                 and (not sso_enabled or sso_ready),
             "callbacks_ready": enabled and bool(settings.get("custom_convox_callbacks_enabled"))
-                and unique_agent and bool(frappe.db.exists("DocType", "ConVox Call Event")),
+                and unique_agent and bool(frappe.db.exists("DocType", "ConVox Call Event"))
+                and bool(settings.get("custom_convox_callback_user") or _secret(settings, "custom_convox_callback_token")),
             "server_time": str(now_datetime())}
 
 
@@ -160,12 +168,12 @@ def widget_session(manual=False):
     def result(value):
         return Response(json.dumps({"message": value}), mimetype="application/json",
                         headers={"Cache-Control": "no-store", "Pragma": "no-cache"})
-    url = _url(settings.get("custom_convox_widget_url"), "/ConVoxCCS/")
+    url = _url(settings.get("custom_convox_widget_url"), "/ConVoxCCS/ExternalIndex")
     if frappe.utils.cint(manual) or not settings.get("custom_convox_sso_enabled"):
         return result({"url": url, "mode": "manual"})
     if not _sso_ready(settings):
         raise frappe.ValidationError("ConVox SSO settings need administrator confirmation. Use manual login until configured.")
-    username = user.get("custom_convox_sso_username") or user.name
+    username = user.get("custom_convox_sso_username") or user.get("email") or user.name
     encrypted = encrypt_username(username, _secret(settings, "custom_convox_sso_secret"),
                                  settings.get("custom_convox_sso_iv"), settings.get("custom_convox_sso_iv_mode"))
     return result({"url": url + "?" + urlencode({"ExternalUserName": encrypted}), "mode": "sso"})
