@@ -1,3 +1,6 @@
 node_modules
 __pycache__/
 *.pyc
+
+# Rebuilt by npm run build:portal (Angular output is separate).
+life_slimming/public/life_portal/

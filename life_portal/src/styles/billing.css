@@ -1,0 +1,102 @@
+/* Keep billing inside the portal workspace, including its desktop summary. */
+.billing-compat-page {
+  container: billing / inline-size;
+  isolation: isolate;
+  min-width: 0;
+}
+#billing-v2-app { min-width: 0; font-family: "Poppins", system-ui, sans-serif; }
+#billing-v2-app > .topbar {
+  position: relative;
+  top: auto;
+  height: auto;
+  min-height: 76px;
+  padding: 18px 24px;
+  flex-wrap: wrap;
+  gap: 14px;
+  background: #fff;
+  color: #164c3f;
+  border-bottom: 1px solid #dce8e0;
+  box-shadow: none;
+  z-index: 20;
+}
+#billing-v2-app .logo-box { display: none; }
+#billing-v2-app .brand { display: block; color: #164c3f; font-size: 16px; height: auto; }
+#billing-v2-app .brand-sub { color: #63796c; font-size: 10px; }
+#billing-v2-app .nav-pills { order: 3; width: 100%; gap: 8px; }
+#billing-v2-app .nav-pill {
+  min-height: 42px;
+  padding: 9px 14px;
+  border-radius: 9px;
+  border: 1px solid #dce8e0;
+  background: #f6f9f7;
+  color: #496355;
+  font-size: 12px;
+  box-shadow: none;
+}
+#billing-v2-app .nav-pill.active { background: #164c3f; border-color: #164c3f; color: white; }
+#billing-v2-app .nav-pill:hover { background: #e7f1e9; color: #164c3f; }
+#billing-v2-app .scope-sel { min-height: 42px; max-width: 100%; background: #f6f9f7; border-color: #dce8e0; color: #164c3f; }
+#billing-v2-app #clock { color: #63796c; }
+#billing-v2-app .hero { margin: 24px 24px 0; padding: 32px 24px; border-radius: 16px; background: #164c3f; }
+#billing-v2-app .hero-title { font-size: 26px; font-weight: 700; margin-bottom: 8px; }
+#billing-v2-app .hero-sub { color: #dcebe3; margin-bottom: 22px; }
+#billing-v2-app .search-input { border-radius: 12px; background: #fff; color: #173d2b; border: 1px solid #dce8e0; font-size: 15px; }
+#billing-v2-app .search-input::placeholder { color: #6c8074; }
+#billing-v2-app .search-input:focus { background: #fff; border-color: #93c5a8; }
+#billing-v2-app .search-btn { border-radius: 8px; background: #e8f2eb; box-shadow: none; }
+#billing-v2-app .wrap { padding: 24px; overflow: visible; }
+#billing-v2-app .kpi-row { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; margin-bottom: 24px; }
+#billing-v2-app .kpi { padding: 20px; box-shadow: 0 3px 12px #14352a05; }
+#billing-v2-app .kpi-val { font-size: clamp(23px, 2.4cqi, 32px); line-height: 1.2; }
+#billing-v2-app .kpi-lbl { color: #506c5c; font-size: 11px; line-height: 1.6; }
+#billing-v2-app .kpi-sub { line-height: 1.6; font-size: 11px; }
+#billing-v2-app .card { box-shadow: 0 3px 12px #14352a05; }
+#billing-v2-app .empty { padding: 40px 20px; color: #587263; line-height: 1.8; }
+#billing-v2-app .bill-grid { grid-template-columns: minmax(0,1fr) minmax(280px,340px); gap: 20px; }
+#billing-v2-app .sum-sticky {
+  position: sticky !important;
+  top: calc(var(--header-height) + 16px) !important;
+  right: auto !important;
+  transform: none !important;
+  width: 100% !important;
+  max-height: calc(100dvh - var(--header-height) - 32px) !important;
+  overflow-y: auto !important;
+  z-index: 10;
+  padding-bottom: 8px;
+}
+#billing-v2-app #mini-search { width: 100% !important; max-width: 100% !important; }
+#billing-v2-app :is(input,select,textarea) { max-width: 100%; }
+#billing-v2-app :is(button,input,select,textarea):focus-visible { outline: 3px solid #b69438; outline-offset: 3px; }
+#billing-v2-app .f-lbl { color: #496355; line-height: 1.5; }
+#billing-v2-app .tbl { font-variant-numeric: tabular-nums; }
+@container billing (max-width: 1100px) {
+  #billing-v2-app .kpi-row { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  #billing-v2-app .bill-grid { grid-template-columns: minmax(0,1fr); }
+  #billing-v2-app .sum-sticky { position: static !important; max-height: none !important; overflow: visible !important; }
+  #billing-v2-app .tp-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  #billing-v2-app #clock { display: none; }
+}
+@container billing (max-width: 600px) {
+  #billing-v2-app > .topbar { padding: 16px; }
+  #billing-v2-app .scope-sel { width: 100%; margin-left: 0; }
+  #billing-v2-app .nav-pills { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 5px; }
+  #billing-v2-app .nav-pill { flex: 0 0 auto; white-space: nowrap; }
+  #billing-v2-app .hero { margin: 16px 16px 0; padding: 24px 16px; }
+  #billing-v2-app .hero-title { font-size: 22px; }
+  #billing-v2-app .hero-sub { font-size: 12px; }
+  #billing-v2-app .search-input { padding-left: 14px; padding-right: 84px; font-size: 16px; }
+  #billing-v2-app .search-icon { display: none; }
+  #billing-v2-app .search-btn { padding: 0 12px; }
+  #billing-v2-app .wrap { padding: 16px; }
+  #billing-v2-app .kpi-row { gap: 10px; }
+  #billing-v2-app .kpi { padding: 16px 12px; }
+  #billing-v2-app :is(.grid2,.grid3,.grid4,.tp-grid,.split-line) { grid-template-columns: minmax(0,1fr) !important; }
+  #billing-v2-app #mini-q { min-width: 0 !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .billing-compat-page *, .billing-compat-page *::before, .billing-compat-page *::after { animation: none !important; transition: none !important; }
+}
+/* The legacy html/body max-width must not constrain the full-width wrapper. */
+.billing-compat-page.billing-compat-page { max-width: none; }
+#billing-v2-app .kpi:only-child { grid-column: 1 / -1; }
+#billing-v2-app .pay-box .f-lbl { color: #e0eee7; }

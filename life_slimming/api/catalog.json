@@ -1,0 +1,3602 @@
+{
+  "source": "ERP Portal / Server Script",
+  "exported_on": "2026-09-19",
+  "count": 141,
+  "endpoints": [
+    {
+      "id": "accounts_command_centre_coa",
+      "source_name": "accounts_command_centre_coa",
+      "legacy_method": "accounts_command_centre_coa",
+      "method": "life_slimming.api.server_scripts.accounts_command_centre_coa.run",
+      "source_modified": "2026-09-01 17:31:31.774801",
+      "source_sha256": "3fc04d63d82aa1f7519f7cc32cae7b2f2a53fe459dd69b03e3c4b09765641305",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "cost_center",
+        "upto"
+      ],
+      "doctypes": [
+        "Account",
+        "Cost Center",
+        "GL Entry"
+      ],
+      "notes": []
+    },
+    {
+      "id": "accounts_command_centre_data",
+      "source_name": "accounts_command_centre_data",
+      "legacy_method": "accounts_command_centre_data",
+      "method": "life_slimming.api.server_scripts.accounts_command_centre_data.run",
+      "source_modified": "2026-09-01 17:30:30.091754",
+      "source_sha256": "f62b9fa40cbba0821b38cf864fefb038efb48913a14038309188ae5400e4b8da",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "branch",
+        "from_date",
+        "month",
+        "to_date"
+      ],
+      "doctypes": [
+        "Account",
+        "Bank Account",
+        "Bank Transaction",
+        "Cost Center",
+        "GL Entry",
+        "Journal Entry",
+        "Payment Entry",
+        "Purchase Invoice",
+        "Sales Invoice",
+        "Sales Invoice Item",
+        "Supplier",
+        "Therapy Plan Detail"
+      ],
+      "notes": []
+    },
+    {
+      "id": "accounts_command_centre_ledger",
+      "source_name": "accounts_command_centre_ledger",
+      "legacy_method": "accounts_command_centre_ledger",
+      "method": "life_slimming.api.server_scripts.accounts_command_centre_ledger.run",
+      "source_modified": "2026-09-01 17:30:54.632279",
+      "source_sha256": "6e9866868066496bc8edd7a050a88ea1861242dfc62893888979808ee2ec2dcf",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "account",
+        "cost_center",
+        "from_date",
+        "mode",
+        "to_date"
+      ],
+      "doctypes": [
+        "Account",
+        "Cost Center",
+        "GL Entry"
+      ],
+      "notes": []
+    },
+    {
+      "id": "accounts_command_centre_post_entry",
+      "source_name": "accounts_command_centre_post_entry",
+      "legacy_method": "accounts_command_centre_post_entry",
+      "method": "life_slimming.api.server_scripts.accounts_command_centre_post_entry.run",
+      "source_modified": "2026-09-01 18:26:01.581898",
+      "source_sha256": "a048b8b51233069d3af8d8bdcb4d8ccc0c1160957961d56a5d30883036d0afe3",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Account",
+        "Cost Center",
+        "Journal Entry"
+      ],
+      "notes": []
+    },
+    {
+      "id": "accounts_command_centre_procurement",
+      "source_name": "accounts_command_centre_procurement",
+      "legacy_method": "accounts_command_centre_procurement",
+      "method": "life_slimming.api.server_scripts.accounts_command_centre_procurement.run",
+      "source_modified": "2026-07-31 13:16:54.060930",
+      "source_sha256": "a31b0c934c4e0ae532102a0de0d273f64531b0faa652a6d2c165ee88e040e7e3",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "from_date",
+        "month",
+        "to_date"
+      ],
+      "doctypes": [
+        "Cost Center",
+        "Journal Entry",
+        "Payment Entry",
+        "Payment Entry Reference",
+        "Purchase Invoice",
+        "Purchase Order",
+        "Supplier"
+      ],
+      "notes": []
+    },
+    {
+      "id": "accounts_command_centre_reconcile",
+      "source_name": "accounts_command_centre_reconcile",
+      "legacy_method": "accounts_command_centre_reconcile",
+      "method": "life_slimming.api.server_scripts.accounts_command_centre_reconcile.run",
+      "source_modified": "2026-07-31 12:42:05.937488",
+      "source_sha256": "a0fefff1dd6f35ff49800b06dbe051022fd55b8421bd85eba75bedc80c33c5ee",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "bank_transaction",
+        "vouchers"
+      ],
+      "doctypes": [
+        "Bank Account",
+        "Bank Transaction",
+        "Journal Entry",
+        "Journal Entry Account",
+        "Payment Entry"
+      ],
+      "notes": []
+    },
+    {
+      "id": "all_approvals_report_data",
+      "source_name": "all_approvals_report_data",
+      "legacy_method": "all_approvals_report_data",
+      "method": "life_slimming.api.server_scripts.all_approvals_report_data.run",
+      "source_modified": "2026-08-07 14:22:52.868204",
+      "source_sha256": "3cbaa0fcc719a046bbf91f67c636a4dac0b2abada9bb90165dc847730b91ba4a",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "branch",
+        "from_date",
+        "to_date"
+      ],
+      "doctypes": [
+        "Client Package Conversion Client To Client",
+        "Discount Approval Request",
+        "Has Role",
+        "LIFE Client Package Conversion Same Client Package To Package",
+        "Material Request",
+        "Purchase Invoice",
+        "Purchase Order"
+      ],
+      "notes": []
+    },
+    {
+      "id": "expenditure_api",
+      "source_name": "api for expendtiure",
+      "legacy_method": "expenditure_api",
+      "method": "life_slimming.api.server_scripts.expenditure_api.run",
+      "source_modified": "2026-06-03 23:16:14.859434",
+      "source_sha256": "8e9cd6d38dae5102d8fabee1db0b90c6f7dfddfe82c8b3d5633df6f461ce70ff",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "branch",
+        "from_date",
+        "names",
+        "payload",
+        "to_date"
+      ],
+      "doctypes": [
+        "Account",
+        "Branch",
+        "Employee",
+        "Journal Entry",
+        "Journal Entry Account",
+        "Payment Entry"
+      ],
+      "notes": []
+    },
+    {
+      "id": "apply_invoice_discount_net_final_v2",
+      "source_name": "apply_invoice_discount_NET_FINAL_V2",
+      "legacy_method": "apply_invoice_discount_NET_FINAL_V2",
+      "method": "life_slimming.api.server_scripts.apply_invoice_discount_net_final_v2.run",
+      "source_modified": "2026-09-07 23:10:20.010752",
+      "source_sha256": "b83fa24cebc60e8e57fca2c259fe6c3255bf77e29a98ab480a892e26577878a3",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "approved_amount",
+        "invoice_name",
+        "request_name"
+      ],
+      "doctypes": [
+        "Discount Approval Request",
+        "Sales Invoice"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_approval_report_conversion_action",
+      "source_name": "Approvals Report Conversion",
+      "legacy_method": "life_approval_report_conversion_action",
+      "method": "life_slimming.api.server_scripts.life_approval_report_conversion_action.run",
+      "source_modified": "2026-09-02 17:48:37.140745",
+      "source_sha256": "aff0f45d54ca4cd29edcb5c6c329ced8e50e0488a96976c7c50990276f725774",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "approver_employee",
+        "docname",
+        "doctype",
+        "operation",
+        "remarks",
+        "signature",
+        "table_edit_reason",
+        "table_rows_json"
+      ],
+      "doctypes": [
+        "Employee",
+        "Has Role",
+        "Patient",
+        "Therapy Plan",
+        "Therapy Type",
+        "User",
+        "User Permission"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_asset_complaint",
+      "source_name": "Asset Master Complaint  Resolver Mail",
+      "legacy_method": "life_asset_complaint",
+      "method": "life_slimming.api.server_scripts.life_asset_complaint.run",
+      "source_modified": "2026-08-12 15:53:39.623399",
+      "source_sha256": "0a7d35afb7964720cf4136d50a1af81ada6cd89ed796539d5713547f97da9bfb",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "asset",
+        "branch",
+        "category",
+        "cc_to",
+        "details",
+        "priority",
+        "resolver",
+        "specific_issue"
+      ],
+      "doctypes": [
+        "User"
+      ],
+      "notes": []
+    },
+    {
+      "id": "therapy_plan_conversion_block_status",
+      "source_name": "block therapy session while conversion",
+      "legacy_method": "therapy_plan_conversion_block_status",
+      "method": "life_slimming.api.server_scripts.therapy_plan_conversion_block_status.run",
+      "source_modified": "2026-07-28 15:26:10.616395",
+      "source_sha256": "208fd770f40b66d38aadee84c9b25fd3e75d21aee20ea8aac7894e27469a7bc6",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "therapy_plan"
+      ],
+      "doctypes": [],
+      "notes": []
+    },
+    {
+      "id": "life_audit_branch_access",
+      "source_name": "Branch Audit Report For Master Report",
+      "legacy_method": "life_audit_branch_access",
+      "method": "life_slimming.api.server_scripts.life_audit_branch_access.run",
+      "source_modified": "2026-07-27 13:28:25.996639",
+      "source_sha256": "490a93e68bb01eac583d5e4817f776192b0ca51125cfa1c54aca8018685d775f",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "from_date",
+        "sort",
+        "status",
+        "to_date"
+      ],
+      "doctypes": [
+        "Branch",
+        "Branch Audit",
+        "Employee",
+        "User",
+        "User Permission"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_audit_topic_approval",
+      "source_name": "Branch Audit Sending Mails Testing",
+      "legacy_method": "life_audit_topic_approval",
+      "method": "life_slimming.api.server_scripts.life_audit_topic_approval.run",
+      "source_modified": "2026-07-27 13:27:02.182569",
+      "source_sha256": "30635d31afe5da55fdfb319b489572de5a4f318538992ad956f4f8309dbc1a4e",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "approval_page_url",
+        "approval_remarks",
+        "enabled",
+        "evidence_attachment",
+        "from_date",
+        "is_critical_item",
+        "item_name",
+        "justification",
+        "points",
+        "proposed_topic",
+        "request_name",
+        "section",
+        "sort",
+        "status",
+        "to_date"
+      ],
+      "doctypes": [
+        "Branch",
+        "Branch Audit",
+        "Branch Audit Item",
+        "Branch Audit Section",
+        "Custom Field",
+        "DocField",
+        "Has Role",
+        "ToDo",
+        "User"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_get_expenditure_branch_employees",
+      "source_name": "Branch Expenditure Employees Name",
+      "legacy_method": "life_get_expenditure_branch_employees",
+      "method": "life_slimming.api.server_scripts.life_get_expenditure_branch_employees.run",
+      "source_modified": "2026-07-29 14:26:48.155946",
+      "source_sha256": "bb038a3e83486dd7399d91947e1a69f44eb0145fb88843a72fec2e9e978d4297",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "branch",
+        "search_term"
+      ],
+      "doctypes": [
+        "Employee",
+        "Employee Branches",
+        "Has Role",
+        "User Permission"
+      ],
+      "notes": []
+    },
+    {
+      "id": "get_branch_verification_data",
+      "source_name": "Branch Verification And Information Form",
+      "legacy_method": "get_branch_verification_data",
+      "method": "life_slimming.api.server_scripts.get_branch_verification_data.run",
+      "source_modified": "2026-06-03 23:16:15.178242",
+      "source_sha256": "2e1533324433703a4d0eeeeb91502783a8340f8bfae0c34ef211b54a230399a7",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Patient",
+        "Payment Entry",
+        "Therapy Plan"
+      ],
+      "notes": [
+        "Function-only Server Script: the native entry now invokes get_branch_verification_data."
+      ]
+    },
+    {
+      "id": "life_cc_agent_marketing_data",
+      "source_name": "Branch visit report",
+      "legacy_method": "life_cc_agent_marketing_data",
+      "method": "life_slimming.api.server_scripts.life_cc_agent_marketing_data.run",
+      "source_modified": "2026-09-04 14:44:12.586677",
+      "source_sha256": "b5329b9a5bdc4fb7e7608a8a5c658f9b65c450fbf246a230c3257772adfec83a",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "agent_owner",
+        "from_date",
+        "to_date"
+      ],
+      "doctypes": [
+        "Has Role",
+        "Lead",
+        "Lead Source",
+        "Patient",
+        "Payment Entry",
+        "Payment Entry Reference",
+        "Sales Invoice",
+        "Therapy Plan",
+        "User"
+      ],
+      "notes": []
+    },
+    {
+      "id": "branch_cluster_target_achievement_api",
+      "source_name": "branch_cluster_target_achievement_api",
+      "legacy_method": "branch_cluster_target_achievement_api",
+      "method": "life_slimming.api.server_scripts.branch_cluster_target_achievement_api.run",
+      "source_modified": "2026-09-18 18:28:30.205450",
+      "source_sha256": "02a6b69dd6160f3da65989316d13870e2fe3dd3400a7bc90014f46d407e2c748",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Lead",
+        "Payment Entry",
+        "Week Achive",
+        "Week Target vs Achive With Cuttings"
+      ],
+      "notes": []
+    },
+    {
+      "id": "branch_command_center",
+      "source_name": "branch_command_center",
+      "legacy_method": "branch_command_center",
+      "method": "life_slimming.api.server_scripts.branch_command_center.run",
+      "source_modified": "2026-09-11 08:18:35.500245",
+      "source_sha256": "f41ada4e6c9cc5898a37974c8a466f6b4afe071c99218c61573088a7f9c4fbcd",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "branch",
+        "from_date",
+        "to_date"
+      ],
+      "doctypes": [
+        "Attendance",
+        "Bin",
+        "Custom Field",
+        "Employee",
+        "Grievance Ticket",
+        "Has Role",
+        "Healthcare Practitioner",
+        "Item",
+        "Lead",
+        "Payment Entry",
+        "Payment Entry Reference",
+        "Sales Invoice",
+        "Therapy Plan",
+        "ToDo",
+        "User Permission",
+        "Week Achive",
+        "Week Target vs Achive With Cuttings"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_stock_cancel_test_transactions",
+      "source_name": "Cancelling MR and Stock entries",
+      "legacy_method": "life_stock_cancel_test_transactions",
+      "method": "life_slimming.api.server_scripts.life_stock_cancel_test_transactions.run",
+      "source_modified": "2026-09-16 00:57:44.247253",
+      "source_sha256": "ce048bc7e25f06d83a30a70b0201bf10add09bd7e44d4c6ebb5078fb0180d4b6",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "payload"
+      ],
+      "doctypes": [
+        "Has Role"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_stock_finalize_test_material_requests",
+      "source_name": "Cancelling MR's",
+      "legacy_method": "life_stock_finalize_test_material_requests",
+      "method": "life_slimming.api.server_scripts.life_stock_finalize_test_material_requests.run",
+      "source_modified": "2026-08-03 11:21:54.682986",
+      "source_sha256": "5afec2a06a2dd5427e73f9a7471207e407083bdca87bf2a470a8b9669ad4461c",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "payload"
+      ],
+      "doctypes": [
+        "Has Role",
+        "Workflow"
+      ],
+      "notes": []
+    },
+    {
+      "id": "cc_add_lead_followup",
+      "source_name": "cc_add_lead_followup",
+      "legacy_method": "cc_add_lead_followup",
+      "method": "life_slimming.api.server_scripts.cc_add_lead_followup.run",
+      "source_modified": "2026-08-13 13:28:02.051118",
+      "source_sha256": "da4dc3f759b833dd4454c0069523820950642b039f1d6a3e7bef02bc966fe1f6",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Followup",
+        "Lead"
+      ],
+      "notes": []
+    },
+    {
+      "id": "cc_create_lead",
+      "source_name": "cc_create_lead",
+      "legacy_method": "cc_create_lead",
+      "method": "life_slimming.api.server_scripts.cc_create_lead.run",
+      "source_modified": "2026-09-17 10:24:41.373281",
+      "source_sha256": "d438004c6cdac37db52f88a79ae7ff0a3b7bc052d8fb5aeb32f1fbb8e6817ec3",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "values"
+      ],
+      "doctypes": [
+        "Has Role",
+        "Lead"
+      ],
+      "notes": []
+    },
+    {
+      "id": "cc_get_lead_history",
+      "source_name": "cc_get_lead_history",
+      "legacy_method": "cc_get_lead_history",
+      "method": "life_slimming.api.server_scripts.cc_get_lead_history.run",
+      "source_modified": "2026-07-15 12:49:46.662254",
+      "source_sha256": "af846976eb67a792735b1af119d2cb76bfc479058be7e9d4bcaffb5235a31bc4",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "lead"
+      ],
+      "doctypes": [
+        "Has Role",
+        "Version"
+      ],
+      "notes": []
+    },
+    {
+      "id": "cc_get_leads",
+      "source_name": "cc_get_leads",
+      "legacy_method": "cc_get_leads",
+      "method": "life_slimming.api.server_scripts.cc_get_leads.run",
+      "source_modified": "2026-08-31 11:25:59.869277",
+      "source_sha256": "845001974659fc0c68404752471e6777d48f24cf282ec532cf30b558aeedacbf",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "date_mode",
+        "from_date",
+        "phone",
+        "to_date"
+      ],
+      "doctypes": [
+        "Has Role",
+        "Lead"
+      ],
+      "notes": []
+    },
+    {
+      "id": "cc_lead_owner_history",
+      "source_name": "cc_lead_owner_history",
+      "legacy_method": "cc_lead_owner_history",
+      "method": "life_slimming.api.server_scripts.cc_lead_owner_history.run",
+      "source_modified": "2026-08-16 03:04:20.420992",
+      "source_sha256": "22a3746b32e5ca52557097ced5f02934d400ce942e27d91ddb56f869c7700354",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "lead_ids"
+      ],
+      "doctypes": [
+        "Has Role",
+        "Lead",
+        "Version"
+      ],
+      "notes": []
+    },
+    {
+      "id": "cc_set_visit_status",
+      "source_name": "cc_set_visit_status",
+      "legacy_method": "cc_set_visit_status",
+      "method": "life_slimming.api.server_scripts.cc_set_visit_status.run",
+      "source_modified": "2026-08-23 12:46:07.981345",
+      "source_sha256": "259be091cd69ec132dea402131e65c24989ba846cecf8e8e4656ca2377caceaa",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "lead",
+        "visit_status"
+      ],
+      "doctypes": [
+        "Lead"
+      ],
+      "notes": []
+    },
+    {
+      "id": "cc_update_lead",
+      "source_name": "cc_update_lead",
+      "legacy_method": "cc_update_lead",
+      "method": "life_slimming.api.server_scripts.cc_update_lead.run",
+      "source_modified": "2026-09-06 14:53:19.081176",
+      "source_sha256": "8ce32d317647b294c171fecc127c8e6c4a23d0e193c11d946611451fd9bfa505",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "lead",
+        "values"
+      ],
+      "doctypes": [
+        "Has Role",
+        "Lead"
+      ],
+      "notes": []
+    },
+    {
+      "id": "cc_walkin_details",
+      "source_name": "cc_walkin_details",
+      "legacy_method": "cc_walkin_details",
+      "method": "life_slimming.api.server_scripts.cc_walkin_details.run",
+      "source_modified": "2026-09-13 11:53:14.048654",
+      "source_sha256": "211345f22ea7398579e4c909b38c82abf5a6ec76287e9af3ac46233460e50ac5",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "lead"
+      ],
+      "doctypes": [
+        "Comment",
+        "File",
+        "Lead",
+        "Patient"
+      ],
+      "notes": []
+    },
+    {
+      "id": "cc_walkin_update",
+      "source_name": "cc_walkin_update",
+      "legacy_method": "cc_walkin_update",
+      "method": "life_slimming.api.server_scripts.cc_walkin_update.run",
+      "source_modified": "2026-09-13 12:17:18.756149",
+      "source_sha256": "8ccd87442e6d35e86b9c78bcfcaf7dc9c6f6869df4f5065a797e10a28afed8d8",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "employee",
+        "lead",
+        "remarks",
+        "status"
+      ],
+      "doctypes": [
+        "Employee",
+        "File",
+        "Healthcare Practitioner",
+        "Lead",
+        "PD Form",
+        "Patient"
+      ],
+      "notes": []
+    },
+    {
+      "id": "cc_walkins_range",
+      "source_name": "cc_walkins_range",
+      "legacy_method": "cc_walkins_range",
+      "method": "life_slimming.api.server_scripts.cc_walkins_range.run",
+      "source_modified": "2026-09-13 12:17:18.706500",
+      "source_sha256": "187e66fa0df2e4398e64189d3d4300870a22b4a3ddc76505c1a88e24f7ad3228",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "branch",
+        "from_date",
+        "to_date"
+      ],
+      "doctypes": [
+        "Employee",
+        "File",
+        "Healthcare Practitioner",
+        "Lead",
+        "Patient",
+        "User"
+      ],
+      "notes": []
+    },
+    {
+      "id": "cc_worksheet",
+      "source_name": "cc_worksheet",
+      "legacy_method": "cc_worksheet",
+      "method": "life_slimming.api.server_scripts.cc_worksheet.run",
+      "source_modified": "2026-07-31 05:55:38.130652",
+      "source_sha256": "f46ae00b9ed8c206ac62798eaabbc9835738cc52a9a24d1627817bcad4e87096",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "name",
+        "rows"
+      ],
+      "doctypes": [
+        "CC Worksheet",
+        "Has Role"
+      ],
+      "notes": []
+    },
+    {
+      "id": "check_be_available",
+      "source_name": "check_be_available",
+      "legacy_method": "check_be_available",
+      "method": "life_slimming.api.server_scripts.check_be_available.run",
+      "source_modified": "2026-08-18 19:54:49.581286",
+      "source_sha256": "6240313c53ede571f151a5b5c0e9b81aef33a28c6430f9298d2e2ded81ac5a14",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Attendance",
+        "Employee"
+      ],
+      "notes": []
+    },
+    {
+      "id": "send_client_conversion_step_email",
+      "source_name": "Client  Package Conversion Cloent To Client-Emails",
+      "legacy_method": "send_client_conversion_step_email",
+      "method": "life_slimming.api.server_scripts.send_client_conversion_step_email.run",
+      "source_modified": "2026-06-15 15:51:55.464563",
+      "source_sha256": "3ca5e77cdeba451f357c057e60b89099486193b1220ab8e5ca5d2aa77269bf95",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "docname",
+        "next_step"
+      ],
+      "doctypes": [],
+      "notes": []
+    },
+    {
+      "id": "life_ops_update_appointment_status",
+      "source_name": "Client Appointment status update",
+      "legacy_method": "life_ops_update_appointment_status",
+      "method": "life_slimming.api.server_scripts.life_ops_update_appointment_status.run",
+      "source_modified": "2026-07-20 19:47:26.614626",
+      "source_sha256": "a62768292e420813e4081f178c2a1b1eb1452b12477ab4604d2ca436c3c96e15",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "appointment_name",
+        "new_appointment_date",
+        "new_appointment_time",
+        "new_status",
+        "status"
+      ],
+      "doctypes": [
+        "Patient Appointment"
+      ],
+      "notes": []
+    },
+    {
+      "id": "get_package_details",
+      "source_name": "Client Package Conversion Client To Client",
+      "legacy_method": "get_package_details",
+      "method": "life_slimming.api.server_scripts.get_package_details.run",
+      "source_modified": "2026-06-03 23:16:15.279951",
+      "source_sha256": "812b901768a74af4cbc11d1322ec4329e57df29dbd14ac97b20b12dc521e4595",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Client Package Conversion Client To Client",
+        "Therapy Type"
+      ],
+      "notes": [
+        "Function-only Server Script: the native entry now invokes get_client_packages."
+      ]
+    },
+    {
+      "id": "get_client_package_conversion_data",
+      "source_name": "Client Package Conversion Same Client Package to Package",
+      "legacy_method": "get_client_package_conversion_data",
+      "method": "life_slimming.api.server_scripts.get_client_package_conversion_data.run",
+      "source_modified": "2026-06-03 23:16:15.192124",
+      "source_sha256": "e96dda4c7dec4ede07254c84d48c5b23e4dab0de0ccecbf2c9023b7113d1f53f",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Patient",
+        "Payment Entry",
+        "Therapy Plan"
+      ],
+      "notes": [
+        "Function-only Server Script: the native entry now invokes client_package_conversion_data."
+      ]
+    },
+    {
+      "id": "send_refund_step_email",
+      "source_name": "Client Refund Request Form",
+      "legacy_method": "send_refund_step_email",
+      "method": "life_slimming.api.server_scripts.send_refund_step_email.run",
+      "source_modified": "2026-06-03 23:16:15.322660",
+      "source_sha256": "64cd12c028414821bb4cde1ef802ec6930989990193d0b29fd112b1eed36d853",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "docname",
+        "next_step"
+      ],
+      "doctypes": [
+        "Client Refund Request Form"
+      ],
+      "notes": []
+    },
+    {
+      "id": "send_request_complaint_step_email",
+      "source_name": "Client Request And Complaint Form-Auto Fetch And Emails",
+      "legacy_method": "send_request_complaint_step_email",
+      "method": "life_slimming.api.server_scripts.send_request_complaint_step_email.run",
+      "source_modified": "2026-06-03 23:16:15.374289",
+      "source_sha256": "b55f6ddd41be8f903be39f4f63637e7ef04c0a9df7ab82dcc69dc0749c5f6c8c",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "docname",
+        "next_step"
+      ],
+      "doctypes": [
+        "Client Request And Complaint Form"
+      ],
+      "notes": []
+    },
+    {
+      "id": "client_stock_entries_api_v14",
+      "source_name": "Client Stock Entries API V14",
+      "legacy_method": "client_stock_entries_api_v14",
+      "method": "life_slimming.api.server_scripts.client_stock_entries_api_v14.run",
+      "source_modified": "2026-09-11 13:05:45.826739",
+      "source_sha256": "3b54958664412acf92c18d2199427a7deeed8de11c96571ae3aa0b5557255d17",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "patient"
+      ],
+      "doctypes": [
+        "Patient",
+        "Stock Entry",
+        "Stock Entry Detail"
+      ],
+      "notes": []
+    },
+    {
+      "id": "send_client_transfer_step_email",
+      "source_name": "Client Transfer Request Form -Emalis",
+      "legacy_method": "send_client_transfer_step_email",
+      "method": "life_slimming.api.server_scripts.send_client_transfer_step_email.run",
+      "source_modified": "2026-06-03 23:16:15.362770",
+      "source_sha256": "ec784015c5fcab3c7100d69b0c0025f0f420865a1fbfe71433775586402a5fa3",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "docname",
+        "next_step"
+      ],
+      "doctypes": [
+        "Client Transfer Request Form"
+      ],
+      "notes": []
+    },
+    {
+      "id": "get_client_transfer_web_details",
+      "source_name": "Client Transfer Request Form-Web Form Data Fetch",
+      "legacy_method": "get_client_transfer_web_details",
+      "method": "life_slimming.api.server_scripts.get_client_transfer_web_details.run",
+      "source_modified": "2026-06-03 23:16:15.290973",
+      "source_sha256": "edbb3e282a0b1cdcc024c39e45a2ff8a8ed3bb61bd9372cba605ab0603fcde1d",
+      "allow_guest": false,
+      "source_allow_guest": true,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "patient"
+      ],
+      "doctypes": [
+        "Patient",
+        "Sales Invoice",
+        "Therapy Plan"
+      ],
+      "notes": [
+        "Patient-data endpoint now requires authentication and Patient read permission."
+      ]
+    },
+    {
+      "id": "cluster_dashboard_api",
+      "source_name": "cluster_dashboard_api",
+      "legacy_method": "cluster_dashboard_api",
+      "method": "life_slimming.api.server_scripts.cluster_dashboard_api.run",
+      "source_modified": "2026-08-27 12:17:37.554461",
+      "source_sha256": "5bb8e8849824175bc163b9514588c9af91d7296f6c2431a49f917b3620a37eb9",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Payment Entry",
+        "Sales Invoice"
+      ],
+      "notes": []
+    },
+    {
+      "id": "create_multiple_discount_approval_requests_v2",
+      "source_name": "create_multiple_discount_approval_requests_v2",
+      "legacy_method": "create_multiple_discount_approval_requests_v2",
+      "method": "life_slimming.api.server_scripts.create_multiple_discount_approval_requests_v2.run",
+      "source_modified": "2026-09-07 23:10:48.464301",
+      "source_sha256": "68185295014067737b2951feae8042f0153436edd575d3fc27cf84e1b2fd77da",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "invoice_name",
+        "requests"
+      ],
+      "doctypes": [
+        "Discount Approval Request",
+        "Discount Approver Master",
+        "Sales Invoice"
+      ],
+      "notes": []
+    },
+    {
+      "id": "create_po_from_indent360__72bd3525",
+      "source_name": "create_po_from_indent360",
+      "legacy_method": "create_po_from_indent360",
+      "method": "life_slimming.api.server_scripts.create_po_from_indent360__72bd3525.run",
+      "source_modified": "2026-08-18 08:53:10.411416",
+      "source_sha256": "1dfbb8248cbcd39b9a0c39083179448cfe82ce609258659c7f2a79e740f28a9e",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "cart"
+      ],
+      "doctypes": [
+        "Global Defaults",
+        "Item",
+        "Purchase Order",
+        "Supplier"
+      ],
+      "notes": [
+        "Duplicate original API method: use this explicit local endpoint; no ambiguous alias."
+      ]
+    },
+    {
+      "id": "create_discount_approval_request",
+      "source_name": "Discount approval test new billing",
+      "legacy_method": "create_discount_approval_request",
+      "method": "life_slimming.api.server_scripts.create_discount_approval_request.run",
+      "source_modified": "2026-09-03 06:23:47.946170",
+      "source_sha256": "53ce5c75a2e6f742757ebed51b22d7ef87e3e16c4b371d4b76a17bc709ad8bec",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "approval_level",
+        "invoice_name",
+        "reason",
+        "requested_discount_pct",
+        "requested_final_amount",
+        "selected_approver"
+      ],
+      "doctypes": [
+        "Discount Approval Request",
+        "Sales Invoice"
+      ],
+      "notes": []
+    },
+    {
+      "id": "dues_recovery_data",
+      "source_name": "dues_recovery_data",
+      "legacy_method": "dues_recovery_data",
+      "method": "life_slimming.api.server_scripts.dues_recovery_data.run",
+      "source_modified": "2026-07-25 23:09:36.354447",
+      "source_sha256": "b52c2d7b4eaf809fcf1fbfae02e6a6b1dc06e54ca25a93acc9fc7a0ce7bd866f",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Dues Recovery Update",
+        "Healthcare Practitioner",
+        "Sales Invoice",
+        "Sales Invoice Item",
+        "User Permission"
+      ],
+      "notes": []
+    },
+    {
+      "id": "dues_recovery_save",
+      "source_name": "dues_recovery_save",
+      "legacy_method": "dues_recovery_save",
+      "method": "life_slimming.api.server_scripts.dues_recovery_save.run",
+      "source_modified": "2026-07-25 23:09:36.418398",
+      "source_sha256": "f3353bee30a0ca89cade66200eb6b756ecf05a774901f25e51985d9f011e881e",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Dues Recovery Update"
+      ],
+      "notes": []
+    },
+    {
+      "id": "essl_manual_sync",
+      "source_name": "ESSL Manual Sync Trigger",
+      "legacy_method": "essl_manual_sync",
+      "method": "life_slimming.api.server_scripts.essl_manual_sync.run",
+      "source_modified": "2026-06-03 23:16:15.437803",
+      "source_sha256": "faee38d1805af6816c65494a2ac9d75b0fc5149ccd21ade612b7e55b0300285c",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Attendance",
+        "Employee"
+      ],
+      "notes": []
+    },
+    {
+      "id": "essl_biometric_checkin",
+      "source_name": "essl_biometric_checkin",
+      "legacy_method": "essl_biometric_checkin",
+      "method": "life_slimming.api.server_scripts.essl_biometric_checkin.run",
+      "source_modified": "2026-06-03 23:16:14.957526",
+      "source_sha256": "d40cd18da0837793b6e00405d281424e449143e3923450c9b6e7c3cda2522a93",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Employee",
+        "Employee Checkin"
+      ],
+      "notes": [
+        "Function-only Server Script: the native entry now invokes essl_biometric_checkin."
+      ]
+    },
+    {
+      "id": "life_rise_api_get_session_details",
+      "source_name": "feedback",
+      "legacy_method": "life_rise.api.get_session_details",
+      "method": "life_slimming.api.server_scripts.life_rise_api_get_session_details.run",
+      "source_modified": "2026-06-03 23:16:14.737964",
+      "source_sha256": "5a979a0ad59b3f7ddc6c973de4a7ab9fbbab5ff46fd0f0d12fd293e91420169c",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Therapy Session"
+      ],
+      "notes": [
+        "Function-only Server Script: the native entry now invokes get_session_details."
+      ]
+    },
+    {
+      "id": "fetch_branch_data",
+      "source_name": "fetch_branch_data",
+      "legacy_method": "fetch_branch_data",
+      "method": "life_slimming.api.server_scripts.fetch_branch_data.run",
+      "source_modified": "2026-06-03 23:16:14.875797",
+      "source_sha256": "6aa401f9b59c00a33c5cd920cc1e6815619de3f336e5038dd6e5599717d2ab88",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "doc_name",
+        "from_date",
+        "last_month_from",
+        "last_month_to",
+        "to_date"
+      ],
+      "doctypes": [
+        "Payment Entry",
+        "Week Target vs Achive With Cuttings"
+      ],
+      "notes": []
+    },
+    {
+      "id": "apply_invoice_discount_net_final",
+      "source_name": "final approval test",
+      "legacy_method": "apply_invoice_discount_NET_FINAL",
+      "method": "life_slimming.api.server_scripts.apply_invoice_discount_net_final.run",
+      "source_modified": "2026-09-03 15:22:20.509382",
+      "source_sha256": "02f1a26b1f545f4e73849741d03360d2c3378d58de68c50837960187cca95cc0",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "approved_amount",
+        "invoice_name"
+      ],
+      "doctypes": [
+        "Discount Approval Request",
+        "Sales Invoice"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_translate_telugu",
+      "source_name": "Followup master diet english to telugu transfer",
+      "legacy_method": "life_translate_telugu",
+      "method": "life_slimming.api.server_scripts.life_translate_telugu.run",
+      "source_modified": "2026-08-19 11:41:44.950734",
+      "source_sha256": "696e56fdf30b02d391a183a023f16f8c79c037e4b0002d36236cfe204c119ad9",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "text"
+      ],
+      "doctypes": [],
+      "notes": [
+        "Translation key is read from local site config: life_google_translate_api_key."
+      ]
+    },
+    {
+      "id": "followup_master_api",
+      "source_name": "followup_master_api",
+      "legacy_method": "followup_master_api",
+      "method": "life_slimming.api.server_scripts.followup_master_api.run",
+      "source_modified": "2026-07-31 19:50:19.546332",
+      "source_sha256": "e9a07a9ae312bd5275e54a11761553fb123f9e1f0b658a47edb1c22dd7033da4",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "branch"
+      ],
+      "doctypes": [
+        "Branch",
+        "Employee",
+        "LIFE Diet Chart",
+        "LIFE Followup",
+        "Lead",
+        "Patient",
+        "Sales Invoice",
+        "User"
+      ],
+      "notes": []
+    },
+    {
+      "id": "get_branch_employees",
+      "source_name": "Get Branch Employees",
+      "legacy_method": "get_branch_employees",
+      "method": "life_slimming.api.server_scripts.get_branch_employees.run",
+      "source_modified": "2026-06-03 23:16:14.783764",
+      "source_sha256": "efe1700a8f72cdbb6b6227fb3ee2b786328d166244a95b6f093348f771d606ae",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "branch"
+      ],
+      "doctypes": [
+        "Employee"
+      ],
+      "notes": []
+    },
+    {
+      "id": "get_user_branch",
+      "source_name": "Get Current User's Branch",
+      "legacy_method": "get_user_branch",
+      "method": "life_slimming.api.server_scripts.get_user_branch.run",
+      "source_modified": "2026-06-03 23:16:14.846679",
+      "source_sha256": "6c447ae536909165b288c65d22fc8d33910af7764381f96eba9ba94c185e6ea8",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Employee",
+        "Has Role",
+        "User Permission"
+      ],
+      "notes": []
+    },
+    {
+      "id": "get_expenditure_history",
+      "source_name": "Get Expenditure History",
+      "legacy_method": "get_expenditure_history",
+      "method": "life_slimming.api.server_scripts.get_expenditure_history.run",
+      "source_modified": "2026-06-03 23:16:14.793776",
+      "source_sha256": "c677dce4aef868abcb05ad3998acfdbd5b39631e3b98e711d039f45462c16485",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "branch"
+      ],
+      "doctypes": [
+        "Journal Entry",
+        "Journal Entry Account"
+      ],
+      "notes": []
+    },
+    {
+      "id": "get_branch_approvers",
+      "source_name": "get_branch_approvers",
+      "legacy_method": "get_branch_approvers",
+      "method": "life_slimming.api.server_scripts.get_branch_approvers.run",
+      "source_modified": "2026-09-04 18:49:43.096760",
+      "source_sha256": "0fab780a52c89a747a0d19f5125e189518c6da69b9463541a881288001386fdf",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "invoice_name"
+      ],
+      "doctypes": [
+        "Discount Approval Request",
+        "Discount Approver Master",
+        "Sales Invoice"
+      ],
+      "notes": []
+    },
+    {
+      "id": "get_branch_consultants",
+      "source_name": "get_branch_consultants",
+      "legacy_method": "get_branch_consultants",
+      "method": "life_slimming.api.server_scripts.get_branch_consultants.run",
+      "source_modified": "2026-06-03 23:16:14.934631",
+      "source_sha256": "78209b9ed1b438ce505d92f058d82abdaa48a0b5586698c03e67ff7b7bb29fae",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "branch",
+        "txt"
+      ],
+      "doctypes": [
+        "Healthcare Practitioner",
+        "Practitioner Branches"
+      ],
+      "notes": []
+    },
+    {
+      "id": "get_collection_gst_data",
+      "source_name": "get_collection_gst_data",
+      "legacy_method": "get_collection_gst_data",
+      "method": "life_slimming.api.server_scripts.get_collection_gst_data.run",
+      "source_modified": "2026-09-16 17:47:49.061148",
+      "source_sha256": "2a2fe085636330682ed47108dd9992cbdbeadcb2ef61c295dec91f7a8fa3c85e",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "from_date",
+        "to_date"
+      ],
+      "doctypes": [
+        "Branch",
+        "Payment Entry",
+        "Payment Entry Reference",
+        "Sales Invoice"
+      ],
+      "notes": []
+    },
+    {
+      "id": "get_media_sale_data",
+      "source_name": "get_media_sale_data",
+      "legacy_method": "get_media_sale_data",
+      "method": "life_slimming.api.server_scripts.get_media_sale_data.run",
+      "source_modified": "2026-08-17 19:20:48.592311",
+      "source_sha256": "13b946ea0cc138e85f59e2bc7beb3ce22c3d2663e64052d23b0be9e4cb32900d",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "from_date",
+        "to_date"
+      ],
+      "doctypes": [
+        "Patient",
+        "Payment Entry",
+        "Payment Entry Reference",
+        "Sales Invoice",
+        "Therapy Plan"
+      ],
+      "notes": []
+    },
+    {
+      "id": "get_media_sale_testing",
+      "source_name": "get_media_sale_testing",
+      "legacy_method": "get_media_sale_testing",
+      "method": "life_slimming.api.server_scripts.get_media_sale_testing.run",
+      "source_modified": "2026-08-17 19:20:26.262798",
+      "source_sha256": "e9f37cd1c2674f3d379aeb5379a892dcd3b2a72b239f7fa6bb8fa4ca1385ba79",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "from_date",
+        "to_date"
+      ],
+      "doctypes": [
+        "Patient",
+        "Payment Entry",
+        "Payment Entry Reference",
+        "Sales Invoice",
+        "Therapy Plan"
+      ],
+      "notes": []
+    },
+    {
+      "id": "get_practitioners_by_branch",
+      "source_name": "get_practitioners_by_branch",
+      "legacy_method": "get_practitioners_by_branch",
+      "method": "life_slimming.api.server_scripts.get_practitioners_by_branch.run",
+      "source_modified": "2026-06-03 23:16:15.166304",
+      "source_sha256": "7cab39c4794b52bf3183b78eb5aa76958f84cdca43553c1441b827cfb3b01069",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Healthcare Practitioner"
+      ],
+      "notes": []
+    },
+    {
+      "id": "get_reference_referral_summary",
+      "source_name": "get_reference_referral_summary",
+      "legacy_method": null,
+      "method": "life_slimming.api.server_scripts.get_reference_referral_summary.run",
+      "source_modified": "2026-06-03 23:16:14.723028",
+      "source_sha256": "b530d9e331c7ab2b8ab552049d39d20714581cafb4e91e7404410bfaea277d1b",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "from_date",
+        "to_date"
+      ],
+      "doctypes": [
+        "Payment Entry",
+        "Payment Entry Reference",
+        "Sales Invoice"
+      ],
+      "notes": [
+        "Original API Method was blank; new local endpoint uses the script name."
+      ]
+    },
+    {
+      "id": "get_roster_employees",
+      "source_name": "get_roster_employees",
+      "legacy_method": "get_roster_employees",
+      "method": "life_slimming.api.server_scripts.get_roster_employees.run",
+      "source_modified": "2026-07-25 18:27:34.692036",
+      "source_sha256": "ebf491678d91bedffb73c19cd523a4f74d96f413247cc148c90549591dcba369",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "branch"
+      ],
+      "doctypes": [
+        "Employee",
+        "Has Role",
+        "User Permission"
+      ],
+      "notes": []
+    },
+    {
+      "id": "get_therapy_plans_for_patient",
+      "source_name": "get_therapy_plans_for_patient",
+      "legacy_method": "get_therapy_plans_for_patient",
+      "method": "life_slimming.api.server_scripts.get_therapy_plans_for_patient.run",
+      "source_modified": "2026-06-03 23:16:15.129041",
+      "source_sha256": "367edce92770e5e7c6287dbc2729a73470414421ae1ac152c28c4ea3655afcd6",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "patient"
+      ],
+      "doctypes": [
+        "Therapy Plan",
+        "Therapy Plan Detail"
+      ],
+      "notes": []
+    },
+    {
+      "id": "lead_assignment_configuration",
+      "source_name": "Lead Assignment Configuration API",
+      "legacy_method": "lead_assignment_configuration",
+      "method": "life_slimming.api.server_scripts.lead_assignment_configuration.run",
+      "source_modified": "2026-09-16 17:37:41.304336",
+      "source_sha256": "b86ffd6d042b7e10ee864117053dc0feb0b55ef9636b7b49a1566d8a67c8c82e",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "agent",
+        "auto_enabled",
+        "lead_sources",
+        "max_per_day",
+        "share_weight",
+        "stop_reason",
+        "team_leader",
+        "temporarily_stopped",
+        "use_conversion"
+      ],
+      "doctypes": [
+        "Attendance",
+        "Employee",
+        "Has Role",
+        "Lead",
+        "Lead Agent Config",
+        "Lead Assignment Settings",
+        "Lead Source",
+        "User"
+      ],
+      "notes": []
+    },
+    {
+      "id": "lead_assignment_preview",
+      "source_name": "Lead Assignment Preview API",
+      "legacy_method": "lead_assignment_preview",
+      "method": "life_slimming.api.server_scripts.lead_assignment_preview.run",
+      "source_modified": "2026-09-16 16:43:06.608562",
+      "source_sha256": "edf66cd68b9e9d21e7a3baae5f7eea53afaa2448d7a815981f8420f1765419b6",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "source"
+      ],
+      "doctypes": [
+        "Attendance",
+        "Employee",
+        "Has Role",
+        "Lead",
+        "Lead Agent Config",
+        "Lead Assignment Settings"
+      ],
+      "notes": []
+    },
+    {
+      "id": "lead_owner_names",
+      "source_name": "lead_owner_names",
+      "legacy_method": "lead_owner_names",
+      "method": "life_slimming.api.server_scripts.lead_owner_names.run",
+      "source_modified": "2026-08-25 05:28:11.463926",
+      "source_sha256": "cfb1c6fd51053a438ff6caad98594040dd5fc77f31c73f7c45affb87073d990e",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "leads"
+      ],
+      "doctypes": [
+        "Lead",
+        "User"
+      ],
+      "notes": []
+    },
+    {
+      "id": "send_same_client_conversion_step_email",
+      "source_name": "LIFE Client Package Conversion Same Client Package To Package",
+      "legacy_method": "send_same_client_conversion_step_email",
+      "method": "life_slimming.api.server_scripts.send_same_client_conversion_step_email.run",
+      "source_modified": "2026-06-03 23:16:15.351540",
+      "source_sha256": "9e5eae094dc914cfc77a3323cb3c22a2439af0e07d2dbbb1abb66707df9eb384",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "docname",
+        "next_step"
+      ],
+      "doctypes": [
+        "LIFE Client Package Conversion Same Client Package To Package"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_convox_call_popup",
+      "source_name": "LIFE ConVox Call Popup API",
+      "legacy_method": "life_convox_call_popup",
+      "method": "life_slimming.api.server_scripts.life_convox_call_popup.run",
+      "source_modified": "2026-09-17 10:58:42.090050",
+      "source_sha256": "97d3c6579215c2ca309f7fb112152c4ada9b205832373b4095595d58b8b474fc",
+      "allow_guest": true,
+      "source_allow_guest": true,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "ConVox Call Event",
+        "System Settings"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_convox_call_status",
+      "source_name": "LIFE ConVox Call Status API",
+      "legacy_method": "life_convox_call_status",
+      "method": "life_slimming.api.server_scripts.life_convox_call_status.run",
+      "source_modified": "2026-09-17 15:33:58.926182",
+      "source_sha256": "90090d289c7b6213fe0d3b24afccd044823c8ff9e97bbdfa8da1d3e06c24e6fd",
+      "allow_guest": true,
+      "source_allow_guest": true,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "ConVox Call Event",
+        "System Settings"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_convox_api",
+      "source_name": "LIFE ConVox Click To Call API",
+      "legacy_method": "life_convox_api",
+      "method": "life_slimming.api.server_scripts.life_convox_api.run",
+      "source_modified": "2026-09-17 09:36:47.369089",
+      "source_sha256": "d67bf9a289d95fced98361c954dd3a4b462c107fcd01fe709b71a6a7bbc76736",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "lead_id"
+      ],
+      "doctypes": [
+        "Lead",
+        "System Settings",
+        "User"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_convox_frontend",
+      "source_name": "LIFE ConVox Frontend API",
+      "legacy_method": "life_convox_frontend",
+      "method": "life_slimming.api.server_scripts.life_convox_frontend.run",
+      "source_modified": "2026-09-17 15:33:58.876662",
+      "source_sha256": "86b5df2c9ea8b9b895c63be39f02059a294b54840588fc01dba81aef5aa29fd1",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "after",
+        "call_reference",
+        "lead_id",
+        "mobile_number"
+      ],
+      "doctypes": [
+        "ConVox Call Event",
+        "System Settings",
+        "User"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_data_correction_api",
+      "source_name": "LIFE Data Correction API",
+      "legacy_method": "life_data_correction_api",
+      "method": "life_slimming.api.server_scripts.life_data_correction_api.run",
+      "source_modified": "2026-09-19 18:23:28.448666",
+      "source_sha256": "61a5392dd578241531a3c30ac18e6412d4d2db503db44abf69c9c923ac1c5bf1",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "approved_changes",
+        "attachment_count",
+        "change_count",
+        "decision",
+        "reason",
+        "remarks",
+        "request",
+        "rule",
+        "search",
+        "source_display_name",
+        "source_document",
+        "status"
+      ],
+      "doctypes": [
+        "DocType",
+        "Employee",
+        "Has Role",
+        "LIFE Data Correction Request",
+        "LIFE Data Correction Rule",
+        "User"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_glp_prepare_client_v61",
+      "source_name": "LIFE GLP Prepare Client",
+      "legacy_method": "life_glp_prepare_client_v61",
+      "method": "life_slimming.api.server_scripts.life_glp_prepare_client_v61.run",
+      "source_modified": "2026-09-01 13:12:18.243250",
+      "source_sha256": "fa3e4afb2d02316109ae4124be8e217c4a47e9254951d3a107ec178bf6c5d4cf",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "payload"
+      ],
+      "doctypes": [
+        "Employee",
+        "File",
+        "Healthcare Practitioner",
+        "Lead",
+        "Patient"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_office_approval_action",
+      "source_name": "LIFE Office Approval Action",
+      "legacy_method": "life_office_approval_action",
+      "method": "life_slimming.api.server_scripts.life_office_approval_action.run",
+      "source_modified": "2026-09-17 20:31:58.578000",
+      "source_sha256": "c75dec6651ae07f5bf04212c5e6f9e096cfe2c85429763c683c338ebcfc47219",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Discount Approver Master",
+        "Employee",
+        "User"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_wati_daily_reports",
+      "source_name": "LIFE WATI Daily Reports API",
+      "legacy_method": "life_wati_daily_reports",
+      "method": "life_slimming.api.server_scripts.life_wati_daily_reports.run",
+      "source_modified": "2026-09-15 19:37:24.496147",
+      "source_sha256": "9a6b49d415a92c2d52d9a1dd00ef3bb8d9672caae326fb18410d1f4811d42212",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "force"
+      ],
+      "doctypes": [
+        "Attendance",
+        "Employee",
+        "LIFE WATI Daily Report",
+        "Server Script",
+        "Shift Assignment",
+        "Shift Type"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_accounts_dashboard",
+      "source_name": "life_accounts_dashboard",
+      "legacy_method": "life_accounts_dashboard",
+      "method": "life_slimming.api.server_scripts.life_accounts_dashboard.run",
+      "source_modified": "2026-07-15 05:48:22.486139",
+      "source_sha256": "a81681e2428657bc8303243eca7ae1cfdaa99ce15aba0c95a1aeb903f4a3e375",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "account",
+        "action",
+        "branch",
+        "cost_center",
+        "from_date",
+        "to_date"
+      ],
+      "doctypes": [
+        "Account",
+        "Cost Center",
+        "GL Entry",
+        "Journal Entry",
+        "Journal Entry Account"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_branch_therapy_stock_transfer",
+      "source_name": "life_branch_therapy_stock_transfer",
+      "legacy_method": "life_branch_therapy_stock_transfer",
+      "method": "life_slimming.api.server_scripts.life_branch_therapy_stock_transfer.run",
+      "source_modified": "2026-09-11 00:00:02.207242",
+      "source_sha256": "99293c458bbd3b726de2c38554e6b41595b29d3120ad6765ca4e71b432c92628",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "item_code",
+        "item_codes",
+        "quantities",
+        "source_warehouse",
+        "therapy_session"
+      ],
+      "doctypes": [
+        "Bin",
+        "Has Role",
+        "Item",
+        "Patient",
+        "Stock Entry",
+        "Therapy Session",
+        "User Permission"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_discount_invoice_report",
+      "source_name": "life_discount_invoice_report",
+      "legacy_method": "life_discount_invoice_report",
+      "method": "life_slimming.api.server_scripts.life_discount_invoice_report.run",
+      "source_modified": "2026-09-07 20:40:04.179648",
+      "source_sha256": "186707b966c45dba516e35fb574a3d639f2480e15f15c71d72719ba2da7dee71",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Branch",
+        "Discount Approval Request",
+        "Has Role",
+        "Payment Entry",
+        "Payment Entry Reference",
+        "Sales Invoice",
+        "User"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_get_template_offer_price",
+      "source_name": "life_get_template_offer_price",
+      "legacy_method": "life_get_template_offer_price",
+      "method": "life_slimming.api.server_scripts.life_get_template_offer_price.run",
+      "source_modified": "2026-09-14 16:11:53.010009",
+      "source_sha256": "edb527794bad0ae2879e29cd36add5a88795b7805b571a04b4a784f5645608f4",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Bin",
+        "DocField",
+        "DocType",
+        "Employee",
+        "Global Defaults",
+        "Item",
+        "Item Supplier",
+        "LIFE Stock Receipt Adjustment Item",
+        "LIFE Stock Receipt Adjustment Request",
+        "LIFE Stock Request Settings",
+        "Material Request",
+        "Material Request Item",
+        "Patient",
+        "Purchase Invoice",
+        "Purchase Order",
+        "Purchase Order Item",
+        "Purchase Receipt",
+        "Purchase Receipt Item",
+        "Special Material Request Detail",
+        "Stock Entry",
+        "Stock Entry Detail",
+        "Supplier",
+        "Therapy Plan",
+        "User",
+        "Warehouse"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_hrms_360_api",
+      "source_name": "life_hrms_360_api",
+      "legacy_method": "life_hrms_360_api",
+      "method": "life_slimming.api.server_scripts.life_hrms_360_api.run",
+      "source_modified": "2026-09-13 16:00:32.402098",
+      "source_sha256": "c633775feab9d373e65417dd97a7dd68184b51775128fb9f0dcb67bf649d49db",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "action_taken",
+        "active",
+        "against",
+        "against_party",
+        "allocated_to",
+        "announcement",
+        "announcement_message",
+        "applicant_name",
+        "appointment_date",
+        "appointment_letter_template",
+        "appraisal",
+        "appraisal_cycle",
+        "appraisal_template",
+        "asset",
+        "attachment",
+        "attendance_device_id",
+        "attendance_request",
+        "audience",
+        "bank_ac_no",
+        "bank_name",
+        "blood_group",
+        "boarding_begins_on",
+        "boarding_status",
+        "branch",
+        "cause",
+        "cell_number",
+        "clearance_status",
+        "closes_on",
+        "company",
+        "company_email",
+        "completion_remarks",
+        "condition",
+        "confidential",
+        "contact_email",
+        "contact_phone",
+        "cover_letter",
+        "ctc",
+        "current_address",
+        "custom_aadhaar_number",
+        "custom_ctc",
+        "custom_employee_name",
+        "cycle_name",
+        "date_of_birth",
+        "date_of_joining",
+        "default_shift",
+        "department",
+        "description",
+        "designation",
+        "details",
+        "document_type",
+        "due_date",
+        "education",
+        "effective_date",
+        "effective_from",
+        "effective_to",
+        "eligible_for_rehire",
+        "email_id",
+        "emergency_phone_number",
+        "employee",
+        "employee_grade",
+        "employee_onboarding",
+        "employee_onboarding_template",
+        "employee_responsible",
+        "employee_separation_template",
+        "employees",
+        "employment_type",
+        "end_date",
+        "end_time",
+        "event_name",
+        "experience_max",
+        "experience_min",
+        "explanation",
+        "fieldname",
+        "file_url",
+        "first_name",
+        "from_date",
+        "from_time",
+        "gender",
+        "grade",
+        "grievance",
+        "grievance_date",
+        "grievance_type",
+        "half_day",
+        "half_day_date",
+        "hiring_manager",
+        "holiday_list",
+        "hr_record",
+        "ifsc_code",
+        "include_holidays",
+        "interview_round",
+        "introduction",
+        "job_applicant",
+        "job_offer",
+        "job_opening",
+        "kra_evaluation_method",
+        "last_name",
+        "last_working_day",
+        "leave_application",
+        "leave_type",
+        "location",
+        "lower_range",
+        "marital_status",
+        "middle_name",
+        "new_branch",
+        "new_department",
+        "new_designation",
+        "notify_users_by_email",
+        "offer_date",
+        "onboarding",
+        "operation",
+        "pan_number",
+        "permanent_address",
+        "person_to_be_contacted",
+        "personal_email",
+        "personal_mobile_no",
+        "phone_number",
+        "priority",
+        "promotion_date",
+        "provident_fund_account",
+        "raised_by",
+        "reason",
+        "record_date",
+        "record_type",
+        "reference",
+        "reference_name",
+        "reference_type",
+        "reflections",
+        "relation",
+        "remarks",
+        "reports_to",
+        "request_reason",
+        "resolution_detail",
+        "responsibilities",
+        "responsibility",
+        "resume_attachment",
+        "revised_ctc",
+        "revision_date",
+        "role",
+        "salary_currency",
+        "salary_mode",
+        "scheduled_on",
+        "selection_rounds",
+        "separation",
+        "separation_type",
+        "settlement_amount",
+        "settlement_date",
+        "severity",
+        "shift",
+        "shift_assignment",
+        "shift_location",
+        "shift_request_approver",
+        "shift_type",
+        "skills",
+        "source",
+        "source_employee",
+        "source_name",
+        "start_date",
+        "start_time",
+        "status",
+        "subject",
+        "submit",
+        "target_location",
+        "task",
+        "template",
+        "to_date",
+        "to_time",
+        "trainer_email",
+        "trainer_name",
+        "training_event",
+        "training_level",
+        "training_program",
+        "training_type",
+        "transaction_date",
+        "transfer_date",
+        "upper_range",
+        "vacancies",
+        "valid_from",
+        "valid_till",
+        "value"
+      ],
+      "doctypes": [
+        "Appointment Letter",
+        "Appointment Letter Template",
+        "Appraisal",
+        "Appraisal Cycle",
+        "Appraisal Template",
+        "Asset",
+        "Attendance Request",
+        "Branch",
+        "Company",
+        "Currency",
+        "Department",
+        "Designation",
+        "DocType",
+        "Employee",
+        "Employee Announcement",
+        "Employee Grievance",
+        "Employee HR Record",
+        "Employee Onboarding",
+        "Employee Separation",
+        "Employee Separation Template",
+        "Employment Type",
+        "File",
+        "Grievance Type",
+        "HR Employee Onboarding",
+        "Has Role",
+        "Interview",
+        "Interview Round",
+        "Job Applicant",
+        "Job Applicant Source",
+        "Job Offer",
+        "Job Opening",
+        "Leave Application",
+        "Leave Type",
+        "Location",
+        "Print Format",
+        "Shift Assignment",
+        "Shift Location",
+        "Shift Type",
+        "ToDo",
+        "Training Event",
+        "Training Program",
+        "User"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_stock_item_editor",
+      "source_name": "life_stock_item_editor",
+      "legacy_method": "life_stock_item_editor",
+      "method": "life_slimming.api.server_scripts.life_stock_item_editor.run",
+      "source_modified": "2026-09-10 17:49:34.764773",
+      "source_sha256": "6fee8c3e1470208208a8dadf156e04cd2a5731d37a940c0765588f9b00f10269",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "custom_sub_group",
+        "enabled",
+        "item_code",
+        "item_group",
+        "standard_rate",
+        "stock_uom",
+        "valuation_rate"
+      ],
+      "doctypes": [
+        "Has Role",
+        "Item",
+        "Item Group",
+        "UOM"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_stores_360_live_api",
+      "source_name": "life_stores_360_live_api",
+      "legacy_method": "life_stores_360_live_api",
+      "method": "life_slimming.api.server_scripts.life_stores_360_live_api.run",
+      "source_modified": "2026-09-16 15:18:45.468857",
+      "source_sha256": "8c49ede2f99cdce0ac1e08b26f6a5bb88a46141fe070b27df5e37aa69c1fe5ae",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Bin",
+        "Company",
+        "DocField",
+        "DocType",
+        "Employee",
+        "Global Defaults",
+        "Item",
+        "Item Supplier",
+        "LIFE Stock Receipt Adjustment Item",
+        "LIFE Stock Receipt Adjustment Request",
+        "LIFE Stock Request Settings",
+        "Material Request",
+        "Material Request Item",
+        "Patient",
+        "Property Setter",
+        "Purchase Invoice",
+        "Purchase Order",
+        "Purchase Order Item",
+        "Purchase Receipt",
+        "Purchase Receipt Item",
+        "Special Material Request Detail",
+        "Stock Entry",
+        "Stock Entry Detail",
+        "Supplier",
+        "Therapy Plan",
+        "User",
+        "Warehouse"
+      ],
+      "notes": []
+    },
+    {
+      "id": "lifescc_billing_bootstrap",
+      "source_name": "lifescc.billing.bootstrap",
+      "legacy_method": "lifescc.billing.bootstrap",
+      "method": "life_slimming.api.server_scripts.lifescc_billing_bootstrap.run",
+      "source_modified": "2026-09-16 18:07:53.725729",
+      "source_sha256": "b80f28e4d7336b770e77d2451a85576eab905970d2c14cd68d9bdb600d8fb07c",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "invoice_name"
+      ],
+      "doctypes": [
+        "Account",
+        "Branch",
+        "Discount Approval Request",
+        "Discount Approver Master",
+        "Employee",
+        "Healthcare Practitioner",
+        "Item",
+        "Mode of Payment",
+        "Mode of Payment Account",
+        "Pricing Rule",
+        "Pricing Rule Item Code",
+        "Sales Invoice",
+        "Therapy Plan Template",
+        "Therapy Plan Template Detail",
+        "Therapy Type",
+        "User Permission"
+      ],
+      "notes": []
+    },
+    {
+      "id": "lifescc_billing_bootstrap_test",
+      "source_name": "lifescc.billing.bootstrap_test",
+      "legacy_method": "lifescc.billing.bootstrap_test",
+      "method": "life_slimming.api.server_scripts.lifescc_billing_bootstrap_test.run",
+      "source_modified": "2026-09-16 17:45:39.629194",
+      "source_sha256": "62c756691d4155a802c546ef96e6b81cc45d437b9aaf8d30af3d6a34faa2ed46",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Account",
+        "Branch",
+        "Discount Approver Master",
+        "Employee",
+        "Healthcare Practitioner",
+        "Item",
+        "Mode of Payment",
+        "Mode of Payment Account",
+        "Pricing Rule",
+        "Pricing Rule Item Code",
+        "Sales Invoice",
+        "Therapy Plan Template",
+        "Therapy Plan Template Detail",
+        "Therapy Type",
+        "User Permission"
+      ],
+      "notes": []
+    },
+    {
+      "id": "lifescc_billing_collect_payment",
+      "source_name": "lifescc.billing.collect_payment",
+      "legacy_method": "lifescc.billing.collect_payment",
+      "method": "life_slimming.api.server_scripts.lifescc_billing_collect_payment.run",
+      "source_modified": "2026-07-29 03:56:05.810402",
+      "source_sha256": "ddae0556dac49e64a6b0686d8849e9c946e0e288a756f9c2fe2e7cd03d8699a4",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Mode of Payment Account",
+        "Sales Invoice"
+      ],
+      "notes": []
+    },
+    {
+      "id": "lifescc_billing_collect_payment_v4",
+      "source_name": "lifescc.billing.collect_payment_v4",
+      "legacy_method": "lifescc.billing.collect_payment_v4",
+      "method": "life_slimming.api.server_scripts.lifescc_billing_collect_payment_v4.run",
+      "source_modified": "2026-09-07 22:56:11.026743",
+      "source_sha256": "a70e0948809977e32aa9cb5bc47e85e716cdafbeeff0604e8b723861f2f19b17",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Mode of Payment Account",
+        "Sales Invoice"
+      ],
+      "notes": []
+    },
+    {
+      "id": "lifescc_billing_collections_report",
+      "source_name": "lifescc.billing.collections_report",
+      "legacy_method": "lifescc.billing.collections_report",
+      "method": "life_slimming.api.server_scripts.lifescc_billing_collections_report.run",
+      "source_modified": "2026-07-27 11:49:32.259519",
+      "source_sha256": "9c3bfc5f2154969420d72baf78f31da32f581e25f900aa8b1c85c66015bac679",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "branch",
+        "from_date",
+        "to_date"
+      ],
+      "doctypes": [
+        "Payment Entry",
+        "Payment Entry Reference",
+        "Sales Invoice"
+      ],
+      "notes": []
+    },
+    {
+      "id": "lifescc_billing_create_client",
+      "source_name": "lifescc.billing.create_client",
+      "legacy_method": "lifescc.billing.create_client",
+      "method": "life_slimming.api.server_scripts.lifescc_billing_create_client.run",
+      "source_modified": "2026-09-03 19:56:06.256219",
+      "source_sha256": "aab13318d0d8f7a10e9b1c8fe51551548bdd059aac8d8cc21e383eed05273d82",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Branch",
+        "Employee",
+        "Gender",
+        "Healthcare Practitioner",
+        "Lead",
+        "Lead Source",
+        "Patient"
+      ],
+      "notes": []
+    },
+    {
+      "id": "lifescc_billing_create_plan_and_invoice",
+      "source_name": "lifescc.billing.create_plan_and_invoice",
+      "legacy_method": "lifescc.billing.create_plan_and_invoice",
+      "method": "life_slimming.api.server_scripts.lifescc_billing_create_plan_and_invoice.run",
+      "source_modified": "2026-08-23 13:38:17.566795",
+      "source_sha256": "f745a87ee4511b3389ed61f037bdefa2addded509ad7993b137081ff6590a9a4",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Cost Center",
+        "Healthcare Practitioner",
+        "Healthcare Service Unit",
+        "Lead Source",
+        "Mode of Payment Account",
+        "Patient",
+        "Sales Invoice",
+        "Sales Taxes and Charges",
+        "Therapy Plan",
+        "Therapy Type",
+        "Web Coupon"
+      ],
+      "notes": []
+    },
+    {
+      "id": "lifescc_billing_create_plan_and_invoice_test",
+      "source_name": "lifescc.billing.create_plan_and_invoice_TEST",
+      "legacy_method": "lifescc.billing.create_plan_and_invoice_TEST",
+      "method": "life_slimming.api.server_scripts.lifescc_billing_create_plan_and_invoice_test.run",
+      "source_modified": "2026-09-15 12:18:30.230686",
+      "source_sha256": "3209d2f27397a778f71ebe92f646c29e276948eeee8fcea0a7b3d9722b626dc1",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Cost Center",
+        "Healthcare Practitioner",
+        "Healthcare Service Unit",
+        "Item",
+        "Lead Source",
+        "Mode of Payment Account",
+        "Patient",
+        "Sales Invoice",
+        "Sales Taxes and Charges",
+        "Therapy Plan",
+        "Therapy Type",
+        "Web Coupon"
+      ],
+      "notes": []
+    },
+    {
+      "id": "lifescc_billing_lead_lookup",
+      "source_name": "lifescc.billing.lead_lookup",
+      "legacy_method": "lifescc.billing.lead_lookup",
+      "method": "life_slimming.api.server_scripts.lifescc_billing_lead_lookup.run",
+      "source_modified": "2026-07-27 17:23:16.324855",
+      "source_sha256": "10471221e154a6e9443fc45a9cd84b2c8a7a10b259ef398d985752613566ef17",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Lead",
+        "Lead Source"
+      ],
+      "notes": []
+    },
+    {
+      "id": "lifescc_billing_submit_invoice",
+      "source_name": "lifescc.billing.submit_invoice",
+      "legacy_method": "lifescc.billing.submit_invoice",
+      "method": "life_slimming.api.server_scripts.lifescc_billing_submit_invoice.run",
+      "source_modified": "2026-07-27 12:11:16.389891",
+      "source_sha256": "8b84d8a0becee10c9d77e062bbc4887d79163faddb705981da97888887e658f0",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Discount Approval Request",
+        "Sales Invoice"
+      ],
+      "notes": []
+    },
+    {
+      "id": "lifescc_hrms_dashboard",
+      "source_name": "lifescc_hrms_dashboard",
+      "legacy_method": "lifescc_hrms_dashboard",
+      "method": "life_slimming.api.server_scripts.lifescc_hrms_dashboard.run",
+      "source_modified": "2026-07-19 08:26:19.736997",
+      "source_sha256": "7ade87acd6002204d8fc9559de067313c9f5b1bfe1b9b1f55dd43efeae05a445",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Attendance",
+        "Branch",
+        "Department",
+        "Employee",
+        "Employee Promotion",
+        "Employee Transfer",
+        "Has Role",
+        "Version"
+      ],
+      "notes": []
+    },
+    {
+      "id": "get_store_warehouses_for_transfer",
+      "source_name": "Machinary Transfer",
+      "legacy_method": "get_store_warehouses_for_transfer",
+      "method": "life_slimming.api.server_scripts.get_store_warehouses_for_transfer.run",
+      "source_modified": "2026-06-03 23:16:15.479150",
+      "source_sha256": "15230e6c77f8d43e97c814cf8ae0ce876bbd541173c29b39d59a42dfa2cbcb65",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "txt"
+      ],
+      "doctypes": [
+        "Warehouse"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_get_machinery_transfers",
+      "source_name": "Machinery Request and Transfer flow",
+      "legacy_method": "life_get_machinery_transfers",
+      "method": "life_slimming.api.server_scripts.life_get_machinery_transfers.run",
+      "source_modified": "2026-08-13 11:47:30.893658",
+      "source_sha256": "8648d753a163e0a13e6def0220db1167d691de18fb62123b56952b031d3fc29a",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "all_items_accounted",
+        "box_serial_no",
+        "bubble_wrap_na",
+        "bubble_wrap_verified",
+        "condition_before_transfer",
+        "final_confirmation",
+        "items_missing",
+        "items_qty_packed",
+        "pre_shipping_and_packaging_protocol",
+        "receipt_reason",
+        "remarks",
+        "request_date_and_time",
+        "request_name",
+        "requested_by",
+        "shipping_box_na",
+        "shipping_box_verified",
+        "target_warehouse",
+        "total_wrap_layers",
+        "transfer_name",
+        "transfer_reason",
+        "workflow_action"
+      ],
+      "doctypes": [
+        "Asset",
+        "Custom Field",
+        "DocField",
+        "Employee",
+        "Has Role",
+        "Location",
+        "Machinery Request",
+        "Machinery Transfer",
+        "User Permission"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_get_machinery_requests",
+      "source_name": "Machinery Request Approvals",
+      "legacy_method": "life_get_machinery_requests",
+      "method": "life_slimming.api.server_scripts.life_get_machinery_requests.run",
+      "source_modified": "2026-08-12 14:40:18.994686",
+      "source_sha256": "fd71f4093cf9f8d9eba62920f057224da2c70566682e8664b3c445548fe1c002",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "allocated_asset",
+        "allocated_source_branch",
+        "rejection_reason",
+        "request_name",
+        "source_warehouse",
+        "target_warehouse"
+      ],
+      "doctypes": [
+        "Asset",
+        "Custom Field",
+        "DocField",
+        "Employee",
+        "Machinery Request",
+        "User Permission"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_create_machinery_request",
+      "source_name": "Machinery request create Permission",
+      "legacy_method": "life_create_machinery_request",
+      "method": "life_slimming.api.server_scripts.life_create_machinery_request.run",
+      "source_modified": "2026-08-12 15:27:54.412458",
+      "source_sha256": "c288ec97459baa7bb44297154f8d82c9dd22e8e533d64c33f1d0aab43e102093",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "additional_remarks",
+        "allocated_asset",
+        "asset_category",
+        "machinery_category",
+        "preferred_source_branch",
+        "priority",
+        "quantity",
+        "request_date",
+        "requested_by",
+        "requested_by_name",
+        "requested_item",
+        "requesting_branch",
+        "required_by",
+        "requirement_reason",
+        "source_warehouse"
+      ],
+      "doctypes": [
+        "Employee"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_get_source_warehouses",
+      "source_name": "Machinery Request Source Warehouse",
+      "legacy_method": "life_get_source_warehouses",
+      "method": "life_slimming.api.server_scripts.life_get_source_warehouses.run",
+      "source_modified": "2026-08-09 12:45:40.984936",
+      "source_sha256": "43c21a352877f282eeb239085f3b62ce3eef2440220e6b610e9af3d3d27f1c3c",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Warehouse"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_get_machinery_availability",
+      "source_name": "Machinery Transfer Availabillity",
+      "legacy_method": "life_get_machinery_availability",
+      "method": "life_slimming.api.server_scripts.life_get_machinery_availability.run",
+      "source_modified": "2026-08-11 18:20:38.976399",
+      "source_sha256": "76e936b292c616bcc259690feb2c7c5cdfb6a2eb1689575e2fdce21e5b75887b",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Asset"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_mark_machinery_transfer_ready",
+      "source_name": "Machinery Trasfer",
+      "legacy_method": "life_mark_machinery_transfer_ready",
+      "method": "life_slimming.api.server_scripts.life_mark_machinery_transfer_ready.run",
+      "source_modified": "2026-08-12 13:49:51.886571",
+      "source_sha256": "e3a22022f8fe8e839550916b49ca0fb498328759afe8427d8861bf66f1b24784",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "transfer_name"
+      ],
+      "doctypes": [
+        "Employee",
+        "Has Role",
+        "Machinery Transfer",
+        "User Permission"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_get_source_machinery_assets",
+      "source_name": "Machonery Request Assets",
+      "legacy_method": "life_get_source_machinery_assets",
+      "method": "life_slimming.api.server_scripts.life_get_source_machinery_assets.run",
+      "source_modified": "2026-08-09 12:46:14.693644",
+      "source_sha256": "960460eb2d2922cadaf3a9ffb88db5014a6908994a86b679210d568a59d004dd",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Asset"
+      ],
+      "notes": []
+    },
+    {
+      "id": "mask_mobile_on_export",
+      "source_name": "mask_mobile_on_export",
+      "legacy_method": "mask_mobile_on_export",
+      "method": "life_slimming.api.server_scripts.mask_mobile_on_export.run",
+      "source_modified": "2026-06-03 23:16:14.920702",
+      "source_sha256": "91f7ad5a98147b660d65244395caf04f3664686f6a3ef0f6bdeb5a54f813c839",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "doctype",
+        "rows"
+      ],
+      "doctypes": [],
+      "notes": []
+    },
+    {
+      "id": "md_360_api",
+      "source_name": "md_360_api",
+      "legacy_method": "md_360_api",
+      "method": "life_slimming.api.server_scripts.md_360_api.run",
+      "source_modified": "2026-08-02 11:45:46.296722",
+      "source_sha256": "940d7c05972e5137bb9ccdab0de16c3d6ae9c0f4dd665c9a4f551b85a456ca7e",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Bin",
+        "Item",
+        "Payment Entry",
+        "Payment Entry Reference",
+        "Purchase Invoice",
+        "Purchase Invoice Item",
+        "Purchase Order",
+        "Stock Entry",
+        "Stock Entry Detail",
+        "Stock Ledger Entry",
+        "Supplier"
+      ],
+      "notes": []
+    },
+    {
+      "id": "md_accounts_api",
+      "source_name": "md_accounts_api",
+      "legacy_method": "md_accounts_api",
+      "method": "life_slimming.api.server_scripts.md_accounts_api.run",
+      "source_modified": "2026-08-04 15:42:16.005525",
+      "source_sha256": "99da0fddcd9c2c6ffe8bfc268a60f7c32511757af60d34abf5134fcb44f26d0f",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Payment Entry",
+        "Week Achive",
+        "Week Target vs Achive With Cuttings"
+      ],
+      "notes": []
+    },
+    {
+      "id": "md_approvals_api",
+      "source_name": "md_approvals_api",
+      "legacy_method": "md_approvals_api",
+      "method": "life_slimming.api.server_scripts.md_approvals_api.run",
+      "source_modified": "2026-08-26 12:13:06.758893",
+      "source_sha256": "decfa6a0e1565c707824805d388a81de65a32df21464cbd93dc7cc2d1ce6c870",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Discount Approval Request",
+        "Has Role",
+        "Purchase Invoice"
+      ],
+      "notes": []
+    },
+    {
+      "id": "md_audit_api",
+      "source_name": "md_audit_api",
+      "legacy_method": "md_audit_api",
+      "method": "life_slimming.api.server_scripts.md_audit_api.run",
+      "source_modified": "2026-08-04 13:09:42.273302",
+      "source_sha256": "d1003f107b9af5368ab8fb8a9794b0ecea9009f852d3d5230f44ba0a25b02df9",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Branch Audit",
+        "Branch Audit Section Score"
+      ],
+      "notes": []
+    },
+    {
+      "id": "md_cash_api",
+      "source_name": "md_cash_api",
+      "legacy_method": "md_cash_api",
+      "method": "life_slimming.api.server_scripts.md_cash_api.run",
+      "source_modified": "2026-08-19 19:12:37.991137",
+      "source_sha256": "ccd123c8a355ad10c44827b77bb4b73d86054cb7db5b9db60c7fd431812c7752",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "from_date",
+        "to_date"
+      ],
+      "doctypes": [
+        "Account",
+        "GL Entry",
+        "Sales Invoice"
+      ],
+      "notes": []
+    },
+    {
+      "id": "md_client_api",
+      "source_name": "md_client_api",
+      "legacy_method": "md_client_api",
+      "method": "life_slimming.api.server_scripts.md_client_api.run",
+      "source_modified": "2026-08-19 19:13:11.828326",
+      "source_sha256": "77eba01dd8fb7fa02a06032517312503223ed3e0b9df5eb55bfb473227db66af",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "from_date",
+        "to_date"
+      ],
+      "doctypes": [
+        "Patient",
+        "Sales Invoice"
+      ],
+      "notes": []
+    },
+    {
+      "id": "md_command_center_api",
+      "source_name": "md_command_center_api",
+      "legacy_method": "md_command_center_api",
+      "method": "life_slimming.api.server_scripts.md_command_center_api.run",
+      "source_modified": "2026-08-26 12:12:50.501136",
+      "source_sha256": "a102ee0e42620c536470d6d009eca2339baf46b92776981dabacde133281dcae",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Client Package Conversion Client To Client",
+        "Discount Approval Request",
+        "Employee",
+        "Item",
+        "LIFE Client Package Conversion Same Client Package To Package",
+        "Lead",
+        "Payment Entry",
+        "Sales Invoice",
+        "Sales Invoice Item"
+      ],
+      "notes": []
+    },
+    {
+      "id": "md_create_po_draft",
+      "source_name": "md_create_po_draft",
+      "legacy_method": "md_create_po_draft",
+      "method": "life_slimming.api.server_scripts.md_create_po_draft.run",
+      "source_modified": "2026-08-03 12:07:40.779967",
+      "source_sha256": "007155d75d8a45f019c6d3fa71a636988bf3f183ea4b9164e2ecf90bab9fa83c",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Item",
+        "Warehouse"
+      ],
+      "notes": []
+    },
+    {
+      "id": "md_crm_api",
+      "source_name": "md_crm_api",
+      "legacy_method": "md_crm_api",
+      "method": "life_slimming.api.server_scripts.md_crm_api.run",
+      "source_modified": "2026-08-04 13:09:18.455547",
+      "source_sha256": "c585a0ac548c6be7ba7560fad117942e97d7540f16d6068e8e70cf1fe9c2b660",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Lead"
+      ],
+      "notes": []
+    },
+    {
+      "id": "md_dashboard_prefs",
+      "source_name": "md_dashboard_prefs",
+      "legacy_method": "md_dashboard_prefs",
+      "method": "life_slimming.api.server_scripts.md_dashboard_prefs.run",
+      "source_modified": "2026-08-19 19:12:58.225524",
+      "source_sha256": "8dc00bcfb77367127951a7aef0cf1388520b3ad53c01aea62fb793ad7a7285e7",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "data"
+      ],
+      "doctypes": [],
+      "notes": []
+    },
+    {
+      "id": "md_employee_sales_api",
+      "source_name": "md_employee_sales_api",
+      "legacy_method": "md_employee_sales_api",
+      "method": "life_slimming.api.server_scripts.md_employee_sales_api.run",
+      "source_modified": "2026-08-05 11:22:36.080780",
+      "source_sha256": "2db094978d4c93789fb1a832871ce32626f7ee6188df74bdd16dfe78905093d2",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Payment Entry",
+        "Payment Entry Reference",
+        "Sales Invoice",
+        "Therapy Plan"
+      ],
+      "notes": []
+    },
+    {
+      "id": "md_forecast_api",
+      "source_name": "md_forecast_api",
+      "legacy_method": "md_forecast_api",
+      "method": "life_slimming.api.server_scripts.md_forecast_api.run",
+      "source_modified": "2026-08-04 13:10:26.818898",
+      "source_sha256": "d69b6691e2dc654409f4d867205c900d9ee3ba79873c1e9186f68806948203d9",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Payment Entry",
+        "Sales Invoice"
+      ],
+      "notes": []
+    },
+    {
+      "id": "md_hr_api",
+      "source_name": "md_hr_api",
+      "legacy_method": "md_hr_api",
+      "method": "life_slimming.api.server_scripts.md_hr_api.run",
+      "source_modified": "2026-08-01 18:40:00.643537",
+      "source_sha256": "dd1c943fba5b44bbdf13a1928e82343895fa3001a8923ab86c8c9862801116e7",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Attendance",
+        "Employee"
+      ],
+      "notes": []
+    },
+    {
+      "id": "md_indent_report_api",
+      "source_name": "md_indent_report_api",
+      "legacy_method": "md_indent_report_api",
+      "method": "life_slimming.api.server_scripts.md_indent_report_api.run",
+      "source_modified": "2026-08-03 11:55:24.607893",
+      "source_sha256": "f7729f2683b13412bbb323df6ba4633e839edc39a7e12e87e76aba278200101b",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Bin",
+        "Material Request",
+        "Purchase Invoice",
+        "Purchase Invoice Item",
+        "Stock Entry",
+        "Stock Entry Detail"
+      ],
+      "notes": []
+    },
+    {
+      "id": "md_live_dashboard_api",
+      "source_name": "md_live_dashboard_api",
+      "legacy_method": "md_live_dashboard_api",
+      "method": "life_slimming.api.server_scripts.md_live_dashboard_api.run",
+      "source_modified": "2026-08-02 11:46:06.213396",
+      "source_sha256": "43fea7e4618fb4f0cb4a9841dff20ebf9c9850098fe7e6d28059863801497db4",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Bin",
+        "Payment Entry",
+        "Sales Invoice",
+        "Stock Entry"
+      ],
+      "notes": []
+    },
+    {
+      "id": "md_my_approvals_api",
+      "source_name": "md_my_approvals_api",
+      "legacy_method": "md_my_approvals_api",
+      "method": "life_slimming.api.server_scripts.md_my_approvals_api.run",
+      "source_modified": "2026-08-07 08:53:08.170000",
+      "source_sha256": "8daaac31c128f2da5511f2757f7fd1b922d7d56cf39f7304d0c99f9b8e1c499f",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Client Package Conversion Client To Client",
+        "Discount Approval Request",
+        "Has Role",
+        "LIFE Client Package Conversion Same Client Package To Package",
+        "Purchase Invoice",
+        "Purchase Order"
+      ],
+      "notes": []
+    },
+    {
+      "id": "md_stock_api",
+      "source_name": "md_stock_api",
+      "legacy_method": "md_stock_api",
+      "method": "life_slimming.api.server_scripts.md_stock_api.run",
+      "source_modified": "2026-07-31 05:49:09.361797",
+      "source_sha256": "92983f1174498e530bbb4992bdad57763ff18253aeaf6c3ef8f1b30b6af9444a",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Material Request",
+        "Purchase Invoice",
+        "Purchase Order",
+        "Purchase Receipt"
+      ],
+      "notes": []
+    },
+    {
+      "id": "md_supplier_api",
+      "source_name": "md_supplier_api",
+      "legacy_method": "md_supplier_api",
+      "method": "life_slimming.api.server_scripts.md_supplier_api.run",
+      "source_modified": "2026-07-31 05:50:13.395061",
+      "source_sha256": "498a16d2cac5e5887d743f998aef373a867ba3f6fb868d1edda792632bc4060d",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Payment Entry",
+        "Purchase Invoice"
+      ],
+      "notes": []
+    },
+    {
+      "id": "md_target_daily_api",
+      "source_name": "md_target_daily_api",
+      "legacy_method": "md_target_daily_api",
+      "method": "life_slimming.api.server_scripts.md_target_daily_api.run",
+      "source_modified": "2026-08-01 19:21:05.366265",
+      "source_sha256": "c3a090a2d45ccf787b9d1afc566264983e64ccd11ae67c6f320e421cd6092864",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Payment Entry",
+        "Week Achive",
+        "Week Target vs Achive With Cuttings"
+      ],
+      "notes": []
+    },
+    {
+      "id": "md_vendor_ageing_api",
+      "source_name": "md_vendor_ageing_api",
+      "legacy_method": "md_vendor_ageing_api",
+      "method": "life_slimming.api.server_scripts.md_vendor_ageing_api.run",
+      "source_modified": "2026-08-04 13:08:55.191774",
+      "source_sha256": "01ddd2f2fca8fa390475fc5200fc7ad517f07cd7be101183610c006cabeb971f",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Purchase Invoice",
+        "Purchase Invoice Item"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_monthly_indent_access",
+      "source_name": "Monthly indent access for branches",
+      "legacy_method": "life_monthly_indent_access",
+      "method": "life_slimming.api.server_scripts.life_monthly_indent_access.run",
+      "source_modified": "2026-07-25 01:37:08.489188",
+      "source_sha256": "49c24e0c311173957c480a777eca175cdc80896b1680dfe50e85e9887db3cd4a",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "enabled"
+      ],
+      "doctypes": [],
+      "notes": []
+    },
+    {
+      "id": "life_room_ops_dashboard_get_data",
+      "source_name": "Operations & Service Module",
+      "legacy_method": "life_room_ops_dashboard_get_data",
+      "method": "life_slimming.api.server_scripts.life_room_ops_dashboard_get_data.run",
+      "source_modified": "2026-07-10 18:54:43.737576",
+      "source_sha256": "0b0b28616bcde14c89aee16c67945d23408f6594870b17f1cc290d28e919c39e",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "branch",
+        "from_date",
+        "to_date"
+      ],
+      "doctypes": [
+        "DocType"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_ops_branch_practitioners",
+      "source_name": "Operations & Service Module Healthcare Practitioner Names",
+      "legacy_method": "life_ops_branch_practitioners",
+      "method": "life_slimming.api.server_scripts.life_ops_branch_practitioners.run",
+      "source_modified": "2026-09-10 17:44:19.214584",
+      "source_sha256": "df2498ba2202f5255ac13528619ad28fed3d1dcff265e44e0ba43fb7e35827ed",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "branch"
+      ],
+      "doctypes": [
+        "Healthcare Practitioner"
+      ],
+      "notes": []
+    },
+    {
+      "id": "p2p_run_final_automation",
+      "source_name": "p2p run final automation",
+      "legacy_method": "p2p_run_final_automation",
+      "method": "life_slimming.api.server_scripts.p2p_run_final_automation.run",
+      "source_modified": "2026-09-09 14:38:07.556783",
+      "source_sha256": "a7b305abeda83e2bb5648c652f6a718e7c9e489be3af142895af3e76c344f07b",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "name",
+        "request_name"
+      ],
+      "doctypes": [
+        "DocType"
+      ],
+      "notes": []
+    },
+    {
+      "id": "payables_planner_api",
+      "source_name": "payables_planner_api",
+      "legacy_method": "payables_planner_api",
+      "method": "life_slimming.api.server_scripts.payables_planner_api.run",
+      "source_modified": "2026-08-18 08:43:40.656790",
+      "source_sha256": "3a73234ad920333671a098efe0d3af4133ee79e0e00d03944d8b85dc724dcd7d",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "branch",
+        "company",
+        "head",
+        "hold",
+        "name",
+        "plan",
+        "reason",
+        "src"
+      ],
+      "doctypes": [
+        "Account",
+        "Cost Center",
+        "Custom Field",
+        "GL Entry",
+        "Journal Entry",
+        "Journal Entry Account",
+        "Payment Entry",
+        "Purchase Invoice",
+        "Purchase Invoice Item",
+        "Supplier"
+      ],
+      "notes": []
+    },
+    {
+      "id": "portal_is_system_manager",
+      "source_name": "portal_is_system_manager",
+      "legacy_method": "portal_is_system_manager",
+      "method": "life_slimming.api.server_scripts.portal_is_system_manager.run",
+      "source_modified": "2026-08-14 12:07:07.907502",
+      "source_sha256": "45f6682ec9a1a4700b161fc1867336891e36209ece911c9c216c39f5878cde8c",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [],
+      "notes": []
+    },
+    {
+      "id": "report_master_api",
+      "source_name": "report_master_api",
+      "legacy_method": "report_master_api",
+      "method": "life_slimming.api.server_scripts.report_master_api.run",
+      "source_modified": "2026-08-21 20:07:44.259642",
+      "source_sha256": "529afa527c29264abdcb7de633c4d68af525547e316c7c603611299ab498c186",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Cost Center",
+        "Employee",
+        "Item",
+        "Item Group",
+        "Patient",
+        "Payment Entry",
+        "Payment Entry Reference",
+        "Sales Invoice",
+        "Sales Invoice Item",
+        "Therapy Plan",
+        "Week Achive",
+        "Week Target vs Achive With Cuttings"
+      ],
+      "notes": []
+    },
+    {
+      "id": "roster_employees",
+      "source_name": "roster_employees",
+      "legacy_method": "roster_employees",
+      "method": "life_slimming.api.server_scripts.roster_employees.run",
+      "source_modified": "2026-08-07 09:27:30.565509",
+      "source_sha256": "ac7c1e663f3266e562b261903adb31d3594efa9e5dccda537c23638779cba665",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "branch"
+      ],
+      "doctypes": [
+        "Employee"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_stock_fast_requests",
+      "source_name": "Stock dashboard",
+      "legacy_method": "life_stock_fast_requests",
+      "method": "life_slimming.api.server_scripts.life_stock_fast_requests.run",
+      "source_modified": "2026-09-16 12:32:35.737020",
+      "source_sha256": "fc32a54dd796276f41d79ac9794244ed231b1144e0e8d6113fa10ce9f9d651b5",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "payload"
+      ],
+      "doctypes": [
+        "Asset",
+        "Batch",
+        "Bin",
+        "DocType",
+        "Employee",
+        "File",
+        "Has Role",
+        "Item",
+        "Stock Ledger Entry",
+        "Therapy Session",
+        "User",
+        "User Permission",
+        "Warehouse",
+        "Workflow"
+      ],
+      "notes": []
+    },
+    {
+      "id": "stock_indent_360_api",
+      "source_name": "stock_indent_360_api",
+      "legacy_method": "stock_indent_360_api",
+      "method": "life_slimming.api.server_scripts.stock_indent_360_api.run",
+      "source_modified": "2026-09-12 16:27:18.283592",
+      "source_sha256": "018536ecaa558f81c3bd67a454f56d0837458975e1ac67f1d26844e4b71b3f5f",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Bin",
+        "Item",
+        "Item Supplier",
+        "Material Request",
+        "Material Request Item",
+        "Patient",
+        "Purchase Invoice",
+        "Purchase Order",
+        "Purchase Order Item",
+        "Purchase Receipt",
+        "Purchase Receipt Item",
+        "Stock Entry",
+        "Stock Entry Detail",
+        "Supplier",
+        "Warehouse"
+      ],
+      "notes": []
+    },
+    {
+      "id": "create_po_from_indent360__0fdd830f",
+      "source_name": "Stores 360",
+      "legacy_method": "create_po_from_indent360",
+      "method": "life_slimming.api.server_scripts.create_po_from_indent360__0fdd830f.run",
+      "source_modified": "2026-09-12 11:33:38.394769",
+      "source_sha256": "e6d102c0cd86230b5127b69c3f4e984f87e24277d04c7f89be400c2224e8f381",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "cart"
+      ],
+      "doctypes": [
+        "Company",
+        "Item",
+        "Item Supplier",
+        "Purchase Order",
+        "Supplier"
+      ],
+      "notes": [
+        "Duplicate original API method: use this explicit local endpoint; no ambiguous alias."
+      ]
+    },
+    {
+      "id": "create_client_request_complaint",
+      "source_name": "Submitting client Complaint api",
+      "legacy_method": "create_client_request_complaint",
+      "method": "life_slimming.api.server_scripts.create_client_request_complaint.run",
+      "source_modified": "2026-06-15 03:24:49.254047",
+      "source_sha256": "1ef5a743f80c87d122f9a2c1836ac34c9f8e221f0b00334a1df1f9a561e4310b",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "doc"
+      ],
+      "doctypes": [],
+      "notes": []
+    },
+    {
+      "id": "life_setup_therapy_session_media_fields",
+      "source_name": "Therapy Session Consent & After Photo",
+      "legacy_method": "life_setup_therapy_session_media_fields",
+      "method": "life_slimming.api.server_scripts.life_setup_therapy_session_media_fields.run",
+      "source_modified": "2026-08-25 16:47:13.919456",
+      "source_sha256": "020b4d93a2c3167d3a0cf98208c8aa446fb8d6563abb12a09799320999e6815a",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Custom Field",
+        "Therapy Session"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_approval_report_user_context",
+      "source_name": "User check for Approvals Report",
+      "legacy_method": "life_approval_report_user_context",
+      "method": "life_slimming.api.server_scripts.life_approval_report_user_context.run",
+      "source_modified": "2026-08-17 14:35:46.465633",
+      "source_sha256": "a6b1d7829db49e1689ef8b8e14d75b0a6cf5a9e1dc6dd2fe843f42b61f3372c5",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Employee",
+        "Has Role",
+        "User",
+        "User Permission"
+      ],
+      "notes": []
+    },
+    {
+      "id": "validate_coupon",
+      "source_name": "validate_coupon",
+      "legacy_method": "validate_coupon",
+      "method": "life_slimming.api.server_scripts.validate_coupon.run",
+      "source_modified": "2026-08-23 13:36:17.203108",
+      "source_sha256": "6e434383371bee9fa7dac5a6834045eaee95b5946059df54b535ce4f835867f7",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Web Coupon"
+      ],
+      "notes": []
+    }
+  ]
+}

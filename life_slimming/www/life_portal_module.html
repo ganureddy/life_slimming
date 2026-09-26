@@ -1,0 +1,32 @@
+{% extends "templates/base.html" %}
+{% block navbar %}{% endblock %}
+{% block banner %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block style %}<style>body { margin: 0; } {{ module_css }}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/assets/life_slimming/css/portal_theme.css">
+{% if module_config.module == "audit" %}
+<link rel="stylesheet" href="/assets/life_slimming/css/portal_audit.css">
+{% endif %}
+{% endblock %}
+{% block content %}
+<script>frappe.boot = {{ boot | json }}; frappe.sys_defaults = frappe.boot.sysdefaults;</script>
+{{ include_script('frappe-web.bundle.js') }}
+<script>window.lifePortalModule = {{ module_config | json }};</script>
+<script src="/assets/life_slimming/js/portal_config.js"></script>
+<script src="/assets/life_slimming/js/portal_module_bridge.js"></script>
+{{ module_html }}
+{% if module_config.module in ["employees", "attend", "payroll"] %}
+<link rel="stylesheet" href="/assets/life_slimming/css/portal_hrms.css">
+{% endif %}
+{% if module_config.module == "leads" %}
+<script src="/assets/life_slimming/js/cc_notifications.js?v={{ module_config.cc_asset_version }}"></script>
+<script src="/assets/life_slimming/js/convox_cc_bridge.js?v={{ module_config.cc_asset_version }}"></script>
+{% endif %}
+{{ module_scripts }}
+{% if module_config.module in ["employees", "attend", "payroll"] %}
+<script src="/assets/life_slimming/js/portal_hrms.js"></script>
+{% endif %}
+<script>{{ module_javascript }}</script>
+{% endblock %}
+{% block base_scripts %}{% endblock %}
