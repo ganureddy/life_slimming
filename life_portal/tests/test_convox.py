@@ -67,6 +67,27 @@ class ConvoxTest(unittest.TestCase):
         self.assertNotIn('agent@example.test', body['url'])
         self.assertNotIn('fixture-secret', response.get_data(as_text=True))
 
+    def test_vendor_identity_is_user_specific_and_encoded_once(self):
+        from urllib.parse import parse_qs, urlsplit
+        self.settings.custom_convox_sso_enabled = 1
+        self.user.custom_convox_sso_encrypted_identity = '********'
+        value = base64.b64encode(bytes(range(240, 256))).decode()
+        with patch.object(convox, '_require_enabled', return_value=(self.user, self.settings)), patch.object(convox, '_secret', return_value=value) as secret, patch.object(convox, 'encrypt_username') as encrypt:
+            body = json.loads(convox.widget_session().get_data())['message']
+        self.assertEqual(parse_qs(urlsplit(body['url']).query)['ExternalUserName'], [value])
+        self.assertEqual(body['mode'], 'sso')
+        secret.assert_called_once_with(self.user, 'custom_convox_sso_encrypted_identity')
+        encrypt.assert_not_called()
+        other = frappe._dict(name='other@example.test')
+        self.assertEqual(convox._vendor_sso_value(other), '')
+
+    def test_vendor_identity_rejects_urls_and_invalid_blocks(self):
+        self.user.custom_convox_sso_encrypted_identity = '********'
+        for value in ['https://example.test/login', 'abcd%3D', base64.b64encode(b'short').decode(), '']:
+            with patch.object(convox, '_secret', return_value=value):
+                with self.assertRaises(frappe.ValidationError):
+                    convox._vendor_sso_value(self.user)
+
     def test_manual_login_never_needs_a_secret(self):
         with patch.object(convox, '_require_enabled', return_value=(self.user, self.settings)), patch.object(convox, '_secret') as secret:
             body = json.loads(convox.widget_session().get_data())['message']

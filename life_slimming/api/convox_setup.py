@@ -33,6 +33,8 @@ def install():
     users = [field("section", "ConVox agent mapping", "Section Break"),
         field("enabled", "Enable ConVox for this user", "Check", default="0"),
         field("agent_id", "ConVox agent ID"), field("sso_username", "ConVox mapped SSO email or username"),
+        field("sso_encrypted_identity", "Vendor encrypted ConVox identity", "Password",
+              description="Optional vendor-issued Base64 ExternalUserName for this agent only. Decode URL escaping first; do not paste a URL. Overrides local SSO encryption."),
         field("dial_prefix", "ConVox dial prefix override"), field("station", "ConVox station")]
     # Agent mappings must be administrator-managed, not editable through My Settings.
     for item in users:

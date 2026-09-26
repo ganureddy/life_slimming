@@ -262,7 +262,9 @@ watch(phoneIdentity, async (user, _, onCleanup) => {
   timer = undefined;
   if (!user) return;
   await loadConfig();
-  if (!cancelled && settings.value?.enabled) await connect();
+  // Each ERP login attempts SSO when configured; an earlier manual fallback
+  // must not permanently disable automatic login for this account.
+  if (!cancelled && settings.value?.enabled) await connect(!settings.value.sso_ready);
 }, { immediate: true });
 function warnBeforeLeaving(event) {
   if (!url.value) return;

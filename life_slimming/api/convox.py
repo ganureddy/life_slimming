@@ -112,6 +112,20 @@ def encrypt_username(username, secret, iv_value, iv_mode):
     return base64.b64encode(encryptor.update(padded) + encryptor.finalize()).decode("ascii")
 
 
+def _vendor_sso_value(user):
+    """An administrator may supply a vendor-issued encrypted identity per user."""
+    if not user.get("custom_convox_sso_encrypted_identity"):
+        return ""
+    value = _secret(user, "custom_convox_sso_encrypted_identity").strip()
+    try:
+        raw = base64.b64decode(value, validate=True)
+    except ValueError:
+        raise frappe.ValidationError("Enter the vendor encrypted identity as Base64, without URL encoding.")
+    if not raw or len(raw) % 16:
+        raise frappe.ValidationError("The vendor encrypted identity must contain complete AES blocks.")
+    return value
+
+
 def _sso_ready(settings):
     try:
         encrypt_username("configuration-check", _secret(settings, "custom_convox_sso_secret"),
@@ -131,7 +145,7 @@ def config():
     token_ready = bool(_secret(settings, "custom_convox_token_key" if settings.get("custom_convox_auto_token_enabled") else "custom_convox_access_token"))
     prefix_ready = bool(user.get("custom_convox_dial_prefix") or settings.get("custom_convox_default_dial_prefix"))
     sso_enabled = bool(settings.get("custom_convox_sso_enabled"))
-    sso_ready = sso_enabled and _sso_ready(settings)
+    sso_ready = sso_enabled and bool(_vendor_sso_value(user) or _sso_ready(settings))
     issues = []
     if not settings.get("custom_convox_integration_enabled"):
         issues.append("Enable ConVox in System Settings.")
@@ -171,11 +185,13 @@ def widget_session(manual=False):
     url = _url(settings.get("custom_convox_widget_url"), "/ConVoxCCS/ExternalIndex")
     if frappe.utils.cint(manual) or not settings.get("custom_convox_sso_enabled"):
         return result({"url": url, "mode": "manual"})
-    if not _sso_ready(settings):
-        raise frappe.ValidationError("ConVox SSO settings need administrator confirmation. Use manual login until configured.")
-    username = user.get("custom_convox_sso_username") or user.get("email") or user.name
-    encrypted = encrypt_username(username, _secret(settings, "custom_convox_sso_secret"),
-                                 settings.get("custom_convox_sso_iv"), settings.get("custom_convox_sso_iv_mode"))
+    encrypted = _vendor_sso_value(user)
+    if not encrypted:
+        if not _sso_ready(settings):
+            raise frappe.ValidationError("ConVox SSO settings need administrator confirmation. Use manual login until configured.")
+        username = user.get("custom_convox_sso_username") or user.get("email") or user.name
+        encrypted = encrypt_username(username, _secret(settings, "custom_convox_sso_secret"),
+                                     settings.get("custom_convox_sso_iv"), settings.get("custom_convox_sso_iv_mode"))
     return result({"url": url + "?" + urlencode({"ExternalUserName": encrypted}), "mode": "sso"})
 
 
