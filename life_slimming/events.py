@@ -1047,6 +1047,16 @@ def sii_rate_within_therapy_type_min_max_rate(doc, method=None):
                
                 
 def restrict_therapy_session_without_payment(doc,method=None):
+    therapy_plan = frappe.db.get_value(
+        "Therapy Plan",
+        doc.therapy_plan,
+        ["therapy_plan_already_taken_"],
+        as_dict=True
+    )
+
+    if therapy_plan and therapy_plan.therapy_plan_already_taken_:
+        return
+
     sales_invoice_id = frappe.db.get_value("Sales Invoice",{"therapy_plan_reference_id":doc.therapy_plan,"docstatus":1},["name"])
     if sales_invoice_id:
         try:

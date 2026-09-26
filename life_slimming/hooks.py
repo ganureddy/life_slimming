@@ -309,8 +309,8 @@ doc_events = {
     "before_save": "life_slimming.events.restrict_therapy_session_without_payment",
     "before_submit":"life_slimming.book_appointment.create_appointment_through_therapy_s",
     "on_submit":["life_slimming.book_appointment.change_status",
-                 "life_slimming.book_appointment.issue_consumed_items_from_stock"
-                #  "life_slimming.user_wise_roles.send_whatsapp_session_completion_to_client"
+                 "life_slimming.book_appointment.issue_consumed_items_from_stock",
+                 "life_slimming.user_wise_roles.send_whatsapp_session_completion_to_client"
                  ]
     },
 "Sales Invoice":{
