@@ -3,6 +3,8 @@
   "scripts": {
     "preinstall": "cd frontend && npm install --force",
     "dev": "cd frontend && npm run start-ui",
-    "build": "cd frontend && npm run build"
+    "build": "cd frontend && npm run build",
+    "dev:portal": "npm --prefix life_portal run dev",
+    "build:portal": "npm --prefix life_portal run build"
   }
 }

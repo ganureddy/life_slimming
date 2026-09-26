@@ -1,0 +1,91 @@
+html.portal-hrms {
+  --cream: #f6f7f9;
+  --cream-2: #f0f3f5;
+  --line: #e2e6eb;
+  --line-2: #cfd8d3;
+  --sans: var(--portal-font-family);
+  --serif: var(--portal-font-family);
+  --r: 8px;
+  --sh: none;
+}
+.portal-hrms body { background: var(--cream); }
+.portal-hrms .container { width: 100%; max-width: none; padding: 0; }
+.portal-hrms .page_content { padding: 0; }
+.portal-hrms .app > .side,
+.portal-hrms #menub,
+.portal-hrms .mast > :is(.logo, .home, .user),
+.portal-hrms .mast .ttl span,
+.portal-hrms .fbar > :is(.lb, #fc-scope, #fc-date, #fc-role),
+.portal-hrms .fbar > [onclick="lockNow()"],
+.portal-hrms .ph .kicker,
+.portal-hrms .ph > div > p { display: none !important; }
+.portal-hrms:not([data-hrms-view="bio"]) .biobar,
+.portal-hrms .ph .btn[onclick="window.print()"] { display: none !important; }
+.portal-hrms .app { min-height: 0; }
+.portal-hrms .main { width: 100%; min-width: 0; }
+.portal-hrms .mast {
+  position: relative;
+  height: auto;
+  min-height: 64px;
+  padding: 12px 24px;
+  gap: 16px;
+  background: white;
+  color: var(--ink);
+  box-shadow: none;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+  z-index: 85;
+}
+.portal-hrms .mast .ttl { order: -1; flex: 0 0 auto; text-align: left; display: block; }
+.portal-hrms .mast .ttl b { color: #164c3f; font-size: var(--portal-text-section); letter-spacing: 0; }
+.portal-hrms .mast .gsrch { display: block; flex: 1; width: auto; min-width: 200px; max-width: 460px; margin-left: auto; }
+.portal-hrms .mast .gsrch input { min-height: 40px; background: #f6f8f9; color: var(--ink); border: 1px solid var(--line-2); }
+.portal-hrms .mast .gsrch input::placeholder { color: #69786f; }
+.portal-hrms .portal-hrms-picker { position: relative; min-width: 180px; max-width: 100%; }
+.portal-hrms .portal-hrms-picker summary { padding: 9px 12px; border: 1px solid var(--line-2); border-radius: 6px; cursor: pointer; font-size: var(--portal-text-control); }
+.portal-hrms .portal-hrms-menu { position: absolute; top: calc(100% + 8px); right: 0; width: 320px; max-width: calc(100vw - 32px); background: white; border: 1px solid var(--line); border-radius: 8px; padding: 12px; box-shadow: 0 8px 24px #182f251a; z-index: 100; }
+.portal-hrms .portal-hrms-menu > input { width: 100%; min-height: 40px; padding: 8px 10px; border: 1px solid var(--line-2); border-radius: 6px; }
+.portal-hrms .portal-hrms-results { max-height: min(440px, 55vh); overflow: auto; margin-top: 8px; }
+.portal-hrms .portal-hrms-group { padding: 12px 8px 6px; font-size: var(--portal-text-small); font-weight: var(--portal-weight-semibold); color: var(--ink-3); }
+.portal-hrms .portal-hrms-results button { display: block; width: 100%; text-align: left; padding: 10px; background: white; color: var(--ink); border: 0; border-radius: 4px; cursor: pointer; }
+.portal-hrms .portal-hrms-results button:is(:hover, [aria-current]) { background: #edf5ef; color: #164c3f; }
+.portal-hrms .portal-hrms-tabs { display: flex; gap: 22px; padding: 0 24px; overflow-x: auto; background: white; border-bottom: 1px solid var(--line); }
+.portal-hrms .portal-hrms-tabs button { flex-shrink: 0; padding: 12px 0; min-height: 44px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: var(--ink-3); cursor: pointer; font-size: var(--portal-text-control); }
+.portal-hrms .portal-hrms-tabs button[aria-current] { border-bottom-color: #267958; color: #164c3f; }
+.portal-hrms .fbar { position: relative; top: auto; background: white; padding: 12px 24px; gap: 8px; }
+.portal-hrms .fbar .fchip { border-radius: 6px; min-height: 36px; }
+.portal-hrms .fbar .hrms-select-wrap { max-width: 100%; }
+.portal-hrms .fbar > .fchip:has(select) { min-width: 0; padding: 0; border: 0; flex: 0 1 180px; }
+.portal-hrms .fbar > .fchip .hrms-select-wrap { width: 100% !important; }
+.portal-hrms .wrap { padding: 20px 24px 32px; }
+.portal-hrms .ph { background: transparent; border: 0; padding: 0 0 16px; box-shadow: none; }
+.portal-hrms .ph > div { min-width: 0 !important; }
+.portal-hrms .tile { border-radius: 8px; box-shadow: none; }
+.portal-hrms :is(.tile, .bigval) .k { letter-spacing: 0; text-transform: none; font-size: var(--portal-text-small); }
+.portal-hrms :is(.bigval, .psum)::after { display: none; }
+.portal-hrms .bigval { background: white; color: var(--ink); border: 1px solid var(--line); border-top: 3px solid #6d99b3; border-radius: 8px; box-shadow: none; }
+.portal-hrms .bigval .v { color: #234c62; }
+.portal-hrms .bigval :is(.k, .d) { color: var(--ink-3); }
+.portal-hrms .acc:not(.a-dark) > .ah { background: #f2f5f7; }
+.portal-hrms .btn { border-radius: 6px; box-shadow: none; }
+.portal-hrms .portal-hrms-status { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 24px; background: #edf3f8; color: #31556d; }
+.portal-hrms .portal-hrms-status[hidden] { display: none; }
+.portal-hrms .portal-hrms-status[role="alert"] { background: #fff3ef; color: #873d30; }
+.portal-hrms .portal-hrms-status button { padding: 8px 14px; border: 1px solid #cfd8d3; background: white; border-radius: 6px; cursor: pointer; }
+@media (max-width: 600px) {
+  .portal-hrms .mast { padding: 12px 16px; gap: 10px; }
+  .portal-hrms .mast .gsrch { order: 3; flex-basis: 100%; max-width: none; min-width: 0; }
+  .portal-hrms .portal-hrms-picker { margin-left: auto; min-width: 0; max-width: 60%; }
+  .portal-hrms .portal-hrms-picker summary { overflow-wrap: anywhere; }
+  .portal-hrms .portal-hrms-tabs { padding-inline: 16px; gap: 18px; }
+  .portal-hrms .fbar { padding: 10px 16px; }
+  .portal-hrms .fbar > .fchip:has(select) { flex: 1 1 calc(50% - 8px); }
+  .portal-hrms .fbar .hrms-select-wrap { width: 100% !important; }
+  .portal-hrms .wrap { padding: 16px; }
+  .portal-hrms .grid.g6:has(> .tile), .portal-hrms .grid.g4:has(> .bigval) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .portal-hrms :is(.tile, .bigval) { padding: 12px; overflow-wrap: anywhere; }
+  .portal-hrms :is(.tile, .bigval) .v { font-size: 24px; }
+}
+@media print {
+  .portal-hrms .mast, .portal-hrms .portal-hrms-tabs, .portal-hrms .fbar { display: none !important; }
+}
