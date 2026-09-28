@@ -112,6 +112,12 @@
         "description": "360° client file"
       },
       {
+        "id": "enrollment-register",
+        "icon": "📋",
+        "label": "Enrollment Register",
+        "description": "Client enrollment register"
+      },
+      {
         "id": "unjoined",
         "icon": "⛔",
         "label": "Unjoined Clients",
