@@ -36,6 +36,11 @@ export const routes = [
     component: () => import("../pages/ConvoxHistoryPage.vue"),
     meta: { title: "ConVox history", accessModule: "leads" },
   },
+  {
+    path: "/cc-appointments", name: "cc-appointments",
+    component: () => import("../pages/CCAppointmentsPage.vue"),
+    meta: { title: "CC Appointments", accessModule: "leads" },
+  },
   ...menu
     .flatMap((group) => group.items)
     .filter((item) => item.id !== "home")
