@@ -1,9 +1,9 @@
 {
   "private": true,
   "scripts": {
-    "preinstall": "cd frontend && npm install --force",
+    "preinstall": "npm --prefix frontend install --force && npm --prefix life_portal ci --include=dev",
     "dev": "cd frontend && npm run start-ui",
-    "build": "cd frontend && npm run build",
+    "build": "npm --prefix frontend run build && npm run build:portal",
     "dev:portal": "npm --prefix life_portal run dev",
     "build:portal": "npm --prefix life_portal run build"
   }
