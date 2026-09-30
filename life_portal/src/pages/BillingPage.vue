@@ -4,6 +4,8 @@ import billingSource from "../data/billingV2LiveSource.json";
 import { apiUrl, apiCredentials } from "../api/config";
 import endpoints from "../api/endpoints.json";
 import { session } from "../lib/session";
+import { beginLoading } from "../lib/loading";
+const pendingLoads = new Set();
 import billingPolish from "../styles/billing.css?inline";
 
 const host = ref(null);
@@ -32,6 +34,9 @@ function csrfToken() {
 async function invoke(method, args = {}, type = "POST") {
   const id = legacyToId[method];
   const resolved = id && endpoints[id] ? endpoints[id] : method;
+  const finish = beginLoading("Loading billing");
+  pendingLoads.add(finish);
+  try {
   const response = await fetch(apiUrl("/api/method/" + resolved), {
     method: type === "GET" ? "GET" : "POST",
     credentials: apiCredentials(),
@@ -49,6 +54,7 @@ async function invoke(method, args = {}, type = "POST") {
     throw error;
   }
   return body;
+  } finally { finish(); pendingLoads.delete(finish); }
 }
 
 function installFrappeBridge() {
@@ -83,6 +89,8 @@ function extractBillingApp() {
   const app = parsed.querySelector("#app");
   if (!app) throw new Error("The exported Billing #app container was not found");
   app.id = "billing-v2-app";
+  app.querySelectorAll(".topbar > .logo-box, .topbar > div:has(> .brand)").forEach(element => element.remove());
+  app.querySelector("#clock")?.setAttribute("hidden", "");
   app.querySelectorAll("input, textarea").forEach((element) => {
     element.removeAttribute("value");
     if (element.tagName === "TEXTAREA") element.textContent = "";
@@ -165,6 +173,8 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  for (const finish of pendingLoads) finish();
+  pendingLoads.clear();
   for (const element of injected) element.remove();
 });
 </script>

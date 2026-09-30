@@ -1,5 +1,7 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref } from "vue";
+import { request } from "../api/http";
+import { session } from "../lib/session";
 import { useRoute, useRouter } from "vue-router";
 import {
   authApi,
@@ -73,6 +75,7 @@ function back() {
 async function finish() {
   password.value = "";
   clearChallenge();
+  session.user = "";
   await router.replace(destination.value.replace(/^\/life_portal/, "") || "/");
 }
 async function initialize() {
@@ -80,7 +83,16 @@ async function initialize() {
   ready.value = false;
   error.value = "";
   try {
-    const context = await authApi.context();
+    let context = await authApi.context();
+    let pending = route.query.reason === "idle";
+    try { pending ||= sessionStorage.getItem("life-portal-logout-pending") === "1"; } catch { /* Storage unavailable. */ }
+    if (pending) {
+      await request("logout", { args: {}, csrfToken: context.csrf_token });
+      try { sessionStorage.removeItem("life-portal-logout-pending"); } catch { /* Storage unavailable. */ }
+      session.user = "";
+      notice.value = "You were signed out after one hour of inactivity. Please sign in again.";
+      context = await authApi.context();
+    }
     if (!alive) return;
     csrfToken.value = context.csrf_token || "";
     passwordEnabled.value = context.password_login_enabled;

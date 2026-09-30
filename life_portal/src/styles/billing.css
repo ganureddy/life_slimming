@@ -100,3 +100,7 @@
 .billing-compat-page.billing-compat-page { max-width: none; }
 #billing-v2-app .kpi:only-child { grid-column: 1 / -1; }
 #billing-v2-app .pay-box .f-lbl { color: #e0eee7; }
+
+/* The workspace header provides the title and session identity. */
+.billing-compat-page #billing-v2-app > .topbar { position:relative;top:auto;min-height:0;padding:10px 20px;box-shadow:none; }
+.billing-compat-page #clock { display:none !important; }

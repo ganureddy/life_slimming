@@ -1,12 +1,15 @@
+import { ref } from "vue";
 import { createRouter, createWebHistory } from "vue-router";
-import { authApi } from "../api/auth";
-import menu from "../data/menu.json";
+import { session, loadSession } from "../lib/session";
+import access from "../../../life_slimming/portal_pages/access.json";
+const menu = access.menu;
 import portalPages from "../data/portalPages.json";
+
+export const routeLoading = ref(false);
 
 const pageComponents = {
   control: () => import("../pages/ControlPage.vue"),
   billing: () => import("../pages/BillingPage.vue"),
-  bdash: () => import("../pages/BranchDashboardPage.vue"),
   conversions: () => import("../pages/ConversionsPage.vue"),
 };
 
@@ -23,6 +26,16 @@ export const routes = [
     component: () => import("../pages/HomePage.vue"),
     meta: { title: "Home" },
   },
+  {
+    path: "/leads/:leadId/convox", name: "convox-history",
+    component: () => import("../pages/ConvoxHistoryPage.vue"),
+    meta: { title: "ConVox call details", accessModule: "leads" },
+  },
+  {
+    path: "/convox-history", name: "convox-history-index",
+    component: () => import("../pages/ConvoxHistoryPage.vue"),
+    meta: { title: "ConVox history", accessModule: "leads" },
+  },
   ...menu
     .flatMap((group) => group.items)
     .filter((item) => item.id !== "home")
@@ -33,7 +46,7 @@ export const routes = [
         ? pageComponents.control
         : portalPages[item.id]
         ? () => import("../pages/PortalSourcePage.vue")
-        : ["billing", "bdash", "conversions"].includes(item.id)
+        : ["billing", "conversions"].includes(item.id)
           ? pageComponents[item.id]
           : () => import("../pages/ModulePage.vue"),
       meta: {
@@ -42,6 +55,11 @@ export const routes = [
         icon: item.icon,
       },
     })),
+  ...Object.entries(access.children).map(([id, entry]) => ({
+    path: "/" + id, name: id,
+    component: () => import("../pages/PortalSourcePage.vue"),
+    meta: { title: entry.title },
+  })),
   {
     path: "/:pathMatch(.*)*",
     name: "not-found",
@@ -55,11 +73,12 @@ const router = createRouter({
   scrollBehavior: () => ({ top: 0 }),
 });
 router.beforeEach(async (to, from) => {
+  routeLoading.value = true;
   // Check guest entry before rendering the workspace, including Vite.
   if (!to.meta.public && !from.name) {
     try {
-      const context = await authApi.context();
-      if (!context.authenticated) return { name: "login", query: { "redirect-to": "/life_portal" + to.fullPath }, replace: true };
+      await loadSession();
+      if (!session.user) return { name: "login", query: { "redirect-to": "/life_portal" + to.fullPath }, replace: true };
     } catch {
       return { name: "login", query: { "redirect-to": "/life_portal" + to.fullPath }, replace: true };
     }
@@ -74,7 +93,9 @@ router.beforeEach(async (to, from) => {
     return { name: view, query, replace: true };
   }
 });
+router.onError(() => { routeLoading.value = false; });
 router.afterEach((to) => {
+  routeLoading.value = false;
   document.title = to.meta.title + " · LIFE Portal";
 });
 export default router;

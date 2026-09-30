@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, watch } from "vue";
-import menu from "../data/menu.json";
+import access from "../../../life_slimming/portal_pages/access.json";
+const menu = access.menu;
 import { session, roleKey, labels, groupRoles } from "../lib/session";
 import { call } from "../lib/api";
 const allowed = computed(() => ["IT", "MD"].includes(roleKey.value));
@@ -69,10 +70,7 @@ async function save() {
     <p>Portal Access Control can only be opened by an IT Admin or MD.</p>
   </section>
   <section v-else class="access-panel">
-    <header class="access-hero">
-      <span aria-hidden="true">🔐</span>
-      <div><h1>Portal Access Control</h1><p>Choose a role, then tick the groups and individual tabs it can see.</p></div>
-    </header>
+    <p>Choose a role, then select the groups and tabs it can see.</p>
     <fieldset :disabled="saving">
       <div class="access-toolbar panel">
         <label for="access-role">Role
@@ -104,5 +102,5 @@ async function save() {
 </template>
 
 <style scoped>
-.access-panel{max-width:1180px}.access-hero{display:flex;align-items:center;gap:18px;padding:24px;background:#164c3f;border-radius:16px;color:white;margin-bottom:20px}.access-hero>span{font-size:30px}.access-hero h1{font-size:24px}.access-hero p{margin:0;color:#d5e6da;font-size:13px}fieldset{border:0;padding:0;margin:0;min-width:0}.access-toolbar{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:18px}.access-toolbar label{display:grid;gap:6px;font-size:12px;font-weight:600}select{min-width:190px;padding:10px;border:1px solid var(--line);border-radius:8px;background:white;color:inherit}.access-matrix{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}.access-group{border:1px solid var(--line);border-radius:12px;background:white;overflow:hidden}.access-group header{display:flex;justify-content:space-between;gap:8px;padding:14px;background:#eaf3e8;font-size:11px;font-weight:600}.access-group header label{display:flex;align-items:center;gap:8px}.access-group header>span{white-space:nowrap}.access-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border-top:1px solid #edf2eb;font-size:12px;color:#6b8070}.access-item.enabled{color:#183d26;background:#f8fbf6}input{accent-color:#236d38;width:16px;height:16px;flex-shrink:0}.access-error{color:#9a4233}.access-notice{color:#236d38}@media(max-width:1000px){.access-matrix{grid-template-columns:repeat(2,minmax(0,1fr))}.access-toolbar{align-items:flex-start;flex-direction:column}}@media(max-width:600px){.access-matrix{grid-template-columns:1fr}.access-hero{padding:18px}.access-hero h1{font-size:20px}.actions{flex-wrap:wrap}}
+.access-panel{max-width:1180px}fieldset{border:0;padding:0;margin:0;min-width:0}.access-toolbar{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:18px}.access-toolbar label{display:grid;gap:6px;font-size:12px;font-weight:600}select{min-width:190px;padding:10px;border:1px solid var(--line);border-radius:8px;background:white;color:inherit}.access-matrix{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}.access-group{border:1px solid var(--line);border-radius:12px;background:white;overflow:hidden}.access-group header{display:flex;justify-content:space-between;gap:8px;padding:14px;background:#eaf3e8;font-size:11px;font-weight:600}.access-group header label{display:flex;align-items:center;gap:8px}.access-group header>span{white-space:nowrap}.access-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border-top:1px solid #edf2eb;font-size:12px;color:#6b8070}.access-item.enabled{color:#183d26;background:#f8fbf6}input{accent-color:#236d38;width:16px;height:16px;flex-shrink:0}.access-error{color:#9a4233}.access-notice{color:#236d38}@media(max-width:1000px){.access-matrix{grid-template-columns:repeat(2,minmax(0,1fr))}.access-toolbar{align-items:flex-start;flex-direction:column}}@media(max-width:600px){.access-matrix{grid-template-columns:1fr}.actions{flex-wrap:wrap}}
 </style>

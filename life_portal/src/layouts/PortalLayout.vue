@@ -1,11 +1,13 @@
 <script setup>
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
+import ConvoxHistoryDialog from "../components/ConvoxHistoryDialog.vue";
 import PortalSidebar from "../components/PortalSidebar.vue";
 import AccountDialog from "../components/AccountDialog.vue";
 import ConvoxPhone from "../components/ConvoxPhone.vue";
-import { session, initials, roleLabel } from "../lib/session";
+import { session, initials, roleLabel, canAccessModule } from "../lib/session";
 const route = useRoute();
+const allowed = computed(() => route.name === 'not-found' || canAccessModule(route.meta.accessModule || route.name));
 const collapsed = ref(false);
 const mobileOpen = ref(false);
 const account = ref(null);
@@ -34,13 +36,6 @@ watch(
         >
           ☰
         </button>
-        <!-- <a
-          class="icon-button healthcare-link"
-          href="/app/healthcare"
-          aria-label="Go to Healthcare"
-          title="Go to Healthcare"
-          >←</a -->
-        <!-- > -->
         <RouterLink
           :to="{ name: 'home' }"
           class="brand"
@@ -83,9 +78,11 @@ watch(
       @close="mobileOpen = false"
     />
     <main id="main-content" class="main-content" tabindex="-1">
-      <RouterView />
+      <RouterView v-if="allowed" />
+      <section v-else class="panel"><h1>Access unavailable</h1><p>This module is not enabled for your portal role.</p></section>
     </main>
     <AccountDialog ref="account" />
     <ConvoxPhone />
+    <ConvoxHistoryDialog />
   </div>
 </template>

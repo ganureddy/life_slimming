@@ -11,7 +11,9 @@ const groups = computed(() =>
   visibleMenu.value
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) =>
+      items: group.items.flatMap(item => item.id === 'leads'
+        ? [item, { id: 'convox-history-index', label: 'ConVox History', description: 'Call details and recordings', icon: '☎' }]
+        : [item]).filter((item) =>
         (group.label + " " + item.label + " " + item.description)
           .toLowerCase()
           .includes(search.value.toLowerCase()),

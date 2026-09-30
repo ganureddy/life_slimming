@@ -8,12 +8,15 @@
 {% if module_config.module == "audit" %}
 <link rel="stylesheet" href="/assets/life_slimming/css/portal_audit.css">
 {% endif %}
+<link rel="stylesheet" href="/assets/life_slimming/css/portal_module.css">
 {% endblock %}
 {% block content %}
+<script>document.documentElement.dataset.portalModule = {{ module_config.module | json }};</script>
 <script>frappe.boot = {{ boot | json }}; frappe.sys_defaults = frappe.boot.sysdefaults;</script>
 {{ include_script('frappe-web.bundle.js') }}
 <script>window.lifePortalModule = {{ module_config | json }};</script>
 <script src="/assets/life_slimming/js/portal_config.js"></script>
+<script src="/assets/life_slimming/js/portal_module_loading.js"></script>
 <script src="/assets/life_slimming/js/portal_module_bridge.js"></script>
 {{ module_html }}
 {% if module_config.module in ["employees", "attend", "payroll"] %}

@@ -141,43 +141,22 @@ Local 2FA is currently off; setup does not enable it or send test SMS/email.
 The schema check found missing DocTypes referenced by 51 APIs. Those dependencies
 must be addressed before their pages can use the migrated endpoints.
 
-### Branch Dashboard — live ERP connection
+### Branch Dashboard
 
-Open `/life_portal/bdash` after signing in to the local portal. Use **Connect ERP
-Portal** with your own `portal.lifescc.com` credentials and verification code.
-The ChatGPT connector session is separate and cannot authenticate this app.
-No API keys, passwords, or production snapshots are bundled into the frontend.
+`/life_portal/bdash` now uses the checked-in `branch-command-center` page through
+`PortalSourcePage.vue`, the shared module bridge, and the portal page manifest.
+The superseded native branch Vue component, styles, and API wrappers were removed.
+The remote ERP backend remains available for its other consumers.
 
-The page follows the remote `branch-command-center` layout inspected on
-2026-09-19 (Web Page modified 2026-09-18), with branch/date filters, money summary,
-target progress, daily collections, payment breakdown, appointments, pending
-balances, employee collections, attendance, source collections and stock.
-Today-only figures and current stock/task snapshots are explicitly labelled;
-other figures use the selected date range. API row limits are disclosed.
-Walk-in editing, full dues recovery, offers and roster planning remain available
-through links to the original portal; they are not yet native Vue components.
+### ConVox call details
 
-API entry point: `src/api/branch.js`. Backend: `life_slimming/api/remote_erp.py`.
-
-| Local action (POST) | Remote request | Purpose |
-| --- | --- | --- |
-| `connect` | POST `login`, GET `frappe.auth.get_logged_user` | Personal ERP sign-in, including OTP |
-| `dashboard` | GET `frappe.client.get_list` (Branch), GET `branch_command_center` | Permission-filtered branch selection and live figures |
-| `disconnect` | None | Forget this local session's ERP connection |
-
-The gateway uses a fixed HTTPS origin, verifies TLS, disallows redirects, and
-keeps remote session cookies in Redis scoped to the local user AND session ID.
-Cached connections expire after one hour of inactivity. Disconnect removes the
-local cached connection; it does not log out other ERP browser sessions.
-Passwords are forwarded only for login and never saved by this integration.
-Business requests are reads; the Vue app does not mutate remote records.
-A remote permission/session error, timeout, invalid date range or mismatched
-branch response does not render invented zero values or stale figures.
-
-Validation: `../../env/bin/python -m unittest life_slimming.tests.test_remote_erp`
-from the app directory; browser tests in `tests/branch.browser.cjs` use mocked
-ERP responses and test-only credentials. Authenticated production totals still
-require a real user's ERP sign-in; they were not verified using the connector.
+Open a lead summary or follow-up and choose **ConVox details** beside History.
+The modal matches saved events to the lead's mobile (10 digits, +91, or leading 0 formats).
+The sidebar also provides **ConVox History** with a Lead ID lookup.
+Calls are counted by distinct call reference; all matching events are paginated.
+Managers can see all agents; other authorized agents see their own events for
+assigned leads. Recordings play when a saved HTTP(S) or Frappe file URL exists;
+filenames alone are shown as stored. Raw callback payloads are not exposed.
 
 ### Shared API domain
 

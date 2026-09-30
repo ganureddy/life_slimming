@@ -119,8 +119,9 @@
     if (![location.origin, remoteOrigin].includes(url.origin)) return;
     const module = config.routes[url.pathname];
     if (!module) return;
-    url.searchParams.set("module", module);
-    anchor.href =
-      "/life_portal_module?" + url.searchParams.toString() + url.hash;
+    url.searchParams.delete("module");
+    url.searchParams.delete("embed");
+    anchor.href = "/life_portal/" + encodeURIComponent(module) + url.search + url.hash;
+    if (!anchor.target || anchor.target === "_self") anchor.target = "_top";
   });
 })();

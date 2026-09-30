@@ -1,90 +1,22 @@
 import { reactive, computed } from "vue";
 import { call } from "./api";
-import menu from "../data/menu.json";
+import access from "../../../life_slimming/portal_pages/access.json";
+const menu = access.menu;
 
 export const session = reactive({
   loading: true,
   error: "",
   status: null,
   user: "",
+  session_id: "",
   full_name: "",
   roles: [],
   portal_role: "",
   csrf_token: "",
   access_config: null,
 });
-export const labels = {
-  IT: "IT Admin",
-  MD: "MD",
-  CEO: "CEO",
-  COO: "COO",
-  C00: "C00",
-  CGO: "CGO",
-  CH: "Cluster Head",
-  BM: "Branch Manager",
-  AC: "Accounts",
-  CC: "Call Centre",
-  DR: "Doctor",
-  FO: "Front Office",
-  HR: "HR",
-  Therapist: "Therapist",
-  Dietitian: "Dietitian",
-  STORES: "Stores",
-};
-export const groupRoles = {
-  CEO: [
-    "MAIN",
-    "BRANCH HOME",
-    "CRM & CALL CENTRE",
-    "CLIENTS & CLINICAL",
-    "BILLING & ACCOUNTS",
-    "REPORTS & MIS",
-    "LIFE RISE",
-  ],
-  COO: [
-    "MAIN",
-    "BRANCH HOME",
-    "CRM & CALL CENTRE",
-    "CLIENTS & CLINICAL",
-    "BILLING & ACCOUNTS",
-    "STOCK & PURCHASE",
-    "REPORTS & MIS",
-    "LIFE RISE",
-  ],
-  CGO: [
-    "MAIN",
-    "BRANCH HOME",
-    "CRM & CALL CENTRE",
-    "CLIENTS & CLINICAL",
-    "BILLING & ACCOUNTS",
-    "REPORTS & MIS",
-  ],
-  CH: [
-    "MAIN",
-    "BRANCH HOME",
-    "CRM & CALL CENTRE",
-    "CLIENTS & CLINICAL",
-    "REPORTS & MIS",
-    "LIFE RISE",
-  ],
-  BM: [
-    "MAIN",
-    "BRANCH HOME",
-    "CLIENTS & CLINICAL",
-    "BILLING & ACCOUNTS",
-    "STOCK & PURCHASE",
-    "CRM & CALL CENTRE",
-  ],
-  AC: ["MAIN", "BILLING & ACCOUNTS", "STOCK & PURCHASE", "REPORTS & MIS"],
-  CC: ["MAIN", "CRM & CALL CENTRE", "CLIENTS & CLINICAL"],
-  DR: ["MAIN", "CLIENTS & CLINICAL"],
-  Therapist: ["MAIN", "CLIENTS & CLINICAL", "BILLING & ACCOUNTS"],
-  Dietitian: ["MAIN", "CLIENTS & CLINICAL", "BILLING & ACCOUNTS"],
-  FO: ["MAIN", "CLIENTS & CLINICAL", "BILLING & ACCOUNTS", "CRM & CALL CENTRE"],
-  HR: ["MAIN", "HR & PAYROLL", "REPORTS & MIS"],
-  STORES: ["MAIN", "STOCK & PURCHASE"],
-};
-groupRoles.C00 = groupRoles.COO;
+export const labels = access.labels;
+export const groupRoles = access.group_roles;
 export const roleKey = computed(() => {
   if (
     session.user === "Administrator" ||
@@ -112,7 +44,7 @@ export function canSee(item, group) {
   if (item.id === "home") return true;
   const key = roleKey.value;
   const cfg = session.access_config?.[key];
-  if (cfg && typeof cfg === "object") {
+  if (cfg && typeof cfg === "object" && !Array.isArray(cfg)) {
     if (Array.isArray(cfg.show) && cfg.show.includes(item.id)) return true;
     if (Array.isArray(cfg.hide) && cfg.hide.includes(item.id)) return false;
     return (
@@ -130,17 +62,24 @@ export const visibleMenu = computed(() =>
     }))
     .filter((group) => group.items.length),
 );
+export function canAccessModule(module) {
+  const parent = access.children[module]?.parent || module;
+  return visibleMenu.value.some(group => group.items.some(item => item.id === parent));
+}
 export async function loadSession() {
   session.loading = true;
   session.error = "";
   session.status = null;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20000);
   try {
-    Object.assign(session, await call("life_slimming.api.portal.bootstrap"));
+    Object.assign(session, await call("life_slimming.api.portal.bootstrap", undefined, { signal: controller.signal }));
   } catch (error) {
     session.user = "";
-    session.error = error.message;
+    session.error = error.name === "AbortError" ? "Loading took too long. Please check your connection and try again." : error.message;
     session.status = error.status;
   } finally {
+    clearTimeout(timeout);
     session.loading = false;
   }
 }

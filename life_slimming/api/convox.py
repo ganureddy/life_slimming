@@ -347,6 +347,66 @@ def history(lead_id=None, mobile_number=None, call_reference=None):
         fields=EVENT_FIELDS, order_by="received_on desc", limit_page_length=50)}
 
 
+def recording_url(value):
+    """Expose the PBX recording path through its public HTTPS host."""
+    value = str(value or "").strip()
+    return re.sub(r"^https://192\.168\.0\.193(?=/|$)", ORIGIN, value)
+
+
+HISTORY_FIELDS = EVENT_FIELDS + [
+    "agent_id", "process_name", "call_datetime", "station", "disposition_2",
+    "disposition_3", "call_mode", "completed_by", "queue_name", "queue_duration",
+    "ring_duration", "followup_time", "list_id", "did", "recording_file_name",
+    "recording_available", "recording_received_on", "remarks",
+]
+
+
+@frappe.whitelist(methods=["POST"])
+def lead_history(lead_id, start=0):
+    """Read saved call events for an authorized lead, matched by its mobile."""
+    user, _ = _identity()
+    lead = _lead(lead_id)
+    number = _lead_number(lead)
+    manager = bool(MANAGERS.intersection(frappe.get_roles()))
+    agent = user.get("custom_convox_agent_id")
+    if not manager and not agent:
+        raise frappe.PermissionError("Your account needs a ConVox agent mapping to read call history.")
+    try:
+        start = int(start)
+    except (TypeError, ValueError):
+        raise frappe.ValidationError("Invalid history page.")
+    if start < 0:
+        raise frappe.ValidationError("Invalid history page.")
+    result = {"lead_id": lead.name, "lead_name": lead.get("lead_name") or lead.name,
+              "mobile_number": number, "scope": "all_agents" if manager else "own_agent",
+              "events": [], "fields": [], "total_calls": 0, "total_events": 0,
+              "start": start, "has_more": False}
+    if not frappe.db.exists("DocType", "ConVox Call Event"):
+        return result
+    meta = frappe.get_meta("ConVox Call Event")
+    fields = [field for field in HISTORY_FIELDS if field == "name" or meta.has_field(field)]
+    result["fields"] = [{"key": field, "label": (meta.get_field(field).label if field != "name" else "Event ID")}
+                        for field in fields]
+    # Match the complete normalized number, never an arbitrary trailing suffix.
+    where = "REGEXP_REPLACE(COALESCE(mobile_number, ''), '[[:space:]()+.-]', '') IN %(numbers)s"
+    args = {"numbers": (number, "91" + number, "0" + number), "start": start}
+    if not manager:
+        where += " AND agent_id = %(agent)s"
+        args["agent"] = agent
+    summary = frappe.db.sql(
+        "SELECT COUNT(*) AS total_events, COUNT(DISTINCT COALESCE(NULLIF(call_reference, ''), name)) AS total_calls "
+        "FROM `tabConVox Call Event` WHERE " + where, args, as_dict=True)[0]
+    result.update(total_events=int(summary.total_events), total_calls=int(summary.total_calls))
+    result["events"] = frappe.db.sql(
+        "SELECT " + ", ".join("`" + field + "`" for field in fields) +
+        " FROM `tabConVox Call Event` WHERE " + where +
+        " ORDER BY received_on DESC, name DESC LIMIT 50 OFFSET %(start)s", args, as_dict=True)
+    for event in result["events"]:
+        event["recording_file_name"] = recording_url(event.get("recording_file_name"))
+    result["has_more"] = start + len(result["events"]) < result["total_events"]
+    return result
+
+
 def receive_callback(event_type, data):
     """Called by existing POST-only callback routes; authenticate before writes."""
     settings = frappe.get_doc("System Settings")
@@ -410,6 +470,8 @@ def receive_callback(event_type, data):
         for field, key in mapping.items():
             if key in data:
                 setattr(event, field, str(data[key] or "")[:10000 if field in {"remarks", "recording_file_name"} else 140])
+        if "RECORDING_FILE_NAME" in data:
+            event.recording_file_name = recording_url(event.recording_file_name)
         for key, value in durations.items():
             setattr(event, key.lower(), value)
         followup = data.get("FOLLOWUP_TIME")

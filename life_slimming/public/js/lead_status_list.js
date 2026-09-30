@@ -80,12 +80,10 @@ frappe.listview_settings["Lead"] = {
     //                 data.forEach((el)=>{
                         
     //                     let elTime=  moment(el.followup_next_date + ' ' + el.time).format('HH:mm');
-    //                     console.log(today,time,el.followup_next_date,elTime);
     //                     if(el.followup_next_date == today && elTime == time){
     //                         finalData.push(el);
     //                     }
     //                 });
-    //                 // console.log('----------',finalData);
     //                 // let data = r.message.Data;
     //                 if(finalData.length){
     //                         var leadInfo = finalData.map(function(lead) {

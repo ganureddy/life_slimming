@@ -8,6 +8,7 @@ async function call(action, args = {}, signal) {
   return body.message;
 }
 export const convoxApi = {
+  leadHistory: (lead_id, start = 0, signal) => call("lead_history", { lead_id, start }, signal),
   config: (signal) => call('config', {}, signal),
   widgetSession: (signal, manual = false) => call('widget_session', { manual: manual ? 1 : 0 }, signal),
   callTarget: (lead_id, signal) => call('call_target', { lead_id }, signal),
