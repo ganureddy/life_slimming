@@ -13,6 +13,7 @@ from frappe.integrations.utils import make_post_request as _make_post_request
 from frappe.utils.safe_exec import read_sql as _read_sql
 from frappe.utils.safe_exec import call_whitelisted_function as _call_whitelisted
 from life_slimming.api._runtime import script_endpoint
+from life_slimming.api.cc_appointments import enrich_lead_appointments
 
 
 @script_endpoint(allow_guest=False)
@@ -90,6 +91,7 @@ def run(**kwargs):
         "custom_delivery_type", "custom_breastfeeding", "custom_chat_script",
         "creation", "modified"
     ]
+    LEAD_FIELDS += ["custom_appointment", "custom_appointment_duration"]
     phone = (frappe.form_dict.get("phone") or "").strip()
 
     if phone:
@@ -114,6 +116,7 @@ def run(**kwargs):
             order_by="modified desc",
             limit_page_length=10
         )
+        enrich_lead_appointments(rows)
         frappe.response["message"] = {"rows": rows, "total": len(rows), "truncated": 0,
                                      "scoped_to_owner": 0 if is_manager else 1}
     else:
@@ -148,6 +151,7 @@ def run(**kwargs):
             order_by="modified desc",
             limit_page_length=PAGE_LIMIT
         )
+        enrich_lead_appointments(rows)
         frappe.response["message"] = {
             "rows": rows,
             "total": total,

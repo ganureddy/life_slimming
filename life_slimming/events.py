@@ -15,18 +15,22 @@ import traceback
   
 # To fetch data to customer_details feild for calander_view 
 def fetch_details_data(doc,method=None): 
+    if doc.get("custom_cc_booking"):
+        return
     # try: 
-        fetch_data = frappe.db.get_list("Appointment",filters={'name':doc.name},
-                                        fields=['branch','category','concern','customer_name'])
-        data = f"{fetch_data[0].branch}\n{fetch_data[0].category}\n{fetch_data[0].concern}\n{fetch_data[0].customer_name}"   
-        insert_data = frappe.db.set_value('Appointment', doc.name, 'customer_details', data)
-        frappe.db.commit()
-        frappe.reload_doctype("Appointment")  
+    fetch_data = frappe.db.get_list("Appointment",filters={'name':doc.name},
+                                    fields=['branch','category','concern','customer_name'])
+    data = f"{fetch_data[0].branch}\n{fetch_data[0].category}\n{fetch_data[0].concern}\n{fetch_data[0].customer_name}"   
+    insert_data = frappe.db.set_value('Appointment', doc.name, 'customer_details', data)
+    frappe.db.commit()
+    frappe.reload_doctype("Appointment")  
     # except Exception as e:
     #     print(e)
 
   
 def set_appointment_time(doc,method=None):
+    if doc.get("custom_cc_booking"):
+        return
     # try:
     appointment_data = frappe.db.get_list("Appointment",filters={'name':doc.name},
                                         fields=['scheduled_time','duration','customer_phone_number'])

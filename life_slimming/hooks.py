@@ -253,6 +253,7 @@ fixtures = [
 before_request = ["life_slimming.two_factor_bypass.install"]
 
 override_doctype_class = {
+    "Appointment": "life_slimming.cc_appointment.CCAppointment",
 	# "ToDo": "custom_app.overrides.CustomToDo"
     "Patient Appointment":"life_slimming.get_availability_data.Validate_Patient_Appointment"
 }
@@ -476,3 +477,6 @@ try:
     _patch_msg91_2fa()
 except Exception:
     pass
+
+# Staff-based CC scheduler fields.
+after_migrate = ["life_slimming.api.cc_appointment_setup.execute"]
