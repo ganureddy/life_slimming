@@ -1,0 +1,525 @@
+{
+  "labels": {
+    "IT": "IT Admin",
+    "MD": "MD",
+    "CEO": "CEO",
+    "COO": "COO",
+    "C00": "C00",
+    "CGO": "CGO",
+    "CH": "Cluster Head",
+    "BM": "Branch Manager",
+    "AC": "Accounts",
+    "CC": "Call Centre",
+    "DR": "Doctor",
+    "FO": "Front Office",
+    "HR": "HR",
+    "Therapist": "Therapist",
+    "Dietitian": "Dietitian",
+    "STORES": "Stores"
+  },
+  "group_roles": {
+    "CEO": [
+      "MAIN",
+      "BRANCH HOME",
+      "CRM & CALL CENTRE",
+      "CLIENTS & CLINICAL",
+      "BILLING & ACCOUNTS",
+      "REPORTS & MIS",
+      "LIFE RISE"
+    ],
+    "COO": [
+      "MAIN",
+      "BRANCH HOME",
+      "CRM & CALL CENTRE",
+      "CLIENTS & CLINICAL",
+      "BILLING & ACCOUNTS",
+      "STOCK & PURCHASE",
+      "REPORTS & MIS",
+      "LIFE RISE"
+    ],
+    "CGO": [
+      "MAIN",
+      "BRANCH HOME",
+      "CRM & CALL CENTRE",
+      "CLIENTS & CLINICAL",
+      "BILLING & ACCOUNTS",
+      "REPORTS & MIS"
+    ],
+    "CH": [
+      "MAIN",
+      "BRANCH HOME",
+      "CRM & CALL CENTRE",
+      "CLIENTS & CLINICAL",
+      "REPORTS & MIS",
+      "LIFE RISE"
+    ],
+    "BM": [
+      "MAIN",
+      "BRANCH HOME",
+      "CLIENTS & CLINICAL",
+      "BILLING & ACCOUNTS",
+      "STOCK & PURCHASE",
+      "CRM & CALL CENTRE"
+    ],
+    "AC": [
+      "MAIN",
+      "BILLING & ACCOUNTS",
+      "STOCK & PURCHASE",
+      "REPORTS & MIS"
+    ],
+    "CC": [
+      "MAIN",
+      "CRM & CALL CENTRE",
+      "CLIENTS & CLINICAL"
+    ],
+    "DR": [
+      "MAIN",
+      "CLIENTS & CLINICAL"
+    ],
+    "Therapist": [
+      "MAIN",
+      "CLIENTS & CLINICAL",
+      "BILLING & ACCOUNTS"
+    ],
+    "Dietitian": [
+      "MAIN",
+      "CLIENTS & CLINICAL",
+      "BILLING & ACCOUNTS"
+    ],
+    "FO": [
+      "MAIN",
+      "CLIENTS & CLINICAL",
+      "BILLING & ACCOUNTS",
+      "CRM & CALL CENTRE"
+    ],
+    "HR": [
+      "MAIN",
+      "HR & PAYROLL",
+      "REPORTS & MIS"
+    ],
+    "STORES": [
+      "MAIN",
+      "STOCK & PURCHASE"
+    ],
+    "C00": [
+      "MAIN",
+      "BRANCH HOME",
+      "CRM & CALL CENTRE",
+      "CLIENTS & CLINICAL",
+      "BILLING & ACCOUNTS",
+      "STOCK & PURCHASE",
+      "REPORTS & MIS",
+      "LIFE RISE"
+    ]
+  },
+  "menu": [
+    {
+      "label": "MAIN",
+      "icon": "\u2302",
+      "items": [
+        {
+          "id": "home",
+          "icon": "\u2302",
+          "label": "Home",
+          "description": "Portal dashboard"
+        },
+        {
+          "id": "tasks",
+          "icon": "\u2611",
+          "label": "My Tasks",
+          "description": "Assigned work"
+        },
+        {
+          "id": "approvals",
+          "icon": "\u270d",
+          "label": "Approvals Pending",
+          "description": "Awaiting your sign-off"
+        },
+        {
+          "id": "stores360",
+          "icon": "\ud83c\udfec",
+          "label": "Stores 360",
+          "description": "Store-wise 360\u00b0 view"
+        }
+      ]
+    },
+    {
+      "label": "BRANCH HOME",
+      "icon": "\ud83c\udfe5",
+      "items": [
+        {
+          "id": "bdash",
+          "icon": "\ud83d\udcca",
+          "label": "Branch Dashboard",
+          "description": "Live branch performance"
+        },
+        {
+          "id": "conv",
+          "icon": "\ud83c\udfaf",
+          "label": "Conversions & Targets",
+          "description": "Target vs achieved"
+        },
+        {
+          "id": "empsale",
+          "icon": "\ud83d\udc65",
+          "label": "Employee Sale Master",
+          "description": "Employee-wise sales"
+        },
+        {
+          "id": "salemaster",
+          "icon": "\ud83d\udcbc",
+          "label": "Sale Master Data",
+          "description": "All invoices"
+        },
+        {
+          "id": "audit",
+          "icon": "\ud83d\udd0d",
+          "label": "Audit Reports",
+          "description": "200-point branch audit"
+        },
+        {
+          "id": "documents",
+          "icon": "\ud83d\udcbc",
+          "label": "Forms And Documents",
+          "description": "Forms"
+        },
+        {
+          "id": "bexp",
+          "icon": "\ud83e\uddfe",
+          "label": "Branch Expenditures",
+          "description": "Branch spend"
+        }
+      ]
+    },
+    {
+      "label": "CRM & CALL CENTRE",
+      "icon": "\ud83d\udcde",
+      "items": [
+        {
+          "id": "leads",
+          "icon": "\u25ce",
+          "label": "CC Dashboard",
+          "description": "Leads, follow-ups & agent performance"
+        },
+        {
+          "id": "ccvisit",
+          "icon": "\ud83d\udccb",
+          "label": "CC Visit Report",
+          "description": "Reports, visits & agent performance"
+        },
+        {
+          "id": "campaign",
+          "icon": "\ud83d\udce3",
+          "label": "Campaigns",
+          "description": "Ads & ROI"
+        }
+      ]
+    },
+    {
+      "label": "CLIENTS & CLINICAL",
+      "icon": "\ud83e\ude7a",
+      "items": [
+        {
+          "id": "cliinfo",
+          "icon": "\ud83d\udc64",
+          "label": "Client Info",
+          "description": "360\u00b0 client file"
+        },
+        {
+          "id": "enrollment-register",
+          "icon": "\ud83d\udccb",
+          "label": "Enrollment Register",
+          "description": "Client enrollment register"
+        },
+        {
+          "id": "unjoined",
+          "icon": "\u26d4",
+          "label": "Unjoined Clients",
+          "description": "Consulted, not joined"
+        },
+        {
+          "id": "appt",
+          "icon": "\ud83d\udcc5",
+          "label": "Appointments",
+          "description": "Appointment Scheduler"
+        },
+        {
+          "id": "conversions",
+          "icon": "\ud83d\udd04",
+          "label": "Conversions",
+          "description": "P2P, C2C & B2B transfers"
+        },
+        {
+          "id": "service",
+          "icon": "\ud83d\udee0",
+          "label": "Service",
+          "description": "Operations & service module"
+        },
+        {
+          "id": "wlres",
+          "icon": "\ud83d\udcc8",
+          "label": "WL Results Report",
+          "description": "Weight-loss outcomes"
+        },
+        {
+          "id": "dietfb",
+          "icon": "\ud83e\udd57",
+          "label": "Dietitian Feedback",
+          "description": "Diet compliance"
+        },
+        {
+          "id": "followup",
+          "icon": "\u23f0",
+          "label": "Follow-ups",
+          "description": "Pending call-backs"
+        },
+        {
+          "id": "knowledge",
+          "icon": "\ud83d\udcda",
+          "label": "Knowledge Center",
+          "description": "SOPs & documents"
+        }
+      ]
+    },
+    {
+      "label": "BILLING & ACCOUNTS",
+      "icon": "\u20b9",
+      "items": [
+        {
+          "id": "billing",
+          "icon": "\ud83e\uddfe",
+          "label": "Billing & Invoices",
+          "description": "Package billing"
+        },
+        {
+          "id": "accounts",
+          "icon": "\ud83c\udfe6",
+          "label": "Accounts Command Centre",
+          "description": "Entry book & cash"
+        },
+        {
+          "id": "pendbal",
+          "icon": "\ud83e\uddee",
+          "label": "Pending Balances",
+          "description": "Branch pending balances report"
+        },
+        {
+          "id": "payables",
+          "icon": "\u2b05",
+          "label": "Payables",
+          "description": "Vendor dues"
+        },
+        {
+          "id": "receivables",
+          "icon": "\u27a1",
+          "label": "Receivables",
+          "description": "Client dues"
+        },
+        {
+          "id": "gst",
+          "icon": "\ud83d\udcd1",
+          "label": "GST India",
+          "description": "Returns & filing"
+        },
+        {
+          "id": "assets",
+          "icon": "\ud83c\udfd7",
+          "label": "Assets",
+          "description": "Fixed assets"
+        },
+        {
+          "id": "finrep",
+          "icon": "\ud83d\udcc9",
+          "label": "Financial Reports",
+          "description": "P&L, ledgers"
+        }
+      ]
+    },
+    {
+      "label": "STOCK & PURCHASE",
+      "icon": "\ud83d\udce6",
+      "items": [
+        {
+          "id": "stock",
+          "icon": "\ud83d\udce6",
+          "label": "Stock",
+          "description": "Item-wise stock"
+        },
+        {
+          "id": "buying",
+          "icon": "\ud83d\uded2",
+          "label": "Buying / Purchase Orders",
+          "description": "PO & GRN"
+        },
+        {
+          "id": "vendors",
+          "icon": "\ud83d\ude9a",
+          "label": "Vendors",
+          "description": "Vendor master"
+        },
+        {
+          "id": "pricelist",
+          "icon": "\ud83c\udff7",
+          "label": "Price-List",
+          "description": "Package pricing"
+        }
+      ]
+    },
+    {
+      "label": "HR & PAYROLL",
+      "icon": "\ud83e\udeaa",
+      "items": [
+        {
+          "id": "employees",
+          "icon": "\ud83e\uddd1\u200d\ud83d\udcbc",
+          "label": "HRMS Dashboard",
+          "description": "HR overview & employee management"
+        },
+        {
+          "id": "attend",
+          "icon": "\ud83e\udeaa",
+          "label": "Attendance",
+          "description": "Biometric punches"
+        },
+        {
+          "id": "payroll",
+          "icon": "\ud83d\udcb0",
+          "label": "Payroll",
+          "description": "Salary & incentives"
+        },
+        {
+          "id": "leaves",
+          "icon": "\ud83c\udf34",
+          "label": "Leaves",
+          "description": "Leave register"
+        },
+        {
+          "id": "hrpol",
+          "icon": "\ud83d\udcd8",
+          "label": "HR Policies",
+          "description": "Documents & SOPs"
+        }
+      ]
+    },
+    {
+      "label": "LIFE RISE",
+      "icon": "\ud83c\udf31",
+      "items": [
+        {
+          "id": "risedash",
+          "icon": "\ud83c\udf31",
+          "label": "RISE Dashboard",
+          "description": "Online vertical"
+        },
+        {
+          "id": "riseprog",
+          "icon": "\ud83c\udf81",
+          "label": "Programs & Packages",
+          "description": "6 hero programs"
+        },
+        {
+          "id": "risewb",
+          "icon": "\ud83c\udfa5",
+          "label": "Webinars",
+          "description": "Schedule & history"
+        },
+        {
+          "id": "riseclients",
+          "icon": "\ud83d\udc65",
+          "label": "RISE Clients",
+          "description": "Enrolled clients"
+        }
+      ]
+    },
+    {
+      "label": "REPORTS & MIS",
+      "icon": "\ud83d\udcca",
+      "items": [
+        {
+          "id": "repmaster",
+          "icon": "\ud83d\uddc2",
+          "label": "Report Master",
+          "description": "24 enterprise reports"
+        },
+        {
+          "id": "discountaudit",
+          "icon": "\ud83d\uddc2",
+          "label": "Discount Audit Report",
+          "description": "Discount Audit"
+        },
+        {
+          "id": "approvalsreport",
+          "icon": "\u2705",
+          "label": "Approvals Report",
+          "description": "Approval requests & status"
+        },
+        {
+          "id": "execdash",
+          "icon": "\ud83d\udc51",
+          "label": "Executive Dashboard",
+          "description": "CEO / COO view"
+        },
+        {
+          "id": "mis",
+          "icon": "\ud83d\udcca",
+          "label": "MD Dashboard",
+          "description": "Charts & leaderboards"
+        },
+        {
+          "id": "clusterhome",
+          "icon": "\ud83e\udde9",
+          "label": "Cluster Dashboard",
+          "description": "Multi-branch rollup"
+        }
+      ]
+    },
+    {
+      "label": "SETTINGS",
+      "icon": "\u2699",
+      "items": [
+        {
+          "id": "control",
+          "icon": "\u2699",
+          "label": "Control Panel",
+          "description": "Menu & user rights"
+        },
+        {
+          "id": "users",
+          "icon": "\ud83d\udd10",
+          "label": "Users & Roles",
+          "description": "Access management"
+        },
+        {
+          "id": "masters",
+          "icon": "\ud83d\uddc3",
+          "label": "Masters",
+          "description": "Branches, clusters, items"
+        },
+        {
+          "id": "auditlog",
+          "icon": "\ud83d\udee1",
+          "label": "System Audit Log",
+          "description": "Every action traced"
+        }
+      ]
+    }
+  ],
+  "children": {
+    "p2p": {
+      "parent": "conversions",
+      "title": "Package Conversion"
+    },
+    "c2c": {
+      "parent": "conversions",
+      "title": "Client Package Transfer"
+    },
+    "b2b": {
+      "parent": "conversions",
+      "title": "Branch Transfer"
+    },
+    "clireg": {
+      "parent": "cliinfo",
+      "title": "Client Registration"
+    }
+  }
+}

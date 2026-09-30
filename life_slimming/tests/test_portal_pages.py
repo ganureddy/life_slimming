@@ -15,7 +15,7 @@ class PortalPagesTest(unittest.TestCase):
     def setUp(self):
         frappe.local.session = frappe._dict(user="test@example.test")
         frappe.local.flags = frappe._dict()
-        frappe.local.form_dict = frappe._dict(module="tasks")
+        frappe.local.form_dict = frappe._dict(module="tasks", embed="1")
         frappe.local.request = frappe._dict(full_path="/life_portal_module?module=tasks")
         self.manifest = json.loads((ROOT / "portal_pages/manifest.json").read_text())
 
@@ -24,7 +24,7 @@ class PortalPagesTest(unittest.TestCase):
 
     def context(self):
         result = {}
-        with patch.object(frappe, "get_app_path", return_value=str(ROOT)), patch.object(page, "get_csrf_token", return_value="test-csrf"):
+        with patch.object(frappe, "get_app_path", return_value=str(ROOT)), patch.object(page, "get_csrf_token", return_value="test-csrf"), patch.object(page, "require_module", return_value=list(self.manifest)), patch.object(frappe, "get_roles", return_value=[]), patch.object(frappe, "has_permission", return_value=False):
             page.get_context(result)
         return result
 

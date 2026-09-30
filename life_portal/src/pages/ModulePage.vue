@@ -1,32 +1,13 @@
 <script setup>
-import { computed } from "vue";
 import { useRoute } from "vue-router";
-import { visibleMenu } from "../lib/session";
 const route = useRoute();
-const allowed = computed(() =>
-  visibleMenu.value.some((group) =>
-    group.items.some((item) => item.id === route.name),
-  ),
-);
 </script>
 
 <template>
   <section class="panel module-placeholder">
-    <template v-if="allowed"
-      ><span class="placeholder-icon" aria-hidden="true">{{
-        route.meta.icon
-      }}</span>
-      <p class="eyebrow">LIFE PORTAL</p>
-      <h1>{{ route.meta.title }}</h1>
-      <p>{{ route.meta.description }}</p>
-      <p class="muted">
-        Not wired yet in the original ERP portal.
-      </p></template
-    >
-    <template v-else
-      ><h1>Access unavailable</h1>
-      <p>This module is not enabled for your portal role.</p></template
-    >
+    <span class="placeholder-icon" aria-hidden="true">{{ route.meta.icon }}</span>
+    <p>{{ route.meta.description }}</p>
+    <p class="muted">This module is not connected yet.</p>
     <RouterLink class="primary" :to="{ name: 'home' }">Back to Home</RouterLink>
   </section>
 </template>

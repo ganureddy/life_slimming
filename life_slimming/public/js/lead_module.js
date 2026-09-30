@@ -1,5 +1,4 @@
 // frappe.ui.form.on('Lead', 'dob', function(frm) {
-//     console.log("testTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTs")
 // 	if (frm.doc.dob) {
 // 		let today = new Date();
 // 		let birthDate = new Date(frm.doc.dob);
@@ -22,7 +21,6 @@
 // 	let years = age.getFullYear() - 1970;
 // 	return years + ' Year(s) ' + age.getMonth() + ' Month(s) ' + age.getDate() + ' Day(s)';
 // };
-// console.log(get_age,"---------------------------")
 
 // frappe.ui.form.on('Lead', {
 // 	onload: function (frm) {

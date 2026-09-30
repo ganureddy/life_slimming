@@ -6,9 +6,14 @@
     <meta name="theme-color" content="#174d2b" />
     <link rel="icon" type="image/svg+xml" href="/assets/frappe/images/frappe-favicon.svg" />
     <title>LIFE Portal</title>
+    <style>
+      .boot-ring{width:54px;height:54px;margin:0 auto 22px;border:3px solid #e1e9e2;border-top-color:#b99a50;border-right-color:#174d2b;border-radius:50%;animation:boot-spin 1.2s linear infinite}
+      @keyframes boot-spin{to{transform:rotate(360deg)}}
+      @media(prefers-reduced-motion:reduce){.boot-ring{animation:none}}
+    </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app"><div role="status" style="min-height:100vh;display:grid;place-content:center;text-align:center;background:#f4f7f4;color:#174d2b;font-family:system-ui"><span class="boot-ring" aria-hidden="true"></span><strong style="font-size:28px;letter-spacing:3px">LIFE</strong><p>Loading your workspace…</p></div></div>
     <noscript>Please enable JavaScript to use LIFE Portal.</noscript>
     <script type="module" src="/src/main.js"></script>
   </body>

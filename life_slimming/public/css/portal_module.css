@@ -1,0 +1,41 @@
+/* Shared workspace owns identity and loading; keep legacy DOM hooks inert. */
+[data-portal-chrome] { display: none !important; }
+.portal-module-toolbar {
+  position: relative !important;
+  top: auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  margin-top: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+/* Only loading indicators, never generic overlays used by dialogs. */
+:is(.la-loading, .c3-loader, .ref-loading, .life-loading, .glp-loading,
+.lo-loading, .tt-loading, .fad-loading, .detail-loading, .lscc-rp-status-loading,
+.pdr-loader, .ldr-loader, #lifeLiveLoading, #loader, #freeze, .freeze-message) {
+  display: none !important;
+}
+/* The discount report builds its heading after the initial HTML is parsed. */
+[data-portal-module="discountaudit"] .ldr-header > div:first-child { display: none !important; }
+
+/* Status containers may show errors later; only suppress the loading state. */
+.portal-hrms-status[role="status"] { display: none !important; }
+/* Indicators inserted by legacy page scripts after startup. */
+:is(#cc-loader-overlay, #life-load, .life-load-mini, .life-spinner,
+.b2b-inline-loading, .b2b-mini-spinner, .bcc4-loading, .life-sales-loading,
+.life-v5-loading, .wk-loading, .life-mkt-loading, .life-mkt-spinner,
+.life3m-full-loading, .life3m-mode-loading, .wl-loading-box, .wl-loading-row,
+.wl-spinner, .glp-assessment-loading, .glp-assessment-result-loading,
+.glp-spinner, .md-edge-loading, .lo-appt-detail-loading,
+.lo-live-inline-loading, .lo-live-inline-spinner, .lo-patient-loading,
+.lo-spinner, .cpc-detail-loading, .cpc-p2p-loading, .pkg-bill-loading,
+.pkg-detail-invoices-loading, .pkg-detail-loading, .pkg-native-bill-loader,
+.branch-receipt-loading-scroll, .branch-request-loading-scroll,
+.ho-approval-loading-card, .life-item-loading, .life-item-spinner,
+.life-ra-manager-loading, .life-sr-modal-loading, .life-stock-issue-loading,
+.sai-loading-overlay, #ssr-client-loading-host, .ssr-client-loading-spinner) {
+  display: none !important;
+}
+[data-portal-module="ccvisit"] .loadwrap { display: none !important; }
