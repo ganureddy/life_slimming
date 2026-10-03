@@ -1,6 +1,8 @@
 # ERP Portal API catalogue
 
-141 enabled Server Scripts migrated to native Python; disabled scripts are excluded.
+145 API Server Scripts migrated to native Python; disabled scripts are excluded.
+
+Reviewed against live ERP on 2026-10-04: eight existing sources refreshed and four page dependencies added. Local appointment enrichment is preserved. See REVIEW_2026-10-04.md for scope and validation.
 
 Use **POST** `/api/method/<Python method>` with the Frappe session cookie and CSRF token.
 The Vue client uses `dataApi(id, params)` from `src/api/index.js`.
@@ -151,3 +153,7 @@ Read `MIGRATION.md` for missing local schema and explicit behavior changes.
 | [life_setup_therapy_session_media_fields](server_scripts/life_setup_therapy_session_media_fields.py) | `life_setup_therapy_session_media_fields` | No |  |
 | [life_approval_report_user_context](server_scripts/life_approval_report_user_context.py) | `life_approval_report_user_context` | No |  |
 | [validate_coupon](server_scripts/validate_coupon.py) | `validate_coupon` | No |  |
+| [life_stock_receipt_employee_search](server_scripts/life_stock_receipt_employee_search.py) | `life_stock_receipt_employee_search` | No | Added 2026-10-04 for portal page compatibility. |
+| [cc_phone_lookup](server_scripts/cc_phone_lookup.py) | `cc_phone_lookup` | No | Added 2026-10-04 for portal page compatibility. |
+| [life_client360_branch_patient_lookup](server_scripts/life_client360_branch_patient_lookup.py) | `life_client360_branch_patient_lookup` | No | Added 2026-10-04 for portal page compatibility. |
+| [life_client_record_book_api](server_scripts/life_client_record_book_api.py) | `life_client_record_book_api` | No | Added 2026-10-04 for portal page compatibility. |

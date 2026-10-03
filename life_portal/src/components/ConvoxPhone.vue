@@ -35,10 +35,44 @@ const incoming = ref(null);
 const launcher = ref(null);
 const panel = ref(null);
 const position = ref(null);
-const wide = ref(false);
+const size = ref({ width: 760, height: 780 });
+const resizing = ref(false);
+let resizeOrigin;
 const dragging = ref(false);
 let dragOrigin;
-const panelStyle = computed(() => position.value ? { left: `${position.value.x}px`, top: `${position.value.y}px`, right: 'auto', bottom: 'auto' } : {});
+const panelStyle = computed(() => ({
+  width: `${size.value.width}px`, height: `${size.value.height}px`,
+  ...(position.value ? { left: `${position.value.x}px`, top: `${position.value.y}px`, right: 'auto', bottom: 'auto' } : {}),
+}));
+function resizeTo(width, height) {
+  size.value = {
+    width: Math.min(Math.max(360, width), window.innerWidth - 16),
+    height: Math.min(Math.max(360, height), window.innerHeight - 96),
+  };
+}
+async function changeSize(delta) {
+  resizeTo(size.value.width + delta, size.value.height + delta);
+  await nextTick();
+  fitPanel();
+}
+function startResize(event) {
+  if (event.button !== 0) return;
+  const rect = panel.value.getBoundingClientRect();
+  position.value = { x: rect.left, y: rect.top };
+  resizeOrigin = { x: event.clientX, y: event.clientY, width: rect.width, height: rect.height };
+  resizing.value = true;
+  event.currentTarget.setPointerCapture(event.pointerId);
+  event.preventDefault();
+}
+function moveResize(event) {
+  if (!resizing.value) return;
+  resizeTo(
+    Math.min(resizeOrigin.width + event.clientX - resizeOrigin.x, window.innerWidth - position.value.x - 8),
+    Math.min(resizeOrigin.height + event.clientY - resizeOrigin.y, window.innerHeight - position.value.y - 8),
+  );
+  fitPanel();
+}
+function stopResize() { resizing.value = false; }
 function clampPosition(x, y) {
   const rect = panel.value?.getBoundingClientRect();
   return { x: Math.max(8, Math.min(x, window.innerWidth - (rect?.width || 560) - 8)),
@@ -56,10 +90,10 @@ function moveDrag(event) {
 }
 function stopDrag() { dragging.value = false; }
 function fitPanel() {
+  resizeTo(size.value.width, size.value.height);
   if (position.value) position.value = clampPosition(position.value.x, position.value.y);
 }
-async function toggleWidth() { wide.value = !wide.value; await nextTick(); fitPanel(); }
-function resetPosition() { position.value = null; }
+function resetPosition() { position.value = null; resizeTo(760, 780); }
 
 const visible = computed(() => permitted.value && (route.name === 'leads' || Boolean(url.value)));
 const controller = new AbortController();
@@ -119,6 +153,7 @@ async function showPhone() {
   open.value = true;
   if (!settings.value) await loadConfig();
   await nextTick();
+  fitPanel();
   panel.value?.focus();
 }
 function minimize() {
@@ -288,7 +323,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div v-if="visible" class="convox-phone">
-    <div v-if="dragging" class="convox-drag-shield" aria-hidden="true"></div>
+    <div v-if="dragging || resizing" class="convox-drag-shield" aria-hidden="true"></div>
     <aside v-if="incoming && !open" class="convox-incoming" role="status">
       <strong>Incoming call</strong><span>{{ incoming.mobile_number }}</span>
       <div><button @click="showPhone">Open phone</button><button aria-label="Dismiss incoming call notification" @click="incoming = null">Dismiss</button></div>
@@ -298,10 +333,15 @@ onBeforeUnmount(() => {
       <span v-if="events.length" class="convox-count">{{ events.length }}</span>
     </button>
     <!-- v-show preserves the softphone session while minimized and across portal routes. -->
-    <section v-show="open" id="convox-panel" ref="panel" :style="panelStyle" :class="{ wide, dragging }" class="convox-panel" tabindex="-1" aria-label="ConVox calling panel" @keydown.esc.stop="minimize">
+    <section v-show="open" id="convox-panel" ref="panel" :style="panelStyle" :class="{ dragging, resizing }" class="convox-panel" tabindex="-1" aria-label="ConVox calling panel" @keydown.esc.stop="minimize">
       <header @pointerdown="startDrag" @pointermove="moveDrag" @pointerup="stopDrag" @pointercancel="stopDrag" @lostpointercapture="stopDrag">
         <div><strong>ConVox phone</strong><small>{{ settings?.agent_id ? `Agent ${settings.agent_id}` : 'Call centre workspace' }} · Drag to move</small></div>
-        <div class="convox-tools"><button aria-label="Reset phone position" title="Reset position" @click="resetPosition">↺</button><button :aria-label="wide ? 'Narrow phone panel' : 'Widen phone panel'" :aria-pressed="wide" @click="toggleWidth">{{ wide ? '↙' : '↗' }}</button><button aria-label="Minimize ConVox phone" @click="minimize">−</button></div>
+        <div class="convox-tools convox-window-tools">
+          <button aria-label="Decrease phone size" title="Make smaller" @click="changeSize(-100)">−</button>
+          <button aria-label="Increase phone size" title="Make larger" @click="changeSize(100)">+</button>
+          <button aria-label="Reset phone size and position" title="Reset size and position" @click="resetPosition">↺</button>
+          <button aria-label="Minimize ConVox phone" title="Minimize phone" @click="minimize">▁</button>
+        </div>
       </header>
       <div class="convox-body">
         <p v-if="error" class="convox-error" role="alert">{{ error }}</p>
@@ -334,6 +374,10 @@ onBeforeUnmount(() => {
         </template>
         <div v-if="events.length" class="convox-events"><h3>Recent call updates</h3><article v-for="event in events" :key="event.name"><strong>{{ event.call_status || event.call_type || event.event_type }}</strong><span>{{ event.mobile_number }} <span v-if="event.disposition">· {{ event.disposition }}</span></span><button v-if="route.name === 'leads' && event.mobile_number" @click="findCaller(event)">Find caller in leads</button></article></div>
       </div>
+      <button class="convox-resize" aria-label="Resize phone panel" title="Drag to resize, or use arrow keys"
+        @pointerdown="startResize" @pointermove="moveResize" @pointerup="stopResize" @pointercancel="stopResize" @lostpointercapture="stopResize"
+        @keydown.right.prevent="changeSize(40)" @keydown.down.prevent="changeSize(40)"
+        @keydown.left.prevent="changeSize(-40)" @keydown.up.prevent="changeSize(-40)">◢</button>
     </section>
   </div>
 </template>
@@ -343,10 +387,10 @@ onBeforeUnmount(() => {
 .convox-phone{position:fixed;right:24px;bottom:20px;z-index:110;font-size:13px;color:#183d2b}.convox-launch{display:flex;align-items:center;gap:9px;background:#164c3f;color:white;border-color:#b8901f;box-shadow:0 5px 22px #12332525;min-height:46px}.convox-incoming{display:grid;gap:8px;background:#fffdf7;border:1px solid #dcd8c9;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 8px 24px #0a281e25}.convox-incoming>div{display:flex;gap:8px}.convox-count{background:#f1d476;color:#173d2b;border-radius:20px;padding:2px 7px}.convox-panel{position:absolute;right:0;bottom:58px;width:min(430px,calc(100vw - 32px));max-height:calc(100dvh - 160px);background:#fffdf7;border:1px solid #dcd8c9;border-radius:15px;box-shadow:0 18px 50px #0a281e40;overflow:auto}.convox-panel>header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 18px;background:#164c3f;color:white;position:sticky;top:0;z-index:1}.convox-panel header small{display:block;color:#d3e8d7;font-size:11px;margin-top:3px}.convox-panel header button{color:white;background:#ffffff14;padding:4px 12px;font-size:22px}.convox-body{padding:14px}.convox-body p{margin:0 0 12px}.convox-error{padding:10px;background:#fff0e9;color:#8e351d;border-radius:8px}.convox-note{padding:10px;background:#e8f3ec;color:#245c3e;border-radius:8px}.convox-connect button,.convox-call>button{background:#164c3f;color:white;min-height:44px}.convox-widget{width:100%;height:510px;border:1px solid #dde6dc;border-radius:8px;background:white}.convox-hint{font-size:11px;color:#627769;margin-top:8px!important}.convox-call{display:grid;gap:10px;padding:12px 0;border-top:1px solid #e3e7df;overflow-wrap:anywhere}.convox-call small{color:#617566}.convox-events h3{font-size:14px;margin:12px 0}.convox-events article{display:grid;gap:6px;padding:12px 0;border-top:1px solid #e3e7df;overflow-wrap:anywhere}.convox-events article button{justify-self:start}.convox-events article span{color:#52675a;font-size:12px}@media(max-width:600px){.convox-phone{right:12px;bottom:12px}.convox-panel{max-height:calc(100dvh - 135px);bottom:56px}.convox-widget{height:480px}.convox-body{padding:10px}}
 
 .convox-panel{position:fixed;right:24px;bottom:80px;width:min(580px,calc(100vw - 24px));max-height:calc(100dvh - 96px);overflow:hidden;display:flex;flex-direction:column;background:#fff}
-.convox-panel.wide{width:min(880px,calc(100vw - 24px))}
+.convox-panel{max-width:calc(100vw - 16px)}
 .convox-panel>header{flex-shrink:0;cursor:grab;touch-action:none;user-select:none;padding:16px 20px}
 .convox-panel.dragging>header{cursor:grabbing}
-.convox-panel.dragging iframe{pointer-events:none}
+.convox-panel.dragging iframe,.convox-panel.resizing iframe{pointer-events:none}
 .convox-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .convox-tools button{min-width:36px;min-height:36px}
 .convox-body{overflow:auto;padding:18px;line-height:1.5;min-height:0}
@@ -359,4 +403,13 @@ onBeforeUnmount(() => {
 @media(max-width:600px){.convox-panel{right:12px;bottom:70px;max-height:calc(100dvh - 86px)}.convox-body{padding:12px}}
 .convox-ready{display:flex;align-items:flex-start;gap:12px;padding:14px;margin:0 0 12px;border:1px solid #dce7e0;border-radius:10px;background:#f5f9f6;cursor:pointer}.convox-ready input{margin-top:4px;width:18px;height:18px;flex-shrink:0}.convox-ready small{display:block;color:#627769;margin-top:5px}
 .convox-drag-shield{position:fixed;inset:0;z-index:0;cursor:grabbing}.convox-panel{z-index:1}
+</style>
+
+<style scoped>
+.convox-body{flex:1;padding-bottom:32px}
+.convox-widget{height:clamp(420px,65dvh,820px)}
+.convox-window-tools{flex-wrap:nowrap;gap:4px}
+.convox-panel header .convox-window-tools button{min-width:40px;min-height:40px;padding:4px 8px}
+.convox-resize{position:absolute;right:2px;bottom:2px;width:30px;height:30px;padding:0;border:0;border-radius:8px;background:#e8f3ec;color:#164c3f;cursor:nwse-resize;touch-action:none;font-size:22px}
+@media(max-width:600px){.convox-panel>header{padding:10px;gap:6px}.convox-panel header small{max-width:150px}.convox-panel header .convox-window-tools button{min-width:32px;padding:2px 6px}}
 </style>

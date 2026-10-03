@@ -1,11 +1,11 @@
 const WebSocket=require('../node_modules/ws'),fs=require('node:fs'),assert=require('node:assert/strict');
 (async()=>{
- const source=JSON.parse(fs.readFileSync('life_slimming/portal_pages/cc-new-dash.json','utf8'));
+ const source=JSON.parse(fs.readFileSync('life_slimming/portal_pages/cc-new-dashboard-bhuvan-oct2.json','utf8'));
  const js=source.javascript;
  const functions=js.slice(js.indexOf('  function openModal('),js.indexOf('  function toggleDark('))+js.slice(js.indexOf('  async function openAppointmentFromLead('),js.indexOf('  function selectStatus('));
  const target=await(await fetch('http://127.0.0.1:9225/json/new?about:blank',{method:'PUT'})).json();
  const ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise(r=>ws.on('open',r));
- let id=0,fail=true;const jobs=new Map(),errors=[],bookings=[];
+ let id=0,fail=true,editing=false;const jobs=new Map(),errors=[],bookings=[];
  const send=(method,params={})=>new Promise((resolve,reject)=>{jobs.set(++id,m=>m.error?reject(m.error):resolve(m.result));ws.send(JSON.stringify({id,method,params}));});
  const staff=[{id:'Employee:E1',name:'Manager One',role:'Manager',designation:'ACM'},{id:'Employee:E2',name:'Doctor Two',role:'Doctor',designation:'Consultant Doctor'}];
  ws.on('message',async raw=>{
@@ -21,9 +21,9 @@ const WebSocket=require('../node_modules/ws'),fs=require('node:fs'),assert=requi
    openAppointmentFromLead('LEAD1');</script>`;
   }else{
    let result={};const args=JSON.parse(request.postData||'{}');
-   if(request.url.endsWith('.bootstrap'))result={today:'2030-01-01',branches:['Branch A','Branch B'],leads:[{name:'LEAD1',lead_name:'Lead One',mobile_no:'9000000000',lead_owner_name:'Assigned Agent'}]};
+   if(request.url.endsWith('.bootstrap'))result={appointment:editing?{name:'APT1',modified:'2029-01-01 09:00:00',branch:'Branch A',start:'2030-01-01 10:00:00',duration:45,resource:'Employee:E1',staff:'Manager One'}:null,today:'2030-01-01',branches:['Branch A','Branch B'],leads:[{name:'LEAD1',lead_name:'Lead One',mobile_no:'9000000000',lead_owner_name:'Assigned Agent'}]};
    if(request.url.endsWith('.calendar'))result={schedules:(args.branch==='Branch A'?staff:[staff[1]]).map(person=>({staff:person,slots:[{start:'2030-01-01 10:00:00',end:'2030-01-01 10:45:00',available:false,reason:'Booked'},{start:'2030-01-01 11:00:00',end:'2030-01-01 11:45:00',available:true,reason:'Available'}]}))};
-   if(request.url.endsWith('.book')){bookings.push(args);if(fail)payload=JSON.stringify({error:'Slot is already booked'});else result={name:'APT1'};}
+   if(request.url.endsWith('.book')||request.url.endsWith('.reschedule')){bookings.push(args);if(fail)payload=JSON.stringify({error:'Slot is already booked'});else result={name:'APT1'};}
    payload=payload||JSON.stringify({message:result});
   }
   await send('Fetch.fulfillRequest',{requestId,responseCode:200,responseHeaders:[{name:'Content-Type',value:contentType+'; charset=utf-8'}],body:Buffer.from(payload).toString('base64')});
@@ -32,7 +32,8 @@ const WebSocket=require('../node_modules/ws'),fs=require('node:fs'),assert=requi
  const wait=async expression=>{for(let i=0;i<80;i++){if(await evaluate(expression))return;await new Promise(r=>setTimeout(r,100));}throw Error('Timeout '+expression+' '+await evaluate('document.body.innerText'));};
  try{
   await send('Page.enable');await send('Runtime.enable');await send('Fetch.enable',{patterns:[{urlPattern:'http://127.0.0.1:5175/cc-booking-test'},{urlPattern:'http://127.0.0.1:5175/api/*'}]});
-  for(const width of [1440,390]){
+  for(const mode of [false,true])for(const width of [1440,390]){
+   editing=mode;
    fail=true;await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});await send('Page.navigate',{url:'http://127.0.0.1:5175/cc-booking-test'});
    await wait("document.querySelectorAll('#cc-slot-times button').length===2");
    assert.equal(await evaluate("document.querySelector('#cc-slot-owner').value"),'Assigned Agent');
@@ -44,7 +45,7 @@ const WebSocket=require('../node_modules/ws'),fs=require('node:fs'),assert=requi
    assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth'),true);
    await evaluate("document.querySelector('#cc-slot-form').requestSubmit()");await wait("document.querySelector('#cc-slot-message').textContent==='Slot is already booked'");
    fail=false;await evaluate("document.querySelector('#cc-slot-form').requestSubmit()");await wait('refreshed===1');
-   assert.equal(bookings.at(-1).lead,'LEAD1');assert.equal(bookings.at(-1).resource,'Employee:E2');assert.equal(bookings.at(-1).request_id,bookings.at(-2).request_id);
+   if(editing){assert.equal(bookings.at(-1).appointment,'APT1');assert.equal(bookings.at(-1).modified,'2029-01-01 09:00:00');assert.equal(await evaluate("document.querySelector('#cc-slot-lead').disabled"),true);}else assert.equal(bookings.at(-1).lead,'LEAD1');assert.equal(bookings.at(-1).resource,'Employee:E2');assert.equal(bookings.at(-1).request_id,bookings.at(-2).request_id);
    assert.equal(await evaluate("document.querySelector('#modal').classList.contains('show')"),false);
   }
   assert.deepEqual(errors,[]);console.log('Dashboard direct booking: desktop/mobile, designation filter, owner, unavailable slots, error/retry and refresh passed.');

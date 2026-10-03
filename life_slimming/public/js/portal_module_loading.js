@@ -4,12 +4,13 @@
   if (window.parent === window) return;
   let pending = 0;
   let ready = false;
+  let primaryReady = false;
   let timer;
   const config = window.lifePortalModule;
   function report() {
     clearTimeout(timer);
     timer = setTimeout(() => window.parent.postMessage({
-      type: 'life-portal:loading', module: config.module, busy: !ready || pending > 0,
+      type: 'life-portal:loading', module: config.module, busy: !primaryReady && (!ready || pending > 0),
     }, location.origin), pending ? 0 : 120);
   }
   function begin() {
@@ -49,6 +50,20 @@
     try { return send.apply(this, args); }
     catch (error) { done(); throw error; }
   };
-  window.addEventListener('load', () => { ready = true; report(); }, { once: true });
+  // The branch dashboard renders its main figures before optional panels finish.
+  // Those panels retain their own loading/error states without blocking navigation.
+  window.addEventListener('life-portal:primary-ready', () => {
+    if (config.module !== 'bdash') return;
+    primaryReady = true;
+    report();
+  }, { once: true });
+  // Fonts, images and third-party widgets must not hold the workspace loader.
+  // DOMContentLoaded runs after page initialization scripts; API requests still
+  // keep the loader active until their own completion.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => { ready = true; report(); }, { once: true });
+  } else {
+    ready = true;
+  }
   report();
 })();

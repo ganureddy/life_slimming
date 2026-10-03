@@ -139,5 +139,9 @@
   "create_client_request_complaint": "life_slimming.api.server_scripts.create_client_request_complaint.run",
   "life_setup_therapy_session_media_fields": "life_slimming.api.server_scripts.life_setup_therapy_session_media_fields.run",
   "life_approval_report_user_context": "life_slimming.api.server_scripts.life_approval_report_user_context.run",
-  "validate_coupon": "life_slimming.api.server_scripts.validate_coupon.run"
+  "validate_coupon": "life_slimming.api.server_scripts.validate_coupon.run",
+  "life_stock_receipt_employee_search": "life_slimming.api.server_scripts.life_stock_receipt_employee_search.run",
+  "cc_phone_lookup": "life_slimming.api.server_scripts.cc_phone_lookup.run",
+  "life_client360_branch_patient_lookup": "life_slimming.api.server_scripts.life_client360_branch_patient_lookup.run",
+  "life_client_record_book_api": "life_slimming.api.server_scripts.life_client_record_book_api.run"
 }

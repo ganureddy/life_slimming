@@ -1,7 +1,7 @@
 """cc_get_leads
 
 Original API: cc_get_leads
-Source modified: 2026-08-31 11:25:59.869277
+Source modified: 2026-10-03 11:06:14.910658
 See ../CATALOG.md for migration notes and validation limits.
 """
 
@@ -94,7 +94,20 @@ def run(**kwargs):
     LEAD_FIELDS += ["custom_appointment", "custom_appointment_duration"]
     phone = (frappe.form_dict.get("phone") or "").strip()
 
-    if phone:
+    query = (frappe.form_dict.get("query") or "").strip()
+    contact_manager = user in ["bhuvan@lifescc.com", "surya@lifescc.com"]
+    if not contact_manager:
+        contact_manager = bool(frappe.db.exists("Employee", {"user_id": user, "status": "Active", "designation": "Business Executive Team Leader"}))
+    if query:
+        if len(query) < 2:
+            frappe.throw("Enter at least two characters")
+        scoped = [] if is_manager else [["lead_owner", "=", user]]
+        pattern = "%" + query.replace("%", "").replace("_", "") + "%"
+        rows = frappe.get_all("Lead", fields=LEAD_FIELDS, filters=scoped,
+            or_filters=[["lead_name", "like", pattern], ["name", "like", pattern], ["mobile_no", "like", pattern], ["phone", "like", pattern], ["custom_remarks", "like", pattern]],
+            order_by="modified desc", limit_start=int(frappe.form_dict.get("start") or 0), limit_page_length=21)
+        frappe.response["message"] = {"rows": rows[:20], "more": len(rows) > 20, "contact_manager": contact_manager, "scoped_to_owner": 0 if is_manager else 1}
+    elif phone:
         digits = ""
         for ch in phone:
             if ch.isdigit():
@@ -116,7 +129,6 @@ def run(**kwargs):
             order_by="modified desc",
             limit_page_length=10
         )
-        enrich_lead_appointments(rows)
         frappe.response["message"] = {"rows": rows, "total": len(rows), "truncated": 0,
                                      "scoped_to_owner": 0 if is_manager else 1}
     else:
@@ -151,10 +163,28 @@ def run(**kwargs):
             order_by="modified desc",
             limit_page_length=PAGE_LIMIT
         )
-        enrich_lead_appointments(rows)
         frappe.response["message"] = {
             "rows": rows,
             "total": total,
             "truncated": 1 if total > PAGE_LIMIT else 0,
             "scoped_to_owner": 0 if is_manager else 1
         }
+    frappe.response["message"]["contact_manager"] = contact_manager
+
+    if query and frappe.form_dict.get("detail"):
+        for item in frappe.response["message"].get("rows") or []:
+            if item.get("name") == query:
+                versions = frappe.get_all("Version", filters={"ref_doctype": "Lead", "docname": query}, fields=["creation", "owner", "data"], order_by="creation desc", limit_page_length=0)
+                events = []
+                prior_connected = ""
+                connected_values = ["appointment booked", "callback: scheduled", "price negotiation", "get back", "walked in: not booked", "walked in & booked", "not interested", "other clinic", "joined competition", "do not contact", "existing client", "job enquiry", "tna", "nid", "franchise lead", "not enquired"]
+                for version in versions:
+                    for change in json.loads(version.get("data") or "{}").get("changed") or []:
+                        if change[0] == "custom_cc_sub_status":
+                            events.append({"at": str(version.get("creation")), "by": version.get("owner"), "from": change[1], "to": change[2]})
+                            for value in [change[2], change[1]]:
+                                if str(value or "").strip().lower() in connected_values and not prior_connected:
+                                    prior_connected = value
+                item["workflow_hint"] = {"prior_connected": prior_connected, "legacy_events": events}
+
+    enrich_lead_appointments(frappe.response["message"].get("rows") or [])

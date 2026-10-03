@@ -178,3 +178,52 @@ class DashboardAppointmentDetails(unittest.TestCase):
         with patch.object(frappe, 'get_all') as query:
             api.enrich_lead_appointments([frappe._dict(name='LEAD1')])
         query.assert_not_called()
+
+
+class RescheduleRules(unittest.TestCase):
+    def setUp(self):
+        self.doc = Mock()
+        self.doc.name = 'APT1'
+        self.doc.party = 'LEAD1'
+        self.doc.modified = '2029-01-01 09:00:00'
+        self.doc.custom_consultation_taken_by = None
+        self.doc.custom_cc_staff_name = 'Manager B'
+        self.db = Mock()
+        for mock in [patch.object(api, 'authorize'), patch.object(api, 'branch_access'),
+                     patch.object(api, 'editable_appointment', return_value=self.doc),
+                     patch.object(api, 'now_datetime', return_value=datetime(2029, 1, 1)),
+                     patch.object(frappe, 'db', self.db)]:
+            mock.start(); self.addCleanup(mock.stop)
+
+    def test_reschedule_updates_same_appointment_and_lead_fields(self):
+        result = api.reschedule('APT1', 'Branch B', 'Employee:E2', '2030-01-01 11:00:00', 60, self.doc.modified)
+        self.doc.save.assert_called_once_with(ignore_permissions=True)
+        self.doc.insert.assert_not_called()
+        self.assertEqual(result['name'], 'APT1')
+        self.assertEqual(self.doc.custom_cc_resource, 'Employee:E2')
+        values = self.db.set_value.call_args.args[2]
+        self.assertEqual(self.db.set_value.call_args.args[:2], ('Lead', 'LEAD1'))
+        self.assertEqual(values['custom_appointment'], 'APT1')
+        self.assertEqual(values['branch'], 'Branch B')
+        self.assertEqual(values['lead_assign_to_branch'], 'Branch B')
+        self.assertEqual(values['custom_appointment_duration'], '1 Hour')
+        self.assertEqual(values['custom_appointment_date_and_time'], datetime(2030, 1, 1, 11))
+        self.assertIsNone(values['custom_consulting_doctor'])
+
+    def test_stale_dialog_cannot_overwrite_changes(self):
+        with self.assertRaisesRegex(frappe.ValidationError, 'appointment changed'):
+            api.reschedule('APT1', 'Branch B', 'Employee:E2', '2030-01-01 11:00:00', 45, 'old version')
+        self.doc.save.assert_not_called()
+        self.db.set_value.assert_not_called()
+
+    def test_failed_save_does_not_sync_lead(self):
+        self.doc.save.side_effect = frappe.ValidationError('Slot already booked')
+        with self.assertRaises(frappe.ValidationError):
+            api.reschedule('APT1', 'Branch B', 'Employee:E2', '2030-01-01 11:00:00', 45, self.doc.modified)
+        self.db.set_value.assert_not_called()
+
+    def test_unauthorized_edit_rejected(self):
+        with patch.object(api, 'editable_appointment', side_effect=frappe.PermissionError):
+            with self.assertRaises(frappe.PermissionError):
+                api.reschedule('APT1', 'Branch B', 'Employee:E2', '2030-01-01 11:00:00', 45, self.doc.modified)
+        self.doc.save.assert_not_called()

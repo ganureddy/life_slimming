@@ -1,7 +1,7 @@
 """life_stores_360_live_api
 
 Original API: life_stores_360_live_api
-Source modified: 2026-09-16 15:18:45.468857
+Source modified: 2026-09-30 12:01:34.538247
 See ../CATALOG.md for migration notes and validation limits.
 """
 
@@ -31,6 +31,13 @@ def run(**kwargs):
 
     args = frappe.form_dict or {}
     action = (args.get("action") or "main").strip().lower()
+
+    # LIFE FIX 27-Sep-2026:
+    # Show physically released Draft Stock Entries in movement history.
+    # A Draft is counted ONLY when there is release evidence (release date/user)
+    # or workflow state indicates it has reached Pending Receipt / Released / In Transit.
+    INCLUDE_RELEASED_DRAFT_STOCK_MOVEMENTS = True
+
 
     if action == "create_purchase_orders":
         # REAL ERP ACTION: create Draft Purchase Orders from Stores 360.
@@ -224,10 +231,186 @@ def run(**kwargs):
             "schedule_date": schedule_date
         }
 
+
+    elif action == "client_search":
+        # V25.56 EXACT MOBILE SEARCH
+        # Full 10+ digit mobile input returns ONLY exact mobile matches.
+        # Partial numeric input can still return suggestions.
+
+        q = str(args.get("q") or "").strip()
+        result = []
+
+        if len(q) >= 2:
+            patient_meta = frappe.get_meta("Patient")
+
+            patient_fields = ["name"]
+
+            candidate_fields = [
+                "patient_name",
+                "mobile",
+                "mobile_no",
+                "phone",
+                "phone_number",
+                "contact_number",
+                "custom_mobile",
+                "custom_mobile_no",
+                "custom_mobile_number",
+                "custom_client_mobile_no",
+                "custom_primary_mobile",
+                "custom_branch",
+                "branch",
+                "branch_name"
+            ]
+
+            for fieldname in candidate_fields:
+                if patient_meta.has_field(fieldname) and fieldname not in patient_fields:
+                    patient_fields.append(fieldname)
+
+            mobile_fields = []
+
+            for fieldname in [
+                "mobile",
+                "mobile_no",
+                "phone",
+                "phone_number",
+                "contact_number",
+                "custom_mobile",
+                "custom_mobile_no",
+                "custom_mobile_number",
+                "custom_client_mobile_no",
+                "custom_primary_mobile"
+            ]:
+                if patient_meta.has_field(fieldname):
+                    mobile_fields.append(fieldname)
+
+            q_digits = ""
+            for ch in q:
+                if ch >= "0" and ch <= "9":
+                    q_digits = q_digits + ch
+
+            exact_mobile_mode = len(q_digits) >= 10
+            exact_mobile = q_digits[-10:] if exact_mobile_mode else q_digits
+
+            found = {}
+
+            def add_patient_row(p, match_type):
+                pid = str(p.get("name") or "").strip()
+                if not pid:
+                    return
+
+                mobile_value = ""
+
+                for mf in mobile_fields:
+                    mv = str(p.get(mf) or "").strip()
+                    if mv:
+                        mobile_value = mv
+                        break
+
+                # In exact-mobile mode, double-check normalized last 10 digits.
+                if exact_mobile_mode:
+                    mobile_digits = ""
+                    for ch in mobile_value:
+                        if ch >= "0" and ch <= "9":
+                            mobile_digits = mobile_digits + ch
+
+                    if not mobile_digits or mobile_digits[-10:] != exact_mobile:
+                        return
+
+                found[pid] = {
+                    "id": pid,
+                    "name": str(p.get("patient_name") or pid).strip(),
+                    "mob": mobile_value,
+                    "br": str(
+                        p.get("branch_name")
+                        or p.get("custom_branch")
+                        or p.get("branch")
+                        or ""
+                    ).strip(),
+                    "match": match_type
+                }
+
+            # ---------------------------------------------------------
+            # 1) Exact search across every real mobile field.
+            # ---------------------------------------------------------
+            if exact_mobile:
+                for mf in mobile_fields:
+                    try:
+                        exact_rows = frappe.get_all(
+                            "Patient",
+                            filters={mf: exact_mobile},
+                            fields=patient_fields,
+                            limit_page_length=12
+                        )
+                    except:
+                        exact_rows = []
+
+                    for p in exact_rows:
+                        add_patient_row(p, "exact_" + mf)
+
+            # ---------------------------------------------------------
+            # 2) If full mobile was entered, STOP here.
+            # Do not append last-4/partial matches from other clients.
+            # ---------------------------------------------------------
+            if not exact_mobile_mode:
+                search_terms = []
+
+                if q:
+                    search_terms.append(q)
+
+                if q_digits and q_digits not in search_terms:
+                    search_terms.append(q_digits)
+
+                search_fields = ["name"]
+
+                if patient_meta.has_field("patient_name"):
+                    search_fields.append("patient_name")
+
+                for mf in mobile_fields:
+                    if mf not in search_fields:
+                        search_fields.append(mf)
+
+                stop_search = False
+
+                for fieldname in search_fields:
+                    if stop_search:
+                        break
+
+                    for term in search_terms:
+                        if stop_search:
+                            break
+
+                        try:
+                            rows = frappe.get_all(
+                                "Patient",
+                                filters={fieldname: ["like", "%" + term + "%"]},
+                                fields=patient_fields,
+                                limit_page_length=12
+                            )
+                        except:
+                            rows = []
+
+                        for p in rows:
+                            add_patient_row(p, "like_" + fieldname)
+
+                            if len(found) >= 12:
+                                stop_search = True
+                                break
+
+            for pid in found:
+                result.append(found[pid])
+
+        frappe.response["message"] = {
+            "clients": result[:12],
+            "query": q,
+            "count": len(result[:12]),
+            "exact_mobile_mode": bool(len("".join([ch for ch in q if ch >= "0" and ch <= "9"])) >= 10),
+            "version": "V25.56"
+        }
+
     elif action == "item_history":
-        # Central warehouse must also be defined in item_history scope.
-        # Previously it existed only in the main dashboard branch, causing:
-        # NameError: name 'HO_WH' is not defined
+        # V25.39 FIX:
+        # item_history is a separate Server Script branch, so HO_WH must be
+        # defined inside this exact scope before any Stock Entry classification.
         HO_WH = "Stores - LSACPL"
 
         item_code = (args.get("item_code") or "").strip()
@@ -449,7 +632,7 @@ def run(**kwargs):
                     "Stock Entry",
                     filters={
                         "name": ["in", se_names],
-                        "docstatus": 1
+                        "docstatus": ["in", [0, 1]]
                     },
                     fields=se_fields,
                     order_by="posting_date desc, posting_time desc",
@@ -457,7 +640,23 @@ def run(**kwargs):
                 )
 
                 for header in se_headers:
-                    se_header_map[header.get("name")] = header
+                    docstatus = int(header.get("docstatus") or 0)
+                    workflow_text = sval(header.get("workflow_state")).strip().lower()
+
+                    released_draft = bool(
+                        docstatus == 0
+                        and INCLUDE_RELEASED_DRAFT_STOCK_MOVEMENTS
+                        and (
+                            sval(header.get("custom_stock_release_date")).strip()
+                            or sval(header.get("custom_stock_released_by")).strip()
+                            or "pending receipt" in workflow_text
+                            or "released" in workflow_text
+                            or "in transit" in workflow_text
+                        )
+                    )
+
+                    if docstatus == 1 or released_draft:
+                        se_header_map[header.get("name")] = header
 
             for row in se_items:
                 header = se_header_map.get(row.get("parent"))
@@ -562,7 +761,15 @@ def run(**kwargs):
                     "received_qty": received_qty,
                     "received_by": header.get("custom_received_by") or "",
                     "received_on": sval(header.get("custom_received_date")),
-                    "status": "Received" if receipt_confirmed else "Posted — receipt acknowledgement pending"
+                    "status": (
+                        "Received"
+                        if receipt_confirmed
+                        else (
+                            "Released — Draft / Pending Receipt"
+                            if int(header.get("docstatus") or 0) == 0
+                            else "Posted — receipt acknowledgement pending"
+                        )
+                    )
                 }
 
                 if tgt == HO_WH and src != HO_WH:
@@ -571,7 +778,11 @@ def run(**kwargs):
                     movement["rid"] = movement["ref"]
                     movement["reason"] = "Stock Entry transfer back to HO"
                     movement["cond"] = ""
-                    movement["status"] = "Posted"
+                    movement["status"] = (
+                        "Released — Draft / Pending Receipt"
+                        if int(header.get("docstatus") or 0) == 0
+                        else "Posted"
+                    )
                     returns.append(movement)
 
                 else:
@@ -1312,6 +1523,48 @@ def run(**kwargs):
                 if therapy_plan_id and therapy_plan_id not in therapy_plan_ids:
                     therapy_plan_ids.append(therapy_plan_id)
 
+            # V25.57 CRITICAL FIX:
+            # Do not build the Therapy Session lookup only from
+            # Special Material Request Detail.
+            #
+            # Some Stores requests carry the real Therapy Plan directly in
+            # Material Request.custom_therapy_id -> row_data["therapy_id"] ->
+            # stock_requests[].therapy, even when there is no matching
+            # Special Material Request Detail child row.
+            #
+            # That was the reason a client could visibly show
+            # HLC-THP-2026-36340 in Client Statement but still get Executed = No:
+            # the plan was never added to therapy_plan_ids, so its Therapy Sessions
+            # were never queried.
+            def add_execution_plan_ids(plan_value):
+                raw = str(plan_value or "").strip()
+                if not raw:
+                    return
+
+                normalized = raw.replace(" + ", ",").replace("+", ",")
+
+                for part in normalized.split(","):
+                    plan_id = part.strip()
+                    if (
+                        plan_id
+                        and plan_id not in therapy_plan_ids
+                    ):
+                        therapy_plan_ids.append(plan_id)
+
+            for request_row in material_requests:
+                add_execution_plan_ids(
+                    request_row.get("therapy_id")
+                    or request_row.get("custom_therapy_id")
+                    or ""
+                )
+
+            for request_row in stock_requests:
+                add_execution_plan_ids(
+                    request_row.get("therapy")
+                    or request_row.get("therapy_id")
+                    or ""
+                )
+
             if therapy_plan_ids and frappe.db.exists("DocType", "Therapy Plan"):
                 therapy_plan_meta = frappe.get_meta("Therapy Plan")
                 therapy_plan_fields = ["name", "patient", "patient_name", "status", "start_date"]
@@ -1329,6 +1582,76 @@ def run(**kwargs):
 
                 for therapy_row in therapy_plan_rows:
                     therapy_plan_map[therapy_row.get("name")] = therapy_row
+
+            # V25.58 STRICT EXECUTION RULE
+            # User-required business rule:
+            #   Therapy Session status = Completed    -> Executed = Yes
+            #   Therapy Session status = In Progress  -> Executed = No
+            #   Therapy Session status = Not Started  -> Executed = No
+            #   Any other / blank / Draft state       -> Executed = No
+            #
+            # IMPORTANT:
+            # Do NOT use docstatus, custom_sessions_complted,
+            # custom_completed_percentage, or any count field to turn a
+            # non-Completed session into Yes.
+            therapy_session_state_by_plan = {}
+
+            if therapy_plan_ids and frappe.db.exists("DocType", "Therapy Session"):
+                therapy_session_meta = frappe.get_meta("Therapy Session")
+
+                if therapy_session_meta.has_field("therapy_plan"):
+                    ts_fields = ["name", "therapy_plan"]
+
+                    if therapy_session_meta.has_field("status"):
+                        ts_fields.append("status")
+
+                    therapy_session_rows = frappe.get_all(
+                        "Therapy Session",
+                        filters={
+                            "therapy_plan": ["in", therapy_plan_ids],
+                            "docstatus": ["!=", 2]
+                        },
+                        fields=ts_fields,
+                        limit_page_length=0
+                    )
+
+                    for session_row in therapy_session_rows:
+                        plan_id = str(session_row.get("therapy_plan") or "").strip()
+                        if not plan_id:
+                            continue
+
+                        state = therapy_session_state_by_plan.get(plan_id)
+
+                        if not state:
+                            state = {
+                                "completed": 0,
+                                "in_progress": 0,
+                                "not_started": 0,
+                                "other": 0,
+                                "sessions": 0
+                            }
+                            therapy_session_state_by_plan[plan_id] = state
+
+                        state["sessions"] = int(state.get("sessions") or 0) + 1
+
+                        session_status = str(session_row.get("status") or "").strip().lower()
+
+                        if session_status == "completed":
+                            state["completed"] = int(state.get("completed") or 0) + 1
+                        elif session_status in ("in progress", "in-progress", "inprogress"):
+                            state["in_progress"] = int(state.get("in_progress") or 0) + 1
+                        elif session_status in ("not started", "not-started", "notstarted"):
+                            state["not_started"] = int(state.get("not_started") or 0) + 1
+                        else:
+                            state["other"] = int(state.get("other") or 0) + 1
+
+            # Retain the old map name for the existing enrichment loops, but make
+            # it contain COMPLETED-status sessions only.
+            actual_completed_sessions_by_plan = {}
+            for plan_id in therapy_session_state_by_plan:
+                actual_completed_sessions_by_plan[plan_id] = int(
+                    (therapy_session_state_by_plan.get(plan_id) or {}).get("completed") or 0
+                )
 
             # Enrich each Material Request line with the Patient/Therapy data from
             # Special Material Request Detail -> Therapy Plan -> Patient.
@@ -1366,7 +1689,15 @@ def run(**kwargs):
                             branch_name = request_detail.get("branch") or ""
 
                         booked_sessions += int(request_detail.get("booked_sessions") or 0)
-                        completed_sessions += int(request_detail.get("completed_sessions") or 0)
+
+                        detail_completed = int(request_detail.get("completed_sessions") or 0)
+                        real_completed = int(
+                            actual_completed_sessions_by_plan.get(therapy_plan_id) or 0
+                        )
+
+                        # Prefer real submitted Therapy Session evidence when present.
+                        completed_sessions += max(detail_completed, real_completed)
+
                         remaining_sessions += int(request_detail.get("remaining_sessions") or 0)
 
                     if patient_id:
@@ -1417,7 +1748,15 @@ def run(**kwargs):
                             branch_name = request_detail.get("branch") or ""
 
                         booked_sessions += int(request_detail.get("booked_sessions") or 0)
-                        completed_sessions += int(request_detail.get("completed_sessions") or 0)
+
+                        detail_completed = int(request_detail.get("completed_sessions") or 0)
+                        real_completed = int(
+                            actual_completed_sessions_by_plan.get(therapy_plan_id) or 0
+                        )
+
+                        # Prefer real submitted Therapy Session evidence when present.
+                        completed_sessions += max(detail_completed, real_completed)
+
                         remaining_sessions += int(request_detail.get("remaining_sessions") or 0)
 
                     if patient_id:
@@ -1434,6 +1773,100 @@ def run(**kwargs):
                     request_row["remainingSessions"] = remaining_sessions
                     request_row["executionEvidence"] = "Yes" if completed_sessions > 0 else "No"
                     request_row["executedQty"] = None
+
+            # V25.48 FINAL EXECUTION OVERRIDE
+            # Make the Yes/No flag depend ONLY on Therapy Session status.
+            # Cached child-table completed counters are not allowed to turn an
+            # In Progress session into Yes.
+            def execution_for_plans(plan_value):
+                raw_plan_value = str(plan_value or "").strip()
+                normalized = raw_plan_value.replace(" + ", ",").replace("+", ",")
+
+                plan_ids = []
+
+                for part in normalized.split(","):
+                    plan_id = part.strip()
+                    if plan_id and plan_id not in plan_ids:
+                        plan_ids.append(plan_id)
+
+                completed_count = 0
+                in_progress_count = 0
+                not_started_count = 0
+                other_count = 0
+
+                for plan_id in plan_ids:
+                    state = therapy_session_state_by_plan.get(plan_id) or {}
+
+                    completed_count = completed_count + int(state.get("completed") or 0)
+                    in_progress_count = in_progress_count + int(state.get("in_progress") or 0)
+                    not_started_count = not_started_count + int(state.get("not_started") or 0)
+                    other_count = other_count + int(state.get("other") or 0)
+
+                # STRICT RULE:
+                # Only an actual Therapy Session status of Completed can produce Yes.
+                if completed_count > 0:
+                    return {
+                        "evidence": "Yes",
+                        "status": "Completed",
+                        "completed": completed_count,
+                        "in_progress": in_progress_count,
+                        "not_started": not_started_count,
+                        "other": other_count
+                    }
+
+                if in_progress_count > 0:
+                    return {
+                        "evidence": "No",
+                        "status": "In Progress",
+                        "completed": 0,
+                        "in_progress": in_progress_count,
+                        "not_started": not_started_count,
+                        "other": other_count
+                    }
+
+                if not_started_count > 0:
+                    return {
+                        "evidence": "No",
+                        "status": "Not Started",
+                        "completed": 0,
+                        "in_progress": 0,
+                        "not_started": not_started_count,
+                        "other": other_count
+                    }
+
+                return {
+                    "evidence": "No",
+                    "status": "Not Started",
+                    "completed": 0,
+                    "in_progress": 0,
+                    "not_started": 0,
+                    "other": other_count
+                }
+
+            for request_row in material_requests:
+                ex = execution_for_plans(request_row.get("therapy_id") or "")
+                request_row["execution_evidence"] = ex["evidence"]
+                request_row["execution_status"] = ex["status"]
+                request_row["completed_sessions"] = ex["completed"]
+                request_row["in_progress_sessions"] = ex["in_progress"]
+
+            for request_row in stock_requests:
+                ex = execution_for_plans(
+                    request_row.get("therapy")
+                    or request_row.get("therapy_id")
+                    or ""
+                )
+                request_row["executionEvidence"] = ex["evidence"]
+                request_row["executionStatus"] = ex["status"]
+                request_row["completedSessions"] = ex["completed"]
+                request_row["inProgressSessions"] = ex["in_progress"]
+                request_row["notStartedSessions"] = ex.get("not_started") or 0
+                request_row["otherSessions"] = ex.get("other") or 0
+                request_row["executionPlanIds"] = (
+                    request_row.get("therapy")
+                    or request_row.get("therapy_id")
+                    or ""
+                )
 
             # FAST MODE:
             # Special request parent diagnostics are not required by Stores 360.
@@ -1470,10 +1903,10 @@ def run(**kwargs):
             if has_field("Stock Entry", se_optional_field):
                 se_fields.append(se_optional_field)
 
-        stock_entries = frappe.get_all(
+        stock_entries_all = frappe.get_all(
             "Stock Entry",
             filters=[
-                ["docstatus", "=", 1],
+                ["docstatus", "in", [0, 1]],
                 ["posting_date", ">=", from_date],
                 ["posting_date", "<=", to_date]
             ],
@@ -1481,6 +1914,29 @@ def run(**kwargs):
             order_by="posting_date desc, posting_time desc, name desc",
             limit_page_length=0
         )
+
+        stock_entries = []
+
+        for stock_entry_row in stock_entries_all:
+            docstatus = int(stock_entry_row.get("docstatus") or 0)
+            workflow_text = sval(stock_entry_row.get("workflow_state")).strip().lower()
+
+            released_draft = bool(
+                docstatus == 0
+                and INCLUDE_RELEASED_DRAFT_STOCK_MOVEMENTS
+                and (
+                    sval(stock_entry_row.get("custom_stock_release_date")).strip()
+                    or sval(stock_entry_row.get("custom_stock_released_by")).strip()
+                    or "pending receipt" in workflow_text
+                    or "released" in workflow_text
+                    or "in transit" in workflow_text
+                )
+            )
+
+            # Submitted entries remain authoritative.
+            # Draft entries are included only after actual stock release evidence.
+            if docstatus == 1 or released_draft:
+                stock_entries.append(stock_entry_row)
 
         se_names = [x.get("name") for x in stock_entries if x.get("name")]
 
@@ -1625,6 +2081,12 @@ def run(**kwargs):
                 "sending_method": h.get("custom_sending_method") or "",
                 "delivery_reference": h.get("custom_delivery_reference") or "",
                 "workflow_state": h.get("workflow_state") or "",
+                "docstatus": int(h.get("docstatus") or 0),
+                "movement_status": (
+                    "Released — Draft / Pending Receipt"
+                    if int(h.get("docstatus") or 0) == 0
+                    else "Submitted"
+                ),
                 "client": r.get("custom_client_name") or "",
                 "package": r.get("custom_package_number") or ""
             }
@@ -1636,7 +2098,11 @@ def run(**kwargs):
                 x["rid"] = entry_name
                 x["reason"] = "Stock Entry transfer back to HO"
                 x["cond"] = ""
-                x["status"] = "Posted"
+                x["status"] = (
+                    "Released — Draft / Pending Receipt"
+                    if int(h.get("docstatus") or 0) == 0
+                    else "Posted"
+                )
                 returns.append(x)
 
             else:
@@ -2762,6 +3228,82 @@ def run(**kwargs):
 
 
         # ============================================================
+        # V25.40 REQUEST-BY DISPLAY NAME ENRICHMENT
+        # ============================================================
+        request_by_employee_map = {}
+        request_by_user_map = {}
+
+        if frappe.db.exists("DocType", "Employee"):
+            employee_rows = frappe.get_all(
+                "Employee",
+                filters={"status": "Active"},
+                fields=["name", "employee_name", "user_id", "designation", "branch"],
+                limit_page_length=0
+            )
+
+            for er in employee_rows:
+                emp_id = sval(er.get("name")).strip()
+                emp_name = sval(er.get("employee_name")).strip()
+                user_id = sval(er.get("user_id")).strip()
+                info = {
+                    "employee": emp_id,
+                    "employee_name": emp_name or emp_id,
+                    "user_id": user_id,
+                    "designation": sval(er.get("designation")).strip(),
+                    "branch": sval(er.get("branch")).strip()
+                }
+                if emp_id:
+                    request_by_employee_map[emp_id.lower()] = info
+                if user_id:
+                    request_by_employee_map[user_id.lower()] = info
+
+        if frappe.db.exists("DocType", "User"):
+            user_rows = frappe.get_all(
+                "User",
+                filters={"enabled": 1},
+                fields=["name", "full_name"],
+                limit_page_length=0
+            )
+            for ur in user_rows:
+                uid = sval(ur.get("name")).strip()
+                if uid:
+                    request_by_user_map[uid.lower()] = {
+                        "user_id": uid,
+                        "full_name": sval(ur.get("full_name")).strip() or uid
+                    }
+
+        def request_by_display(raw_value):
+            raw = sval(raw_value).strip()
+            key = raw.lower()
+            emp = request_by_employee_map.get(key) or {}
+            usr = request_by_user_map.get(key) or {}
+            return {
+                "raw": raw,
+                "name": (
+                    sval(emp.get("employee_name")).strip()
+                    or sval(usr.get("full_name")).strip()
+                    or raw
+                ),
+                "role": sval(emp.get("designation")).strip(),
+                "employee": sval(emp.get("employee")).strip(),
+                "user_id": sval(emp.get("user_id")).strip() or sval(usr.get("user_id")).strip(),
+                "branch": sval(emp.get("branch")).strip()
+            }
+
+        for request_row in stock_requests:
+            rb = request_by_display(
+                request_row.get("requestBy")
+                or request_row.get("reqBy")
+                or ""
+            )
+            request_row["requestByRaw"] = rb["raw"]
+            request_row["requestByName"] = rb["name"]
+            request_row["requestByRole"] = rb["role"]
+            request_row["requestByEmployee"] = rb["employee"]
+            request_row["requestByUser"] = rb["user_id"]
+            request_row["requestByBranch"] = rb["branch"]
+
+        # ============================================================
         # CURRENT LOGGED-IN USER
         # ============================================================
 
@@ -2855,7 +3397,7 @@ def run(**kwargs):
                     "clients": len(clients)
                 },
                 "fast_mode": 1,
-                "version": "V25_REAL_BRANCH_CONSUMPTION"
+                "version": "V25_58_STRICT_COMPLETED_ONLY_EXECUTION_2026_09_30"
             },
 
             "current_user": current_user_info,
@@ -2885,10 +3427,10 @@ def run(**kwargs):
 
             "data_quality": {
                 "requested_qty": "Material Request Item.qty",
-                "released_qty": "Submitted Stock Entry Detail.qty",
+                "released_qty": "Submitted Stock Entry Detail.qty plus released Draft transfer rows with release evidence",
                 "received_qty": "Stock Entry Detail.custom_received_qty only after branch receipt confirmation",
                 "missing_damaged_return": "LIFE Stock Receipt Adjustment Item",
-                "execution_status": "Therapy Session counts are not converted to item quantity. Consumed Qty uses only submitted branch Material Issue Stock Entry Detail.qty.",
+                "execution_status": "Executed Yes ONLY when a linked Therapy Session status is exactly Completed. In Progress, Not Started, blank, Draft, or any other status is No. Exact item consumption qty still uses only submitted branch Material Issue Stock Entry Detail.qty.",
                 "vendor_financials": "Selected-period submitted Purchase Invoice grand_total/outstanding_amount",
                 "vendor_financials_lifetime": "All submitted Purchase Invoice grand_total/outstanding_amount",
                 "historical_consumption": "Submitted Material Issue Stock Entry Detail.qty from branch warehouse with no target warehouse; no inferred consumption",
