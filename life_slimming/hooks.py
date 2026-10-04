@@ -479,4 +479,7 @@ except Exception:
     pass
 
 # Staff-based CC scheduler fields.
-after_migrate = ["life_slimming.api.cc_appointment_setup.execute"]
+after_migrate = [
+    "life_slimming.api.cc_appointment_setup.execute",
+    "life_slimming.api.data_correction_setup.execute",
+]
