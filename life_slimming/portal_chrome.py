@@ -25,6 +25,7 @@ PAGE_CHROME = {
     'cluster-head-dashboard': ('.cd-top', '.cd-top > div:first-child'),
     'contols-command': ('.topbar', '.topbar > .logo, .topbar > .brand, .topbar .clock'),
     'coo-dashboard': ('.hdr', '.hdr .logo, .hdr .clk'),
+    'data-correction': ('.mast', '.mast > .logo, .mast > .ttl, .mast > .user'),
     'employee-sale-master-data': ('', '.ref-header, .ref-gold-bar'),
     'enrollment-register-testing': ('.mast', '.mast > .logo, .mast > div:nth-child(2), .mast > .spacer, #userchip, .headbar > .hb-ic, .headbar > div:nth-child(2)'),
     'followup-master': ('.life-topbar', '.life-page-heading, .life-brand'),

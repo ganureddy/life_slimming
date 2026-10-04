@@ -140,6 +140,12 @@
           "icon": "\ud83c\udfec",
           "label": "Stores 360",
           "description": "Store-wise 360\u00b0 view"
+        },
+        {
+          "id": "data-correction",
+          "icon": "\u270e",
+          "label": "Data Correction",
+          "description": "Request, approve and track data corrections"
         }
       ]
     },
