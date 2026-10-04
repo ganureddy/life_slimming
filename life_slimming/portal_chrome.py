@@ -17,6 +17,8 @@ PAGE_CHROME = {
     'branch-expenditure-entry': ('.life-exp-hero', '.life-exp-brand, .life-exp-clock-pill'),
     'branch-home-target': ('.btgt-head', '.btgt-title'),
     'branch-visit-report': ('.life-reports-header', '.life-reports-header > div:first-child:not(.life-header-actions)'),
+    'cc-new-dashboard-bhuvan-oct2': ('.hdr', '.hdr-brand'),
+    'call-center-new-report-bhuvan': ('.life-reports-header', '.life-reports-header > div:first-child:not(.life-header-actions)'),
     'cc-new-dash': ('.hdr', '.hdr-brand'),
     'client-info': ('.c3-mast', '.c3-mast-brand'),
     'client-weight-loss-info': ('.wl-header', '.wl-header > div:first-child'),
@@ -55,6 +57,9 @@ def prepare_chrome(soup, name):
             tag['hidden'] = ''
             tag['inert'] = ''
             tag['aria-hidden'] = 'true'
+            # Some exported pages force their navigation visible with an
+            # !important ID selector. Keep the DOM hooks without duplicate UI.
+            tag['style'] = tag.get('style', '').rstrip('; ') + '; display: none !important;'
     if toolbar:
         for tag in soup.select(toolbar):
             if tag.name == 'header':

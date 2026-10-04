@@ -5,9 +5,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const code = fs.readFileSync(path.join(__dirname, '../../life_slimming/public/js/portal_module_loading.js'), 'utf8');
 const settle = () => new Promise(resolve => setTimeout(resolve, 160));
-function setup() {
+function setup(module = 'tasks') {
   const messages = [], requests = [];
-  let onload;
+  const listeners = {};
   class XHR {
     open() {}
     send() { if(this.fail) throw Error('send failed'); }
@@ -15,16 +15,23 @@ function setup() {
   }
   const context = { URL, Request, WeakMap, setTimeout, clearTimeout, XMLHttpRequest: XHR,
     location: {href:'https://local.test/life_portal_module?module=tasks',origin:'https://local.test'},
-    lifePortalModule:{module:'tasks'},
-    addEventListener: (_, callback) => {onload=callback;},
+    lifePortalModule:{module},
+    document: { readyState: 'loading', addEventListener: (name, callback) => {listeners[name]=callback;} },
+    addEventListener: (name, callback) => {listeners[name]=callback;},
     parent: {postMessage: message => messages.push(message)},
     fetch: () => new Promise((resolve,reject) => requests.push({resolve,reject})),
   };
   context.window=context;
   vm.runInNewContext(code,context);
-  onload();
-  return {context,messages,requests,XHR};
+  listeners.DOMContentLoaded();
+  return {context,messages,requests,XHR,listeners};
 }
+test('DOM readiness releases the loader without waiting for image or widget load', async () => {
+  const {messages,listeners}=setup();
+  assert.equal(listeners.load, undefined);
+  await settle();
+  assert.equal(messages.at(-1).busy,false);
+});
 test('overlapping requests keep the main loader active through success and rejection', async () => {
   const {context,messages,requests}=setup();
   const first=context.fetch('/api/one');
@@ -47,4 +54,22 @@ test('unrelated external requests do not block the workspace', async () => {
   const request=context.fetch('https://external.test/api/one');
   await settle();assert.equal(messages.at(-1).busy,false);
   requests[0].resolve({});await request;
+});
+
+test('branch main figures release the workspace while optional requests continue', async () => {
+  const {context,messages,requests,listeners}=setup('bdash');
+  const request=context.fetch('/api/slow-panel');
+  await settle();assert.equal(messages.at(-1).busy,true);
+  listeners['life-portal:primary-ready']();
+  await settle();assert.equal(messages.at(-1).busy,false);
+  const refresh=context.fetch('/api/background-refresh');
+  await settle();assert.equal(messages.at(-1).busy,false);
+  requests.forEach(r=>r.resolve({}));await Promise.all([request,refresh]);
+});
+test('primary-ready does not bypass loading for other modules', async () => {
+  const {context,messages,requests,listeners}=setup();
+  const request=context.fetch('/api/slow-panel');
+  listeners['life-portal:primary-ready']();
+  await settle();assert.equal(messages.at(-1).busy,true);
+  requests[0].resolve({});await request;await settle();assert.equal(messages.at(-1).busy,false);
 });

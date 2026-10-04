@@ -1,7 +1,7 @@
 """cc_walkin_update
 
 Original API: cc_walkin_update
-Source modified: 2026-09-13 12:17:18.756149
+Source modified: 2026-09-22 16:17:11.577364
 See ../CATALOG.md for migration notes and validation limits.
 """
 
@@ -884,7 +884,8 @@ def run(**kwargs):
         "Doctor",
         "Consultant",
         "Consultant Doctor",
-        "Doctor Consultant"
+        "Doctor Consultant",
+        "DIETICIAN"
     ]
 
     # ------------------------------------------------------------
@@ -1005,40 +1006,22 @@ def run(**kwargs):
         )
 
 
-    # After Visited, only the final booking decision is allowed.
     if previous_status == "Visited":
-        if status not in [
-            "Visited Booked",
-            "Visited Not Booked"
-        ]:
-            frappe.throw(
-                "After Visited, select only Visited Booked "
-                "or Visited Not Booked"
-            )
+        if status not in ["Visited Booked", "Visited Not Booked"]:
+            frappe.throw("After Visited, select only Visited Booked or Visited Not Booked")
 
+    elif previous_status == "Visited Not Booked":
+        # Per the workflow diagram, Visited Not Booked can still move to
+        # Visited Booked. Reverse correction is also allowed.
+        if status not in ["Visited Booked", "Visited", "Not Visited"]:
+            frappe.throw("From Visited Not Booked, select Visited Booked, Visited or Not Visited")
 
-    # Initial or correctable statuses must first return to Visited.
-    elif previous_status in [
-        "",
-        "Booked",
-        "Not Booked",
-        "Not Visited",
-        "Visited Not Booked"
-    ]:
-        if status not in [
-            "Visited",
-            "Not Visited"
-        ]:
-            frappe.throw(
-                "First update the client as Visited"
-            )
-
+    elif previous_status in ["", "Booked", "Not Booked", "Not Visited"]:
+        if status not in ["Visited", "Not Visited"]:
+            frappe.throw("First update the client as Visited")
 
     else:
-        frappe.throw(
-            "Invalid previous appointment status: "
-            + previous_status
-        )
+        frappe.throw("Invalid previous appointment status: " + previous_status)
 
 
     # ------------------------------------------------------------
@@ -1121,11 +1104,6 @@ def run(**kwargs):
         if pd_count < 2:
             frappe.throw(
                 "At least 2 PD Form images are mandatory"
-            )
-
-        if pd_count > 5:
-            frappe.throw(
-                "Maximum 5 PD Form images are allowed"
             )
 
 
@@ -1368,10 +1346,7 @@ def run(**kwargs):
             )
 
 
-        if len(existing_urls) > 5:
-            frappe.throw(
-                "Maximum 5 PD Form images are allowed"
-            )
+
 
 
         patient_doc.save(ignore_permissions=True)

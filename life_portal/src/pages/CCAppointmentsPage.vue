@@ -5,7 +5,7 @@ import { request } from '../api/http';
 import { session } from '../lib/session';
 import { createRequestId } from '../api/convox';
 const route = useRoute();
-const bookingDialog=ref(null);
+const bookingDialog=ref(null), editing=ref(null);
 const branches=ref([]), staff=ref([]), leads=ref([]), branch=ref(''), date=ref(''), today=ref(''), timezone=ref('');
 const resource=ref(''), role=ref(''), agent=ref(''), lead=ref(typeof route.query.lead === 'string' ? route.query.lead : ''), search=ref(''), duration=ref(45);
 const schedules=ref([]), selected=ref(null), loading=ref(false), saving=ref(false), error=ref(''), success=ref('');
@@ -31,14 +31,18 @@ async function init(){try{const d=await call('bootstrap',{selected_lead:lead.val
 async function refresh(){
  const gen=++generation; selected.value=null;requestId=createRequestId();schedules.value=[];error.value='';
  if(!branch.value||!date.value){loading.value=false;return;}loading.value=true;
- try{const [meta,cal]=await Promise.all([call('bootstrap',{branch:branch.value}),call('calendar',{branch:branch.value,date:date.value,resource:resource.value,duration:duration.value})]);if(gen!==generation||!mounted)return;staff.value=meta.staff;schedules.value=cal.schedules;}
+ try{const [meta,cal]=await Promise.all([call('bootstrap',{branch:branch.value}),call('calendar',{branch:branch.value,date:date.value,resource:resource.value,duration:duration.value,appointment:editing.value?.name})]);if(gen!==generation||!mounted)return;staff.value=meta.staff;schedules.value=cal.schedules;}
  catch(e){if(gen===generation)error.value=e.message;}finally{if(gen===generation)loading.value=false;}
 }
 async function findLeads(){const gen=++searchGeneration;try{const d=await call('bootstrap',{query:search.value,selected_lead:lead.value});if(gen===searchGeneration&&mounted)leads.value=d.leads;}catch(e){error.value=e.message;}}
 async function choose(person,slot){if(!slot.available||saving.value)return;selected.value={staff:person,slot};requestId=createRequestId();error.value='';success.value='';await nextTick();bookingDialog.value?.showModal();}
+async function changeAppointment(event){
+ try{const data=await call('bootstrap',{selected_lead:event.lead});if(!data.appointment||data.appointment.name!==event.name)throw Error('Open this lead’s latest appointment from the lead screen.');editing.value=data.appointment;leads.value=data.leads;lead.value=event.lead;branch.value=data.appointment.branch;duration.value=data.appointment.duration;role.value='';resource.value='';await refresh();}catch(e){error.value=e.message;}
+}
+async function cancelChange(){editing.value=null;await refresh();}
 async function book(){
  if(!selected.value||!lead.value)return; saving.value=true;error.value='';success.value='';
- try{const d=await call('book',{lead:lead.value,branch:branch.value,resource:selected.value.staff.id,start:selected.value.slot.start,duration:duration.value,request_id:requestId});success.value='Appointment '+d.name+' booked successfully.';await refresh();}
+ try{const d=await call(editing.value?'reschedule':'book',{...(editing.value?{appointment:editing.value.name,modified:editing.value.modified}:{lead:lead.value,request_id:requestId}),branch:branch.value,resource:selected.value.staff.id,start:selected.value.slot.start,duration:duration.value});success.value='Appointment '+d.name+(editing.value?' updated successfully.':' booked successfully.');editing.value=null;await refresh();}
  catch(e){error.value=e.message; /* Keep the same request ID if the response is uncertain. */}
  finally{saving.value=false;}
 }
@@ -61,6 +65,7 @@ onUnmounted(()=>{mounted=false;generation++;searchGeneration++;clearTimeout(time
   <label>Designation<select v-model="role"><option value="">All eligible designations</option><option v-for="d in designations" :key="d">{{d}}</option></select></label>
   <label>Staff member<select v-model="resource"><option value="">All staff</option><option v-for="s in filteredStaff" :key="s.id" :value="s.id">{{s.name}} · {{s.designation||s.role}}</option></select></label>
  </fieldset>
+ <p v-if="editing" class="success" role="status">Changing {{editing.name}} · {{editing.staff}} · {{editing.start}}. Choose a date and an available manager slot below. <button :disabled="saving" @click="cancelChange">Cancel change</button></p>
  <div class="summary"><div><span>Booked appointments</span><strong>{{bookedCount}}</strong></div><div><span>Available slots</span><strong>{{availableCount}}</strong></div><div><span>Consultation staff</span><strong>{{visible.length}}</strong></div></div>
  <p v-if="loading" role="status">Checking staff calendars…</p>
  <p v-else-if="branch&&!visible.length">No active consultation staff are mapped to this branch and role. Ask the branch administrator to update the staff mapping.</p>
@@ -70,7 +75,7 @@ onUnmounted(()=>{mounted=false;generation++;searchGeneration++;clearTimeout(time
    <tbody><tr v-for="row in gridRows" :key="row.start"><th scope="row" class="time-cell">{{time(row.start)}}</th>
     <td v-for="cell in row.cells" :key="cell.staff.id" :class="{'occupied':cell.events.length}">
      <div v-for="(event,i) in cell.events" :key="event.name||i" class="event-card"><strong>{{event.client||'Booked'}}</strong><small>{{time(event.start)}}–{{time(event.end)}}</small><small v-if="event.agent_name">{{event.agent_name}}</small><small v-if="event.branch!==branch">{{event.branch}}</small></div>
-     <button v-if="!cell.events.length&&cell.slot?.available" class="add-slot" :disabled="saving" :aria-label="'Book '+cell.staff.name+' at '+time(row.start)" :title="'Book '+duration+' minutes with '+cell.staff.name" @click="choose(cell.staff,cell.slot)">+</button>
+     <button v-if="cell.slot?.available" class="add-slot" :disabled="saving" :aria-label="'Book '+cell.staff.name+' at '+time(row.start)" :title="'Book '+duration+' minutes with '+cell.staff.name" @click="choose(cell.staff,cell.slot)">+</button>
      <span v-else-if="!cell.events.length" class="unavailable" :title="cell.slot?.reason||'Session would end after closing'">—</span>
     </td>
    </tr></tbody>
@@ -78,17 +83,17 @@ onUnmounted(()=>{mounted=false;generation++;searchGeneration++;clearTimeout(time
  </div>
  <dialog ref="bookingDialog" class="booking-dialog" aria-labelledby="booking-title" @cancel.prevent="closeBooking">
  <form v-if="selected" class="booking" @submit.prevent="book">
-  <header><h2 id="booking-title">Book appointment</h2><button type="button" :disabled="saving" aria-label="Close booking" @click="closeBooking">×</button></header>
+  <header><h2 id="booking-title">{{editing?'Change appointment':'Book appointment'}}</h2><button type="button" :disabled="saving" aria-label="Close booking" @click="closeBooking">×</button></header>
   <p v-if="error" role="alert" class="error">{{error}}</p>
   <p>{{branch}} · {{selected.staff.name}} · {{date}} · {{time(selected.slot.start)}}–{{time(selected.slot.end)}}</p>
-  <fieldset :disabled="saving"><label>Find assigned lead<input v-model="search" placeholder="Name, mobile number or Lead ID"></label>
-  <label>Lead<select v-model="lead" required><option value="">Select lead</option><option v-if="lead&&!leads.some(l=>l.name===lead)" :value="lead">{{lead}}</option><option v-for="l in leads" :key="l.name" :value="l.name">{{l.lead_name}} · {{l.mobile_no}} · {{l.name}}</option></select></label>
+  <fieldset :disabled="saving"><label>Find assigned lead<input :disabled="!!editing" v-model="search" placeholder="Name, mobile number or Lead ID"></label>
+  <label>Lead<select v-model="lead" :disabled="!!editing" required><option value="">Select lead</option><option v-if="lead&&!leads.some(l=>l.name===lead)" :value="lead">{{lead}}</option><option v-for="l in leads" :key="l.name" :value="l.name">{{l.lead_name}} · {{l.mobile_no}} · {{l.name}}</option></select></label>
   <label>Lead owner / CC agent<input :value="selectedLead?.lead_owner_name || selectedLead?.lead_owner || 'Unassigned'" readonly></label>
   <label>Selected manager / consultation staff<input :value="selected.staff.name + ' · ' + (selected.staff.designation || selected.staff.role)" readonly></label>
-  <p>Booked by: {{session.full_name}}. Availability is checked again when saving.</p><button type="submit" :disabled="saving||!lead">{{saving?'Booking…':'Confirm appointment'}}</button><button type="button" :disabled="saving" @click="closeBooking">Cancel</button></fieldset>
+  <p>Booked by: {{session.full_name}}. Availability is checked again when saving.</p><button type="submit" :disabled="saving||!lead">{{saving?'Saving…':editing?'Save appointment changes':'Confirm appointment'}}</button><button type="button" :disabled="saving" @click="closeBooking">Cancel</button></fieldset>
  </form>
  </dialog>
- <section class="agenda"><header><h2>Booked appointments</h2><label>Lead owner / CC agent<select v-model="agent"><option value="">All visible agents</option><option v-for="a in agents" :key="a.id" :value="a.id">{{a.name}}</option></select></label></header><p>Agent filtering affects this list only; every occupied staff slot stays blocked.</p><div class="table-wrap"><table><thead><tr><th>Time</th><th>Branch</th><th>Staff / role</th><th>Lead / client</th><th>Lead owner / CC agent</th></tr></thead><tbody><tr v-for="(e,i) in agenda" :key="e.name||i"><td>{{time(e.start)}}–{{time(e.end)}}</td><td>{{e.branch}}</td><td>{{e.staff}} · {{e.role}}</td><td>{{e.client}} {{e.lead}}</td><td>{{e.agent_name||e.agent||'Reserved'}}</td></tr><tr v-if="!agenda.length"><td colspan="5">No appointments to show for this selection.</td></tr></tbody></table></div></section>
+ <section class="agenda"><header><h2>Booked appointments</h2><label>Lead owner / CC agent<select v-model="agent"><option value="">All visible agents</option><option v-for="a in agents" :key="a.id" :value="a.id">{{a.name}}</option></select></label></header><p>Agent filtering affects this list only; every occupied staff slot stays blocked.</p><div class="table-wrap"><table><thead><tr><th>Time</th><th>Branch</th><th>Staff / role</th><th>Lead / client</th><th>Lead owner / CC agent</th><th>Actions</th></tr></thead><tbody><tr v-for="(e,i) in agenda" :key="e.name||i"><td>{{time(e.start)}}–{{time(e.end)}}</td><td>{{e.branch}}</td><td>{{e.staff}} · {{e.role}}</td><td>{{e.client}} {{e.lead}}</td><td>{{e.agent_name||e.agent||'Reserved'}}</td><td><button v-if="e.editable" :disabled="saving||loading" @click="changeAppointment(e)">Reschedule / change manager</button></td></tr><tr v-if="!agenda.length"><td colspan="6">No appointments to show for this selection.</td></tr></tbody></table></div></section>
 </section>
 </template>
 <style scoped>

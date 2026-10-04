@@ -21,3 +21,13 @@ test('offscreen roster does not request data until first intersection',()=>{
  const ctx={document:{querySelector:()=>target},window:{IntersectionObserver:Observer},IntersectionObserver:Observer};vm.runInNewContext(code,ctx);
  ctx.portalWhenVisible('roster',()=>loads++);assert.equal(loads,0);callback([{isIntersecting:false}]);assert.equal(loads,0);callback([{isIntersecting:true}]);assert.equal(loads,1);assert.equal(disconnected,1);
 });
+
+test('branch changes defer unopened roster but refresh it after initialization',()=>{
+ const branch=source('branch-command-center');
+ const code=branch.slice(branch.indexOf('function syncRosterToBranch(){'),branch.indexOf('function updateWeekLabel(){'));
+ let weeks=0,months=0;
+ const ctx={curBranch:'Demo B',portalRosterInitialized:false,rosterState:{},document:{querySelector:()=>({}),getElementById:()=>null},loadWeek:()=>weeks++,loadMonthlySummary:()=>months++};
+ vm.runInNewContext(code,ctx);
+ ctx.syncRosterToBranch();assert.equal(ctx.rosterState.branch,'Demo B');assert.equal(weeks,0);assert.equal(months,0);
+ ctx.portalRosterInitialized=true;ctx.syncRosterToBranch();assert.equal(weeks,1);assert.equal(months,1);
+});

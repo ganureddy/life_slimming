@@ -9,7 +9,7 @@ function setup(fail = false) {
   const session = { user: 'fixture', csrf_token: 'csrf', access_config: { BM: { groups: ['MAIN'], hide: ['two'], show: ['three'] } } };
   const context = {
     session, roleKey: {value:'IT'}, labels: { IT:'IT Admin', BM:'Branch Manager' }, groupRoles: { BM:['MAIN'] },
-    menu: [{label:'MAIN',items:[{id:'one'},{id:'two'}]},{label:'OTHER',items:[{id:'three'}]}],
+    access: {menu: [{label:'MAIN',items:[{id:'one'},{id:'two'}]},{label:'OTHER',items:[{id:'three'}]}]},
     ref: value => ({value}), computed: fn => ({get value(){return fn();}}), watch: (_, fn) => fn(),
     call: async (...args) => { calls.push(args); if(fail) throw new Error('Permission denied'); },
   };

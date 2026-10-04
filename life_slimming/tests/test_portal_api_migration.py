@@ -24,7 +24,7 @@ class PortalMigrationTest(unittest.TestCase):
 
     def test_all_native_modules_are_registered_without_executing_bodies(self):
         catalog = json.loads((Path(__file__).parents[1] / 'api/catalog.json').read_text())
-        self.assertEqual(catalog['count'], 141)
+        self.assertEqual(catalog['count'], 145)
         methods = set()
         for item in catalog['endpoints']:
             fn = importlib.import_module(item['method'].rsplit('.', 1)[0]).run
@@ -32,7 +32,7 @@ class PortalMigrationTest(unittest.TestCase):
             self.assertEqual(fn in frappe.guest_methods, item['allow_guest'])
             self.assertEqual(frappe.allowed_http_methods_for_whitelisted_func[fn], ['POST'])
             methods.add(item['method'])
-        self.assertEqual(len(methods), 141)
+        self.assertEqual(len(methods), 145)
         self.assertEqual(sum(item['allow_guest'] for item in catalog['endpoints']), 2)
 
     def test_request_arguments_are_restored_after_exception(self):

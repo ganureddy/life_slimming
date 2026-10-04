@@ -79,6 +79,7 @@ class WorkspaceChromeTest(unittest.TestCase):
                 for tag in after.select('[data-portal-chrome]'):
                     self.assertIn('inert', tag.attrs)
                     self.assertIn('hidden', tag.attrs)
+                    self.assertIn('display: none !important', tag.get('style', ''))
                 # Form controls and buttons survive the page transformation.
                 for selector in ('input', 'select', 'button'):
                     self.assertEqual(len(before.select(selector)), len(after.select(selector)))

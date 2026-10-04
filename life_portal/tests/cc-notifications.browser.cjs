@@ -11,7 +11,7 @@ const fs = require('node:fs'), assert = require('node:assert/strict');
     ws.send(JSON.stringify({ id, method, params }));
   });
   const bridge = fs.readFileSync('../life_slimming/public/js/convox_cc_bridge.js', 'utf8');
-  const source = JSON.parse(fs.readFileSync('../life_slimming/portal_pages/cc-new-dash.json', 'utf8'));
+  const source = JSON.parse(fs.readFileSync('../life_slimming/portal_pages/cc-new-dashboard-bhuvan-oct2.json', 'utf8'));
   const notifications = fs.readFileSync('../life_slimming/public/js/cc_notifications.js', 'utf8');
   const toastCode = source.javascript.slice(source.javascript.indexOf('  function toast(msg, type)'), source.javascript.indexOf('  function showLoader'));
   const dashboard = source.javascript.slice(source.javascript.indexOf('  let callRequestPending'), source.javascript.indexOf('  function openLeadSummary'));

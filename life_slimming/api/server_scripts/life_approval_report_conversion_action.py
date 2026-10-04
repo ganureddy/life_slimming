@@ -1,7 +1,7 @@
 """Approvals Report Conversion
 
 Original API: life_approval_report_conversion_action
-Source modified: 2026-09-02 17:48:37.140745
+Source modified: 2026-09-24 16:42:08.254544
 See ../CATALOG.md for migration notes and validation limits.
 """
 
@@ -1112,7 +1112,37 @@ def run(**kwargs):
         }
 
 
-    ctx = resolve_context()
+
+    # My Approvals is a personal stage queue, not the administrator override queue.
+    # Keep existing action permissions unchanged; expose a narrower queue decision.
+    def personal_queue_context(ctx):
+        mode = clean(ctx.get("mode"))
+        if mode == "p2p":
+            audit_users = P2P_AUDIT_USERS
+            coo_users = P2P_COO_USERS
+        elif mode == "c2c":
+            audit_users = C2C_AUDIT_USERS
+            coo_users = C2C_COO_USERS
+        else:
+            audit_users = B2B_AUDIT_USERS
+            coo_users = B2B_COO_USERS
+        level = ""
+        if user_key in coo_users:
+            level = "coo"
+        elif user_key in audit_users:
+            level = "audit"
+        elif login_employee and user_can_access_branch(ctx.get("branch")):
+            for manager in active_manager_rows(ctx.get("branch"), mode):
+                if clean(manager.get("name")) == clean(login_employee.get("name")):
+                    level = "manager"
+                    break
+        pending = clean(ctx.get("pending_role"))
+        expected = "coo" if pending in ["coo", "operations_coo"] else "audit" if pending in ["ops", "audit_team", "audit"] else "manager" if pending in ["cm", "centre_manager", "manager"] else ""
+        ctx["my_approval_level"] = level
+        ctx["my_queue_can_act"] = 1 if level and level == expected and int(ctx.get("can_act") or 0) else 0
+        return ctx
+
+    ctx = personal_queue_context(resolve_context())
 
     if operation == "repair_b2b":
         if doctype != "Client Transfer Request Form":

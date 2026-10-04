@@ -5,8 +5,12 @@ const vm = require('node:vm');
 const path = require('node:path');
 const app = path.join(__dirname, '../../life_slimming');
 const bridge = fs.readFileSync(path.join(app, 'public/js/convox_cc_bridge.js'), 'utf8');
-const page = JSON.parse(fs.readFileSync(path.join(app, 'portal_pages/cc-new-dash.json'), 'utf8'));
-const dashboard = page.javascript.slice(page.javascript.indexOf('  let callRequestPending'), page.javascript.indexOf('  function openLeadSummary'));
+const page = JSON.parse(fs.readFileSync(path.join(app, 'portal_pages/cc-new-dashboard-bhuvan-oct2.json'), 'utf8'));
+// Isolate call controls from the appointment/history UI and its dashboard root.
+const callStart = page.javascript.indexOf('  let callRequestPending');
+const callEnd = page.javascript.indexOf('  function appointmentPageLink', callStart);
+assert(callStart >= 0 && callEnd > callStart, 'Dashboard call-control section must exist');
+const dashboard = page.javascript.slice(callStart, callEnd);
 
 function setup() {
   const messages = [], notices = [], listeners = {}, timeouts = new Map(), intervals = new Map();

@@ -1,7 +1,7 @@
 {
   "source": "ERP Portal / Server Script",
   "exported_on": "2026-09-19",
-  "count": 141,
+  "count": 145,
   "endpoints": [
     {
       "id": "accounts_command_centre_coa",
@@ -246,8 +246,8 @@
       "source_name": "Approvals Report Conversion",
       "legacy_method": "life_approval_report_conversion_action",
       "method": "life_slimming.api.server_scripts.life_approval_report_conversion_action.run",
-      "source_modified": "2026-09-02 17:48:37.140745",
-      "source_sha256": "aff0f45d54ca4cd29edcb5c6c329ced8e50e0488a96976c7c50990276f725774",
+      "source_modified": "2026-09-24 16:42:08.254544",
+      "source_sha256": "7bd72b4fa84f3147b0863694437cb8dc5139529f92e190744211147d25b095d5",
       "allow_guest": false,
       "source_allow_guest": false,
       "http_methods": [
@@ -634,8 +634,8 @@
       "source_name": "cc_get_leads",
       "legacy_method": "cc_get_leads",
       "method": "life_slimming.api.server_scripts.cc_get_leads.run",
-      "source_modified": "2026-08-31 11:25:59.869277",
-      "source_sha256": "845001974659fc0c68404752471e6777d48f24cf282ec532cf30b558aeedacbf",
+      "source_modified": "2026-10-03 11:06:14.910658",
+      "source_sha256": "458a79f38c5f92ba62426c89384af655ce84d73cb6238eb4eacbd5d1a91155c7",
       "allow_guest": false,
       "source_allow_guest": false,
       "http_methods": [
@@ -643,15 +643,22 @@
       ],
       "parameters": [
         "date_mode",
+        "detail",
         "from_date",
         "phone",
+        "query",
+        "start",
         "to_date"
       ],
       "doctypes": [
+        "Employee",
         "Has Role",
-        "Lead"
+        "Lead",
+        "Version"
       ],
-      "notes": []
+      "notes": [
+        "Local appointment link/duration fields and appointment enrichment are preserved for all search modes."
+      ]
     },
     {
       "id": "cc_lead_owner_history",
@@ -746,8 +753,8 @@
       "source_name": "cc_walkin_update",
       "legacy_method": "cc_walkin_update",
       "method": "life_slimming.api.server_scripts.cc_walkin_update.run",
-      "source_modified": "2026-09-13 12:17:18.756149",
-      "source_sha256": "8ccd87442e6d35e86b9c78bcfcaf7dc9c6f6869df4f5065a797e10a28afed8d8",
+      "source_modified": "2026-09-22 16:17:11.577364",
+      "source_sha256": "073ccfea0bd9d349cb22055f355c02bbb929d4a94980c88bd6f45be5b97c39a8",
       "allow_guest": false,
       "source_allow_guest": false,
       "http_methods": [
@@ -1781,8 +1788,8 @@
       "source_name": "LIFE Data Correction API",
       "legacy_method": "life_data_correction_api",
       "method": "life_slimming.api.server_scripts.life_data_correction_api.run",
-      "source_modified": "2026-09-19 18:23:28.448666",
-      "source_sha256": "61a5392dd578241531a3c30ac18e6412d4d2db503db44abf69c9c923ac1c5bf1",
+      "source_modified": "2026-09-20 20:07:11.984558",
+      "source_sha256": "670568cc7ff0a7567c737138e0a31e1ba8f450e8e33b8de7caa444c51228ce9f",
       "allow_guest": false,
       "source_allow_guest": false,
       "http_methods": [
@@ -1794,6 +1801,7 @@
         "attachment_count",
         "change_count",
         "decision",
+        "posting_remarks",
         "reason",
         "remarks",
         "request",
@@ -2285,8 +2293,8 @@
       "source_name": "life_stores_360_live_api",
       "legacy_method": "life_stores_360_live_api",
       "method": "life_slimming.api.server_scripts.life_stores_360_live_api.run",
-      "source_modified": "2026-09-16 15:18:45.468857",
-      "source_sha256": "8c49ede2f99cdce0ac1e08b26f6a5bb88a46141fe070b27df5e37aa69c1fe5ae",
+      "source_modified": "2026-09-30 12:01:34.538247",
+      "source_sha256": "83ccfbd13578f178a453a57972fbc696516ca98f7c2c8acf5c57b39e5731d63c",
       "allow_guest": false,
       "source_allow_guest": false,
       "http_methods": [
@@ -2319,6 +2327,7 @@
         "Stock Entry Detail",
         "Supplier",
         "Therapy Plan",
+        "Therapy Session",
         "User",
         "Warehouse"
       ],
@@ -2510,8 +2519,8 @@
       "source_name": "lifescc.billing.create_plan_and_invoice_TEST",
       "legacy_method": "lifescc.billing.create_plan_and_invoice_TEST",
       "method": "life_slimming.api.server_scripts.lifescc_billing_create_plan_and_invoice_test.run",
-      "source_modified": "2026-09-15 12:18:30.230686",
-      "source_sha256": "3209d2f27397a778f71ebe92f646c29e276948eeee8fcea0a7b3d9722b626dc1",
+      "source_modified": "2026-09-20 12:21:45.387178",
+      "source_sha256": "dfb85c4c0b7e2ea2da827d3fd8324a7dc488e1cd0a6a12e516cce0ae70b9587f",
       "allow_guest": false,
       "source_allow_guest": false,
       "http_methods": [
@@ -3333,8 +3342,8 @@
       "source_name": "payables_planner_api",
       "legacy_method": "payables_planner_api",
       "method": "life_slimming.api.server_scripts.payables_planner_api.run",
-      "source_modified": "2026-08-18 08:43:40.656790",
-      "source_sha256": "3a73234ad920333671a098efe0d3af4133ee79e0e00d03944d8b85dc724dcd7d",
+      "source_modified": "2026-09-24 20:22:15.322164",
+      "source_sha256": "d4f40a60dda6b72ee397a3479b611ada2b9799a2b1aa45c6c8a1a61af1bbb894",
       "allow_guest": false,
       "source_allow_guest": false,
       "http_methods": [
@@ -3348,17 +3357,27 @@
         "hold",
         "name",
         "plan",
+        "query",
         "reason",
-        "src"
+        "reference",
+        "require_reason",
+        "revision_reason",
+        "source",
+        "src",
+        "workspace"
       ],
       "doctypes": [
         "Account",
+        "Company",
         "Cost Center",
         "Custom Field",
+        "DocType",
+        "File",
         "GL Entry",
         "Journal Entry",
         "Journal Entry Account",
         "Payment Entry",
+        "Payment Entry Reference",
         "Purchase Invoice",
         "Purchase Invoice Item",
         "Supplier"
@@ -3435,8 +3454,8 @@
       "source_name": "Stock dashboard",
       "legacy_method": "life_stock_fast_requests",
       "method": "life_slimming.api.server_scripts.life_stock_fast_requests.run",
-      "source_modified": "2026-09-16 12:32:35.737020",
-      "source_sha256": "fc32a54dd796276f41d79ac9794244ed231b1144e0e8d6113fa10ce9f9d651b5",
+      "source_modified": "2026-09-29 13:54:48.909094",
+      "source_sha256": "900bfd1ce4e6d18221966a082acbe443fb34e89f2f5b5ed91eb0d3b3762ae180",
       "allow_guest": false,
       "source_allow_guest": false,
       "http_methods": [
@@ -3597,6 +3616,98 @@
         "Web Coupon"
       ],
       "notes": []
+    },
+    {
+      "id": "life_stock_receipt_employee_search",
+      "source_name": "BRANCH RECEIPT EMPLOYEE SEARCH",
+      "legacy_method": "life_stock_receipt_employee_search",
+      "method": "life_slimming.api.server_scripts.life_stock_receipt_employee_search.run",
+      "source_modified": "2026-10-02 12:26:29.564232",
+      "source_sha256": "bb214d75d2f113c0cd95523bf6515837770a0e14f22712b7d178f093a3769075",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "branch",
+        "limit",
+        "query"
+      ],
+      "doctypes": [
+        "Employee",
+        "User Permission"
+      ],
+      "notes": []
+    },
+    {
+      "id": "cc_phone_lookup",
+      "source_name": "CC-LEAD-New By Bhuvan",
+      "legacy_method": "cc_phone_lookup",
+      "method": "life_slimming.api.server_scripts.cc_phone_lookup.run",
+      "source_modified": "2026-10-03 18:34:26.640319",
+      "source_sha256": "1665383843eac9cb4d0747830c0e06681142de75d0e2abab999941c89845d0cd",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "phone"
+      ],
+      "doctypes": [
+        "Contact Phone",
+        "Has Role",
+        "Patient",
+        "Sales Invoice"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_client360_branch_patient_lookup",
+      "source_name": "LIFE Client 360 Branch Safe Patient Lookup",
+      "legacy_method": "life_client360_branch_patient_lookup",
+      "method": "life_slimming.api.server_scripts.life_client360_branch_patient_lookup.run",
+      "source_modified": "2026-09-25 15:55:38.891427",
+      "source_sha256": "988201aea19c102b580d75a5cf9c34276a9d68373e95115241741d331ab65e3a",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Employee",
+        "Has Role",
+        "Multiple Branches",
+        "Patient",
+        "Sales Invoice",
+        "Therapy Plan",
+        "Therapy Session",
+        "User Permission"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_client_record_book_api",
+      "source_name": "LIFE Client Record Book API",
+      "legacy_method": "life_client_record_book_api",
+      "method": "life_slimming.api.server_scripts.life_client_record_book_api.run",
+      "source_modified": "2026-09-25 18:47:43.694074",
+      "source_sha256": "8e0c8b615fb7740cba1e35916d1e1e1e4f53263eb1d4f0d81416effabda8e764",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [],
+      "doctypes": [
+        "Client Record Book Number",
+        "Client Record Book Serial",
+        "Patient"
+      ],
+      "notes": []
     }
-  ]
+  ],
+  "last_reviewed_on": "2026-10-04"
 }

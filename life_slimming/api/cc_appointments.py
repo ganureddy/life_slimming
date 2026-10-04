@@ -195,12 +195,22 @@ def bootstrap(branch=None, query='', selected_lead=None):
         leads.append(frappe._dict({key: selected.get(key) for key in ['name', 'lead_name', 'mobile_no', 'lead_owner']}))
     for row in leads:
         row['lead_owner_name'] = user_name(row.lead_owner)
-    return dict(branches=branches, staff=staff, leads=leads, today=str(now_datetime().date()), timezone=frappe.utils.get_system_timezone(), user=frappe.session.user)
+    current = None
+    if selected_lead:
+        selected = lead_access(selected_lead)
+        if selected.get('custom_appointment'):
+            candidate = frappe.get_doc('Appointment', selected.custom_appointment)
+            if candidate.party == selected_lead and candidate.get('custom_cc_booking') and candidate.status == 'Open':
+                current = dict(name=candidate.name, modified=str(candidate.modified), branch=candidate.branch,
+                    start=str(candidate.scheduled_time), duration=60 if candidate.duration == '1 Hour' else 45,
+                    resource=candidate.custom_cc_resource, staff=candidate.custom_cc_staff_name)
+    return dict(appointment=current, branches=branches, staff=staff, leads=leads, today=str(now_datetime().date()), timezone=frappe.utils.get_system_timezone(), user=frappe.session.user)
 
 
 @frappe.whitelist(methods=['POST'])
-def calendar(branch, date, resource='', duration=45):
+def calendar(branch, date, resource='', duration=45, appointment=None):
     authorize(); branch_access(branch)
+    editing = editable_appointment(appointment) if appointment else None
     day = getdate(date)
     if day < now_datetime().date() or day > now_datetime().date() + timedelta(days=365):
         raise frappe.ValidationError('Choose a date from today through the next 12 months.')
@@ -218,7 +228,7 @@ def calendar(branch, date, resource='', duration=45):
     all_busy = []
     if resources:
         all_busy = frappe.db.sql("""SELECT name, scheduled_time, appointment_time, duration, customer_name,
-            party, lead_owner, branch, custom_cc_resource, custom_consultation_taken_by
+            party, lead_owner, branch, custom_cc_resource, custom_consultation_taken_by, custom_cc_booking, status
             FROM `tabAppointment` WHERE status != 'Closed' AND scheduled_time >= %(day)s
             AND scheduled_time < %(next)s AND (custom_cc_resource IN %(resources)s
             OR custom_consultation_taken_by IN %(practitioners)s) ORDER BY scheduled_time""",
@@ -237,13 +247,13 @@ def calendar(branch, date, resource='', duration=45):
         start = datetime.combine(day, time(10))
         while start + timedelta(minutes=duration) <= datetime.combine(day, time(20)):
             end = start + timedelta(minutes=duration)
-            occupied = any(overlaps(start, end, get_datetime(r.scheduled_time), get_datetime(r.appointment_time)) for r in busy)
+            occupied = any(overlaps(start, end, get_datetime(r.scheduled_time), get_datetime(r.appointment_time)) for r in busy if not (editing and r.get('custom_cc_booking') and r.name == editing.name))
             slots.append(dict(start=str(start), end=str(end), available=start > now and not occupied, reason='Time passed' if start <= now else ('Booked' if occupied else 'Available')))
             start += timedelta(minutes=15)
         events = []
         for r in busy:
             allowed = is_manager() or r.get('lead_owner') == frappe.session.user
-            events.append(dict(name=r.name if allowed else '', start=str(r.scheduled_time), end=str(r.appointment_time), branch=r.branch,
+            events.append(dict(editable=bool(allowed and r.get('custom_cc_booking') and r.get('status') == 'Open'), name=r.name if allowed else '', start=str(r.scheduled_time), end=str(r.appointment_time), branch=r.branch,
                 client=r.get('customer_name') if allowed else 'Booked', agent=r.get('lead_owner') if allowed else '', agent_name=user_name(r.get('lead_owner')) if allowed else '', lead=r.get('party') if allowed else ''))
         schedules.append(dict(staff=person, slots=slots, events=events))
     return dict(schedules=schedules, date=str(day), now=str(now))
@@ -263,11 +273,47 @@ def book(lead, branch, resource, start, duration, request_id):
         custom_cc_resource=resource, branch=branch, scheduled_time=start, duration='1 Hour' if int(duration)==60 else '45 Minutes',
         status='Open', appointment_with='Lead', party=lead, customer_name=lead))
     doc.insert(ignore_permissions=True)
-    frappe.db.set_value('Lead', lead, {'custom_appointment_date_and_time': start, 'custom_appointment_status': 'Booked', 'lead_assign_to_branch': branch, 'branch': branch, 'custom_appointment': doc.name,
-        'custom_appointment_duration': doc.duration, 'status': 'Appointment Booked',
-        'custom_cc_stage': 'SUCCESS', 'custom_cc_sub_status': 'Appointment Booked',
-        'custom_consulting_doctor': doc.custom_consultation_taken_by})
+    sync_lead(doc)
     return dict(name=doc.name, start=str(start), end=str(end), staff=doc.custom_cc_staff_name)
+
+
+def sync_lead(doc):
+    frappe.db.set_value('Lead', doc.party, {'custom_appointment_date_and_time': doc.scheduled_time,
+        'custom_appointment_status': 'Booked', 'lead_assign_to_branch': doc.branch, 'branch': doc.branch,
+        'custom_appointment': doc.name, 'custom_appointment_duration': doc.duration,
+        'status': 'Appointment Booked', 'custom_cc_stage': 'SUCCESS',
+        'custom_cc_sub_status': 'Appointment Booked',
+        'custom_consulting_doctor': doc.custom_consultation_taken_by})
+
+
+def editable_appointment(name):
+    doc = frappe.get_doc('Appointment', name)
+    if not doc.get('custom_cc_booking') or doc.appointment_with != 'Lead' or doc.status != 'Open':
+        raise frappe.ValidationError('Only open CC appointments can be rescheduled.')
+    lead_access(doc.party)
+    branch_access(doc.branch)
+    return doc
+
+
+@frappe.whitelist(methods=['POST'])
+def reschedule(appointment, branch, resource, start, duration, modified):
+    authorize()
+    doc = editable_appointment(appointment)
+    branch_access(branch)
+    start, end = interval(start, duration)
+    # Serialize edits and reject stale dialogs rather than overwriting another change.
+    frappe.db.sql('SELECT name FROM `tabAppointment` WHERE name=%s FOR UPDATE', doc.name)
+    doc.reload()
+    editable_appointment(doc.name)
+    if str(doc.modified) != str(modified):
+        raise frappe.ValidationError('This appointment changed. Reopen it to see the latest details.')
+    doc.branch, doc.custom_cc_resource = branch, resource
+    doc.scheduled_time = start
+    doc.duration = '1 Hour' if int(duration) == 60 else '45 Minutes'
+    doc.save(ignore_permissions=True)
+    sync_lead(doc)
+    return dict(name=doc.name, start=str(start), end=str(end), staff=doc.custom_cc_staff_name)
+
 
 
 def enrich_lead_appointments(rows):

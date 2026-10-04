@@ -1,7 +1,7 @@
 """lifescc.billing.create_plan_and_invoice_TEST
 
 Original API: lifescc.billing.create_plan_and_invoice_TEST
-Source modified: 2026-09-15 12:18:30.230686
+Source modified: 2026-09-20 12:21:45.387178
 See ../CATALOG.md for migration notes and validation limits.
 """
 
@@ -155,7 +155,7 @@ def run(**kwargs):
                         err = str(tt) + " rate below minimum " + str(mn); break
                     if mx and rate > mx:
                         err = str(tt) + " rate above maximum " + str(mx); break
-                # Normalize imported Therapy Type links. Some older rows contain
+                            # Normalize imported Therapy Type links. Some older rows contain
                 # leading/trailing spaces in item_code (for example GLP-1 1 Dose).
                 # Prefer the cleaned item_code, then fall back to the cleaned item link.
                 item_code = (tinfo.item_code or "").strip()
@@ -165,6 +165,36 @@ def run(**kwargs):
                 if not item_code or not frappe.db.exists("Item", item_code):
                     err = "Item for therapy " + str(tt) + " was not found. Check Therapy Type item_code/item."
                     break
+
+                # ---- Pre-flight item state check --------------------------------
+                # ERPNext throws ValidationError (HTTP 417) at insert time if the
+                # item is disabled or past its end_of_life date. Catch it here so
+                # the client can show a clean red toast and stop the submission
+                # BEFORE the Therapy Plan is created (no orphaned plans).
+                item_state = frappe.db.get_value(
+                    "Item",
+                    item_code,
+                    ["disabled", "end_of_life"],
+                    as_dict=True,
+                )
+                if item_state and item_state.get("disabled"):
+                    err = (
+                        "Therapy \"" + str(tt) + "\" cannot be billed — its "
+                        "underlying item (" + str(item_code) + ") is disabled. "
+                        "Please re-enable the item or remove this therapy."
+                    )
+                    break
+                if item_state and item_state.get("end_of_life"):
+                    if str(item_state.get("end_of_life"))[:10] <= frappe.utils.today():
+                        err = (
+                            "Therapy \"" + str(tt) + "\" cannot be billed — its "
+                            "underlying item (" + str(item_code) + ") reached "
+                            "end of life on "
+                            + str(item_state.get("end_of_life"))[:10] + "."
+                        )
+                        break
+                # -----------------------------------------------------------------
+
                 clean.append({
                     "therapy_type": tinfo.name,
                     "item_code": item_code,
@@ -490,7 +520,24 @@ def run(**kwargs):
                         si.discount_remarks = ("Fixed package price applied; the "
                                                + str(discount_pct)
                                                + "% discount was NOT applied on top.")
+                                    # ---- Remarks for Office Use --------------------------------
+                    # Long Text on Sales Invoice; allow_on_submit = 0, so it must
+                    # be written on the DRAFT, before insert(). Client sends the
+                    # key "office_remarks" from the billing web page.
+                    raw_office_remarks = (
+                        args.get("office_remarks") or ""
+                    ).strip()
 
+                    # Defence in depth: cap to 400 words server-side too.
+                    if raw_office_remarks:
+                        remark_words = raw_office_remarks.split()
+                        if len(remark_words) > 400:
+                            raw_office_remarks = " ".join(remark_words[:400])
+
+                    si.custom_remarks_for_office_use = (
+                        raw_office_remarks or None
+                    )
+                    # ------------------------------------------------------------
                     si.insert(ignore_permissions=False)
 
                     if draft_only:
