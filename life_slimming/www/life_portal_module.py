@@ -91,6 +91,10 @@ def get_context(context):
         "module_javascript": source["javascript"],
         "module_config": {
             "module": module, "methods": methods, "routes": routes,
+            "bridge_asset_version": hashlib.sha256(
+                (root / "public/js/portal_module_loading.js").read_bytes() +
+                (root / "public/js/portal_module_bridge.js").read_bytes()
+            ).hexdigest()[:16],
             "cc_asset_version": hashlib.sha256(
                 (root / "public/js/convox_cc_bridge.js").read_bytes() +
                 (root / "public/js/cc_notifications.js").read_bytes()

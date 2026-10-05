@@ -4,6 +4,14 @@
   const config = window.lifePortalModule;
   const runtime = window.lifePortalConfig || {};
   const remoteOrigin = runtime.legacyOrigin || "https://portal.lifescc.com";
+  const legacyPortalRoutes = {
+    "/billing-v2": "billing",
+    "/client-360-Bhuvan": "cliinfo",
+    "/pending-balances-updates-Bhuvan": "pendbal",
+    "/branch-visit-report": "ccvisit",
+    "/cc-dashboard": "leads",
+    "/all-approvals-dashboard": "approvals",
+  };
   const apiBase = (runtime.apiBase || "").replace(/\/$/, "");
   const apiOrigin = new URL(apiBase || location.origin).origin;
   frappe.csrf_token = config.csrf_token;
@@ -111,17 +119,36 @@
     return result;
   };
 
-  // Preserve navigation between exported forms without leaving the local site.
+  // Route known legacy and current portal links through the parent SPA.
+  // Keep normal new-tab/download behavior and all record/filter parameters.
   document.addEventListener("click", (event) => {
     const anchor = event.target.closest?.("a[href]");
-    if (!anchor || event.defaultPrevented || event.button !== 0) return;
+    if (!anchor || event.defaultPrevented || event.button !== 0 || anchor.hasAttribute('download')) return;
+    if (anchor.getAttribute?.('href')?.startsWith('#')) return;
     const url = new URL(anchor.href, location.href);
     if (![location.origin, remoteOrigin].includes(url.origin)) return;
-    const module = config.routes[url.pathname];
-    if (!module) return;
-    url.searchParams.delete("module");
-    url.searchParams.delete("embed");
-    anchor.href = "/life_portal/" + encodeURIComponent(module) + url.search + url.hash;
-    if (!anchor.target || anchor.target === "_self") anchor.target = "_top";
+    const pathname = url.pathname.replace(/\/$/, '');
+    let module = config.routes[pathname] || legacyPortalRoutes[pathname];
+    if (pathname === '/life_portal_module') module = url.searchParams.get('module');
+    if (['/life-home', '/life_portal'].includes(pathname)) {
+      module = url.searchParams.get('view') || 'home';
+      url.searchParams.delete('view');
+    }
+    // Frappe Desk routes are not portal pages. Leave them alone only when no
+    // portal equivalent exists; known legacy portal URLs always stay in the SPA.
+    if (!module && pathname.startsWith('/app/')) return;
+    if (!module && !pathname.startsWith('/life_portal/')) return;
+    url.searchParams.delete('module');
+    url.searchParams.delete('embed');
+    const target = (module ? '/life_portal/' + encodeURIComponent(module) : pathname) + url.search + url.hash;
+    anchor.href = target;
+    const self = !anchor.target || ['_self', '_top', '_parent'].includes(anchor.target);
+    if (self) anchor.target = '_top';
+    if (!self || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    if (window.parent === window) return;
+    event.preventDefault();
+    // A report embedded inside another module must address the outer workspace.
+    if (window.parent !== window.top) window.top.location.assign(target);
+    else window.parent.postMessage({ type: 'life-portal:navigate', path: target }, location.origin);
   });
 })();

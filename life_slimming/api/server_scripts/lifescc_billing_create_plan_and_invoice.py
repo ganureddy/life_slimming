@@ -628,6 +628,12 @@ def run(**kwargs):
     elif not lines:
         fail("At least one therapy line is required")
 
+    elif not practitioner:
+        fail("Consultant Employee is required")
+
+    elif not frappe.db.exists("Healthcare Practitioner", practitioner):
+        fail("Select a valid Consultant Employee")
+
     elif coupon_code_in and not coupon_ok:
         fail("Coupon problem: " + (coupon_error or "coupon not valid"))
 

@@ -1,7 +1,7 @@
 /* Keep billing inside the portal workspace, including its desktop summary. */
 .billing-compat-page {
   container: billing / inline-size;
-  isolation: isolate;
+  isolation: auto;
   min-width: 0;
 }
 #billing-v2-app { min-width: 0; font-family: "Poppins", system-ui, sans-serif; }
@@ -98,8 +98,18 @@
 }
 /* The legacy html/body max-width must not constrain the full-width wrapper. */
 .billing-compat-page.billing-compat-page { max-width: none; }
+#alert-stack[data-billing-toast-host="true"] {
+  position: fixed !important;
+  top: calc(var(--header-height, 64px) + 12px) !important;
+  right: 20px !important;
+  z-index: 2000 !important;
+  width: min(390px, calc(100vw - 32px)) !important;
+  pointer-events: none;
+}
+#alert-stack[data-billing-toast-host="true"] .alert { pointer-events: auto; }
 #billing-v2-app .kpi:only-child { grid-column: 1 / -1; }
 #billing-v2-app .pay-box .f-lbl { color: #e0eee7; }
+#billing-v2-app #bl-prac-search[aria-invalid="true"] { border-color: #b42318; box-shadow: 0 0 0 2px #b4231820; }
 
 /* The workspace header provides the title and session identity. */
 .billing-compat-page #billing-v2-app > .topbar { position:relative;top:auto;min-height:0;padding:10px 20px;box-shadow:none; }

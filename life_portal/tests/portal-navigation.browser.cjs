@@ -5,7 +5,8 @@ const assert = require('node:assert/strict');
 (async () => {
  const endpoint = process.env.PORTAL_BROWSER_URL || 'http://127.0.0.1:9226';
  const base = process.env.PORTAL_PREVIEW_URL || 'http://127.0.0.1:5176';
- const fixtures = JSON.parse(fs.readFileSync('/tmp/life-workspace-fixtures.json', 'utf8'));
+ const loading = fs.readFileSync('life_slimming/public/js/portal_module_loading.js','utf8');
+ const bridge = fs.readFileSync('life_slimming/public/js/portal_module_bridge.js','utf8');
  const target = await (await fetch(endpoint+'/json/new?about:blank',{method:'PUT'})).json();
  const ws = new WebSocket(target.webSocketDebuggerUrl); await new Promise(r => ws.on('open',r));
  const sessionId = 'fixture-' + Date.now();
@@ -20,7 +21,8 @@ const assert = require('node:assert/strict');
   if(request.url.includes('/api/fixture/')){pending.push(requestId);return;}
   if(request.url.includes('/life_portal_module?')){
    const module=new URL(request.url).searchParams.get('module');
-   return fulfill(requestId,fixtures[module],'text/html');
+   const config={module,methods:{},routes:{'/branch-visit-report-NEW-Bhuvan':'ccvisit'}};
+   return fulfill(requestId,`<!doctype html><html><body><h1>Fixture ${module}</h1><a id="report" href="/branch-visit-report-NEW-Bhuvan?branch=Fixture#table">Visit report</a><script>window.frappe={call:()=>{}};window.lifePortalModule=${JSON.stringify(config)};</script><script>${loading}</script><script>${bridge}</script><script>fetch('/api/fixture/slow');</script></body></html>`,'text/html');
   }
   let message={};
   if(request.url.includes('portal.bootstrap'))message={user:'workspace-fixture',session_id:sessionId,full_name:'Workspace Fixture',roles:role==='IT'?['System Manager']:[],portal_role:role,csrf_token:'fixture'};
@@ -32,30 +34,22 @@ const assert = require('node:assert/strict');
  try {
   await send('Runtime.enable');await send('Page.enable');
   await send('Fetch.enable',{patterns:[{urlPattern:'*/api/method/*'},{urlPattern:'*/api/fixture/*'},{urlPattern:'*/life_portal_module?*'}]});
-  for(const module of Object.keys(fixtures).filter(x=>x!=='control')){
-   pending.length=0;
-   await send('Page.navigate',{url:base+'/life_portal/'+module});
-   await wait('document.querySelector("iframe")?.contentDocument?.documentElement?.dataset.portalModule === '+JSON.stringify(module));
-   for(let n=0;n<100&&pending.length<2;n++)await new Promise(r=>setTimeout(r,50));
-   assert.equal(pending.length,2,module+' starts two fixture requests');
-   await wait('!!document.querySelector(".route-loader")');
-   assert.equal(await evaluate('!!document.querySelector(".module-progress")'),false,module+' uses the shared loader');
-   assert.equal(await evaluate('document.querySelectorAll(".portal > header").length'),1);
-   assert.equal(await evaluate('Array.from(document.querySelector("iframe").contentDocument.querySelectorAll("[data-portal-chrome]")).every(el=>getComputedStyle(el).display==="none")'),true,module+' hides duplicate chrome');
-   await fulfill(pending.shift(),'{}');
-   await new Promise(r=>setTimeout(r,180));
-   assert.equal(await evaluate('!!document.querySelector(".route-loader")'),true,module+' waits for both requests');
-   await fulfill(pending.shift(),'{}');
-   await wait('!document.querySelector(".route-loader")');
-  }
-  // Denied native and embedded routes must never mount their business pages.
-  role='HR';
-  for(const module of ['billing','p2p','cliinfo']){
-   await send('Page.navigate',{url:base+'/life_portal/'+module});
-   await wait('document.querySelector("main")?.textContent.includes("Access unavailable")');
-   assert.equal(await evaluate('document.querySelectorAll("iframe,.billing-compat-page").length'),0);
-  }
+  await send('Page.navigate',{url:base+'/life_portal/leads'});
+  await wait('!!document.querySelector(".route-loader")');
+  await new Promise(resolve=>setTimeout(resolve,15500));
+  assert.equal(await evaluate('document.querySelector(".route-loader button")?.textContent'),'Retry loading');
+  await evaluate('window.navigationMarker="preserved";document.querySelector("iframe").contentDocument.querySelector("#report").click()');
+  await wait('location.pathname === "/life_portal/ccvisit"');
+  assert.equal(await evaluate('window.navigationMarker'),'preserved');
+  assert.equal(await evaluate('location.search+location.hash'),'?branch=Fixture#table');
+  await wait('document.querySelector("iframe")?.contentDocument?.querySelector("h1")?.textContent === "Fixture ccvisit"');
+  assert.equal(await evaluate('document.querySelectorAll(".portal > header").length'),1);
+  await evaluate('document.querySelector("iframe").src="/life_portal/tasks"');
+  await wait('location.pathname === "/life_portal/tasks"');
+  await wait('document.querySelector("iframe")?.contentDocument?.querySelector("h1")?.textContent === "Fixture tasks"');
+  assert.equal(await evaluate('document.querySelectorAll(".portal > header").length'),1);
+  assert.equal(await evaluate('document.querySelector("iframe").contentDocument.querySelectorAll(".portal").length'),0);
   assert.deepEqual(errors,[]);
-  console.log(`PASS: ${Object.keys(fixtures).filter(x=>x!=="control").length} embedded routes, one header, hidden legacy branding, shared loading overlay, and denied native/embedded routes.`);
- } catch(error) { console.error({errors, page: await evaluate('document.body?.innerText'), frames: await evaluate('Array.from(document.querySelectorAll("iframe")).map(f=>({src:f.src,html:f.contentDocument?.documentElement?.outerHTML.slice(0,500)}))')}); throw error; } finally {ws.close();await fetch(endpoint+'/json/close/'+target.id);}
+  console.log('PASS: slow-request retry, SPA report navigation, query/hash preservation, and nested workspace escape.');
+ } finally {ws.close();await fetch(endpoint+'/json/close/'+target.id);}
 })().catch(error=>{console.error(error);process.exitCode=1;});

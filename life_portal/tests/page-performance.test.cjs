@@ -31,3 +31,25 @@ test('branch changes defer unopened roster but refresh it after initialization',
  ctx.syncRosterToBranch();assert.equal(ctx.rosterState.branch,'Demo B');assert.equal(weeks,0);assert.equal(months,0);
  ctx.portalRosterInitialized=true;ctx.syncRosterToBranch();assert.equal(weeks,1);assert.equal(months,1);
 });
+
+test('CC lead requests start while master lists are still pending', async () => {
+ const dashboard=source('cc-new-dashboard-bhuvan-oct2');
+ const start=dashboard.indexOf('  async function seedLeads() {');
+ const end=dashboard.indexOf('    const leadResp = fetches[0];',start);
+ const calls=[],pending=[];
+ const ctx={PORTAL:{loaded:false},window:{},CM_DESIGNATIONS:[],DOCTOR_DESIGNATIONS:[],CM_PRIMARY:[],CM_SECONDARY:[],
+  rangeFrom:()=> '2026-10-05',rangeTo:()=> '2026-10-05',console,toast:()=>{},
+  portalGetList:(doctype)=>{calls.push(doctype);return new Promise(resolve=>pending.push(()=>resolve([])));},
+  frappe:{call:({args})=>{calls.push(args.date_mode);return Promise.resolve({message:[]});}}};
+ vm.runInNewContext(dashboard.slice(start,end)+'return fetches;\n}',ctx);
+ const result=ctx.seedLeads();
+ assert(calls.includes('created')&&calls.includes('appointment')&&calls.includes('followup'));
+ assert.equal(ctx.PORTAL.loaded,false);
+ pending.splice(0).forEach(resolve=>resolve());
+ // Allow the second group of master reads to start together.
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.deepEqual(calls.slice(-3),['Employee','Employee','User']);
+ pending.splice(0).forEach(resolve=>resolve());
+ await result;
+ assert.equal(ctx.PORTAL.loaded,true);
+});

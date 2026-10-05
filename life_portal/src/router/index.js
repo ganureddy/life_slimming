@@ -15,6 +15,16 @@ const pageComponents = {
 
 export const routes = [
   {
+    path: "/native/cc-dashboard", name: "leads-native",
+    component: () => import("../pages/CCDashboardPage.vue"),
+    meta: { title: "CC Dashboard preview", accessModule: "leads" },
+  },
+  {
+    path: "/native/cc-visit-report", name: "ccvisit-native",
+    component: () => import("../pages/CCVisitReportPage.vue"),
+    meta: { title: "CC Visit Report preview", accessModule: "ccvisit" },
+  },
+  {
     path: "/login",
     name: "login",
     component: () => import("../pages/LoginPage.vue"),
