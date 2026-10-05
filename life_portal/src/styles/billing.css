@@ -68,6 +68,27 @@
 #billing-v2-app :is(input,select,textarea) { max-width: 100%; }
 #billing-v2-app :is(button,input,select,textarea):focus-visible { outline: 3px solid #b69438; outline-offset: 3px; }
 #billing-v2-app .f-lbl { color: #496355; line-height: 1.5; }
+#billing-v2-app #bl-media-note {
+  margin-top: 7px !important;
+  padding: 9px 11px;
+  border: 1px solid #dce8e0;
+  border-radius: 9px;
+  background: #f6f9f7;
+  color: #526b5d;
+  font-size: 12px;
+  line-height: 1.55;
+}
+#billing-v2-app #bl-media-note.bl-media-note-lead {
+  border-color: #9bd3b2;
+  background: #e8f6ed;
+  color: #14543e;
+}
+#billing-v2-app #bl-media-note.bl-media-note-locked {
+  border-color: #ead79a;
+  background: #fff9e8;
+  color: #74591a;
+}
+#billing-v2-app #bl-media:disabled { opacity: 1; background: #f2f7f3; color: #245b43; font-weight: 600; }
 #billing-v2-app .tbl { font-variant-numeric: tabular-nums; }
 @container billing (max-width: 1100px) {
   #billing-v2-app .kpi-row { grid-template-columns: repeat(2,minmax(0,1fr)); }
