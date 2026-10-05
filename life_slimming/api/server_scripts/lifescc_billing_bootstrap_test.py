@@ -860,6 +860,19 @@ def run(**kwargs):
         limit_page_length=0
     )
 
+    practitioner_names = [row.get("name") for row in practitioner_rows if row.get("name")]
+    practitioner_branch_map = {}
+    if practitioner_names:
+        for branch_row in frappe.get_all(
+            "Practitioner Branches",
+            filters={"parent": ["in", practitioner_names]},
+            fields=["parent", "branch"],
+            limit_page_length=0,
+        ):
+            parent = branch_row.get("parent")
+            branch_name = branch_row.get("branch")
+            if parent and branch_name:
+                practitioner_branch_map.setdefault(parent, []).append(branch_name)
 
     # Determine which duplicate practitioner record was used recently
     last_used_map = {}
@@ -907,6 +920,10 @@ def run(**kwargs):
                 or practitioner_row.get("name")
             ),
             "branch": practitioner_row.get("branch") or "",
+            "branches": list(dict.fromkeys(
+                ([practitioner_row.get("branch")] if practitioner_row.get("branch") else [])
+                + practitioner_branch_map.get(practitioner_row.get("name"), [])
+            )),
             "status": practitioner_status,
             "designation": practitioner_row.get("designation") or "",
             "all_branches": (

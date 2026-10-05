@@ -10,5 +10,7 @@ if (window.top !== window.self) {
   window.top.location.replace(window.location.href);
 } else {
   const app = createApp(App).use(router);
-  router.isReady().then(() => app.mount("#app"));
+  // Mount immediately so the startup loader can paint while the router's
+  // initial navigation checks the session in the background.
+  app.mount("#app");
 }

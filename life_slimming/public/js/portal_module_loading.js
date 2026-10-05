@@ -57,7 +57,7 @@
   // Dashboards report when their main figures render before optional panels finish.
   // Those panels retain their own loading/error states without blocking navigation.
   window.addEventListener('life-portal:primary-ready', () => {
-    if (!['bdash', 'leads', 'ccvisit'].includes(config.module)) return;
+    if (!['bdash', 'leads', 'ccvisit', 'price-list'].includes(config.module)) return;
     primaryReady = true;
     report();
   }, { once: true });
