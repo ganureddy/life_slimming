@@ -1544,6 +1544,7 @@ p {
 .portal {
   background: var(--canvas);
   min-height: 100dvh;
+  overflow-x: clip;
 }
 .topbar {
   height: var(--header-height);

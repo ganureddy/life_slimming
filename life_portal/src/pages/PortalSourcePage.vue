@@ -44,7 +44,13 @@ function loaded() {
     if (doc?.head && !doc.getElementById("life-portal-scroll-fix")) {
       const style = doc.createElement("style");
       style.id = "life-portal-scroll-fix";
-      style.textContent = "html,body{overflow-y:auto!important;overscroll-behavior-y:auto!important}html{min-height:100%;height:auto!important}body{min-height:100%;height:auto!important}";
+      style.textContent = "html,body{overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior-y:auto!important;max-width:100%!important}html{min-height:100%;height:auto!important}body{min-height:100%;height:auto!important}";
+      doc.head.appendChild(style);
+    }
+    if (route.name === "leads" && doc?.head && !doc.getElementById("life-cc-sidebar-overflow-fix")) {
+      const style = doc.createElement("style");
+      style.id = "life-cc-sidebar-overflow-fix";
+      style.textContent = ".cc-erp-root,.cc-erp-root .body-wrap,.cc-erp-root .main{min-width:0;max-width:100%}.cc-erp-root .sidebar{overflow-x:hidden!important}.cc-erp-root .sidebar .nav-item{min-width:0;white-space:normal;overflow-wrap:anywhere}@media(min-width:901px){.cc-erp-root .sidebar{position:fixed!important;top:var(--hdr-h)!important;left:0!important;height:calc(100dvh - var(--hdr-h))!important}.cc-erp-root .body-wrap{padding-left:var(--side-w)}.cc-erp-root .body-wrap:has(>.sidebar.collapsed){padding-left:0}}";
       doc.head.appendChild(style);
     }
   } catch { setLoading(false); return; }
@@ -105,10 +111,10 @@ watch(source, () => { receivedActivity = false; setLoading(true); }, { immediate
 </template>
 
 <style scoped>
-.portal-source-page{margin:-24px -28px -40px;position:relative;height:calc(100dvh - var(--header-height));min-height:560px;min-width:0;background:#f6f7f9;display:flex;flex-direction:column;overflow:visible}
+.portal-source-page{margin:-24px -28px -40px;position:relative;height:calc(100dvh - var(--header-height));min-height:560px;min-width:0;background:#f6f7f9;display:flex;flex-direction:column;overflow-x:clip;overflow-y:visible}
 .module-stalled{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 18px;background:#fff8e8;color:#6e5311;font-size:13px;border-bottom:1px solid #e8d8a8;flex-shrink:0}
 .module-stalled button{background:white;border:1px solid #d7c48e;border-radius:6px;padding:6px 12px;color:inherit;cursor:pointer;white-space:nowrap}
-iframe{display:block;width:100%;flex:1;min-height:0;border:0;background:white;overflow:auto}
+iframe{display:block;width:100%;max-width:100%;min-width:0;flex:1;min-height:0;border:0;background:white;overflow:auto}
 @media(max-width:980px){.portal-source-page{margin:-25px}}
 @media(max-width:600px){.portal-source-page{margin:-22px -16px}}
 </style>
