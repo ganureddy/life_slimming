@@ -96,7 +96,7 @@ def run(**kwargs):
     agent_suffix = ""
 
     if user_local_part.startswith("lifescc"):
-        agent_suffix = user_local_part[6:]
+        agent_suffix = user_local_part[len("lifescc"):]
 
     is_agent_login = (
         True
@@ -113,6 +113,26 @@ def run(**kwargs):
         owner_filter = requested_agent
     else:
         owner_filter = ""
+
+    # Vue's essential schedule does not need the financial joins below.
+    # Keep exactly the same owner scope as the existing report endpoint.
+    if frappe.form_dict.get("view") == "appointments":
+        filters = {"custom_appointment_date_and_time": [
+            "between", [from_date + " 00:00:00", to_date + " 23:59:59"]
+        ]}
+        if owner_filter:
+            filters["lead_owner"] = owner_filter
+        schedule_fields = ["name", "lead_name", "lead_owner", "mobile_no", "branch",
+            "lead_assign_to_branch", "custom_appointment_date_and_time",
+            "custom_appointment_status", "custom_cc_stage", "status"]
+        if frappe.get_meta("Lead").has_field("custom_visit_status"):
+            schedule_fields.append("custom_visit_status")
+        total = frappe.db.count("Lead", filters=filters)
+        schedule = frappe.get_all("Lead", fields=schedule_fields, filters=filters,
+            order_by="custom_appointment_date_and_time asc, name asc", limit_page_length=10000)
+        frappe.response["message"] = {"ok": True, "rows": schedule, "total": total,
+            "truncated": total > len(schedule), "restricted_to_owner": bool(owner_filter)}
+        return
 
     fields = [
         "name",

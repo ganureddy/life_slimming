@@ -6,6 +6,7 @@ import endpoints from "../api/endpoints.json";
 import { session } from "../lib/session";
 import { beginLoading } from "../lib/loading";
 const pendingLoads = new Set();
+let billingMounted = false;
 import billingPolish from "../styles/billing.css?inline";
 
 const host = ref(null);
@@ -34,12 +35,19 @@ function csrfToken() {
 async function invoke(method, args = {}, type = "POST") {
   const id = legacyToId[method];
   const resolved = id && endpoints[id] ? endpoints[id] : method;
-  const finish = beginLoading("Loading billing");
-  pendingLoads.add(finish);
+  // Individual API requests already have local progress states. Showing the
+  // full-screen route loader for every request hides the page during searches
+  // and competing bootstrap calls; reserve it for the first bootstrap call.
+  const isBootstrap = method === "lifescc.billing.bootstrap" && !billingMounted;
+  const finish = isBootstrap ? beginLoading("Loading billing") : null;
+  if (finish) pendingLoads.add(finish);
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 45000);
   try {
   const response = await fetch(apiUrl("/api/method/" + resolved), {
     method: type === "GET" ? "GET" : "POST",
     credentials: apiCredentials(),
+    signal: controller.signal,
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
@@ -54,7 +62,15 @@ async function invoke(method, args = {}, type = "POST") {
     throw error;
   }
   return body;
-  } finally { finish(); pendingLoads.delete(finish); }
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error("Billing request timed out. Check your connection and retry.");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+    if (finish) { finish(); pendingLoads.delete(finish); }
+  }
 }
 
 function installFrappeBridge() {
@@ -89,6 +105,10 @@ function extractBillingApp() {
   const app = parsed.querySelector("#app");
   if (!app) throw new Error("The exported Billing #app container was not found");
   app.id = "billing-v2-app";
+  // Notifications need to escape the billing app's isolated stacking context.
+  // Keep them in the Vue page but mount at the document root.
+  const alerts = app.querySelector("#alert-stack");
+  if (alerts) alerts.dataset.billingToastHost = "true";
   app.querySelectorAll(".topbar > .logo-box, .topbar > div:has(> .brand)").forEach(element => element.remove());
   app.querySelector("#clock")?.setAttribute("hidden", "");
   app.querySelectorAll("input, textarea").forEach((element) => {
@@ -125,6 +145,9 @@ function scopedBillingCss(code) {
   function scope(rules) {
     for (const rule of rules) {
       if (rule.type === CSSRule.STYLE_RULE) {
+        // Toasts are mounted at document.body so they can layer above the
+        // portal header; keep their legacy visual rules global as well.
+        if (rule.selectorText.split(",").some((selector) => /\.alert(?:\b|[-.#:[\s])/i.test(selector))) continue;
         const selector = rule.selectorText
           .replaceAll(":root", ".billing-compat-page")
           .replace(/(^|[\s>+~,(])(?:html|body)(?=$|[\s>+~.#:[,)])/g, "$1.billing-compat-page");
@@ -142,6 +165,14 @@ function scopedBillingCss(code) {
 async function mountBilling() {
   installFrappeBridge();
   host.value.innerHTML = extractBillingApp();
+  const alertStack = host.value.querySelector("#alert-stack");
+  if (alertStack) {
+    alertStack.dataset.billingToastHost = "true";
+    document.body.appendChild(alertStack);
+    injected.push(alertStack);
+  }
+  billingMounted = true;
+
 
   for (const block of billingSource.css) {
     const style = document.createElement("style");
@@ -173,8 +204,10 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  billingMounted = false;
   for (const finish of pendingLoads) finish();
   pendingLoads.clear();
+  document.querySelector("body > #alert-stack")?.remove();
   for (const element of injected) element.remove();
 });
 </script>

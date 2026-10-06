@@ -73,3 +73,19 @@ test('primary-ready does not bypass loading for other modules', async () => {
   await settle();assert.equal(messages.at(-1).busy,true);
   requests[0].resolve({});await request;await settle();assert.equal(messages.at(-1).busy,false);
 });
+
+test('background refresh cannot reactivate initial page loading after settling', async () => {
+  const {context,messages,requests} = setup();
+  await settle();
+  const refresh = context.fetch('/api/background');
+  await settle();
+  assert.equal(messages.at(-1).busy, false);
+  requests[0].resolve({}); await refresh; await settle();
+});
+for (const module of ['leads', 'ccvisit']) test(module + ' releases loading when main data renders', async () => {
+  const {context,messages,requests,listeners} = setup(module);
+  const pending = context.fetch('/api/optional');
+  listeners['life-portal:primary-ready']();
+  await settle(); assert.equal(messages.at(-1).busy, false);
+  requests[0].resolve({}); await pending; await settle();
+});

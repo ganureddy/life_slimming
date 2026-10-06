@@ -1,17 +1,21 @@
-/* Forward ERP request activity to the one loader in the parent workspace. */
+/* Report initial ERP activity to the parent page without tracking background refreshes. */
 (() => {
   'use strict';
   if (window.parent === window) return;
   let pending = 0;
   let ready = false;
   let primaryReady = false;
+  let settled = false;
   let timer;
   const config = window.lifePortalModule;
   function report() {
     clearTimeout(timer);
-    timer = setTimeout(() => window.parent.postMessage({
-      type: 'life-portal:loading', module: config.module, busy: !primaryReady && (!ready || pending > 0),
-    }, location.origin), pending ? 0 : 120);
+    timer = setTimeout(() => {
+      if (ready && pending === 0) settled = true;
+      window.parent.postMessage({
+        type: 'life-portal:loading', module: config.module, busy: !settled && !primaryReady && (!ready || pending > 0),
+      }, location.origin);
+    }, pending ? 0 : 120);
   }
   function begin() {
     pending++;
@@ -50,10 +54,10 @@
     try { return send.apply(this, args); }
     catch (error) { done(); throw error; }
   };
-  // The branch dashboard renders its main figures before optional panels finish.
+  // Dashboards report when their main figures render before optional panels finish.
   // Those panels retain their own loading/error states without blocking navigation.
   window.addEventListener('life-portal:primary-ready', () => {
-    if (config.module !== 'bdash') return;
+    if (!['bdash', 'leads', 'ccvisit', 'price-list'].includes(config.module)) return;
     primaryReady = true;
     report();
   }, { once: true });

@@ -13,6 +13,7 @@ from frappe.integrations.utils import make_post_request as _make_post_request
 from frappe.utils.safe_exec import read_sql as _read_sql
 from frappe.utils.safe_exec import call_whitelisted_function as _call_whitelisted
 from life_slimming.api._runtime import script_endpoint
+from life_slimming.api.pd_form_utils import pd_form_urls
 
 
 @script_endpoint(allow_guest=False)
@@ -1098,6 +1099,12 @@ def run(**kwargs):
                     and file_url not in pd_image_urls
                 ):
                     pd_image_urls.append(file_url)
+
+        # Include attachments held on PD Form child rows even when Frappe did
+        # not create a corresponding Patient File record.
+        for file_url in pd_form_urls(patient_name):
+            if file_url and file_url not in pd_image_urls:
+                pd_image_urls.append(file_url)
 
         pd_count = len(pd_image_urls)
 

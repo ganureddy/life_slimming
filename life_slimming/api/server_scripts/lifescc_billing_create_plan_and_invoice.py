@@ -628,6 +628,12 @@ def run(**kwargs):
     elif not lines:
         fail("At least one therapy line is required")
 
+    elif not practitioner:
+        fail("Consultant Employee is required")
+
+    elif not frappe.db.exists("Healthcare Practitioner", practitioner):
+        fail("Select a valid Consultant Employee")
+
     elif coupon_code_in and not coupon_ok:
         fail("Coupon problem: " + (coupon_error or "coupon not valid"))
 
@@ -643,7 +649,7 @@ def run(**kwargs):
     else:
         pat = frappe.db.get_value(
             "Patient", patient,
-            ["name", "patient_name", "customer", "custom_branch", "custom_media"],
+            ["name", "patient_name", "customer", "custom_branch", "custom_media", "custom_lead"],
             as_dict=True,
         )
         if not pat:
@@ -682,6 +688,58 @@ def run(**kwargs):
                     "qty": qty, "rate": rate, "min": mn, "max": mx,
                     "use_offer": use_offer, "offer_rule": offer_rule,
                 })
+
+            clean_comps = []
+            comp_qty_by_item = {}
+            comp_value_total = 0.0
+            if not err:
+                bill_subtotal = sum(float(line.get("qty") or 0) * float(line.get("rate") or 0) for line in clean)
+                if bill_subtotal <= 25000 and comps:
+                    err = "Complimentary sessions are available only when the bill subtotal exceeds 25,000."
+                else:
+                    comp_rate = 0.04 if bill_subtotal <= 100000 else (0.075 if bill_subtotal <= 200000 else 0.10)
+                    comp_value_limit = bill_subtotal * comp_rate
+                    for comp in comps:
+                        item_code = (comp.get("item_code") or "").strip()
+                        try:
+                            qty_value = float(comp.get("qty") or 0)
+                        except (TypeError, ValueError):
+                            qty_value = 0
+                        if not item_code or qty_value < 1 or not qty_value.is_integer():
+                            err = "Select a complimentary item and enter a whole session quantity."
+                            break
+                        qty = int(qty_value)
+                        item = frappe.db.get_value(
+                            "Item", item_code,
+                            ["item_name", "item_group", "disabled", "standard_rate", "custom_max_qty_per_bill"],
+                            as_dict=True,
+                        )
+                        if not item or item.item_group != "Complimentary Sessions" or item.disabled:
+                            err = "Invalid or inactive complimentary item: " + item_code
+                            break
+                        max_qty = int(item.custom_max_qty_per_bill or 0)
+                        selected_qty = comp_qty_by_item.get(item_code, 0) + qty
+                        if max_qty and selected_qty > max_qty:
+                            err = (item.item_name or item_code) + " allows at most " + str(max_qty) + " complimentary session(s) per bill."
+                            break
+                        comp_qty_by_item[item_code] = selected_qty
+                        therapy_type = frappe.db.get_value("Therapy Type", {"item_code": item_code}, "name")
+                        if not therapy_type:
+                            therapy_type = frappe.db.get_value("Therapy Type", {"item": item_code}, "name")
+                        if not therapy_type:
+                            err = "Complimentary item " + item_code + " is not linked to a Therapy Type, so it cannot be added to the Therapy Plan."
+                            break
+                        rate = float(item.standard_rate or 0)
+                        comp_value_total += rate * qty
+                        clean_comps.append({
+                            "item_code": item_code,
+                            "item_name": item.item_name or item_code,
+                            "therapy_type": therapy_type,
+                            "qty": qty,
+                            "rate": rate,
+                        })
+                    if not err and comp_value_total > comp_value_limit + 0.01:
+                        err = "Complimentary session value exceeds the allowed bill slab limit of " + str(round(comp_value_limit, 2)) + "."
 
             if err:
                 fail(err)
@@ -739,15 +797,18 @@ def run(**kwargs):
                             plan_category = frappe.db.get_value("Healthcare Service Unit", {}, "name") or ""
 
                     plan_media = ""
+                    if pat.get("custom_lead") and frappe.db.exists("Lead Source", "Call Center"):
+                        plan_media = "Call Center"
+
                     has_paid = frappe.db.get_value(
                         "Sales Invoice",
                         {"patient": pat.name, "docstatus": 1,
                          "status": ["in", ["Paid", "Partly Paid", "Overdue"]]},
                         "name",
                     )
-                    if has_paid and frappe.db.exists("Lead Source", "Existing Customer"):
+                    if not plan_media and has_paid and frappe.db.exists("Lead Source", "Existing Customer"):
                         plan_media = "Existing Customer"
-                    else:
+                    elif not plan_media:
                         allowed = ["Call Center", "Existing Customer", "Reference", "DIRECT WALKIN"]
                         incoming = args.get("plan_media") or ""
                         if incoming in allowed and frappe.db.exists("Lead Source", incoming):
@@ -769,7 +830,7 @@ def run(**kwargs):
                     if plan_media:
                         tp.media = plan_media
                     tp.status         = "Not Started"
-                    tp.total_sessions = total_sessions
+                    tp.total_sessions = total_sessions + sum(comp["qty"] for comp in clean_comps)
                     tp.custom_total_plan_amount = total_plan
                     if consultant:
                         tp.custom_employee_name = consultant
@@ -811,6 +872,15 @@ def run(**kwargs):
                             "custom_plan_amount": c["qty"] * c["rate"],
                             "custom_min_amount": c["min"],
                             "custom_max_amount": c["max"],
+                        })
+                    for comp in clean_comps:
+                        tp.append("therapy_plan_details", {
+                            "therapy_type": comp["therapy_type"],
+                            "no_of_sessions": comp["qty"],
+                            "custom_plan_amount": 0,
+                            "custom_min_amount": 0,
+                            "custom_max_amount": 0,
+                            "custom_is_offer_": 1,
                         })
                     tp.insert(ignore_permissions=False)
 

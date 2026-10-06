@@ -16,8 +16,8 @@
 {{ include_script('frappe-web.bundle.js') }}
 <script>window.lifePortalModule = {{ module_config | json }};</script>
 <script src="/assets/life_slimming/js/portal_config.js"></script>
-<script src="/assets/life_slimming/js/portal_module_loading.js"></script>
-<script src="/assets/life_slimming/js/portal_module_bridge.js"></script>
+<script src="/assets/life_slimming/js/portal_module_loading.js?v={{ module_config.bridge_asset_version }}"></script>
+<script src="/assets/life_slimming/js/portal_module_bridge.js?v={{ module_config.bridge_asset_version }}"></script>
 {{ module_html }}
 {% if module_config.module in ["employees", "attend", "payroll"] %}
 <link rel="stylesheet" href="/assets/life_slimming/css/portal_hrms.css">

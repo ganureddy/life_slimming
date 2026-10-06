@@ -13,6 +13,7 @@ from frappe.integrations.utils import make_post_request as _make_post_request
 from frappe.utils.safe_exec import read_sql as _read_sql
 from frappe.utils.safe_exec import call_whitelisted_function as _call_whitelisted
 from life_slimming.api._runtime import script_endpoint
+from life_slimming.api.pd_form_utils import pd_form_child_urls_by_patient
 
 
 @script_endpoint(allow_guest=False)
@@ -153,7 +154,9 @@ def run(**kwargs):
         for practitioner_row in practitioner_rows:
             practitioner_map[practitioner_row.get("name")] = practitioner_row.get("practitioner_name") or practitioner_row.get("name")
 
-    # Count unique PD Form file URLs.
+    # Include attachment values stored on the PD Form child rows as well as
+    # File records. Some uploads are attached to the Patient child table and
+    # do not create a File row with attached_to_field=custom_pd_form.
     # Multiple File records can point to the same physical image,
     # so counting File rows directly produces an incorrect 5/5.
     file_count = {}
@@ -185,11 +188,7 @@ def run(**kwargs):
                 file_row.get("file_url") or ""
             )
 
-            is_pd_form = (
-                fld == "pd_form"
-                or fld == "custom_pd_form"
-                or "pd_form" in fld
-            )
+            is_pd_form = not fld or "pd_form" in fld
 
             if is_pd_form and file_url:
                 p_name = file_row.get(
@@ -207,10 +206,13 @@ def run(**kwargs):
                         file_url
                     )
 
-        for p_name in file_urls_by_patient:
-            file_count[p_name] = len(
-                file_urls_by_patient[p_name]
-            )
+    child_urls = pd_form_child_urls_by_patient(patient_names)
+    for p_name in patient_names:
+        urls = file_urls_by_patient.setdefault(p_name, [])
+        for file_url in child_urls.get(p_name, []):
+            if file_url not in urls:
+                urls.append(file_url)
+        file_count[p_name] = len(urls)
 
     def category_of(row):
         blob = (str(row.get("enquired_for") or "") + " " +

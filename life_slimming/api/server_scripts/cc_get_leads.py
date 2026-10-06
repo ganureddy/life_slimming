@@ -154,19 +154,34 @@ def run(**kwargs):
         if not is_manager:
             filters.append(["lead_owner", "=", user])
 
-        PAGE_LIMIT = 5000
+        # Opt-in pagination for Vue. Legacy callers retain their existing contract.
+        paginated = frappe.form_dict.get("page_size") is not None
+        try:
+            page_size = max(1, min(100, int(frappe.form_dict.get("page_size") or 40)))
+            start = max(0, int(frappe.form_dict.get("start") or 0)) if paginated else 0
+        except (TypeError, ValueError):
+            frappe.throw("Invalid pagination")
+        if paginated:
+            for argument, field in [("branch", "branch"), ("stage", "custom_cc_stage")]:
+                value = str(frappe.form_dict.get(argument) or "").strip()
+                if value:
+                    filters.append([field, "=", value])
+        PAGE_LIMIT = page_size if paginated else 5000
         total = frappe.db.count("Lead", filters=filters)
         rows = frappe.get_all(
             "Lead",
             fields=LEAD_FIELDS,
             filters=filters,
-            order_by="modified desc",
+            order_by="modified desc, name desc",
+            limit_start=start,
             limit_page_length=PAGE_LIMIT
         )
         frappe.response["message"] = {
             "rows": rows,
             "total": total,
-            "truncated": 1 if total > PAGE_LIMIT else 0,
+            "truncated": 1 if not paginated and total > PAGE_LIMIT else 0,
+            "has_more": start + len(rows) < total,
+            "start": start,
             "scoped_to_owner": 0 if is_manager else 1
         }
     frappe.response["message"]["contact_manager"] = contact_manager

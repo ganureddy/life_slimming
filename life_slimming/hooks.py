@@ -315,6 +315,7 @@ doc_events = {
                  ]
     },
 "Sales Invoice":{
+    "on_submit":"life_slimming.cc_invoice_appointment_sync.sales_invoice_on_submit",
     "on_cancel":"life_slimming.book_appointment.to_check_narration"
 },
 "Payment Entry":{

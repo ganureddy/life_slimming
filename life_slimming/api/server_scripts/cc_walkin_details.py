@@ -13,6 +13,7 @@ from frappe.integrations.utils import make_post_request as _make_post_request
 from frappe.utils.safe_exec import read_sql as _read_sql
 from frappe.utils.safe_exec import call_whitelisted_function as _call_whitelisted
 from life_slimming.api._runtime import script_endpoint
+from life_slimming.api.pd_form_utils import pd_form_urls
 
 
 @script_endpoint(allow_guest=False)
@@ -85,6 +86,19 @@ def run(**kwargs):
                     "created": str(
                         file_row.get("creation") or ""
                     )
+                })
+
+        # PD Form child rows are the source of truth for several historical
+        # uploads; those URLs may not have a matching File row.
+        patient_doc = frappe.get_doc("Patient", patient.get("name"))
+        for file_url in pd_form_urls(patient.get("name"), patient_doc):
+            if file_url not in seen_image_urls:
+                seen_image_urls.append(file_url)
+                images.append({
+                    "name": file_url.rsplit("/", 1)[-1] or "PD Form",
+                    "url": file_url,
+                    "thumb": file_url,
+                    "created": "",
                 })
 
     history = []

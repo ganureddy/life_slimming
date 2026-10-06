@@ -39,6 +39,7 @@ export const initials = computed(() =>
     .slice(0, 2)
     .toUpperCase(),
 );
+let sessionRequest = null;
 export function canSee(item, group) {
   if (!session.user || session.error) return false;
   if (item.id === "home") return true;
@@ -66,22 +67,29 @@ export function canAccessModule(module) {
   const parent = access.children[module]?.parent || module;
   return visibleMenu.value.some(group => group.items.some(item => item.id === parent));
 }
-export async function loadSession() {
+export function loadSession() {
+  // The router guard and App startup watcher can request this at the same
+  // time. Share one bootstrap request rather than making the user wait on two.
+  if (sessionRequest) return sessionRequest;
   session.loading = true;
   session.error = "";
   session.status = null;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 20000);
-  try {
-    Object.assign(session, await call("life_slimming.api.portal.bootstrap", undefined, { signal: controller.signal }));
-  } catch (error) {
-    session.user = "";
-    session.error = error.name === "AbortError" ? "Loading took too long. Please check your connection and try again." : error.message;
-    session.status = error.status;
-  } finally {
-    clearTimeout(timeout);
-    session.loading = false;
-  }
+  sessionRequest = (async () => {
+    try {
+      Object.assign(session, await call("life_slimming.api.portal.bootstrap", undefined, { signal: controller.signal }));
+    } catch (error) {
+      session.user = "";
+      session.error = error.name === "AbortError" ? "Loading took too long. Please check your connection and try again." : error.message;
+      session.status = error.status;
+    } finally {
+      clearTimeout(timeout);
+      session.loading = false;
+      sessionRequest = null;
+    }
+  })();
+  return sessionRequest;
 }
 export function loginUrl() {
   return (
