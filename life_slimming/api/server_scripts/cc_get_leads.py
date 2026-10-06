@@ -87,7 +87,7 @@ def run(**kwargs):
         "custom_call_count", "custom_conclusion_remark", "custom_bmi", "custom_target_weight", "custom_treatment_interests",
         "custom_current_medication", "custom_hospitalized", "custom_consulting_doctor",
         "email_id", "custom_status_updated_date", "custom_last_call_time", "custom_client_category",
-        "custom_media", "custom_previous_attempts", "custom_marital_status", "custom_no_of_kids",
+        "custom_media", "custom_specific_interests", "custom_previous_attempts", "custom_marital_status", "custom_no_of_kids",
         "custom_delivery_type", "custom_breastfeeding", "custom_chat_script",
         "creation", "modified"
     ]

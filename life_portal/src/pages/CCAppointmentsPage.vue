@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import { request } from '../api/http';
 import { session } from '../lib/session';
 import { createRequestId } from '../api/convox';
+import '../styles/cc.css';
 const route = useRoute();
 const bookingDialog=ref(null), editing=ref(null);
 const branches=ref([]), staff=ref([]), leads=ref([]), branch=ref(''), date=ref(''), today=ref(''), timezone=ref('');
@@ -55,7 +56,9 @@ onMounted(init);
 onUnmounted(()=>{mounted=false;generation++;searchGeneration++;clearTimeout(timer);});
 </script>
 <template>
-<section class="cc-scheduler" :aria-busy="loading||saving">
+<section class="cc-scheduler cc-native-shell" :aria-busy="loading||saving">
+ <header class="cc-workspace-head"><div class="cc-brand"><span class="cc-brand-mark">L</span><div><strong>🎧 LIFE CALL CENTRE AGENT DASHBOARD</strong><small>CC Command ERP</small></div></div><div class="cc-user"><strong>{{session.full_name||'Call Center'}}</strong><small>Call Center</small></div></header>
+ <div class="cc-app-layout"><aside class="cc-sidebar"><div class="cc-nav-caption">MAIN</div><RouterLink :to="{name:'leads-native'}">📊 Dashboard</RouterLink><RouterLink :to="{name:'leads-native'}">📋 My Lead Queue</RouterLink><RouterLink :to="{name:'leads-native'}">📞 Lead Follow-Up Form</RouterLink><RouterLink class="active" :to="{name:'cc-appointments'}">📅 Appointments</RouterLink><div class="cc-nav-caption">REPORTING</div><RouterLink :to="{name:'ccvisit-native'}">📈 CC Reports</RouterLink><div class="cc-sidebar-foot">{{session.full_name||'Call Center'}}<small>LIFE CC Command</small></div></aside><main class="cc-main">
  <header><div><RouterLink :to="{name:'leads'}">← CC Dashboard</RouterLink><h1>CC Appointment Scheduler</h1><p>10:00 AM–8:00 PM · Minimum 45 minutes · {{ timezone }}</p></div><button :disabled="loading||saving" @click="refresh">Refresh calendar</button></header>
  <p v-if="error" role="alert" class="error">{{ error }}</p><p v-if="success" role="status" class="success">{{ success }}</p>
  <fieldset :disabled="saving" class="filters"><legend>Branch and consultation staff</legend>
@@ -94,6 +97,7 @@ onUnmounted(()=>{mounted=false;generation++;searchGeneration++;clearTimeout(time
  </form>
  </dialog>
  <section class="agenda"><header><h2>Booked appointments</h2><label>Lead owner / CC agent<select v-model="agent"><option value="">All visible agents</option><option v-for="a in agents" :key="a.id" :value="a.id">{{a.name}}</option></select></label></header><p>Agent filtering affects this list only; every occupied staff slot stays blocked.</p><div class="table-wrap"><table><thead><tr><th>Time</th><th>Branch</th><th>Staff / role</th><th>Lead / client</th><th>Lead owner / CC agent</th><th>Actions</th></tr></thead><tbody><tr v-for="(e,i) in agenda" :key="e.name||i"><td>{{time(e.start)}}–{{time(e.end)}}</td><td>{{e.branch}}</td><td>{{e.staff}} · {{e.role}}</td><td>{{e.client}} {{e.lead}}</td><td>{{e.agent_name||e.agent||'Reserved'}}</td><td><button v-if="e.editable" :disabled="saving||loading" @click="changeAppointment(e)">Reschedule / change manager</button></td></tr><tr v-if="!agenda.length"><td colspan="6">No appointments to show for this selection.</td></tr></tbody></table></div></section>
+</main></div>
 </section>
 </template>
 <style scoped>

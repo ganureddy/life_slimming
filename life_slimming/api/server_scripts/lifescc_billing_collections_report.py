@@ -34,6 +34,21 @@ def run(**kwargs):
     if not from_date or not to_date:
         frappe.throw("from_date and to_date are required")
 
+    # This report uses raw SQL, so Frappe's DocType permissions do not filter
+    # its rows. Apply the same Branch User Permissions returned by bootstrap.
+    permitted = frappe.get_all(
+        "User Permission",
+        filters={"user": frappe.session.user, "allow": "Branch"},
+        fields=["for_value"], limit_page_length=0,
+    )
+    allowed_branches = []
+    for permission in permitted:
+        name = permission.get("for_value")
+        if name and name not in ("Head Office", "Testing Branch") and name not in allowed_branches:
+            allowed_branches.append(name)
+    if allowed_branches and branch and branch not in allowed_branches:
+        frappe.throw("You do not have access to this branch.", frappe.PermissionError)
+
     branch_cond_inv = ""
     branch_cond_pe = ""
     params = {"from_date": from_date, "to_date": to_date}
@@ -41,6 +56,14 @@ def run(**kwargs):
         branch_cond_inv = "AND si.branch = %(branch)s"
         branch_cond_pe = "AND pe.branch = %(branch)s"
         params["branch"] = branch
+    elif allowed_branches:
+        placeholders = []
+        for index, name in enumerate(allowed_branches):
+            key = "allowed_branch_" + str(index)
+            params[key] = name
+            placeholders.append("%(" + key + ")s")
+        branch_cond_inv = "AND si.branch IN (" + ",".join(placeholders) + ")"
+        branch_cond_pe = "AND pe.branch IN (" + ",".join(placeholders) + ")"
 
     # ── BILLED side: Sales Invoice totals for the period, split by GST flag ──
     billed_sql = (

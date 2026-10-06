@@ -151,6 +151,10 @@ def run(**kwargs):
     elif not pd_form_file:
         validation_error = "PD Form attachment is required."
 
+    otp_proof_key = "client_otp_verified::" + frappe.session.user + "::" + mobile
+    if not validation_error and not frappe.cache().get_value(otp_proof_key):
+        validation_error = "Verify this mobile number before registering."
+
 
     if validation_error:
         fail(validation_error)
@@ -421,6 +425,8 @@ def run(**kwargs):
                                 )
 
                                 frappe.db.commit()
+
+                                frappe.cache().delete_value(otp_proof_key)
 
                                 success({
                                     "name": patient.name,

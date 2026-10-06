@@ -949,6 +949,18 @@ def verify_client_otp(mobile, otp):
     cache_key = f"client_otp_{mobile}"
 
     if verify_otp(cache_key, otp):
+        # Client creation must validate proof on the server, not trust the
+        # browser's claim that this call succeeded.
+        verified_mobile = ''.join(ch for ch in str(mobile) if ch.isdigit())
+        if len(verified_mobile) == 12 and verified_mobile.startswith('91'):
+            verified_mobile = verified_mobile[2:]
+        elif len(verified_mobile) == 11 and verified_mobile.startswith('0'):
+            verified_mobile = verified_mobile[1:]
+        frappe.cache().set_value(
+            f"client_otp_verified::{frappe.session.user}::{verified_mobile}",
+            1,
+            expires_in_sec=OTP_EXPIRY,
+        )
         return "verified"
 
     return "invalid"

@@ -256,6 +256,14 @@ function receive(event) {
   if (event.data.type === 'life-convox-open') showPhone();
   if (event.data.type === 'life-convox-call') callFromDashboard(event);
 }
+function receiveNative(event) {
+  if(route.name!=='leads'||!permitted.value) return;
+  const data=event.detail;
+  if(!data||!['life-convox-select','life-convox-open','life-convox-call'].includes(data.type))return;
+  if(typeof data.lead_id==='string'&&data.lead_id.length<=140)selectedLead.value=data.lead_id;
+  if(data.type==='life-convox-open')showPhone();
+  if(data.type==='life-convox-call'&&selectedLead.value)callFromDashboard({data,origin:window.location.origin,source:{postMessage:result=>data.onResult?.(result)}});
+}
 function findCaller(event) {
   if (route.name !== 'leads') return;
   const frame = document.querySelector('.portal-source-page iframe');
@@ -308,6 +316,7 @@ function warnBeforeLeaving(event) {
 }
 onMounted(() => {
   window.addEventListener('message', receive);
+  window.addEventListener('life-convox-native', receiveNative);
   window.addEventListener('resize', fitPanel);
   window.addEventListener('beforeunload', warnBeforeLeaving);
 });
@@ -316,6 +325,7 @@ onBeforeUnmount(() => {
   clearTimeout(timer);
   controller.abort();
   window.removeEventListener('message', receive);
+  window.removeEventListener('life-convox-native', receiveNative);
   window.removeEventListener('resize', fitPanel);
   window.removeEventListener('beforeunload', warnBeforeLeaving);
 });
