@@ -4,16 +4,46 @@ import { session, loadSession } from "../lib/session";
 import access from "../../../life_slimming/portal_pages/access.json";
 const menu = access.menu;
 import portalPages from "../data/portalPages.json";
+import PortalSourcePage from "../pages/PortalSourcePage.vue";
+
+// Keep the existing ERP screen active from the portal menu until Vue parity is approved.
+const keepLegacyModule = (id) => Boolean(portalPages[id]);
 
 export const routeLoading = ref(false);
 
 const pageComponents = {
   control: () => import("../pages/ControlPage.vue"),
+  clireg: () => import("../pages/ClientRegistrationPage.vue"),
+  stores360: () => import("../pages/Stores360NativePage.vue"),
+  stock: () => import("../pages/StockDashboardNativePage.vue"),
   billing: () => import("../pages/BillingPage.vue"),
+  payables: () => import("../pages/PayablesNativePage.vue"),
   conversions: () => import("../pages/ConversionsPage.vue"),
+  pricelist: () => import("../pages/PriceListNativePage.vue"),
+  conv: () => import("../pages/BranchTargetPage.vue"),
+  discountaudit: () => import("../pages/DiscountAuditPage.vue"),
+  documents: () => import("../pages/FormsDocumentsPage.vue"),
+  appt: () => import("../pages/AppointmentSchedulerPage.vue"),
+  salemaster: () => import("../pages/SalesMasterDataPage.vue"),
+  empsale: () => import("../pages/EmployeeSaleMasterPage.vue"),
+  wlres: () => import("../pages/WeightLossReportPage.vue"),
+  service: () => import("../pages/ServicePage.vue"),
+  vendors: () => import("../pages/VendorsPage.vue"),
+  ccvisit: () => import("../pages/CCVisitReportPage.vue"),
+  leads: () => import("../pages/CCDashboardPage.vue"),
+  pendbal: () => import("../pages/PendingBalancesPage.vue"),
+  receivables: () => import("../pages/PendingBalancesPage.vue"),
+  bexp: () => import("../pages/BranchExpenditurePage.vue"),
+  approvals: () => import("../pages/ApprovalsPage.vue"),
+  approvalsreport: () => import("../pages/ApprovalsPage.vue"),
 };
 
 export const routes = [
+  {
+    path: "/native/billing", name: "billing-native",
+    component: () => import("../pages/BillingNativePage.vue"),
+    meta: { title: "Billing preview", accessModule: "billing" },
+  },
   {
     path: "/native/cc-dashboard", name: "leads-native",
     component: () => import("../pages/CCDashboardPage.vue"),
@@ -23,6 +53,36 @@ export const routes = [
     path: "/native/cc-visit-report", name: "ccvisit-native",
     component: () => import("../pages/CCVisitReportPage.vue"),
     meta: { title: "CC Visit Report preview", accessModule: "ccvisit" },
+  },
+  {
+    path: "/native/cluster-dashboard", name: "clusterhome-native",
+    component: () => import("../pages/ClusterDashboardPage.vue"),
+    meta: { title: "Cluster Dashboard preview", accessModule: "clusterhome" },
+  },
+  {
+    path: "/native/stores360", name: "stores360-native",
+    component: () => import("../pages/Stores360NativePage.vue"),
+    meta: { title: "Stores 360 preview", accessModule: "stores360" },
+  },
+  {
+    path: "/stock-legacy", name: "stock-legacy",
+    component: () => import("../pages/PortalSourcePage.vue"),
+    meta: { title: "Stock dashboard legacy", accessModule: "stock" },
+  },
+  {
+    path: "/native/pricelist", name: "pricelist-native",
+    component: () => import("../pages/PriceListNativePage.vue"),
+    meta: { title: "Price-List preview", accessModule: "pricelist" },
+  },
+  {
+    path: "/native/branch-target", name: "conv-native",
+    component: () => import("../pages/BranchTargetPage.vue"),
+    meta: { title: "Target & Realisation preview", accessModule: "conv" },
+  },
+  {
+    path: "/native/service", name: "service-native",
+    component: () => import("../pages/ServicePage.vue"),
+    meta: { title: "Service Vue migration preview", accessModule: "service" },
   },
   {
     path: "/login",
@@ -57,13 +117,17 @@ export const routes = [
     .map((item) => ({
       path: "/" + item.id,
       name: item.id,
-      component: item.id === "control"
-        ? pageComponents.control
-        : portalPages[item.id]
-        ? () => import("../pages/PortalSourcePage.vue")
-        : ["billing", "conversions"].includes(item.id)
-          ? pageComponents[item.id]
-          : () => import("../pages/ModulePage.vue"),
+      component: keepLegacyModule(item.id)
+        ? PortalSourcePage
+        : item.id === "control"
+          ? pageComponents.control
+          : ["clireg", "stores360", "stock", "pricelist", "conv", "documents", "appt", "salemaster", "empsale", "wlres", "vendors", "pendbal", "receivables", "bexp", "ccvisit", "leads", "approvals", "approvalsreport", "service", "payables"].includes(item.id)
+            ? pageComponents[item.id]
+            : item.id === "discountaudit"
+              ? pageComponents.discountaudit
+              : ["billing", "conversions"].includes(item.id)
+                ? pageComponents[item.id]
+                : () => import("../pages/ModulePage.vue"),
       meta: {
         title: item.label,
         description: item.description,
@@ -72,7 +136,7 @@ export const routes = [
     })),
   ...Object.entries(access.children).map(([id, entry]) => ({
     path: "/" + id, name: id,
-    component: () => import("../pages/PortalSourcePage.vue"),
+    component: keepLegacyModule(id) ? PortalSourcePage : pageComponents[id] || PortalSourcePage,
     meta: { title: entry.title },
   })),
   {

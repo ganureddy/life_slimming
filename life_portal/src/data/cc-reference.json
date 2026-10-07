@@ -1,0 +1,1582 @@
+{
+  "CALL_SCRIPTS": [
+    {
+      "title": "Standard Greeting",
+      "icon": "👋",
+      "text": "\"Good morning / afternoon. Thank you for calling LIFE Slimming & Cosmetic Clinics. My name is [Agent Name]. How can I help you today?\"\n\n✅ AGENT NOTE: Speak clearly, smile (it shows in your voice), and use the client's name as soon as they give it. Always sound warm and welcoming."
+    },
+    {
+      "title": "Appointment Booking — 5-Step Flow",
+      "icon": "📅",
+      "text": "1. \"Certainly! May I know your name, please?\"\n2. \"Thank you, [Name]. Can I have your best mobile number for confirmation?\"\n3. \"Which of our branches is most convenient for you?\"\n4. \"Would you prefer a weekday or weekend? Morning or afternoon?\"\n5. \"Perfect, [Name]. Your priority consultation is successfully booked for [Day] at [Time] at our [Branch] clinic. We will send the address details via WhatsApp shortly.\"\n\n✅ AGENT NOTE: Always confirm all 5 steps before ending the call."
+    },
+    {
+      "title": "Price Enquiry Bridge",
+      "icon": "💰",
+      "text": "Client asks: \"How much does it cost?\"\n\nAgent: \"I completely understand wanting to know the pricing, [Name]. At LIFE, all our treatments are customized. Because costs depend entirely on your specific concern, BMI, or skin type, our doctor needs to do a quick evaluation first to give you an accurate budget.\n\nThe good news is we can get you scheduled for an expert doctor consultation this week. Shall we check available slots?\"\n\n✅ AGENT NOTE: Never quote prices over the phone. Always bridge to the consultation."
+    },
+    {
+      "title": "Follow-Up Call Opening",
+      "icon": "🔄",
+      "text": "\"Hello, am I speaking with [Client Name]? This is [Agent Name] calling from LIFE Slimming & Cosmetic Clinics.\n\nI'm following up regarding your earlier enquiry about [Treatment]. I just wanted to check whether you had any questions I could help with, and to let you know we have some excellent availability this week for your doctor consultation.\"\n\n✅ AGENT NOTE: Sound warm, not salesy. Reference their specific interest to show you know them."
+    },
+    {
+      "title": "No Answer Script",
+      "icon": "📵",
+      "text": "If no answer after 3 rings:\n\"This is [Agent Name] from LIFE Clinics. I'm calling regarding your [Treatment] enquiry. Please call us back at [CC Number] at your convenience. Alternatively, I'll try again [specific time/day]. Thank you!\"\n\n✅ AGENT NOTE: Leave a maximum 1 voicemail. Attempt the call 3 times before marking as \"No Response.\""
+    },
+    {
+      "title": "Existing Client Handling",
+      "icon": "🔁",
+      "text": "\"That's wonderful, [Name]! I'm glad you're already part of the LIFE family. I'm calling today because based on your previous treatment, our consultant thought you might benefit from our [specific complementary treatment/package renewal].\n\nWould you be open to a quick chat with our doctor to explore this? There's no obligation — it's just to keep your progress on track.\"\n\n✅ AGENT NOTE: Focus on cross-sell or renewal — never hard sell existing clients."
+    },
+    {
+      "title": "Complaint / Escalation",
+      "icon": "⚠️",
+      "text": "\"I sincerely apologize for the inconvenience you've experienced, [Name]. Your comfort and satisfaction are our highest priority.\n\nI'm making a note of your concern right now and I'll ensure this reaches our [Branch Manager / Medical Head] immediately. You can expect a callback within [2 hours / by today evening]. Thank you for bringing this to our attention.\"\n\n✅ AGENT NOTE: Do not argue. Do not make promises about refunds without manager approval. Always escalate complaints to TL."
+    },
+    {
+      "title": "Consultation Close",
+      "icon": "✅",
+      "text": "\"So based on everything you've told me, [Name], I think you'll really benefit from meeting our doctor. It's a completely free, no-obligation session where they'll assess your exact concern and give you a customized plan.\n\nWe have slots on [Day] morning and [Day] afternoon. Which works better for you?\"\n\n✅ AGENT NOTE: Always present 2 choices (not \"do you want an appointment?\") to make it easier for the client to say yes."
+    }
+  ],
+  "OBJECTIONS": [
+    {
+      "obj": "It's too costly / What are your charges?",
+      "response": "I completely understand, [Name]. At LIFE, our treatments are 100% customized — so the cost really depends on your specific condition and what our doctor recommends. What I can tell you is that we have options across all budgets, including installment plans. The first step — a doctor consultation — is the most important. Once our doctor meets you, you'll have a clear picture of exactly what's needed and what it costs. Shall we book that for you?",
+      "tip": "Never quote prices. Bridge to consultation."
+    },
+    {
+      "obj": "I need to discuss with my family / husband / wife",
+      "response": "Absolutely, [Name] — that's a very sensible approach, and we completely respect that. In fact, we warmly welcome family members to join you for the consultation. That way, the doctor can address all questions together, and the whole family has clarity. I'll book you a slot — you can always cancel or reschedule if needed. There's no pressure at all.",
+      "tip": "Validate the family dynamic. Invite them along."
+    },
+    {
+      "obj": "I need some time / Let me think",
+      "response": "Of course, [Name] — completely understood. Can I ask what specific thing you'd like to think about? If there's any concern about the treatment, safety, or pricing, I'd love to address it right now so you have all the information you need to decide. Most people find that a single 15-minute doctor consultation clarifies everything for them. Shall I book one for you?",
+      "tip": "Identify the REAL objection. Offer the consultation as the solution."
+    },
+    {
+      "obj": "I'm already taking treatment somewhere else",
+      "response": "That's completely fine, [Name] — it's great to know you're proactive about your health! We occasionally see clients who come to us for a second opinion or to try a different approach. Would you be open to a quick consultation with our doctor? There's no pressure — you might just find a better result is possible for you. We are very confident in our technology and results.",
+      "tip": "Never criticize the competitor. Focus on curiosity and a free 2nd opinion."
+    },
+    {
+      "obj": "I'm scared of side effects",
+      "response": "Your safety is our absolute first priority, [Name]. I completely understand the concern. All our treatments are doctor-supervised, clinically approved, and non-invasive. In fact, our doctor specifically evaluates your health history before recommending anything, so nothing is done without a proper assessment. Would you feel more comfortable meeting the doctor in person to understand the procedure in detail? That usually helps a lot.",
+      "tip": "Reassure safety. Offer a face-to-face doctor explanation."
+    },
+    {
+      "obj": "I'll call you back / Will call later",
+      "response": "Of course, [Name]! When would be a good time for me to call you back so I don't miss you? I just want to make sure we hold a slot for you — our doctors' consultation availability fills up quickly, especially on weekends. If it works, I can book a provisional slot now and we can always adjust the time if needed.",
+      "tip": "Pin down a specific callback time. Offer a provisional booking."
+    },
+    {
+      "obj": "I need a discount / Can you give any offer?",
+      "response": "I completely hear you, [Name]. I want to be honest with you — our treatments are already priced very competitively for the quality and technology we offer. However, what I CAN do is check with my team lead whether there's any current program or offer applicable to your case. Sometimes first-time consultation packages have some additional benefits. Shall I check and call you back in 10 minutes?",
+      "tip": "Never promise unauthorized discounts. Escalate to TL."
+    },
+    {
+      "obj": "I don't have time",
+      "response": "I absolutely understand — everyone is busy! That's actually WHY our process is designed to be as efficient as possible. Our initial doctor consultation is typically 15–20 minutes. We have early morning slots (10 AM), lunchtime slots, and even evening slots (up to 7 PM). Which day of the week usually works better for you — a weekday or weekend?",
+      "tip": "Remove the time barrier. Show flexibility across the entire day."
+    }
+  ],
+  "FAQS": [
+    {
+      "cat": "Slimming / Weight Loss",
+      "q": "What is the best treatment for weight loss?",
+      "a": "Our doctor assesses your BMI, lifestyle, and hormonal health to design a customized plan. This can include clinical diet setups, fat-reduction technologies, or doctor-prescribed GLP-1 medical therapies. First step is a body composition analysis at the clinic."
+    },
+    {
+      "cat": "Slimming / Weight Loss",
+      "q": "What is GLP-1 Weight Loss Injection?",
+      "a": "GLP-1 is an advanced, doctor-prescribed medical weight management treatment that naturally regulates appetite, reduces cravings, and helps you feel full faster. Only prescribed after doctor reviews your medical history."
+    },
+    {
+      "cat": "Slimming / Weight Loss",
+      "q": "What is Inch Loss and how does it work?",
+      "a": "Inch loss targets stubborn localized fat pockets (belly, love handles, arms) to reshape body contour. You can lose dress sizes even before your scale weight drops significantly."
+    },
+    {
+      "cat": "Slimming / Weight Loss",
+      "q": "What is CoolSculpting?",
+      "a": "A premium, non-surgical treatment that permanently freezes and destroys stubborn fat cells. Over following weeks, the body naturally flushes dead fat cells out. Ideal for targeted body shaping."
+    },
+    {
+      "cat": "Slimming / Weight Loss",
+      "q": "Will CoolSculpting help me lose 10kg?",
+      "a": "No, CoolSculpting is specifically an inch loss and body sculpting treatment for stubborn areas, not a major weight-loss solution. For weight loss, our medical programs are recommended."
+    },
+    {
+      "cat": "Slimming / Weight Loss",
+      "q": "How many kilos will I lose?",
+      "a": "Because every body is unique, results vary. For Weight Loss, our doctors set realistic, healthy targets tailored to your BMI. During consultation, body fat analysis is done to show you an exact timeline. Shall we book that slot today?"
+    },
+    {
+      "cat": "Slimming / Weight Loss",
+      "q": "Is weight loss treatment safe?",
+      "a": "Yes, all our treatments are doctor-supervised and clinically approved. We do not use any unauthorized injections or unsafe methods. Safety is our first priority."
+    },
+    {
+      "cat": "Hair Treatments",
+      "q": "What is PRP for hair?",
+      "a": "PRP stands for Platelet-Rich Plasma. We draw a small sample of your own blood, separate the nutrient-dense platelets, and gently inject them into your scalp to control hair fall and strengthen weak roots."
+    },
+    {
+      "cat": "Hair Treatments",
+      "q": "What is GFC (Growth Factor Concentrate)?",
+      "a": "GFC is next-generation advancement over standard PRP. It extracts and delivers pure, highly concentrated growth factors directly. Completely precise, highly effective, and usually requires fewer sessions."
+    },
+    {
+      "cat": "Hair Treatments",
+      "q": "What is the difference between PRP and GFC?",
+      "a": "PRP delivers platelets + growth factors. GFC delivers only pure, extracted growth factors — making it more potent, with faster results and higher comfort. GFC usually requires fewer sessions and gives better outcomes."
+    },
+    {
+      "cat": "Hair Treatments",
+      "q": "When will I see results from PRP / GFC?",
+      "a": "For PRP and GFC, most clients notice significant reduction in active hair fall after 2nd or 3rd session. New hair thickness and scalp coverage become visible around the 3rd to 4th month of consistent treatment."
+    },
+    {
+      "cat": "Hair Treatments",
+      "q": "Is PRP painful?",
+      "a": "The procedure involves micro-injections into the scalp. A numbing cream is applied beforehand to minimize discomfort. Most clients describe it as a mild tingling sensation. GFC is generally more comfortable than standard PRP."
+    },
+    {
+      "cat": "Hair Treatments",
+      "q": "How many sessions of PRP are needed?",
+      "a": "Typically 6 to 8 sessions are recommended, once every 2–4 weeks, followed by maintenance sessions. Your trichologist will advise based on the degree of hair loss."
+    },
+    {
+      "cat": "Hair Transplant (HT)",
+      "q": "Who is an ideal candidate for Hair Transplant?",
+      "a": "Anyone experiencing permanent baldness or structural hairline receding, provided they have a healthy \"donor area\" of hair at the back or sides of the head."
+    },
+    {
+      "cat": "Hair Transplant (HT)",
+      "q": "What are the different HT methods?",
+      "a": "FUE (Follicular Unit Extraction): Individual follicles extracted one by one — no linear scars, fast healing. DHI (Direct Hair Implantation): Ultra-precise implanter pen for perfect angle, depth, density. FUT (Strip Method): Traditional method for high-volume graft needs — selected cases only."
+    },
+    {
+      "cat": "Hair Transplant (HT)",
+      "q": "Is Hair Transplant permanent?",
+      "a": "Yes, transplanted hairs from the donor area are genetically resistant to DHT (the hormone that causes baldness), so they grow permanently in their new location."
+    },
+    {
+      "cat": "Hair Transplant (HT)",
+      "q": "Can ladies undergo Hair Transplant?",
+      "a": "Yes, women can undergo Hair Transplant, particularly for frontal hairline receding or traction alopecia. Our doctor will evaluate the pattern and eligibility during consultation."
+    },
+    {
+      "cat": "Hair Transplant (HT)",
+      "q": "When will I see final results from HT?",
+      "a": "Transplanted roots settle in first month. Permanent natural growth begins around 3rd month. Full, high-density results appear between 9 to 12 months."
+    },
+    {
+      "cat": "Skin / Dermat",
+      "q": "What is HydraFacial?",
+      "a": "A premium multi-step medical facial that deeply cleanses, exfoliates, painlessly extracts blackheads, and infuses skin with intense hydrating serums for instant glowing complexion."
+    },
+    {
+      "cat": "Skin / Dermat",
+      "q": "What is Carbon Laser Facial?",
+      "a": "Commonly called the Hollywood Peel — liquid carbon is dried onto the face, then a specialized laser is used. Delivers instant skin brightening, tightens open pores, controls excess oil, and clears surface debris."
+    },
+    {
+      "cat": "Skin / Dermat",
+      "q": "Can you treat severe acne?",
+      "a": "Yes. Our doctors customize treatments based on acne severity. Options range from medicated clinical peels to advanced acne-target lasers that eliminate bacteria and reduce active breakouts."
+    },
+    {
+      "cat": "Skin / Dermat",
+      "q": "Can dark pigmentation and melasma be removed?",
+      "a": "Most hyperpigmentation can be significantly lightened and cleared. Our doctor will examine it under a specialized skin analyzer to recommend the perfect laser or peel protocol."
+    },
+    {
+      "cat": "Skin / Dermat",
+      "q": "What is Skin PRP?",
+      "a": "Uses your own natural growth factors to stimulate collagen production deep within skin. Drastically improves skin texture, minimizes fine lines, heals acne scars, and brings back a youthful glow."
+    },
+    {
+      "cat": "Anti-Aging / Aesthetics",
+      "q": "What is HIFU Face Lift?",
+      "a": "High-Intensity Focused Ultrasound — a completely non-invasive treatment that uses ultrasound energy to tighten sagging skin, lift the jawline, and rebuild deep collagen. No surgery, no downtime."
+    },
+    {
+      "cat": "Anti-Aging / Aesthetics",
+      "q": "What is Botox?",
+      "a": "A safe, micro-injectable treatment by expert doctors that relaxes targeted facial muscles to smooth away dynamic expression lines like forehead wrinkles, frown lines, and crow's feet."
+    },
+    {
+      "cat": "Anti-Aging / Aesthetics",
+      "q": "What are Dermal Fillers?",
+      "a": "A smooth hydrating gel that restores lost volume — lifts cheeks, plumps thin lips, or fills deep folds for an instant youth boost. Different from Botox which treats wrinkles."
+    },
+    {
+      "cat": "Laser Treatments",
+      "q": "Is Laser Hair Reduction permanent?",
+      "a": "It offers long-lasting, permanent reduction of hair growth by up to 85–90%. Over time, any remaining hair becomes baby-fine. Occasional maintenance sessions ensure perfectly smooth skin."
+    },
+    {
+      "cat": "Laser Treatments",
+      "q": "How many sessions of Laser Hair Removal are needed?",
+      "a": "Typically 6–8 sessions are needed, spaced 4–6 weeks apart, because the laser targets only active growth phase hair. Your doctor will advise based on your skin and hair type."
+    },
+    {
+      "cat": "Laser Treatments",
+      "q": "Is Laser safe for dark skin?",
+      "a": "Yes! We use advanced Diode Laser technology which is safe and effective for all skin tones, including dark Indian skin types. Our doctors carefully calibrate the settings."
+    },
+    {
+      "cat": "General",
+      "q": "How much does treatment cost?",
+      "a": "All our treatments are customized — costs depend on your specific concern, body mass index, or skin type. Our doctor needs to do a quick evaluation first to give you an accurate budget. The good news is we can schedule you for an expert doctor consultation this week!"
+    },
+    {
+      "cat": "General",
+      "q": "Do you have EMI options?",
+      "a": "Yes, we offer easy payment options including EMI and installment plans. Our counsellor at the branch will explain the exact options available for your treatment package."
+    },
+    {
+      "cat": "General",
+      "q": "Can diabetes patients undergo treatment?",
+      "a": "Most patients with well-controlled diabetes can undergo our treatments after doctor evaluation. Our doctor will review your blood sugar levels, medications, and treatment history before recommending any procedure."
+    },
+    {
+      "cat": "General",
+      "q": "Can thyroid patients lose weight?",
+      "a": "Yes, but it depends on thyroid control. Our doctors specialize in designing weight loss programs for thyroid patients, accounting for metabolic differences. First step is a medical history review."
+    },
+    {
+      "cat": "General",
+      "q": "Is there a doctor consultation before treatment?",
+      "a": "Yes, absolutely. Every treatment at LIFE Clinics begins with a thorough doctor consultation. No treatment is started without proper medical evaluation."
+    },
+    {
+      "cat": "General",
+      "q": "What are the branch working hours?",
+      "a": "All branches operate from 9:30 AM to 7:30 PM, Monday to Saturday. For Sunday availability, please check with your specific branch."
+    }
+  ],
+  "TREATMENT_KB": [
+    {
+      "name": "Weight Loss Program",
+      "cat": "Slimming",
+      "icon": "⚖️",
+      "purpose": "Medical, supervised weight reduction combining doctor consultation, clinical diet, lifestyle modification, and advanced body technologies.",
+      "suitableFor": "Individuals with BMI > 23, metabolic disorders, PCOD-related weight gain, post-pregnancy weight, stress eating.",
+      "benefits": [
+        "✅ Clinically supervised fat & weight reduction",
+        "✅ BMI normalization",
+        "✅ Improved metabolism",
+        "✅ Better hormonal balance",
+        "✅ Lifestyle transformation"
+      ],
+      "procedure": "Body composition analysis → Doctor consultation → Customized diet plan → Technology sessions → Regular follow-up",
+      "sessions": "12–24 sessions (protocol-based)",
+      "recovery": "None — all non-invasive",
+      "pain": "None",
+      "results": "Initial changes in 3–4 weeks; significant results in 8–12 weeks",
+      "cannotTake": "Pregnancy, uncontrolled diabetes, severe cardiac conditions (doctor decision required)",
+      "faq": [
+        {
+          "q": "Will I regain the weight?",
+          "a": "With proper lifestyle modifications and maintenance plan, weight regain is significantly minimized. We provide full lifestyle counseling."
+        },
+        {
+          "q": "Is the diet plan strict?",
+          "a": "Our doctor and dietician design a practical, balanced plan suited to your lifestyle — not extreme crash diets."
+        }
+      ]
+    },
+    {
+      "name": "CoolSculpting (Cryolipolysis)",
+      "cat": "Slimming",
+      "icon": "❄️",
+      "purpose": "Non-surgical fat freezing treatment that permanently destroys stubborn localized fat cells.",
+      "suitableFor": "Individuals with stubborn fat pockets in abdomen, flanks, arms, thighs, double chin. Not for obesity.",
+      "benefits": [
+        "✅ Permanent fat cell destruction",
+        "✅ Inch loss and body sculpting",
+        "✅ No surgery, no needles",
+        "✅ Zero downtime"
+      ],
+      "procedure": "Cooling applicator placed on target area → Fat cells frozen at -9°C → Cells naturally eliminated over 2–8 weeks",
+      "sessions": "1–3 sessions per target area",
+      "recovery": "Immediate return to activity; minor redness/numbness for 1–2 hours",
+      "pain": "Mild cold sensation, minor tingling",
+      "results": "Visible body sculpting change in 3–4 weeks; final results at 8–12 weeks",
+      "cannotTake": "Cryoglobulinemia, cold agglutinin disease, Raynaud's disease, pregnancy",
+      "faq": [
+        {
+          "q": "Will I lose weight?",
+          "a": "CoolSculpting reduces inches and fat, not necessarily scale weight. It is a sculpting treatment, not a weight-loss solution."
+        }
+      ]
+    },
+    {
+      "name": "GFC Hair Treatment",
+      "cat": "Hair",
+      "icon": "💉",
+      "purpose": "Growth Factor Concentrate — advanced hair regeneration therapy using your own pure growth factors.",
+      "suitableFor": "Hair fall in men and women, early to moderate baldness, thinning hair, post-pregnancy hair loss.",
+      "benefits": [
+        "✅ Significant reduction in hair fall",
+        "✅ New hair growth stimulation",
+        "✅ Thicker, stronger hair",
+        "✅ Improved scalp health"
+      ],
+      "procedure": "Blood drawn → GFC processed (30 min) → Applied to scalp via micro-injections → Session 45–60 min",
+      "sessions": "6–8 sessions (every 2–4 weeks)",
+      "recovery": "Normal activities same day; wash hair next day",
+      "pain": "Very minimal (numbing cream applied)",
+      "results": "Hair fall reduces after 2–3 sessions; new growth visible at 3–4 months",
+      "cannotTake": "Active scalp infections, blood clotting disorders",
+      "faq": [
+        {
+          "q": "Is GFC better than PRP?",
+          "a": "GFC delivers purer, higher-concentration growth factors than PRP, resulting in faster and more potent hair growth stimulation."
+        }
+      ]
+    },
+    {
+      "name": "Hair Transplant (FUE)",
+      "cat": "HT (Hair Transplant)",
+      "icon": "🏥",
+      "purpose": "Permanent surgical restoration of natural hairline by relocating permanent hair follicles from the donor zone.",
+      "suitableFor": "Permanent baldness (Norwood Scale 2–6), stable donor zone, healthy overall health.",
+      "benefits": [
+        "✅ Permanent, natural-looking hair",
+        "✅ High-density coverage",
+        "✅ No linear scar (FUE)",
+        "✅ Customized hairline design"
+      ],
+      "procedure": "Pre-surgical blood tests → Donor zone shaving → Follicle extraction (FUE punch) → Graft storage → Implantation → Post-op care",
+      "sessions": "1 surgical session (6–10 hours)",
+      "recovery": "2–5 days mild swelling; return to light work in 5–7 days",
+      "pain": "Local anesthesia — minimal discomfort during; mild soreness after",
+      "results": "New growth from 3rd month; full high-density results at 9–12 months",
+      "cannotTake": "Active scalp infections, insufficient donor zone, uncontrolled BP or diabetes, bleeding disorders",
+      "faq": [
+        {
+          "q": "Is HT permanent?",
+          "a": "Yes — transplanted follicles are DHT-resistant and grow permanently in their new location."
+        },
+        {
+          "q": "Can women get HT?",
+          "a": "Yes, for frontal receding or traction alopecia. Doctor evaluation required."
+        }
+      ]
+    },
+    {
+      "name": "HydraFacial",
+      "cat": "Skin / Dermat",
+      "icon": "💧",
+      "purpose": "Premium multi-step medical facial combining cleansing, exfoliation, extraction, and intense hydration.",
+      "suitableFor": "All skin types. Dull skin, dehydration, blackheads, early aging signs, uneven tone.",
+      "benefits": [
+        "✅ Instant glow & hydration",
+        "✅ Deep pore cleansing",
+        "✅ Painless blackhead extraction",
+        "✅ Improved skin texture"
+      ],
+      "procedure": "Cleanse → Exfoliate → Acid peel (gentle) → Suction extraction → Serum infusion → Protection",
+      "sessions": "Single session for glow; monthly for maintenance",
+      "recovery": "Immediate — no downtime",
+      "pain": "None",
+      "results": "Visible brightness and glow immediately after session",
+      "cannotTake": "Active rosacea, open wounds, sunburned skin",
+      "faq": [
+        {
+          "q": "How long does glow last?",
+          "a": "Typically 3–4 weeks. Monthly sessions maintain consistent skin quality."
+        }
+      ]
+    },
+    {
+      "name": "Laser Hair Reduction (LHR)",
+      "cat": "Laser",
+      "icon": "✨",
+      "purpose": "Long-lasting reduction and permanent removal of unwanted body and facial hair using advanced Diode Laser.",
+      "suitableFor": "Any body part — face, underarms, bikini, legs, arms, back. All skin tones.",
+      "benefits": [
+        "✅ Up to 85–90% permanent reduction",
+        "✅ Baby-fine remaining hair",
+        "✅ No more shaving/waxing",
+        "✅ Safe for Indian skin"
+      ],
+      "procedure": "Skin assessment → Patch test (first visit) → Laser applied in grid pattern → Cooling gel → Session 15–60 min",
+      "sessions": "6–8 sessions (4–6 weeks apart)",
+      "recovery": "Mild redness for 1–2 hours; normal activity same day",
+      "pain": "Mild snapping sensation; cooling system minimizes discomfort",
+      "results": "Progressive hair reduction with each session; 85–90% permanent reduction after full course",
+      "cannotTake": "Pregnancy, active skin infection on treatment area, certain photosensitizing medications",
+      "faq": [
+        {
+          "q": "Can I wax during the sessions?",
+          "a": "No — waxing must be avoided during the course. Shaving is allowed and recommended between sessions."
+        }
+      ]
+    }
+  ],
+  "BRANCHES": [
+    {
+      "code": "SRN",
+      "name": "SR Nagar",
+      "city": "Hyderabad",
+      "phone": "040-1234 5671",
+      "address": "12, SR Nagar Main Rd, Hyderabad-500038",
+      "maps": "https://www.google.com/maps/search/Life+Slimming+and+Cosmetic+Clinic+SR+Nagar",
+      "hours": "9:30AM–7:30PM"
+    },
+    {
+      "code": "BH",
+      "name": "Banjara Hills",
+      "city": "Hyderabad",
+      "phone": "040-1234 5672",
+      "address": "8-2-293, Road No.78, Banjara Hills, Hyderabad-500034",
+      "maps": "https://www.google.com/maps/search/Life+Slimming+and+Cosmetic+Clinic+Banjara+Hills",
+      "hours": "9:30AM–7:30PM"
+    },
+    {
+      "code": "GB",
+      "name": "Gachibowli",
+      "city": "Hyderabad",
+      "phone": "040-1234 5673",
+      "address": "Plot 8, Gachibowli, Hyderabad-500032",
+      "maps": "https://www.google.com/maps/search/Life+Slimming+and+Cosmetic+Clinic+Gachibowli",
+      "hours": "9:30AM–7:30PM"
+    },
+    {
+      "code": "MP",
+      "name": "Madhapur",
+      "city": "Hyderabad",
+      "phone": "040-1234 5674",
+      "address": "HITEC City Rd, Madhapur, Hyderabad-500081",
+      "maps": "https://www.google.com/maps/search/Life+Slimming+and+Cosmetic+Clinic+Madhapur",
+      "hours": "9:30AM–7:30PM"
+    },
+    {
+      "code": "KP",
+      "name": "Kukatpally",
+      "city": "Hyderabad",
+      "phone": "040-1234 5675",
+      "address": "KPHB Colony, Kukatpally, Hyderabad-500072",
+      "maps": "https://www.google.com/maps/search/Life+Slimming+and+Cosmetic+Clinic+Kukatpally",
+      "hours": "9:30AM–7:30PM"
+    },
+    {
+      "code": "CN",
+      "name": "Chandanagar",
+      "city": "Hyderabad",
+      "phone": "040-1234 5676",
+      "address": "Chandanagar Main Rd, Hyderabad-500050",
+      "maps": "https://www.google.com/maps/search/Life+Slimming+and+Cosmetic+Clinic+Chandanagar",
+      "hours": "9:30AM–7:30PM"
+    },
+    {
+      "code": "HN",
+      "name": "Himayathnagar",
+      "city": "Hyderabad",
+      "phone": "040-1234 5677",
+      "address": "Himayathnagar, Hyderabad-500029",
+      "maps": "https://www.google.com/maps/search/Life+Slimming+and+Cosmetic+Clinic+Himayathnagar",
+      "hours": "9:30AM–7:30PM"
+    },
+    {
+      "code": "DN",
+      "name": "Dilsukhnagar",
+      "city": "Hyderabad",
+      "phone": "040-1234 5678",
+      "address": "Dilsukhnagar, Hyderabad-500036",
+      "maps": "https://www.google.com/maps/search/Life+Slimming+and+Cosmetic+Clinic+Dilsukhnagar",
+      "hours": "9:30AM–7:30PM"
+    },
+    {
+      "code": "VW",
+      "name": "Vijayawada",
+      "city": "Vijayawada",
+      "phone": "0866-1234 567",
+      "address": "MG Road, Vijayawada-520002",
+      "maps": "https://www.google.com/maps/search/Life+Slimming+and+Cosmetic+Clinic+Vijayawada",
+      "hours": "9:30AM–7:30PM"
+    },
+    {
+      "code": "VZ",
+      "name": "Vizag",
+      "city": "Visakhapatnam",
+      "phone": "0891-1234 567",
+      "address": "Dwaraka Nagar, Vizag-530016",
+      "maps": "https://www.google.com/maps/search/Life+Slimming+and+Cosmetic+Clinic+Vizag",
+      "hours": "9:30AM–7:30PM"
+    },
+    {
+      "code": "NLR",
+      "name": "Nellore",
+      "city": "Nellore",
+      "phone": "0861-1234 567",
+      "address": "Pogathota, Nellore-524001",
+      "maps": "https://www.google.com/maps/search/Life+Slimming+and+Cosmetic+Clinic+Nellore",
+      "hours": "9:30AM–7:30PM"
+    }
+  ],
+  "TREATMENT_CATEGORIES": {
+    "Slimming": [
+      "Weight Loss Programs",
+      "Inch Loss / Body Contouring",
+      "Fat Reduction",
+      "Nutrition & Diet Consultation",
+      "Metabolic & Lifestyle Management",
+      "Wellness Programs",
+      "Lifestyle Management",
+      "CoolSculpting / Cryolipolysis",
+      "HIFU Fat Reduction",
+      "RF Body Tightening",
+      "Body Contouring",
+      "EMS Muscle Stimulation",
+      "GLP-1 Program",
+      "LIFE RISE – Weight Management"
+    ],
+    "Skin / Dermat": [
+      "Acne & Acne Scar Treatment",
+      "Pigmentation & Melasma",
+      "Skin Brightening",
+      "Anti-Aging Treatments",
+      "Laser Treatments",
+      "Chemical Peels",
+      "Skin Infections",
+      "General Dermatology",
+      "HydraFacial",
+      "Carbon Laser Facial",
+      "Skin Rejuvenation",
+      "Skin Tightening",
+      "Mole/Wart Removal",
+      "Anti-Tan Treatment",
+      "MNRF",
+      "Microneedling"
+    ],
+    "Hair Patch": [
+      "Hair Patch Consultation",
+      "Hair Patch Maintenance"
+    ],
+    "Hair": [
+      "Hair Fall Treatment",
+      "Hair Regrowth Therapy",
+      "PRP Hair Treatment",
+      "GFC Hair Treatment",
+      "Mesotherapy",
+      "Dandruff & Scalp Treatment",
+      "Stem Cell Hair Therapy",
+      "Hair Transplant Consultation",
+      "Non-Surgical Hair Replacement"
+    ],
+    "HT (Hair Transplant)": [
+      "Hair Transplant (FUE)",
+      "Hair Transplant (DHI)",
+      "Hair Transplant (FUT)",
+      "Beard Transplant"
+    ],
+    "Laser": [
+      "Laser Hair Removal (LHR)",
+      "Q-Switch Laser",
+      "Tattoo Removal"
+    ],
+    "Aesthetics": [
+      "Botox",
+      "Dermal Fillers",
+      "Botox + Fillers Combo"
+    ],
+    "Life Rise": [
+      "Lifestyle Counseling",
+      "Nutritional Guidance",
+      "Preventive Health Programs",
+      "Health & Wellness Coaching",
+      "Lifestyle Disease Management",
+      "LIFE RISE – GLP Program",
+      "LIFE RISE – Nutrition Program",
+      "LIFE RISE – Gut Health Program"
+    ],
+    "Online Consultation": [
+      "Online Consultation"
+    ]
+  },
+  "OCT_MASTER": [
+    [
+      1,
+      "Weight Loss / Obesity",
+      "Weight Loss",
+      "Slimming",
+      "Treatment Enquiry",
+      "Cluster Head - Slimming",
+      "weight loss, weightloss, wt loss, reduce weight, slim, 360, over weight, obesity, obese, fat body",
+      "Weight Loss | Over Weight / Obesity"
+    ],
+    [
+      2,
+      "Belly / Tummy Fat",
+      "Inch Loss & Body Shaping",
+      "Slimming",
+      "Treatment Enquiry",
+      "Cluster Head - Slimming",
+      "tummy, belly, stomach fat, pot belly",
+      "-"
+    ],
+    [
+      3,
+      "Thigh / Arms / Hip Fat",
+      "Inch Loss & Body Shaping",
+      "Slimming",
+      "Treatment Enquiry",
+      "Cluster Head - Slimming",
+      "thigh, thighs, arms fat, arm fat, hand fat, hips, love handle, side fat, back fat",
+      "Thigh Fat | Arms Fat | Hip / Love Handles"
+    ],
+    [
+      4,
+      "Double Chin",
+      "Inch Loss & Body Shaping",
+      "Slimming",
+      "Treatment Enquiry",
+      "Cluster Head - Slimming",
+      "double chin, chin fat",
+      "-"
+    ],
+    [
+      5,
+      "Inch Loss / Body Shaping / Cellulite",
+      "Inch Loss & Body Shaping",
+      "Slimming",
+      "Treatment Enquiry",
+      "Cluster Head - Slimming",
+      "inch loss, inches, body shape, figure, toning, body sculpt, cellulite",
+      "Inch Loss | Body Shaping / Figure Correction | Cellulite / Stretch Marks (Body)"
+    ],
+    [
+      6,
+      "Post Pregnancy Weight",
+      "Post Pregnancy",
+      "Slimming",
+      "Treatment Enquiry",
+      "Cluster Head - Slimming",
+      "post pregnancy, after delivery weight, c section tummy",
+      "-"
+    ],
+    [
+      7,
+      "PCOD / Thyroid Weight Gain",
+      "PCOD & Hormonal",
+      "Slimming",
+      "Treatment Enquiry",
+      "Cluster Head - Slimming",
+      "pcod, pcos, hormonal weight, thyroid weight",
+      "PCOD / PCOS Weight Gain | Thyroid Weight Gain"
+    ],
+    [
+      8,
+      "Diet Plan / Nutrition",
+      "Diet & Nutrition",
+      "Slimming",
+      "Treatment Enquiry",
+      "Cluster Head - Slimming",
+      "diet, diet plan, nutrition, dietician",
+      "-"
+    ],
+    [
+      9,
+      "Weight Gain",
+      "Weight Gain",
+      "Slimming",
+      "Treatment Enquiry",
+      "Cluster Head - Slimming",
+      "weight gain, underweight, gain weight",
+      "-"
+    ],
+    [
+      10,
+      "Pimples / Acne / Blackheads / Open Pores",
+      "Acne & Acne Scars",
+      "Skin (Dermatology)",
+      "Treatment Enquiry",
+      "Consultant Dermatologist",
+      "pimple, pimples, acne, breakout, open pores, large pores, blackhead, whitehead",
+      "Pimples / Acne | Open Pores | Blackheads / Whiteheads"
+    ],
+    [
+      11,
+      "Acne Marks / Scars / Pits",
+      "Acne & Acne Scars",
+      "Skin (Dermatology)",
+      "Treatment Enquiry",
+      "Consultant Dermatologist",
+      "acne mark, pimple mark, acne scar, spots on face, scar, pits, holes on face",
+      "Acne Marks / Pimple Marks | Acne Scars / Pits"
+    ],
+    [
+      12,
+      "Skin Whitening / Glow / Dull Skin",
+      "Skin Whitening & Glow",
+      "Skin (Dermatology)",
+      "Treatment Enquiry",
+      "Consultant Dermatologist",
+      "whitening, fairness, fair skin, white skin, glow, glowing, bridal, marriage, brightening, dull skin, uneven tone, patchy skin",
+      "Skin Whitening | Skin Glow / Bridal Glow | Dull / Uneven Skin Tone"
+    ],
+    [
+      13,
+      "Pigmentation / Tanning / Freckles",
+      "Pigmentation & Tanning",
+      "Skin (Dermatology)",
+      "Treatment Enquiry",
+      "Consultant Dermatologist",
+      "tan, tanning, sun tan, pigment, melasma, chloasma, dark patch, freckle, black spot, dark spot",
+      "Tanning / Sun Tan | Pigmentation / Melasma | Freckles / Black Spots"
+    ],
+    [
+      14,
+      "Dark Circles",
+      "Pigmentation & Tanning",
+      "Skin (Dermatology)",
+      "Treatment Enquiry",
+      "Consultant Dermatologist",
+      "dark circle, under eye",
+      "-"
+    ],
+    [
+      15,
+      "Neck / Underarm / Lip Darkness",
+      "Pigmentation & Tanning",
+      "Skin (Dermatology)",
+      "Treatment Enquiry",
+      "Consultant Dermatologist",
+      "neck dark, black neck, neck darkness, underarm, armpit dark, dark lips, lip pigmentation",
+      "Neck Darkness | Underarm Darkness | Dark Lips"
+    ],
+    [
+      16,
+      "Laser Hair Removal / Unwanted Hair",
+      "Laser",
+      "Skin (Dermatology)",
+      "Treatment Enquiry",
+      "Consultant Dermatologist",
+      "lhr, laser hair, full body laser, permanent hair removal, facial hair, upper lip, chin hair, face laser, underarm laser, bikini, private area hair, unwanted hair, body hair",
+      "Laser Hair Removal (Full Body) | Laser Hair Removal (Face / Upper Lip) | Laser Hair Removal (Underarms / Bikini) | Unwanted Hair (Female)"
+    ],
+    [
+      17,
+      "Wrinkles / Fine Lines / Sagging Skin",
+      "Anti-Ageing & Rejuvenation",
+      "Skin (Dermatology)",
+      "Treatment Enquiry",
+      "Consultant Dermatologist",
+      "wrinkle, fine line, ageing, aging, sagging, loose skin, skin tightening",
+      "Wrinkles / Fine Lines | Sagging Skin"
+    ],
+    [
+      18,
+      "Stretch Marks / Burn & Injury Scars",
+      "Scars & Marks",
+      "Skin (Dermatology)",
+      "Treatment Enquiry",
+      "Consultant Dermatologist",
+      "stretch mark, striae, burn mark, injury mark, surgery scar",
+      "Stretch Marks | Burn / Injury Marks"
+    ],
+    [
+      19,
+      "Warts / Moles / Skin Tags",
+      "Medical Dermatology",
+      "Skin (Dermatology)",
+      "Treatment Enquiry",
+      "Consultant Dermatologist",
+      "wart, mole, skin tag",
+      "-"
+    ],
+    [
+      20,
+      "Skin Disease / Allergy (Fungal, Eczema, Vitiligo)",
+      "Medical Dermatology",
+      "Skin (Dermatology)",
+      "Treatment Enquiry",
+      "Consultant Dermatologist",
+      "fungal, ringworm, itching, psoriasis, eczema, vitiligo, white patch, leucoderma, allergy, rash, hives",
+      "Fungal Infection | Psoriasis / Eczema | Vitiligo / White Patches | Allergy / Rashes"
+    ],
+    [
+      21,
+      "Facial / Clean Up / Skin Polishing",
+      "Skin Care & Facials",
+      "Skin (Dermatology)",
+      "Treatment Enquiry",
+      "Consultant Dermatologist",
+      "facial, clean up, polishing, hydra",
+      "-"
+    ],
+    [
+      22,
+      "Hair Fall / Thinning",
+      "Hair Fall",
+      "Hair Treatment",
+      "Treatment Enquiry",
+      "Trichology Team",
+      "hair fall, hairfall, falling hair, hair loss, thin hair, thinning, less hair, density, post delivery hair, after pregnancy hair",
+      "Hair Fall | Hair Thinning / Low Density | Post Delivery Hair Fall"
+    ],
+    [
+      23,
+      "Hair Regrowth / PRP / GFC",
+      "Hair Regrowth",
+      "Hair Treatment",
+      "Treatment Enquiry",
+      "Trichology Team",
+      "regrowth, hair growth, grow hair, prp, gfc, mesotherapy hair",
+      "Hair Regrowth | PRP / GFC for Hair"
+    ],
+    [
+      24,
+      "Bald Patch / Alopecia",
+      "Alopecia",
+      "Hair Treatment",
+      "Treatment Enquiry",
+      "Trichology Team",
+      "bald patch, alopecia, patch on head",
+      "-"
+    ],
+    [
+      25,
+      "Dandruff / Itchy Scalp",
+      "Scalp & Dandruff",
+      "Hair Treatment",
+      "Treatment Enquiry",
+      "Trichology Team",
+      "dandruff, flakes, itchy scalp, scalp infection, scalp",
+      "Dandruff | Itchy Scalp / Scalp Infection"
+    ],
+    [
+      26,
+      "Premature Greying",
+      "Scalp & Dandruff",
+      "Hair Treatment",
+      "Treatment Enquiry",
+      "Trichology Team",
+      "grey hair, white hair, greying",
+      "-"
+    ],
+    [
+      27,
+      "Hair Spa / Hair Care",
+      "Scalp & Dandruff",
+      "Hair Treatment",
+      "Treatment Enquiry",
+      "Trichology Team",
+      "hair spa, hair care, smoothening",
+      "-"
+    ],
+    [
+      28,
+      "Beard / Eyebrow Growth",
+      "Beard & Eyebrow",
+      "Hair Treatment",
+      "Treatment Enquiry",
+      "Trichology Team",
+      "beard, patchy beard, eyebrow, eyebrows, brows",
+      "Beard Growth | Eyebrow Growth"
+    ],
+    [
+      29,
+      "Hair Transplant (Scalp / Hairline / Bald Head)",
+      "Hair Transplant",
+      "Hair Transplant (HT)",
+      "Treatment Enquiry",
+      "HT Surgeon",
+      "hair transplant, transplantation, ht, fue, fut, dhi, graft, bald head, baldness, male pattern, hairline, forehead hair, receding",
+      "Hair Transplantation | Bald Head (Male Pattern) | Hairline Correction"
+    ],
+    [
+      30,
+      "Beard / Eyebrow Transplant",
+      "Hair Transplant",
+      "Hair Transplant (HT)",
+      "Treatment Enquiry",
+      "HT Surgeon",
+      "beard transplant, eyebrow transplant",
+      "Beard Transplant | Eyebrow Transplant"
+    ],
+    [
+      31,
+      "Hair Patch / Wig / Extension",
+      "Hair Patch / Wig",
+      "Hair Patches (NSHR)",
+      "Treatment Enquiry",
+      "NSHR Technician",
+      "wig, hair wig, hair patch, hair fixing, hair system, non surgical, extension, hair extension",
+      "Hair Wig | Hair Patch / Hair Fixing | Hair Extension"
+    ],
+    [
+      32,
+      "Diabetic Reversal Programme",
+      "LIFE RISE",
+      "LIFE RISE",
+      "Treatment Enquiry",
+      "LIFE RISE Lead",
+      "diabetic, diabetes, sugar, reversal, hba1c",
+      "-"
+    ],
+    [
+      33,
+      "BP / Cholesterol / Fatty Liver / Thyroid (LIFE RISE)",
+      "LIFE RISE",
+      "LIFE RISE",
+      "Treatment Enquiry",
+      "LIFE RISE Lead",
+      "bp, blood pressure, cholesterol, lipid, fatty liver, liver, thyroid",
+      "BP / Cholesterol Management | Fatty Liver Reversal | Thyroid Management"
+    ],
+    [
+      34,
+      "After 40 Programme",
+      "LIFE RISE",
+      "LIFE RISE",
+      "Treatment Enquiry",
+      "LIFE RISE Lead",
+      "after 40, 40 plus, midlife",
+      "-"
+    ],
+    [
+      35,
+      "PCOS Reversal Programme",
+      "LIFE RISE",
+      "LIFE RISE",
+      "Treatment Enquiry",
+      "LIFE RISE Lead",
+      "pcos reversal, pcod reversal",
+      "-"
+    ],
+    [
+      36,
+      "Online Diet Programme",
+      "LIFE RISE",
+      "LIFE RISE",
+      "Treatment Enquiry",
+      "LIFE RISE Lead",
+      "online diet, home diet, virtual diet",
+      "-"
+    ],
+    [
+      37,
+      "Botox / Fillers / Thread Lift / Jawline",
+      "Injectables",
+      "Aesthetics",
+      "Treatment Enquiry",
+      "Aesthetic Head",
+      "botox, botulinum, filler, lip filler, cheek filler, thread lift, threads, jawline, chin sculpt, face slimming",
+      "Botox | Fillers / Lip Fillers | Thread Lift | Jawline / Chin Sculpting"
+    ],
+    [
+      38,
+      "Glutathione / IV Drips",
+      "IV & Skin Boosters",
+      "Aesthetics",
+      "Treatment Enquiry",
+      "Aesthetic Head",
+      "glutathione, iv drip, skin booster, vitamin drip",
+      "-"
+    ],
+    [
+      39,
+      "Job Enquiry",
+      "Recruitment",
+      "Non-Treatment",
+      "Job Enquiry",
+      "HR Department",
+      "job, vacancy, resume, hiring, therapist job, interview",
+      "-"
+    ],
+    [
+      40,
+      "Grievance / Complaint",
+      "Grievance",
+      "Non-Treatment",
+      "Grievance",
+      "Grievance Cell",
+      "complaint, grievance, problem, refund, not satisfied",
+      "-"
+    ],
+    [
+      41,
+      "Feedback / Appreciation",
+      "Grievance",
+      "Non-Treatment",
+      "Feedback",
+      "Grievance Cell",
+      "feedback, thanks, appreciation, review",
+      "-"
+    ],
+    [
+      42,
+      "Existing Client - Service / Appointment",
+      "Client Servicing",
+      "Non-Treatment",
+      "Existing Client",
+      "Branch Manager",
+      "existing client, my package, session, my booking, appointment, reschedule, booking, timing",
+      "Existing Client - Service Query | Appointment Booking / Reschedule"
+    ],
+    [
+      43,
+      "Price / Cost Enquiry Only",
+      "General Enquiry",
+      "Non-Treatment",
+      "Treatment Enquiry",
+      "CC Team Lead",
+      "cost, price, fees, charges, how much",
+      "-"
+    ],
+    [
+      44,
+      "Branch Address / Timings",
+      "General Enquiry",
+      "Non-Treatment",
+      "General Enquiry",
+      "CC Team Lead",
+      "address, location, timings, open",
+      "-"
+    ],
+    [
+      45,
+      "Vendor / Business Enquiry",
+      "Business",
+      "Non-Treatment",
+      "Vendor Enquiry",
+      "Purchase Department",
+      "vendor, supplier, business, tie up, partnership",
+      "-"
+    ],
+    [
+      46,
+      "Franchise Enquiry",
+      "Business",
+      "Non-Treatment",
+      "Franchise Enquiry",
+      "Management",
+      "franchise, dealership, investment",
+      "-"
+    ],
+    [
+      47,
+      "EMI / Finance Query",
+      "General Enquiry",
+      "Non-Treatment",
+      "General Enquiry",
+      "Accounts Department",
+      "emi, finance, loan, instalment",
+      "-"
+    ],
+    [
+      48,
+      "Wrong Number / Not Interested",
+      "Junk",
+      "Non-Treatment",
+      "Junk",
+      "CC Team Lead",
+      "wrong number, not interested, mistake",
+      "-"
+    ]
+  ],
+  "WF": {
+    "RETRY": [
+      "No Response",
+      "Not Reachable",
+      "Switch OFF",
+      "Call Disconnected"
+    ],
+    "APPT_NR": "Appointment no response",
+    "BADNUM": [
+      "Invalid Number",
+      "Wrong number",
+      "Not in Service"
+    ],
+    "ACTIVE": [
+      "Callback: Scheduled",
+      "Price Negotiation",
+      "Get Back",
+      "Very Positive",
+      "Call & Confirm",
+      "Out Station"
+    ],
+    "SUCCESS": [
+      "Appointment Booked",
+      "Existing Client"
+    ],
+    "VISIT": [
+      "Walked In & Booked",
+      "Walked In: Not Booked"
+    ],
+    "LOST": [
+      "Not Interested",
+      "Other clinic",
+      "Joined Competition",
+      "Do Not Contact"
+    ],
+    "INVALID": [
+      "Job enquiry",
+      "Franchise Lead",
+      "Junk/Wrong Call",
+      "Not Enquired",
+      "TNA",
+      "NID"
+    ],
+    "TIP": {
+      "No Response": "Rang out. Record the failed attempt; no follow-up date is required.",
+      "Not Reachable": "Out of coverage. Calls +1 · retry later today.",
+      "Switch OFF": "Phone off. Calls +1 · try a different time slot.",
+      "Call Disconnected": "Cut mid-call. Record the failed attempt; no follow-up date is required.",
+      "Appointment no response": "Client did not respond at the appointment time. Save as Appointment no response; the reserved slot is unchanged.",
+      "Invalid Number": "Number does not exist → INVALID, record locks.",
+      "Wrong number": "Reached someone else → INVALID, record locks.",
+      "Not in Service": "Number disconnected by operator → INVALID, record locks.",
+      "Callback: Scheduled": "Client asked to call later. Next date, preferred time required.",
+      "Price Negotiation": "Wants a better price. Next date + pricing remarks required. Escalate to TL.",
+      "Get Back": "Client will think and revert. Next date + context remark required.",
+      "Very Positive": "Hot lead — early reminder. Push for a slot on the next call.",
+      "Call & Confirm": "Verification call before fixing the appointment.",
+      "Out Station": "Client travelling — long follow-up date allowed.",
+      "Appointment Booked": "Branch, date, time required. One save books it + WhatsApp/Maps.",
+      "Existing Client": "Already a LIFE client — routed out of new sales. Record protected.",
+      "Walked In & Booked": "Visited and booked a package. CLOSED-WON — record locks.",
+      "Walked In: Not Booked": "Visited, not booked yet. Counsellor reason + next follow-up date required.",
+      "Not Interested": "Direct refusal. Specific reason required. Record locks.",
+      "Other clinic": "Taking treatment elsewhere / already visited other clinic. Record locks.",
+      "Joined Competition": "Lost to competitor — name the clinic in remarks. Record locks.",
+      "Do Not Contact": "Never call again. Permanent lock, removed from all dialers.",
+      "Job enquiry": "Job seeker, not a client → INVALID.",
+      "Franchise Lead": "Franchise / B2B enquiry → INVALID (routed out).",
+      "Junk/Wrong Call": "Duplicate, spam or accidental enquiry → INVALID.",
+      "Not Enquired": "Client says never enquired → INVALID.",
+      "TNA": "Unqualified per business rules → INVALID.",
+      "NID": "Unqualified per business rules → INVALID."
+    }
+  },
+  "CONCLUSION_REMARKS": [
+    "Client confirmed walk-in today",
+    "Confirmed walk-in tomorrow",
+    "Client said she will definitely come this week",
+    "Needs one more call to convert to walk-in",
+    "Client interested but needs family consultation first",
+    "Price negotiation required — TL intervention needed",
+    "Client already taking treatment at LIFE — existing client",
+    "Client already taking treatment at competitor clinic",
+    "Client out of station — follow up in 3–5 days",
+    "Client not reachable — try 3 more times",
+    "Client not interested at this time — close in 6 months",
+    "Walk-in happened — treatment not booked yet",
+    "Appointment confirmed and WhatsApp sent",
+    "Invalid / junk lead — removed from active queue",
+    "Client asked to call in the evening after 6PM",
+    "Client asked to call on specific date — reminder set",
+    "Lead transferred to another agent",
+    "Not in our service location",
+    "Treatment not available at this branch"
+  ],
+  "MED_CONDITIONS": {
+    "Slimming": [
+      {
+        "name": "Diabetes / Sugar",
+        "alert": false
+      },
+      {
+        "name": "Blood Pressure (BP)",
+        "alert": false
+      },
+      {
+        "name": "Hyper Tension",
+        "alert": false
+      },
+      {
+        "name": "PCOD / PCOS",
+        "alert": false
+      },
+      {
+        "name": "Thyroid (Hypo / Hyper)",
+        "alert": false
+      },
+      {
+        "name": "Asthma / Respiratory Issues",
+        "alert": false
+      },
+      {
+        "name": "Fatty Liver",
+        "alert": false
+      },
+      {
+        "name": "Arthritis / Joint Pain",
+        "alert": false
+      },
+      {
+        "name": "Heart Condition (controlled)",
+        "alert": false
+      },
+      {
+        "name": "Gallstones",
+        "alert": false
+      },
+      {
+        "name": "Severe Liver Disease",
+        "alert": false
+      },
+      {
+        "name": "Kidney Failure / On Dialysis",
+        "alert": true
+      },
+      {
+        "name": "HIV / AIDS",
+        "alert": true
+      },
+      {
+        "name": "Hepatitis B",
+        "alert": true
+      },
+      {
+        "name": "Hepatitis C",
+        "alert": true
+      },
+      {
+        "name": "Active Cancer (current)",
+        "alert": true
+      },
+      {
+        "name": "Active TB / Tuberculosis",
+        "alert": true
+      },
+      {
+        "name": "No known condition",
+        "alert": false
+      }
+    ],
+    "Hair": [
+      {
+        "name": "Thyroid (Hypo / Hyper)",
+        "alert": false
+      },
+      {
+        "name": "Hormonal Imbalance",
+        "alert": false
+      },
+      {
+        "name": "Anemia / Iron Deficiency",
+        "alert": false
+      },
+      {
+        "name": "PCOD / PCOS",
+        "alert": false
+      },
+      {
+        "name": "Alopecia Areata (autoimmune)",
+        "alert": false
+      },
+      {
+        "name": "Lichen Planopilaris",
+        "alert": false
+      },
+      {
+        "name": "Dandruff (severe / fungal)",
+        "alert": false
+      },
+      {
+        "name": "Scalp Psoriasis",
+        "alert": false
+      },
+      {
+        "name": "Lupus / SLE",
+        "alert": true
+      },
+      {
+        "name": "HIV / AIDS",
+        "alert": true
+      },
+      {
+        "name": "Hepatitis B",
+        "alert": true
+      },
+      {
+        "name": "Hepatitis C",
+        "alert": true
+      },
+      {
+        "name": "Chemotherapy (current)",
+        "alert": true
+      },
+      {
+        "name": "No known condition",
+        "alert": false
+      }
+    ],
+    "HT (Hair Transplant)": [
+      {
+        "name": "Diabetes (controlled)",
+        "alert": false
+      },
+      {
+        "name": "Blood Pressure (controlled)",
+        "alert": false
+      },
+      {
+        "name": "Blood Thinning Medication",
+        "alert": false
+      },
+      {
+        "name": "Keloid / Scar forming tendency",
+        "alert": false
+      },
+      {
+        "name": "Asthma",
+        "alert": false
+      },
+      {
+        "name": "Allergy to anesthesia",
+        "alert": false
+      },
+      {
+        "name": "Heart Condition",
+        "alert": false
+      },
+      {
+        "name": "Uncontrolled Diabetes",
+        "alert": true
+      },
+      {
+        "name": "Hemophilia / Severe Bleeding Disorder",
+        "alert": true
+      },
+      {
+        "name": "Kidney Failure / On Dialysis",
+        "alert": true
+      },
+      {
+        "name": "HIV / AIDS",
+        "alert": true
+      },
+      {
+        "name": "Hepatitis B",
+        "alert": true
+      },
+      {
+        "name": "Hepatitis C",
+        "alert": true
+      },
+      {
+        "name": "Leukemia / Blood Cancer",
+        "alert": true
+      },
+      {
+        "name": "Active Cancer (current)",
+        "alert": true
+      },
+      {
+        "name": "No known condition",
+        "alert": false
+      }
+    ],
+    "Skin / Dermat": [
+      {
+        "name": "Eczema / Dermatitis",
+        "alert": false
+      },
+      {
+        "name": "Rosacea",
+        "alert": false
+      },
+      {
+        "name": "Vitiligo",
+        "alert": false
+      },
+      {
+        "name": "Melasma",
+        "alert": false
+      },
+      {
+        "name": "Photosensitivity / Sun Allergy",
+        "alert": false
+      },
+      {
+        "name": "Seborrheic Dermatitis",
+        "alert": false
+      },
+      {
+        "name": "Acne (severe)",
+        "alert": false
+      },
+      {
+        "name": "Drug Allergy (skin)",
+        "alert": false
+      },
+      {
+        "name": "Severe Widespread Psoriasis",
+        "alert": true
+      },
+      {
+        "name": "Lupus / SLE",
+        "alert": true
+      },
+      {
+        "name": "HIV / AIDS",
+        "alert": true
+      },
+      {
+        "name": "Hepatitis B",
+        "alert": true
+      },
+      {
+        "name": "Hepatitis C",
+        "alert": true
+      },
+      {
+        "name": "Active Herpes (widespread)",
+        "alert": true
+      },
+      {
+        "name": "Immunosuppression",
+        "alert": true
+      },
+      {
+        "name": "No known condition",
+        "alert": false
+      }
+    ],
+    "Laser": [
+      {
+        "name": "Photosensitivity",
+        "alert": false
+      },
+      {
+        "name": "Skin Pigmentation Issues",
+        "alert": false
+      },
+      {
+        "name": "Recent Sun Tan / Burn",
+        "alert": false
+      },
+      {
+        "name": "Active Acne",
+        "alert": false
+      },
+      {
+        "name": "Rosacea",
+        "alert": false
+      },
+      {
+        "name": "Keloid tendency",
+        "alert": false
+      },
+      {
+        "name": "On Accutane / Retinoids",
+        "alert": false
+      },
+      {
+        "name": "On blood thinners",
+        "alert": false
+      },
+      {
+        "name": "Lupus / SLE",
+        "alert": true
+      },
+      {
+        "name": "Active Cancer in treatment area",
+        "alert": true
+      },
+      {
+        "name": "HIV / AIDS",
+        "alert": true
+      },
+      {
+        "name": "Severe Widespread Psoriasis",
+        "alert": true
+      },
+      {
+        "name": "No known condition",
+        "alert": false
+      }
+    ],
+    "Aesthetics": [
+      {
+        "name": "Skin Allergies",
+        "alert": false
+      },
+      {
+        "name": "Previous filler reactions",
+        "alert": false
+      },
+      {
+        "name": "Autoimmune disease (general)",
+        "alert": false
+      },
+      {
+        "name": "Blood thinning medications",
+        "alert": false
+      },
+      {
+        "name": "HIV / AIDS",
+        "alert": true
+      },
+      {
+        "name": "Active Cancer (current)",
+        "alert": true
+      },
+      {
+        "name": "Lupus / SLE",
+        "alert": true
+      },
+      {
+        "name": "Hepatitis B",
+        "alert": true
+      },
+      {
+        "name": "No known condition",
+        "alert": false
+      }
+    ],
+    "Life Rise": [
+      {
+        "name": "Diabetes",
+        "alert": false
+      },
+      {
+        "name": "Blood Pressure (BP)",
+        "alert": false
+      },
+      {
+        "name": "Thyroid",
+        "alert": false
+      },
+      {
+        "name": "Heart Condition",
+        "alert": false
+      },
+      {
+        "name": "Fatty Liver",
+        "alert": false
+      },
+      {
+        "name": "PCOD / PCOS",
+        "alert": false
+      },
+      {
+        "name": "Kidney Failure / On Dialysis",
+        "alert": true
+      },
+      {
+        "name": "Active Cancer (current)",
+        "alert": true
+      },
+      {
+        "name": "HIV / AIDS",
+        "alert": true
+      },
+      {
+        "name": "No known condition",
+        "alert": false
+      }
+    ]
+  }
+}

@@ -8,6 +8,7 @@ const frame = ref(null);
 const attempt = ref(0);
 const busy = ref(false);
 const stalled = ref(false);
+const accessDenied = ref(false);
 let loadWatchdog;
 let receivedActivity = false;
 let finishLoading = null;
@@ -16,6 +17,7 @@ function setLoading(value) {
   busy.value = value;
   stalled.value = false;
   if (value) {
+    accessDenied.value = false;
     finishLoading?.();
     finishLoading = beginLoading(`Loading ${route.meta.title}`, retry, 50000);
     // A legacy page may never send its final loading event. Stop showing an
@@ -65,7 +67,14 @@ function loaded() {
     return;
   }
   // Frappe error/login responses do not run the module bridge.
-  if (!receivedActivity) setLoading(false);
+  if (!receivedActivity) {
+    setLoading(false);
+    // Same-origin Frappe permission pages render in the frame but don't
+    // participate in the loading bridge. Detect the familiar 403 response
+    // and show it as a portal-level state instead of a blank framed error.
+    const bodyText = (frame.value?.contentDocument?.body?.innerText || '').slice(0, 1200);
+    accessDenied.value = /(?:403|forbidden|not permitted|permission denied|insufficient permissions)/i.test(bodyText);
+  }
 }
 function activity(event) {
   if (event.origin !== window.location.origin || event.source !== frame.value?.contentWindow) return;
@@ -93,7 +102,7 @@ const source = computed(() => {
       }
     }
   }
-  query.set("module", route.name);
+  query.set("module", typeof route.query.module === "string" ? route.query.module : route.name);
   query.set("embed", "1");
   return "/life_portal_module?" + query.toString();
 });
@@ -106,7 +115,12 @@ watch(source, () => { receivedActivity = false; setLoading(true); }, { immediate
       <span>{{ route.meta.title }} is taking longer than expected.</span>
       <button type="button" @click="retry">Retry loading</button>
     </div>
-    <iframe ref="frame" :key="source + attempt" :src="source" :title="route.meta.title" @load="loaded"></iframe>
+    <div v-if="accessDenied" class="module-error" role="alert">
+      <div class="module-error-icon">403</div>
+      <div><strong>{{ route.meta.title }} is unavailable</strong><p>Your account does not have permission to open this page. Contact your portal administrator if you need access.</p></div>
+      <button type="button" @click="retry">Try again</button>
+    </div>
+    <iframe v-show="!accessDenied" ref="frame" :key="source + attempt" :src="source" :title="route.meta.title" @load="loaded"></iframe>
   </section>
 </template>
 
@@ -114,7 +128,9 @@ watch(source, () => { receivedActivity = false; setLoading(true); }, { immediate
 .portal-source-page{margin:-24px -28px -40px;position:relative;height:calc(100dvh - var(--header-height));min-height:560px;min-width:0;background:#f6f7f9;display:flex;flex-direction:column;overflow-x:clip;overflow-y:visible}
 .module-stalled{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 18px;background:#fff8e8;color:#6e5311;font-size:13px;border-bottom:1px solid #e8d8a8;flex-shrink:0}
 .module-stalled button{background:white;border:1px solid #d7c48e;border-radius:6px;padding:6px 12px;color:inherit;cursor:pointer;white-space:nowrap}
+.module-error{flex:1;display:flex;align-items:center;justify-content:center;gap:18px;max-width:760px;margin:auto;padding:36px;color:#24382d}.module-error-icon{display:grid;place-items:center;width:74px;height:74px;border-radius:18px;background:#fff0ed;color:#a5372b;font-size:20px;font-weight:800}.module-error strong{font-size:18px}.module-error p{margin:6px 0 0;color:#68776e;line-height:1.5}.module-error button{flex-shrink:0;border:1px solid #cbd9cf;border-radius:7px;background:white;padding:9px 14px;color:#245d3d;cursor:pointer}
 iframe{display:block;width:100%;max-width:100%;min-width:0;flex:1;min-height:0;border:0;background:white;overflow:auto}
 @media(max-width:980px){.portal-source-page{margin:-25px}}
 @media(max-width:600px){.portal-source-page{margin:-22px -16px}}
+@media(max-width:600px){.module-error{align-items:flex-start;flex-direction:column;padding:24px}.module-error-icon{width:58px;height:58px}}
 </style>

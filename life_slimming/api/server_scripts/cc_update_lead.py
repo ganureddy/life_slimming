@@ -258,6 +258,10 @@ def run(**kwargs):
         "lead_assign_to_branch",
         "source",
         "enquired_for",
+        "custom_media",
+        "custom_posting_date",
+        "custom_delivery_type",
+        "custom_specific_interests",
         "lead_owner",
         "custom_cc_stage",
         "custom_cc_sub_status",
@@ -296,7 +300,7 @@ def run(**kwargs):
     )
 
 
-    has_access = False
+    has_access = user == "Administrator"
 
     for role in ALLOWED_ROLES:
         if role in user_roles:
@@ -308,7 +312,7 @@ def run(**kwargs):
         frappe.throw("Not permitted")
 
 
-    can_edit_owner = False
+    can_edit_owner = user == "Administrator"
 
     for role in OWNER_EDIT_ROLES:
         if role in user_roles:
@@ -328,6 +332,20 @@ def run(**kwargs):
 
     if not frappe.db.exists("Lead", lead):
         frappe.throw("Lead not found")
+
+    # Avoid overwriting a status/profile another agent changed after this
+    # worksheet was opened. The caller must reload and review the new values.
+    expected_modified = frappe.form_dict.get("expected_modified")
+    if expected_modified:
+        current_modified = frappe.db.get_value("Lead", lead, "modified")
+        if str(current_modified) != str(expected_modified):
+            return {
+                "ok": 0,
+                "name": lead,
+                "conflict": 1,
+                "modified": str(current_modified),
+                "error": "This lead was updated by another user. The latest status has been reloaded; review it before saving again."
+            }
 
 
     # Non-manager users can update only their assigned leads.
@@ -361,6 +379,52 @@ def run(**kwargs):
     if not isinstance(values, dict):
         frappe.throw("values must be a JSON object")
 
+
+    can_edit_source = user == "Administrator" or any(
+        role in user_roles for role in ("System Manager", "Call Center Export")
+    )
+    if "source" in values and not can_edit_source:
+        current_source = frappe.db.get_value("Lead", lead, "source") or ""
+        if (values["source"] or "") != current_source:
+            frappe.throw("Only Call Center Export and administrators can edit Lead Source", frappe.PermissionError)
+        values.pop("source")
+
+    # Keep the portal status/stage derived from the selected CC outcome.
+    # This prevents a stale or default Lead status from overriding the call result.
+    SUBSTATUS_STATE = {
+        "Appointment Booked": ("Appointment Booked", "SUCCESS"),
+        "Walked In & Booked": ("Appointment Booked", "SUCCESS"),
+        "Existing Client": ("Existing client", "SUCCESS"),
+        "Callback: Scheduled": ("Call Back", "FOLLOW-UP"),
+        "Call & Confirm": ("Followup", "FOLLOW-UP"),
+        "Price Negotiation": ("Interested", "FOLLOW-UP"),
+        "Out Station": ("Get Back", "FOLLOW-UP"),
+        "Very Positive": ("Interested", "FOLLOW-UP"),
+        "Walked In: Not Booked": ("Not interested", "FOLLOW-UP"),
+        "Get Back": ("Get Back", "FOLLOW-UP"),
+        "No Response": ("Not Response", "FOLLOW-UP"),
+        "Not Reachable": ("Not Reachable", "FOLLOW-UP"),
+        "Switch OFF": ("Switch OFF", "FOLLOW-UP"),
+        "Call Disconnected": ("Call Disconnected", "FOLLOW-UP"),
+        "Appointment no response": ("Appointment no response", "FOLLOW-UP"),
+        "Not Interested": ("Not interested", "LOST"),
+        "Other clinic": ("Other clinic ", "LOST"),
+        "Joined Competition": ("Other clinic ", "LOST"),
+        "Do Not Contact": ("Do Not Contact", "LOST"),
+        "Invalid Number": ("Wrong number", "INVALID"),
+        "Wrong number": ("Wrong number", "INVALID"),
+        "Not in Service": ("Not in Service", "INVALID"),
+        "Junk/Wrong Call": ("NID", "INVALID"),
+        "Not Enquired": ("Not Enquired", "INVALID"),
+        "TNA": ("TNA", "INVALID"),
+        "NID": ("NID", "INVALID"),
+        "Franchise Lead": ("Franchise Lead", "INVALID"),
+        "Job enquiry": ("Job enquiry ", "INVALID"),
+        "Lead": ("Lead", "UNTOUCHED")
+    }
+    selected_substatus = values.get("custom_cc_sub_status")
+    if selected_substatus in SUBSTATUS_STATE:
+        values["status"], values["custom_cc_stage"] = SUBSTATUS_STATE[selected_substatus]
 
     # ------------------------------------------------------------
     # LINK FIELD VALIDATION
@@ -517,5 +581,6 @@ def run(**kwargs):
             "ok": 1,
             "name": lead_doc.name,
             "changed": len(clean),
+            "modified": str(lead_doc.modified),
             "skipped": skipped
         }

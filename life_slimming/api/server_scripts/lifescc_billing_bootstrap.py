@@ -1285,6 +1285,20 @@ def run(**kwargs):
     # FINAL RESPONSE
     # ============================================================
 
+    latest_invoice_print_format = "Consultaion Patient Sales Invoice"
+    try:
+        latest_print_formats = frappe.get_all(
+            "Print Format",
+            filters={"doc_type": "Sales Invoice", "print_format_for": "DocType", "disabled": 0},
+            fields=["name"],
+            order_by="creation desc, name desc",
+            limit_page_length=1
+        )
+        if latest_print_formats:
+            latest_invoice_print_format = latest_print_formats[0].get("name") or latest_invoice_print_format
+    except Exception:
+        pass
+
     frappe.response["message"] = {
         "user": frappe.session.user,
         "user_branch": user_branch,
@@ -1298,5 +1312,6 @@ def run(**kwargs):
         "approvers": approvers,
         "offers": offers,
         "comp_items": complimentary_items,
-        "discount_requests": discount_requests
+        "discount_requests": discount_requests,
+        "latest_invoice_print_format": latest_invoice_print_format
     }

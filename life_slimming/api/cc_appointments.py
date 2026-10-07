@@ -74,6 +74,29 @@ def mapped_branches(doctype, name, primary, table_field, extra=''):
     return branches
 
 
+def today_checkins(employees):
+    """Return a scheduling badge only; do not expose raw HR punch records."""
+    day = now_datetime().date()
+    employees = list(set(filter(None, employees)))
+    result = {employee: dict(date=str(day), status='Unavailable') for employee in employees}
+    if not employees or not frappe.db.exists('DocType', 'Employee Checkin'):
+        return result
+    punches = frappe.get_all('Employee Checkin', filters={
+        'employee': ['in', employees],
+        'time': ['between', [datetime.combine(day, time.min), datetime.combine(day, time.max)]],
+    }, fields=['employee', 'log_type'], order_by='time desc', limit_page_length=0)
+    for employee in employees:
+        result[employee]['status'] = 'No check-in recorded'
+    seen = set()
+    for punch in punches:
+        if punch.employee in seen:
+            continue
+        seen.add(punch.employee)
+        result[punch.employee]['status'] = {'IN': 'Checked in', 'OUT': 'Checked out'}.get(
+            punch.log_type, 'Punch recorded · direction unknown')
+    return result
+
+
 def staff_for(branch):
     """Expose only scheduling identity, not HR records, to authorized CC users."""
     employee_fields = ['name', 'employee_name', 'designation', 'branch']
@@ -96,6 +119,9 @@ def staff_for(branch):
                 if selected:
                     selected['practitioners'].append(p.name)
                     selected['practitioner'] = p.name
+    attendance = today_checkins(person['employee'] for person in result.values())
+    for person in result.values():
+        person['today_checkin'] = attendance[person['employee']]
     return sorted(result.values(), key=lambda x: (x['role'], x['name']))
 
 
@@ -179,8 +205,11 @@ def validate_booking(doc, method=None):
 
 
 @frappe.whitelist(methods=['POST'])
-def bootstrap(branch=None, query='', selected_lead=None):
+def bootstrap(branch=None, query='', selected_lead=None, appointment=None):
     authorize()
+    requested_appointment = editable_appointment(appointment) if appointment else None
+    if requested_appointment:
+        selected_lead = requested_appointment.party
     branches = frappe.get_list('Branch', pluck='name', order_by='name', limit_page_length=0)
     staff = []
     if branch:
@@ -198,8 +227,8 @@ def bootstrap(branch=None, query='', selected_lead=None):
     current = None
     if selected_lead:
         selected = lead_access(selected_lead)
-        if selected.get('custom_appointment'):
-            candidate = frappe.get_doc('Appointment', selected.custom_appointment)
+        if requested_appointment or selected.get('custom_appointment'):
+            candidate = requested_appointment or frappe.get_doc('Appointment', selected.custom_appointment)
             if candidate.party == selected_lead and candidate.get('custom_cc_booking') and candidate.status == 'Open':
                 current = dict(name=candidate.name, modified=str(candidate.modified), branch=candidate.branch,
                     start=str(candidate.scheduled_time), duration=60 if candidate.duration == '1 Hour' else 45,
@@ -325,11 +354,17 @@ def enrich_lead_appointments(rows):
         fields=['name', 'party', 'scheduled_time', 'appointment_time', 'custom_cc_staff_name',
                 'custom_cc_staff_role', 'custom_cc_resource'], limit_page_length=0)
     by_name = {row.name: row for row in appointments}
+    attendance = today_checkins(
+        a.custom_cc_resource.split(':', 1)[1] for a in appointments
+        if (a.custom_cc_resource or '').startswith('Employee:'))
     for row in rows:
         appointment = by_name.get(row.get('custom_appointment'))
         if not appointment or appointment.party != row.name:
             continue
         row['cc_consultation_employee'] = appointment.custom_cc_staff_name or ''
         row['cc_consultation_designation'] = appointment.custom_cc_staff_role or ''
+        employee = (appointment.custom_cc_resource or '').removeprefix('Employee:')
+        row['cc_today_checkin'] = attendance.get(employee, {
+            'date': str(now_datetime().date()), 'status': 'Employee not linked'})
         row['cc_appointment_end'] = str(appointment.appointment_time or '')
         row['cc_appointment_start'] = str(appointment.scheduled_time or '')

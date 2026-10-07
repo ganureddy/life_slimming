@@ -25,8 +25,9 @@ def run(**kwargs):
     # Duplicate check uses last-10-digit SUFFIX matching ("%<digits>", anchored
     # at the end) — this also fixes the false-positive you hit earlier where
     # 918959533301 loosely collided with 9959533301 on a last-9 substring match.
-    # Round-robin lead_owner assignment still happens via your existing
-    # before_insert logic on Lead — this script does not interfere with it.
+    # Authorized managers may choose an existing Lead Owner. For other users,
+    # the creator remains the owner. A blank manager selection leaves assignment
+    # to the existing Lead before_insert round-robin logic.
     # ═══════════════════════════════════════════════════════════════════
 
     ALLOWED_ROLES = ["System Manager", "Sales Manager", "Sales User", "Call Center Export"]
@@ -34,7 +35,7 @@ def run(**kwargs):
     ALLOWED_CREATE_FIELDS = [
         "first_name", "mobile_no", "phone", "email_id", "age", "gender", "city",
         "source", "branch", "lead_assign_to_branch", "enquired_for", "custom_remarks",
-        "status", "custom_cc_stage", "custom_media", "custom_posting_date", "category",
+        "status", "custom_cc_stage", "custom_cc_sub_status", "custom_media", "custom_posting_date", "category",
         "lead_owner"
     ]
 
@@ -95,16 +96,39 @@ def run(**kwargs):
     if dup:
         frappe.response["message"] = {"duplicate": dup[0]}
     else:
-        d = {"doctype": "Lead"}
-        # CC New Dash rule: the logged-in creator always remains the Lead Owner.
-        # Supplying this before insert also tells the weighted assignment script to
-        # preserve the manual owner and skip redistribution.
-        values["lead_owner"] = user
+        d = {
+            "doctype": "Lead",
+            "status": "Lead",
+            "custom_cc_stage": "UNTOUCHED",
+            "custom_cc_sub_status": "Lead",
+        }
+        requested_owner = str(values.get("lead_owner") or "").strip()
+        if can_choose_owner:
+            if requested_owner:
+                owner = frappe.db.get_value("User", requested_owner, "name")
+                if not owner:
+                    frappe.throw("Choose a valid Lead Owner")
+                values["lead_owner"] = owner
+            else:
+                values.pop("lead_owner", None)
+        else:
+            values["lead_owner"] = user
 
         for k in ALLOWED_CREATE_FIELDS:
             if k in values and values[k] not in (None, ""):
                 d[k] = values[k]
         d["mobile_no"] = digits
+        # New leads start with matching status fields. If the create form
+        # supplies a status but no CC sub-status, copy a matching value.
+        if not values.get("custom_cc_sub_status"):
+            initial_status = str(values.get("status") or "Lead").strip()
+            if initial_status in ("Lead", "Appointment Booked", "Not Enquired"):
+                d["custom_cc_sub_status"] = initial_status
+                d["custom_cc_stage"] = {
+                    "Lead": "UNTOUCHED",
+                    "Appointment Booked": "SUCCESS",
+                    "Not Enquired": "INVALID",
+                }[initial_status]
         doc = frappe.get_doc(d)
         doc.insert(ignore_permissions=True)
         frappe.response["message"] = {"created": doc.name, "lead_owner": doc.lead_owner}

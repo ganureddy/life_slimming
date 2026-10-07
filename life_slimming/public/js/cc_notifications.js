@@ -25,11 +25,11 @@
         return window.parent.lifeToast(message, indicator, seconds);
       }
     } catch { /* standalone rendering */ }
-    const duration = Math.max(10000, (Number(seconds) || 10) * 1000);
+    const duration = 10000;
     let host = document.getElementById('life-toast-host');
     if (!host) {
       const style = document.createElement('style');
-      style.textContent = `#life-toast-host{position:fixed;top:90px;right:20px;z-index:2147483000;width:min(460px,calc(100vw - 24px));max-height:calc(100dvh - 110px);overflow:auto;display:grid;gap:10px;pointer-events:none;font:14px/1.5 Arial,sans-serif}#life-toast-host .life-toast{pointer-events:auto;display:grid;grid-template-columns:1fr auto;gap:12px;background:#fff;color:#173e31;border:1px solid #a6c6b6;border-left:6px solid #286e53;border-radius:10px;padding:14px 16px;box-shadow:0 6px 24px #0003;white-space:pre-wrap;overflow-wrap:anywhere}#life-toast-host .life-toast-error{border-color:#be463c;color:#802720;background:#fff5f3}#life-toast-host .life-toast-warning{border-color:#a67915;color:#694c0a;background:#fffbeb}#life-toast-host strong{display:block;margin-bottom:4px}#life-toast-host button{align-self:start;border:0;background:transparent;color:inherit;padding:2px 6px;font:22px Arial;cursor:pointer}@media(max-width:600px){#life-toast-host{top:76px;right:12px;max-height:calc(100dvh - 92px)}}`;
+      style.textContent = `#life-toast-host{position:fixed;top:90px;right:20px;z-index:2147483000;width:min(460px,calc(100vw - 24px));max-height:calc(100dvh - 110px);overflow:auto;display:grid;gap:10px;pointer-events:none;font:14px/1.5 Arial,sans-serif}#life-toast-host .life-toast{position:relative;inset:auto;pointer-events:auto;display:grid;grid-template-columns:1fr auto;gap:12px;background:#fff;color:#173e31;border:1px solid #a6c6b6;border-left:6px solid #286e53;border-radius:10px;padding:14px 16px;box-shadow:0 6px 24px #0003;white-space:pre-wrap;overflow-wrap:anywhere}#life-toast-host .life-toast-error{border-color:#be463c;color:#802720;background:#fff5f3}#life-toast-host .life-toast-warning{border-color:#a67915;color:#694c0a;background:#fffbeb}#life-toast-host strong{display:block;margin-bottom:4px}#life-toast-host button{align-self:start;border:0;background:transparent;color:inherit;padding:2px 6px;font:22px Arial;cursor:pointer}@media(max-width:600px){#life-toast-host{top:76px;right:12px;max-height:calc(100dvh - 92px)}}`;
       document.head.appendChild(style);
       host = document.createElement('div'); host.id = 'life-toast-host';
       host.setAttribute('aria-label', 'Notifications');

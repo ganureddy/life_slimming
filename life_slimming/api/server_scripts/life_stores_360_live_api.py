@@ -1434,7 +1434,12 @@ def run(**kwargs):
                     "expectedPhone": row_data["expected_phone"],
                     "expectedJoiningDate": row_data["expected_joining_date"],
                     "expectedTreatmentCategory": row_data["expected_treatment_category"],
-                    "expectedSessions": row_data["expected_sessions"]
+                    "expectedSessions": row_data["expected_sessions"],
+                    "requestBy": row_data["request_by"],
+                    "requestType": row_data["request_type"],
+                    "givenDate": "",
+                    "receiptEvidence": "",
+                    "receiptAdjustment": ""
                 })
 
 
@@ -1989,6 +1994,7 @@ def run(**kwargs):
         received_by_request_code = {}
         entry_by_request_code = {}
         receipt_state_by_request_code = {}
+        released_date_by_request_code = {}
 
         for r in se_detail_rows:
             h = se_header_map.get(r.get("parent")) or {}
@@ -2129,6 +2135,9 @@ def run(**kwargs):
                 request_key = request_name + "||" + item_code
                 released_by_request_code[request_key] = released_by_request_code.get(request_key, 0) + qty
                 received_by_request_code[request_key] = received_by_request_code.get(request_key, 0) + actual_received_qty
+                release_date = sval(h.get("custom_stock_release_date") or h.get("posting_date"))
+                if release_date and release_date > sval(released_date_by_request_code.get(request_key)):
+                    released_date_by_request_code[request_key] = release_date
                 if entry_name:
                     entry_by_request_code[request_key] = entry_name
                 if receipt_confirmed:
@@ -2181,6 +2190,7 @@ def run(**kwargs):
 
             request_row["releasedQty"] = released_qty
             request_row["recQty"] = received_qty
+            request_row["givenDate"] = released_date_by_request_code.get(request_key) or ""
             request_row["receivedQty"] = received_qty
             request_row["pendingReceiptQty"] = max(released_qty - received_qty, 0)
             request_row["pendingQty"] = max(request_qty - received_qty, 0)
@@ -3079,6 +3089,8 @@ def run(**kwargs):
                 r["receiptEvidence"] = adjrow.get("evidence") or ""
                 r["receiptReportedBy"] = adjrow.get("reported_by") or ""
                 r["receiptReportedOn"] = adjrow.get("reported_on") or ""
+                r["discrepancyRemarks"] = adjrow.get("remarks") or ""
+                r["discrepancyType"] = adjrow.get("discrepancy_type") or ""
                 r["receiptReconciliationDiff"] = max(
                     released - received - missing - damaged,
                     0
@@ -3409,8 +3421,13 @@ def run(**kwargs):
 
             "ho_stock": ho_stock,
             "branch_stock": branch_stock,
+            "po_ordered_month": po_ordered_month,
+            "po_pending_month": po_pending_month,
 
             "stock_requests": stock_requests,
+
+            "receipt_adjustments": receipt_adjustments,
+            "receipt_adjustment_items": receipt_adjustment_items,
 
             "dispatch": dispatch,
             "returns": returns,
