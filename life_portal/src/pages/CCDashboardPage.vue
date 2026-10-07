@@ -272,7 +272,7 @@ async function saveFollowup(payload) {
     detail.value=refreshed.rows?.find(item=>item.name===id)||detail.value;
     initLeadDraft(detail.value);
     await load(page.value);
-    if(actionType.value==='book') { await booking.value.open(id,leadDraft.value.branch); }
+    if(actionType.value==='book') { await router.push({name:'cc-appointments',query:{lead:id,branch:leadDraft.value.branch||''}}); }
   } catch(e) { if(e.message)actionError.value=e.message; }
   finally { savingFollowup.value=false; }
 }
