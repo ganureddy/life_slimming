@@ -205,8 +205,11 @@ def validate_booking(doc, method=None):
 
 
 @frappe.whitelist(methods=['POST'])
-def bootstrap(branch=None, query='', selected_lead=None):
+def bootstrap(branch=None, query='', selected_lead=None, appointment=None):
     authorize()
+    requested_appointment = editable_appointment(appointment) if appointment else None
+    if requested_appointment:
+        selected_lead = requested_appointment.party
     branches = frappe.get_list('Branch', pluck='name', order_by='name', limit_page_length=0)
     staff = []
     if branch:
@@ -224,8 +227,8 @@ def bootstrap(branch=None, query='', selected_lead=None):
     current = None
     if selected_lead:
         selected = lead_access(selected_lead)
-        if selected.get('custom_appointment'):
-            candidate = frappe.get_doc('Appointment', selected.custom_appointment)
+        if requested_appointment or selected.get('custom_appointment'):
+            candidate = requested_appointment or frappe.get_doc('Appointment', selected.custom_appointment)
             if candidate.party == selected_lead and candidate.get('custom_cc_booking') and candidate.status == 'Open':
                 current = dict(name=candidate.name, modified=str(candidate.modified), branch=candidate.branch,
                     start=str(candidate.scheduled_time), duration=60 if candidate.duration == '1 Hour' else 45,

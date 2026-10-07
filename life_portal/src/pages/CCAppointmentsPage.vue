@@ -5,6 +5,8 @@ import { request } from '../api/http';
 import { session } from '../lib/session';
 import { createRequestId } from '../api/convox';
 import '../styles/cc.css';
+import CCConsultationBooking from '../components/cc/CCConsultationBooking.vue';
+const rescheduleDialog=ref(null);
 const route = useRoute();
 const bookingDialog=ref(null), editing=ref(null);
 const branches=ref([]), staff=ref([]), leads=ref([]), branch=ref(''), date=ref(''), today=ref(''), timezone=ref('');
@@ -47,7 +49,12 @@ async function refresh(){
 async function findLeads(){const gen=++searchGeneration;try{const d=await call('bootstrap',{query:search.value,selected_lead:lead.value});if(gen===searchGeneration&&mounted)leads.value=d.leads;}catch(e){error.value=e.message;}}
 async function choose(person,slot){if(!slot.available||saving.value)return;selected.value={staff:person,slot};requestId=createRequestId();error.value='';success.value='';await nextTick();bookingDialog.value?.showModal();}
 async function changeAppointment(event){
- try{const data=await call('bootstrap',{selected_lead:event.lead});if(!data.appointment||data.appointment.name!==event.name)throw Error('Open this lead’s latest appointment from the lead screen.');editing.value=data.appointment;leads.value=data.leads;lead.value=event.lead;branch.value=data.appointment.branch;duration.value=data.appointment.duration;role.value='';resource.value='';await refresh();}catch(e){error.value=e.message;}
+ await rescheduleDialog.value.open(event.lead,event.branch,event.name);
+}
+async function appointmentRescheduled(result){
+ editing.value=null;
+ success.value='Appointment '+result.name+' updated. The previous time and manager slot have been released.';
+ await refresh();
 }
 async function cancelChange(){editing.value=null;await refresh();}
 async function book(){
@@ -65,6 +72,7 @@ onMounted(init);
 onUnmounted(()=>{mounted=false;generation++;searchGeneration++;clearTimeout(timer);});
 </script>
 <template>
+<CCConsultationBooking ref="rescheduleDialog" @saved="appointmentRescheduled" />
 <section class="cc-scheduler" :aria-busy="loading||saving">
  <header><div><RouterLink :to="{name:'leads'}">← CC Dashboard</RouterLink><h1>CC Appointment Scheduler</h1><p>10:00 AM–8:00 PM · Minimum 45 minutes · {{ timezone }}</p></div><button :disabled="loading||saving" @click="refresh">Refresh calendar</button></header>
  <p v-if="error" role="alert" class="error">{{ error }}</p><p v-if="success" role="status" class="success">{{ success }}</p>
