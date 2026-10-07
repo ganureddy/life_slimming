@@ -35,7 +35,7 @@ def run(**kwargs):
     ALLOWED_CREATE_FIELDS = [
         "first_name", "mobile_no", "phone", "email_id", "age", "gender", "city",
         "source", "branch", "lead_assign_to_branch", "enquired_for", "custom_remarks",
-        "status", "custom_cc_stage", "custom_media", "custom_posting_date", "category",
+        "status", "custom_cc_stage", "custom_cc_sub_status", "custom_media", "custom_posting_date", "category",
         "lead_owner"
     ]
 
@@ -96,7 +96,12 @@ def run(**kwargs):
     if dup:
         frappe.response["message"] = {"duplicate": dup[0]}
     else:
-        d = {"doctype": "Lead"}
+        d = {
+            "doctype": "Lead",
+            "status": "Lead",
+            "custom_cc_stage": "UNTOUCHED",
+            "custom_cc_sub_status": "Lead",
+        }
         requested_owner = str(values.get("lead_owner") or "").strip()
         if can_choose_owner:
             if requested_owner:
@@ -113,6 +118,17 @@ def run(**kwargs):
             if k in values and values[k] not in (None, ""):
                 d[k] = values[k]
         d["mobile_no"] = digits
+        # New leads start with matching status fields. If the create form
+        # supplies a status but no CC sub-status, copy a matching value.
+        if not values.get("custom_cc_sub_status"):
+            initial_status = str(values.get("status") or "Lead").strip()
+            if initial_status in ("Lead", "Appointment Booked", "Not Enquired"):
+                d["custom_cc_sub_status"] = initial_status
+                d["custom_cc_stage"] = {
+                    "Lead": "UNTOUCHED",
+                    "Appointment Booked": "SUCCESS",
+                    "Not Enquired": "INVALID",
+                }[initial_status]
         doc = frappe.get_doc(d)
         doc.insert(ignore_permissions=True)
         frappe.response["message"] = {"created": doc.name, "lead_owner": doc.lead_owner}

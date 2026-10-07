@@ -389,6 +389,43 @@ def run(**kwargs):
             frappe.throw("Only Call Center Export and administrators can edit Lead Source", frappe.PermissionError)
         values.pop("source")
 
+    # Keep the portal status/stage derived from the selected CC outcome.
+    # This prevents a stale or default Lead status from overriding the call result.
+    SUBSTATUS_STATE = {
+        "Appointment Booked": ("Appointment Booked", "SUCCESS"),
+        "Walked In & Booked": ("Appointment Booked", "SUCCESS"),
+        "Existing Client": ("Existing client", "SUCCESS"),
+        "Callback: Scheduled": ("Call Back", "FOLLOW-UP"),
+        "Call & Confirm": ("Followup", "FOLLOW-UP"),
+        "Price Negotiation": ("Interested", "FOLLOW-UP"),
+        "Out Station": ("Get Back", "FOLLOW-UP"),
+        "Very Positive": ("Interested", "FOLLOW-UP"),
+        "Walked In: Not Booked": ("Not interested", "FOLLOW-UP"),
+        "Get Back": ("Get Back", "FOLLOW-UP"),
+        "No Response": ("Not Response", "FOLLOW-UP"),
+        "Not Reachable": ("Not Reachable", "FOLLOW-UP"),
+        "Switch OFF": ("Switch OFF", "FOLLOW-UP"),
+        "Call Disconnected": ("Call Disconnected", "FOLLOW-UP"),
+        "Appointment no response": ("Appointment no response", "FOLLOW-UP"),
+        "Not Interested": ("Not interested", "LOST"),
+        "Other clinic": ("Other clinic ", "LOST"),
+        "Joined Competition": ("Other clinic ", "LOST"),
+        "Do Not Contact": ("Do Not Contact", "LOST"),
+        "Invalid Number": ("Wrong number", "INVALID"),
+        "Wrong number": ("Wrong number", "INVALID"),
+        "Not in Service": ("Not in Service", "INVALID"),
+        "Junk/Wrong Call": ("NID", "INVALID"),
+        "Not Enquired": ("Not Enquired", "INVALID"),
+        "TNA": ("TNA", "INVALID"),
+        "NID": ("NID", "INVALID"),
+        "Franchise Lead": ("Franchise Lead", "INVALID"),
+        "Job enquiry": ("Job enquiry ", "INVALID"),
+        "Lead": ("Lead", "UNTOUCHED")
+    }
+    selected_substatus = values.get("custom_cc_sub_status")
+    if selected_substatus in SUBSTATUS_STATE:
+        values["status"], values["custom_cc_stage"] = SUBSTATUS_STATE[selected_substatus]
+
     # ------------------------------------------------------------
     # LINK FIELD VALIDATION
     # ------------------------------------------------------------
