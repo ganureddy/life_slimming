@@ -1128,11 +1128,11 @@
       "NID"
     ],
     "TIP": {
-      "No Response": "Rang out. Calls +1 · next follow-up date & time required.",
+      "No Response": "Rang out. Record the failed attempt; no follow-up date is required.",
       "Not Reachable": "Out of coverage. Calls +1 · retry later today.",
       "Switch OFF": "Phone off. Calls +1 · try a different time slot.",
-      "Call Disconnected": "Cut mid-call. Calls +1 · set a short-window retry slot.",
-      "Appointment no response": "Pre-visit confirmation call not answered. Appointment stays booked.",
+      "Call Disconnected": "Cut mid-call. Record the failed attempt; no follow-up date is required.",
+      "Appointment no response": "Client did not respond at the appointment time. Save as Appointment no response; the reserved slot is unchanged.",
       "Invalid Number": "Number does not exist → INVALID, record locks.",
       "Wrong number": "Reached someone else → INVALID, record locks.",
       "Not in Service": "Number disconnected by operator → INVALID, record locks.",

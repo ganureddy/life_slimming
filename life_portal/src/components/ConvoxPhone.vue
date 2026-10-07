@@ -95,7 +95,8 @@ function fitPanel() {
 }
 function resetPosition() { position.value = null; resizeTo(760, 780); }
 
-const visible = computed(() => permitted.value && (route.name === 'leads' || Boolean(url.value)));
+const isCcDashboard = computed(() => ['leads', 'leads-native'].includes(route.name));
+const visible = computed(() => permitted.value && (isCcDashboard.value || Boolean(url.value)));
 const controller = new AbortController();
 let stopped = false, timer, cursor = '';
 let sessionGeneration = 0;
@@ -130,7 +131,7 @@ async function pollEvents() {
       if (seen.has(key)) continue;
       seen.add(key);
       events.value = [event, ...events.value.filter(row => row.name !== event.name)].slice(0, 20);
-      if (route.name === 'leads') {
+      if (isCcDashboard.value) {
         document.querySelector('.portal-source-page iframe')?.contentWindow?.postMessage({
           type: 'life-convox-status', call_reference: event.call_reference,
           event_type: event.event_type, call_status: event.call_status,
@@ -238,7 +239,7 @@ async function callFromDashboard(event) {
       return;
     }
     // Do not dial if the agent changed pages/leads while the phone was opening.
-    if (route.name !== 'leads' || selectedLead.value !== event.data.lead_id) {
+    if (!isCcDashboard.value || selectedLead.value !== event.data.lead_id) {
       reply({ success: false, status: 'CANCELLED', message: 'Lead selection changed. Click Start Call on the intended lead.' });
       return;
     }
@@ -257,7 +258,7 @@ function receive(event) {
   if (event.data.type === 'life-convox-call') callFromDashboard(event);
 }
 function receiveNative(event) {
-  if(route.name!=='leads'||!permitted.value) return;
+  if(!isCcDashboard.value||!permitted.value) return;
   const data=event.detail;
   if(!data||!['life-convox-select','life-convox-open','life-convox-call'].includes(data.type))return;
   if(typeof data.lead_id==='string'&&data.lead_id.length<=140)selectedLead.value=data.lead_id;
@@ -265,6 +266,11 @@ function receiveNative(event) {
   if(data.type==='life-convox-call'&&selectedLead.value)callFromDashboard({data,origin:window.location.origin,source:{postMessage:result=>data.onResult?.(result)}});
 }
 function findCaller(event) {
+  if (route.name === 'leads-native') {
+    window.dispatchEvent(new CustomEvent('life-convox-find-native', { detail: { mobile_number: event.mobile_number } }));
+    minimize();
+    return;
+  }
   if (route.name !== 'leads') return;
   const frame = document.querySelector('.portal-source-page iframe');
   frame?.contentWindow?.postMessage({ type: 'life-convox-find', mobile: event.mobile_number }, window.location.origin);
@@ -372,9 +378,9 @@ onBeforeUnmount(() => {
           <details class="convox-login-options"><summary>Sign-in options</summary>
             <div class="convox-tools"><button :disabled="starting || calling" @click="connect(true, true)">Manual sign-in</button><button v-if="settings.sso_ready" :disabled="starting || calling || dashboardCallPending" @click="connect(false, true)">Retry automatic sign-in</button></div>
           </details>
-          <label v-if="url && selectedLead && route.name === 'leads'" class="convox-ready"><input ref="readinessInput" type="checkbox" v-model="phoneConfirmed" :disabled="calling || starting"> <span>Phone Registered, agent Idle — I confirm.</span></label>
+          <label v-if="url && selectedLead && isCcDashboard" class="convox-ready"><input ref="readinessInput" type="checkbox" v-model="phoneConfirmed" :disabled="calling || starting"> <span>Phone Registered, agent Idle — I confirm.</span></label>
           <iframe @load="phoneConfirmed = false" v-if="url" :key="frameVersion" :src="url" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups" :allow="`microphone ${CONVOX_ORIGIN}`" referrerpolicy="no-referrer" title="ConVox agent softphone" class="convox-widget"></iframe>
-          <div v-if="url && route.name === 'leads'" class="convox-call">
+          <div v-if="url && isCcDashboard" class="convox-call">
             <span>{{ selectedLead ? `Selected lead: ${selectedLead}` : 'Select a lead to call.' }}</span>
             <strong v-if="target">Call to: {{ target.phone_number }}</strong>
             <small v-else-if="selectedLead">{{ targetError || 'Checking saved lead number…' }}</small>
@@ -382,7 +388,7 @@ onBeforeUnmount(() => {
             <small v-if="!settings.click_to_call_ready">Calling setup incomplete.</small>
           </div>
         </template>
-        <div v-if="events.length" class="convox-events"><h3>Recent call updates</h3><article v-for="event in events" :key="event.name"><strong>{{ event.call_status || event.call_type || event.event_type }}</strong><span>{{ event.mobile_number }} <span v-if="event.disposition">· {{ event.disposition }}</span></span><button v-if="route.name === 'leads' && event.mobile_number" @click="findCaller(event)">Find caller in leads</button></article></div>
+        <div v-if="events.length" class="convox-events"><h3>Recent call updates</h3><article v-for="event in events" :key="event.name"><strong>{{ event.call_status || event.call_type || event.event_type }}</strong><span>{{ event.mobile_number }} <span v-if="event.disposition">· {{ event.disposition }}</span></span><button v-if="isCcDashboard && event.mobile_number" @click="findCaller(event)">Find caller in leads</button></article></div>
       </div>
       <button class="convox-resize" aria-label="Resize phone panel" title="Drag to resize, or use arrow keys"
         @pointerdown="startResize" @pointermove="moveResize" @pointerup="stopResize" @pointercancel="stopResize" @lostpointercapture="stopResize"

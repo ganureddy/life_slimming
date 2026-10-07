@@ -25,8 +25,9 @@ def run(**kwargs):
     # Duplicate check uses last-10-digit SUFFIX matching ("%<digits>", anchored
     # at the end) — this also fixes the false-positive you hit earlier where
     # 918959533301 loosely collided with 9959533301 on a last-9 substring match.
-    # Round-robin lead_owner assignment still happens via your existing
-    # before_insert logic on Lead — this script does not interfere with it.
+    # Authorized managers may choose an existing Lead Owner. For other users,
+    # the creator remains the owner. A blank manager selection leaves assignment
+    # to the existing Lead before_insert round-robin logic.
     # ═══════════════════════════════════════════════════════════════════
 
     ALLOWED_ROLES = ["System Manager", "Sales Manager", "Sales User", "Call Center Export"]
@@ -96,10 +97,17 @@ def run(**kwargs):
         frappe.response["message"] = {"duplicate": dup[0]}
     else:
         d = {"doctype": "Lead"}
-        # CC New Dash rule: the logged-in creator always remains the Lead Owner.
-        # Supplying this before insert also tells the weighted assignment script to
-        # preserve the manual owner and skip redistribution.
-        values["lead_owner"] = user
+        requested_owner = str(values.get("lead_owner") or "").strip()
+        if can_choose_owner:
+            if requested_owner:
+                owner = frappe.db.get_value("User", requested_owner, "name")
+                if not owner:
+                    frappe.throw("Choose a valid Lead Owner")
+                values["lead_owner"] = owner
+            else:
+                values.pop("lead_owner", None)
+        else:
+            values["lead_owner"] = user
 
         for k in ALLOWED_CREATE_FIELDS:
             if k in values and values[k] not in (None, ""):
