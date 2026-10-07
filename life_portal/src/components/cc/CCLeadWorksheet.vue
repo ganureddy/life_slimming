@@ -19,7 +19,7 @@ const phones = ref([]), primary = ref(''), savedPhones = ref(new Set()), reveale
 const sources=ref([]),contactMatches=ref({}),previousOwner=ref('Checking history…'),assignment=ref('Checking history…');
 const assessment = ref({}), medical = ref([]), historyDialog = ref(null);
 const leadHistory = ref([]), leadHistoryLoading = ref(false), leadHistoryError = ref('');
-const toast = ref(null); let toastTimer;
+const toast = ref(null), clockNow = ref(Date.now()); let toastTimer, clockTimer;
 const profilePattern = /\[CC_PROFILE_V1\]([\s\S]*?)\[\/CC_PROFILE_V1\]/;
 const digits = value => String(value || '').replace(/\D/g, '').slice(-10);
 function profileOf(lead) { try { return JSON.parse(String(lead.custom_remarks || '').match(profilePattern)?.[1] || '{}'); } catch { return {}; } }
@@ -36,7 +36,14 @@ const stepComplete = computed(() => [
 ]);
 const progress = computed(() => Math.round(stepComplete.value.filter(Boolean).length / progressSteps.length * 100));
 const clientName = computed(() => (draft.value.first_name || props.lead.lead_name || '') + (alias.value ? ` (${alias.value})` : ''));
-const age = computed(() => { const time = new Date(String(props.lead.creation || '').replace(' ', 'T') + '+05:30'); const days = Math.max(0, Math.floor((Date.now() - time.getTime()) / 86400000)); return Number.isFinite(days) ? `${days}d` : '—'; });
+const age = computed(() => {
+  const raw=String(props.lead.creation||props.lead.custom_posting_date||'').trim();
+  let time;
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) time=new Date(raw.includes('T')?raw:raw.replace(' ','T')+'+05:30');
+  else { const match=/^(\d{2})-(\d{2})-(\d{4})/.exec(raw); if(match)time=new Date(Number(match[3]),Number(match[2])-1,Number(match[1])); }
+  if(!time||!Number.isFinite(time.getTime()))return '—';
+  return `${Math.max(0,Math.floor((clockNow.value-time.getTime())/86400000))}d`;
+});
 const calls = computed(() => savedProfile.value.workflow?.attempt_count ?? props.lead.custom_call_count ?? 0);
 const savedStatus = computed(() => (reference.WF.RETRY.includes(props.lead.custom_cc_sub_status) ? props.lead.workflow_hint?.prior_connected : '') || props.lead.custom_cc_sub_status || 'Lead');
 const wf = reference.WF;
@@ -96,7 +103,7 @@ watch(() => [draft.value.weight,draft.value.height], ([weight,height]) => { draf
 async function showHistory(){historyDialog.value?.showModal();if(leadHistory.value.length||leadHistoryLoading.value)return;leadHistoryLoading.value=true;leadHistoryError.value='';try{const rows=await ccCall('cc_get_lead_history',{lead:props.lead.name});leadHistory.value=Array.isArray(rows)?rows:rows?.rows||[]}catch(error){leadHistoryError.value=error.message||'Could not load lead history.'}finally{leadHistoryLoading.value=false}}
 function dismissToast(){toast.value=null;clearTimeout(toastTimer)}
 function showToast(message,type='success'){toast.value={message,type};clearTimeout(toastTimer);toastTimer=setTimeout(()=>dismissToast(),10000)}
-onBeforeUnmount(()=>clearTimeout(toastTimer));
+onBeforeUnmount(()=>{clearTimeout(toastTimer);clearInterval(clockTimer);});
 function leadHistoryChanges(event){try{return (JSON.parse(event.data||'{}').changed||[]).filter(change=>['status','custom_cc_stage','custom_cc_sub_status','lead_owner','custom_appointment_status','branch','lead_assign_to_branch','custom_next_followup_date','custom_conclusion_remark','source'].includes(change[0]))}catch{return []}}
 const historyLabels={status:'Status',custom_cc_stage:'CC Stage',custom_cc_sub_status:'Sub-status',lead_owner:'Lead Owner',custom_appointment_status:'Appointment',branch:'Branch',lead_assign_to_branch:'Assigned Branch',custom_next_followup_date:'Next Follow-up',custom_conclusion_remark:'Conclusion',source:'Source'};
 function openConvoxHistory(){router.push({name:'convox-history',params:{leadId:props.lead.name}})}
@@ -124,7 +131,7 @@ function addPhone(index) { if (phones.value.length >= 4 || phones.value.some(num
 function removePhone(index) { const number=phones.value[index]; if (number && savedPhones.value.has(number) && !props.manager) return; phones.value.splice(index,1); if (!phones.value.length) phones.value=['']; if (primary.value===number) primary.value=phones.value.find(Boolean)||''; }
 function setPhone(index,event) { phones.value[index] = event.target.value.replace(/\D/g,'').slice(0,10); event.target.value=phones.value[index];if(phones.value[index].length===10)lookupPhone(phones.value[index]); }
 async function lookupPhone(phone){try{const data=await ccCall('cc_phone_lookup',{phone,lead:props.lead.name});contactMatches.value={...contactMatches.value,[phone]:data.matches||[]}}catch{}}
-onMounted(async()=>{try{const data=await request('frappe.client.get_list',{args:{doctype:'Lead Source',fields:['name'],limit_page_length:500},csrfToken:session.csrf_token});sources.value=data.message||[]}catch{}});
+onMounted(async()=>{clockTimer=setInterval(()=>clockNow.value=Date.now(),60000);try{const data=await request('frappe.client.get_list',{args:{doctype:'Lead Source',fields:['name'],limit_page_length:500},csrfToken:session.csrf_token});sources.value=data.message||[]}catch{}});
 watch(()=>props.lead.name,async lead=>{previousOwner.value='Checking history…';assignment.value='Checking history…';try{const rows=await ccCall('cc_get_lead_history',{lead});if(props.lead.name!==lead)return;let prior='';for(const row of (Array.isArray(rows)?rows:[]).sort((a,b)=>String(b.creation).localeCompare(String(a.creation)))){try{const change=(JSON.parse(row.data||'{}').changed||[]).find(change=>change[0]==='lead_owner'&&change[1]&&change[1]!==change[2]);if(change){prior=change[1];break}}catch{}}previousOwner.value=prior||'No prior owner recorded';assignment.value=prior?'Reassigned':'No reassignment recorded'}catch{previousOwner.value='History unavailable';assignment.value='Not verified'}}, {immediate:true});
 async function copyPhone(number) { try { await navigator.clipboard.writeText(number); } catch { validation.value = 'Could not copy the phone number.'; } }
 function submit(checkOnly=false) {
