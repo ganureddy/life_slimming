@@ -40,6 +40,11 @@ const pageComponents = {
 
 export const routes = [
   {
+    path: "/native/cc-live-tv", name: "cc-live-tv",
+    component: () => import("../components/cc/CCLiveTV.vue"),
+    meta: { title: "CC Live TV", accessModule: "leads" },
+  },
+  {
     path: "/native/billing", name: "billing-native",
     component: () => import("../pages/BillingNativePage.vue"),
     meta: { title: "Billing preview", accessModule: "billing" },
