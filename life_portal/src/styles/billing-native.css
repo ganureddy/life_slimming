@@ -190,6 +190,7 @@
 .billing-native .billing-hero h2 { font-size: 30px; }
 .billing-native .billing-kpi h3 { font-size: 11px; }
 .billing-native.billing-dialog {
+  min-height: 0;
   width: min(1100px, calc(100vw - 40px));
   max-height: calc(100dvh - 40px);
   overflow-y: auto;
@@ -207,9 +208,47 @@
 .billing-dialog > .billing-panel { margin: 0; border-radius: 16px; border: 0; }
 .billing-dialog > .billing-review-panel { margin: 0; border: 0; }
 .billing-dialog .billing-invoice > .billing-panel { border: 1px solid #dce8e0; }
+.billing-native > .billing-mini-search,
+.billing-native > .billing-month,
+.billing-native > .billing-list-tools,
+.billing-native > .billing-notice,
+.billing-native > [role=alert] { margin-top: 18px; }
+.billing-native .billing-kpi { border-top-width: 3px; }
+.billing-native .billing-kpi.tone-green { border-top-color: #378060; }
+.billing-native .billing-kpi.tone-blue { border-top-color: #628dca; }
+.billing-native .billing-kpi.tone-red { border-top-color: #cd726b; }
+.billing-native .billing-kpi.tone-amber { border-top-color: #c5a153; }
+.billing-native :is(td,th) { font-variant-numeric: tabular-nums; }
+.billing-native tbody tr:hover { background: #f5faf7; }
+.billing-native td:last-child { min-width: 150px; }
+.billing-native td:last-child button { margin: 3px; }
+.billing-native .billing-loan-video { display: grid; gap: 12px; }
+.billing-native .billing-loan-video video { width: 100%; max-height: 280px; background: #102c24; }
+.billing-native .billing-video-review { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--bill-line); border-radius: 10px; }
+.billing-native .billing-video-review p { overflow-wrap: anywhere; }
+.billing-native .billing-video-review input[type=checkbox] { flex: 0 0 18px; }
+.billing-native .billing-invoice-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.billing-native .billing-search-status { margin-top: 12px; }
+.billing-native .billing-cost-details .table-wrap { margin-top: 12px; }
 @media(max-width:600px) {
   .billing-native .billing-scope { min-width: 0; }
   .billing-native .billing-hero h2 { font-size: 26px; }
   .billing-native.billing-dialog { width: calc(100vw - 20px); max-height: calc(100dvh - 20px); border-radius: 12px; }
   .billing-native .billing-kpi h3 { font-size: 10px; }
+}
+
+@media print {
+  body:has(.billing-review-panel) * { visibility: hidden; }
+  body:has(.billing-review-panel) .billing-dialog:has(.billing-review-panel),
+  body:has(.billing-review-panel) .billing-review-panel,
+  body:has(.billing-review-panel) .billing-review-panel * { visibility: visible; }
+  body:has(.billing-review-panel) .billing-dialog:has(.billing-review-panel) {
+    position: absolute; inset: 0 auto auto 0; width: 100%; max-width: none;
+    height: auto; min-height: 0; max-height: none; margin: 0; overflow: visible;
+    background: white; box-shadow: none;
+  }
+  body:has(.billing-review-panel) .billing-review-panel :is(button, footer, .billing-notice),
+  body:has(.billing-review-panel) .billing-preview-title { display: none; }
+  body:has(.billing-review-panel) .billing-review-panel { padding: 0; }
+  body:has(.billing-review-panel) .billing-review-panel .table-wrap { overflow: visible; }
 }

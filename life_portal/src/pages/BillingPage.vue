@@ -4,6 +4,7 @@ import billingSource from "../data/billingV2LiveSource.json";
 import { apiUrl, apiCredentials } from "../api/config";
 import endpoints from "../api/endpoints.json";
 import { session } from "../lib/session";
+import { indiaStamp } from "../lib/cc";
 import { beginLoading } from "../lib/loading";
 const pendingLoads = new Set();
 let billingMounted = false;
@@ -77,12 +78,14 @@ function installFrappeBridge() {
   const existing = window.frappe || {};
   existing.session = existing.session || { user: session.user || "Guest" };
   existing.csrf_token = existing.csrf_token || csrfToken();
-  existing.datetime = existing.datetime || {
-    get_today: () => new Date().toISOString().slice(0, 10),
-    now_date: () => new Date().toISOString().slice(0, 10),
+  existing.datetime = {
+    ...existing.datetime,
+    get_today: () => indiaStamp().slice(0, 10),
+    now_date: () => indiaStamp().slice(0, 10),
+    now_datetime: () => indiaStamp(),
     add_days: (value, days) => {
-      const date = new Date(value + "T00:00:00");
-      date.setDate(date.getDate() + Number(days || 0));
+      const date = new Date(value + "T12:00:00Z");
+      date.setUTCDate(date.getUTCDate() + Number(days || 0));
       return date.toISOString().slice(0, 10);
     },
   };
@@ -132,6 +135,10 @@ function extractBillingApp() {
 
 function adaptCode(code) {
   return code
+    // The server applies the fixed package price without stacking coupons or
+    // staff discounts. Keep the exported preview consistent with that amount.
+    .replace("var net=subRaw-couponAmt-disc-pkgDisc;", "if(pkg>0){couponAmt=0;disc=0;pct=0;} var net=subRaw-couponAmt-disc-pkgDisc;")
+    .replace("var isPkg=parseFloat(BILL.pkg_price||0)>0;", "var isPkg=parseFloat(BILL.pkg_price||0)>0; var couponSection=_g('bl-coupon-sec'); if(couponSection)couponSection.style.display=isPkg?'none':''; if(isPkg){COUPON_AMOUNT=0;COUPON_PCT=0;COUPON_APPLIED='';}")
     .replaceAll("document.body.appendChild(", "document.querySelector('.billing-compat-page').appendChild(")
     .replaceAll("getElementById('app')", "getElementById('billing-v2-app')")
     .replaceAll('getElementById("app")', 'getElementById("billing-v2-app")');

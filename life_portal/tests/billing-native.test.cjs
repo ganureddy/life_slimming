@@ -22,7 +22,7 @@ test('branch defaults stay within permitted branches; missing scope fails closed
 });
 test('native bill calculations preserve package discounts, coupons and tax rounding', async () => {
   const { billTotals, offerPrice, eligibleOffers } = await lib;
-  assert.deepEqual(billTotals([{ no_of_sessions: 2, rate: 1000 }], { coupon: { discount_type: 'Fixed Amount', discount_value: 100 }, discountPct: 5, packagePrice: 1800 }), { subtotal: 2000, couponAmount: 100, discount: 100, packageDiscount: 200, net: 1600, gst: 80, total: 1680 });
+  assert.deepEqual(billTotals([{ no_of_sessions: 2, rate: 1000 }], { coupon: { discount_type: 'Fixed Amount', discount_value: 100 }, discountPct: 5, packagePrice: 1800 }), { subtotal: 2000, couponAmount: 0, discount: 0, packageDiscount: 200, net: 1800, gst: 90, total: 1890 });
   assert.equal(offerPrice({ price_or_product_discount: 'Price', discount_percentage: 10 }, 123), 110.7);
   assert.equal(eligibleOffers([{ apply_on: 'Item Code', item_code: 'T', valid_upto: '2026-10-04' }, { apply_on: 'Item Code', item_code: 'T', min_qty: 2 }], 'T', 1, '2026-10-05').length, 0);
 });
@@ -63,4 +63,20 @@ test('grand-total auto-adjust redistributes capped rates and retains offer flags
  assert.throws(()=>adjustBillingRates(lines,catalog,100),/outside/);
  const withCoupon=adjustBillingRates(lines,catalog,1995,{coupon:{discount_type:'Fixed Amount',discount_value:100}});
  assert.equal(billTotals(withCoupon,{coupon:{discount_type:'Fixed Amount',discount_value:100}}).total,1995);
+});
+
+test('doctor selection stays within the physical branch, including legacy branch aliases', async () => {
+ const { doctorsFor } = await lib;
+ const list=[{name:'D1',practitioner_name:'Doctor A',designation:'Dermatologist',branch:'Himayathnagar'}, {name:'D2',designation:'Doctor',branch:'B',all_branches:1}, {name:'C1',designation:'Consultant',branch:'Himayatnagar'}, {name:'D3',designation:'Physician',branch:'Himayatnagar',status:'Disabled'}];
+ assert.deepEqual(doctorsFor(list,'Himayatnagar').map(p=>p.name),['D1']);
+ assert.deepEqual(doctorsFor(list,''),[]);
+});
+test('cost justification preserves an explicit zero profit and uses absent-field fallbacks', async () => {
+ const { invoiceCosts } = await lib;
+ const values=Object.fromEntries(invoiceCosts({grand_total:1050,custom_product_cost:300,custom_clinical_operational_cost:700,total_taxes_and_charges:50,custom_net_profit:0}));
+ assert.equal(values['Total cost'],1050);assert.equal(values['Net profit'],0);
+});
+test('invalid payment amounts are rejected before collection', async () => {
+ const {validatePayments}=await lib;
+ for(const amount of [-1,Infinity,NaN])assert.throws(()=>validatePayments([{mode:'Cash',amount}],100,[{name:'Cash',type:'Cash'}]),/non-negative/);
 });
