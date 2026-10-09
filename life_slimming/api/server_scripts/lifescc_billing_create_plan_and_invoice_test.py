@@ -1,7 +1,7 @@
 """lifescc.billing.create_plan_and_invoice_TEST
 
 Original API: lifescc.billing.create_plan_and_invoice_TEST
-Source modified: 2026-09-20 12:21:45.387178
+Source modified: 2026-10-09 11:46:48.740138
 See ../CATALOG.md for migration notes and validation limits.
 """
 
@@ -342,18 +342,28 @@ def run(**kwargs):
                             plan_category = frappe.db.get_value("Healthcare Service Unit", {}, "name") or ""
 
                     plan_media = ""
-                    if pat.get("custom_lead") and frappe.db.exists("Lead Source", "Call Center"):
-                        plan_media = "Call Center"
-
+                    same_day_cc = 0
+                    sd_inv = frappe.get_all(
+                        "Sales Invoice",
+                        filters={"patient": pat.name, "posting_date": posting_date, "docstatus": ["<", 2]},
+                        fields=["custom_therapy_plan"],
+                        limit_page_length=0,
+                    )
+                    for sd in sd_inv:
+                        if sd.get("custom_therapy_plan") and not same_day_cc:
+                            if frappe.db.get_value("Therapy Plan", sd.get("custom_therapy_plan"), "media") == "Call Center":
+                                same_day_cc = 1
                     has_paid = frappe.db.get_value(
                         "Sales Invoice",
                         {"patient": pat.name, "docstatus": 1,
                          "status": ["in", ["Paid", "Partly Paid", "Overdue"]]},
                         "name",
                     )
-                    if not plan_media and has_paid and frappe.db.exists("Lead Source", "Existing Customer"):
+                    if same_day_cc and frappe.db.exists("Lead Source", "Call Center"):
+                        plan_media = "Call Center"
+                    elif has_paid and frappe.db.exists("Lead Source", "Existing Customer"):
                         plan_media = "Existing Customer"
-                    elif not plan_media:
+                    else:
                         allowed = ["Call Center", "Existing Customer", "Reference", "DIRECT WALKIN"]
                         incoming = args.get("plan_media") or ""
                         if incoming in allowed and frappe.db.exists("Lead Source", incoming):

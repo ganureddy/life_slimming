@@ -42,7 +42,7 @@
   "ccvisit": {
     "route": "branch-visit-report-NEW-Bhuvan",
     "source": "call-center-new-report-bhuvan",
-    "modified": "2026-10-03 20:32:21.018321"
+    "modified": "2026-10-07 18:51:55.796484"
   },
   "clireg": {
     "route": "new-client-registration",
@@ -67,7 +67,7 @@
   "appt": {
     "route": "appointment-shedular",
     "source": "appointment-shedular",
-    "modified": "2026-08-14 13:58:57.003983"
+    "modified": "2026-10-09 17:10:18.338279"
   },
   "accounts": {
     "route": "accounts-command-center",
@@ -102,7 +102,7 @@
   "stock": {
     "route": "stock-dashboard",
     "source": "stock-dashboard",
-    "modified": "2026-10-03 13:57:07.718180"
+    "modified": "2026-10-09 19:33:29.189540"
   },
   "approvals": {
     "route": "approvals-report",
@@ -177,7 +177,7 @@
   "service": {
     "route": "operations-&-service-module",
     "source": "operations-service-module",
-    "modified": "2026-09-29 18:07:42.673251"
+    "modified": "2026-10-09 16:21:41.701297"
   },
   "followup": {
     "route": "followup-master",

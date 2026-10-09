@@ -143,5 +143,6 @@
   "life_stock_receipt_employee_search": "life_slimming.api.server_scripts.life_stock_receipt_employee_search.run",
   "cc_phone_lookup": "life_slimming.api.server_scripts.cc_phone_lookup.run",
   "life_client360_branch_patient_lookup": "life_slimming.api.server_scripts.life_client360_branch_patient_lookup.run",
-  "life_client_record_book_api": "life_slimming.api.server_scripts.life_client_record_book_api.run"
+  "life_client_record_book_api": "life_slimming.api.server_scripts.life_client_record_book_api.run",
+  "life_appointment_move_history": "life_slimming.api.server_scripts.life_appointment_move_history.run"
 }

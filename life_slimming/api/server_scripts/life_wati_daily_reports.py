@@ -1,7 +1,7 @@
 """LIFE WATI Daily Reports API
 
 Original API: life_wati_daily_reports
-Source modified: 2026-09-15 19:37:24.496147
+Source modified: 2026-10-08 12:02:38.569232
 See ../CATALOG.md for migration notes and validation limits.
 """
 
@@ -47,9 +47,7 @@ def run(**kwargs):
     tenant_id = "1013094"
     # Add additional recipients here in future.
     report_mobiles = [
-        "919822817266",
         "919032590901",
-        "919604238978",
         "917416026677"
     ]
 

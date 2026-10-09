@@ -1,7 +1,7 @@
 """lifescc.billing.bootstrap
 
 Original API: lifescc.billing.bootstrap
-Source modified: 2026-09-16 18:07:53.725729
+Source modified: 2026-10-09 18:20:33.243043
 See ../CATALOG.md for migration notes and validation limits.
 """
 
@@ -1077,53 +1077,63 @@ def run(**kwargs):
         if valid_upto and str(valid_upto)[:10] < today:
             continue
 
-        item_code = ""
+        # One offer per item row (not just the first row of the rule)
+        offer_item_codes = []
 
         if pricing_rule_row.get("apply_on") == "Item Code":
-            pricing_item_code = frappe.db.get_value(
+            item_rows = frappe.get_all(
                 "Pricing Rule Item Code",
-                {
+                filters={
                     "parent": pricing_rule_row.get("name")
                 },
-                "item_code"
+                fields=["item_code"],
+                order_by="idx asc",
+                limit_page_length=0
             )
 
-            item_code = pricing_item_code or ""
+            for item_row in item_rows:
+                row_item_code = item_row.get("item_code")
 
-        offers.append({
-            "name": pricing_rule_row.get("name"),
-            "title": (
-                pricing_rule_row.get("title")
-                or pricing_rule_row.get("name")
-            ),
-            "apply_on": (
-                pricing_rule_row.get("apply_on") or ""
-            ),
-            "item_code": item_code,
-            "price_or_product_discount": (
-                pricing_rule_row.get(
-                    "price_or_product_discount"
-                )
-                or "Price"
-            ),
-            "rate": pricing_rule_row.get("rate") or 0,
-            "discount_percentage": (
-                pricing_rule_row.get("discount_percentage")
-                or 0
-            ),
-            "discount_amount": (
-                pricing_rule_row.get("discount_amount")
-                or 0
-            ),
-            "min_qty": (
-                pricing_rule_row.get("min_qty") or 0
-            ),
-            "max_qty": (
-                pricing_rule_row.get("max_qty") or 0
-            ),
-            "valid_from": valid_from,
-            "valid_upto": valid_upto
-        })
+                if row_item_code and row_item_code not in offer_item_codes:
+                    offer_item_codes.append(row_item_code)
+        else:
+            offer_item_codes.append("")
+
+        for offer_item_code in offer_item_codes:
+            offers.append({
+                "name": pricing_rule_row.get("name"),
+                "title": (
+                    pricing_rule_row.get("title")
+                    or pricing_rule_row.get("name")
+                ),
+                "apply_on": (
+                    pricing_rule_row.get("apply_on") or ""
+                ),
+                "item_code": offer_item_code,
+                "price_or_product_discount": (
+                    pricing_rule_row.get(
+                        "price_or_product_discount"
+                    )
+                    or "Price"
+                ),
+                "rate": pricing_rule_row.get("rate") or 0,
+                "discount_percentage": (
+                    pricing_rule_row.get("discount_percentage")
+                    or 0
+                ),
+                "discount_amount": (
+                    pricing_rule_row.get("discount_amount")
+                    or 0
+                ),
+                "min_qty": (
+                    pricing_rule_row.get("min_qty") or 0
+                ),
+                "max_qty": (
+                    pricing_rule_row.get("max_qty") or 0
+                ),
+                "valid_from": valid_from,
+                "valid_upto": valid_upto
+            })
 
 
     # ============================================================
