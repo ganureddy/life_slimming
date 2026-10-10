@@ -10,7 +10,7 @@ Counting rules:
 
 - Leads: creation date, in the site's timezone.
 - Booked: leads with a current scheduled appointment in the period, excluding cancelled appointments.
-- Walk-ins: those scheduled leads whose status is visited, using the existing CC visit-report status rules.
+- Visited (formerly Walk-ins): those scheduled leads whose status is visited, using the existing CC visit-report status rules.
 - Today and month mean the site calendar day and calendar month. These are current lead snapshots, not a historical count of every appointment or an arrival timestamp report.
 - Unassigned leads contribute to totals but do not occupy an agent podium. Ties use bookings, leads, then agent ID.
 
@@ -21,3 +21,5 @@ Errors show a connection warning and retain the last snapshot; authentication/pe
 Validation: `node --test life_portal/tests/cc-live-tv.test.mjs`, `python3 life_portal/tests/test_cc_live_tv.py`, and `npm run build --prefix life_portal`. A signed-in production browser check is still needed to verify site data and audible playback on the target TV.
 
 Agent podium portraits use the lead owner’s User `user_image` field. Missing or inaccessible photos fall back to initials.
+
+- Visited Booked: the subset of visited leads resolving to `Visited-BKD`, counted by scheduled appointment date for today and the calendar month. Displayed in the daily totals and both agent podiums.
