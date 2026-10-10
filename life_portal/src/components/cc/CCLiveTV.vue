@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { request } from '../../api/http';
+import { apiUrl } from '../../api/config';
 import { leaderboard, rank, changes, kinds } from '../../lib/cc-live-tv';
 const root = ref(null), data = ref(null), error = ref(''), clock = ref(new Date()), sound = ref(false), soundError = ref('');
 const feed = ref([]), active = ref(null), scale = ref(1), lastUpdated = ref(null);
@@ -11,6 +12,14 @@ const zone = computed(() => data.value?.timezone || 'Asia/Kolkata');
 const timeText = computed(() => clock.value.toLocaleTimeString('en-IN', { timeZone: zone.value, hour:'2-digit', minute:'2-digit' }));
 const dateText = computed(() => clock.value.toLocaleDateString('en-IN', { timeZone: zone.value, weekday:'long', day:'numeric', month:'short', year:'numeric' }));
 const stale = computed(() => !lastUpdated.value || clock.value - lastUpdated.value > 15000);
+const failedImages = ref(new Set());
+function agentImage(id) {
+  const path = data.value?.agent_images?.[id];
+  if (!path) return '';
+  const url = path.startsWith('/') && !path.startsWith('//') ? apiUrl(path) : path;
+  return failedImages.value.has(url) ? '' : url;
+}
+function imageFailed(event) { failedImages.value.add(event.target.getAttribute('src')); }
 const initials = name => name.split(/\s+/).slice(0,2).map(word => word[0]).join('');
 function podium(period) { const rows = rank(agents.value, period); return (period === 'today' ? [1,0,2] : [0,1,2]).map(index => ({agent: rows[index], rank:index+1})); }
 let stopped = false, pollTimer, clockTimer, alertTimer, controller, audio, observer;
@@ -99,7 +108,7 @@ onUnmounted(() => {
   <div ref="root" class="cc-tv">
     <div class="tv-stage" :style="{transform:`translate(-50%, -50%) scale(${scale})`}">
       <header><div class="logo">L</div><h1>LIFE CALL CENTRE<small>COMMAND · LIVE LEADERBOARD</small></h1><div class="live" :class="{offline:error || stale}"><i></i>{{ error || stale ? 'CONNECTING' : 'LIVE' }}</div>
-        <div class="chips"><div v-for="(label,key) in {leads:'LEADS TODAY',booked:'BOOKED',walkins:'WALK-INS'}" :key="key" class="chip"><b>{{ data ? totals[key] : '—' }}</b><span>{{ label }}</span></div></div>
+        <div class="chips"><div v-for="(label,key) in {leads:'LEADS TODAY',booked:'APPOINTMENT BOOKED',walkins:'WALK-INS'}" :key="key" class="chip"><b>{{ data ? totals[key] : '—' }}</b><span>{{ label }}</span></div></div>
         <div class="clock">{{ timeText }}<small>{{ dateText }}</small></div>
       </header>
       <main><section><template v-for="period in ['today','month']" :key="period">
@@ -107,8 +116,8 @@ onUnmounted(() => {
         <div class="pod" :class="{m:period==='month'}">
           <template v-for="slot in podium(period)" :key="slot.rank"><article v-if="slot.agent" class="ag" :class="`r${slot.rank}`">
             <div v-if="slot.rank===1" class="crown">👑</div><div class="rank">#{{ slot.rank }}</div>
-            <div class="ph">{{ initials(slot.agent.name) }}</div><div class="nm">{{ slot.agent.name }}</div><div class="br">📍 {{ slot.agent.branch || 'Branch not assigned' }}</div>
-            <div class="st"><div v-for="(label,key) in {walkins:'WALK-INS',booked:'BOOKED',leads:'LEADS'}" :key="key"><b>{{ slot.agent[period][key] }}</b><span>{{ label }}</span></div></div>
+            <div class="ph"><img v-if="agentImage(slot.agent.id)" :key="agentImage(slot.agent.id)" :src="agentImage(slot.agent.id)" :alt="slot.agent.name" @error="imageFailed"><span v-else>{{ initials(slot.agent.name) }}</span></div><div class="nm">{{ slot.agent.name }}</div><div class="br">📍 {{ slot.agent.branch || 'Branch not assigned' }}</div>
+            <div class="st"><div v-for="(label,key) in {walkins:'WALK-INS',booked:'APPOINTMENT BOOKED',leads:'LEADS'}" :key="key"><b>{{ slot.agent[period][key] }}</b><span>{{ label }}</span></div></div>
           </article><article v-else class="ag empty">{{ data ? 'No ranked activity yet' : 'Loading live data…' }}</article></template>
         </div>
       </template></section>
@@ -144,6 +153,7 @@ main{display:grid;grid-template-columns:1180px 1fr;gap:28px;padding:24px 44px;he
 .ag.r1{height:100%;border-color:var(--gold);box-shadow:0 0 50px #f5c54255,inset 0 0 40px #f5c54218;background:linear-gradient(180deg,#f5c54222,#ffffff06)}
 .ag.r2{height:86%}.ag.r3{height:78%}.pod.m .ag{height:100%!important}
 .ph{width:150px;height:150px;border-radius:50%;border:5px solid var(--c,#9db8a8);background:#123 center/cover;display:grid;place-items:center;font:800 54px Georgia,serif;color:#fff;box-shadow:0 8px 30px #0008}
+.ph{overflow:hidden;flex-shrink:0}.ph img{width:100%;height:100%;object-fit:cover;display:block;min-height:0}
 .r1{--c:var(--gold)}.r1 .ph{width:200px;height:200px;font-size:72px}.r2{--c:#d6dde3}.r3{--c:#d9945a}.pod.m .ph{width:96px;height:96px;font-size:36px}.pod.m .r1 .ph{width:96px;height:96px}
 .crown{position:absolute;top:-34px;font-size:60px;animation:float 2s ease-in-out infinite;filter:drop-shadow(0 4px 10px #f5c54299)}
 .rank{position:absolute;top:12px;left:16px;font:900 46px Georgia,serif;color:var(--c)}.pod.m .rank{font-size:30px}
@@ -172,4 +182,10 @@ footer{height:60px;padding:8px 24px;display:flex;gap:15px;align-items:center;fon
 .overlay .big{font:900 110px/1.1 'Segoe UI',sans-serif;color:var(--oc);max-width:1800px}.overlay .ico{font-size:220px;animation:ring 1.6s infinite}.overlay h2{font-size:70px;max-width:1700px;overflow-wrap:anywhere}.overlay p{font-size:42px;color:var(--gold2);margin:15px}.overlay button{position:relative;z-index:25;margin-top:24px}
 .confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none}.confetti i{position:absolute;top:-30px;width:15px;height:9px;animation:fall 3s linear infinite}@keyframes fall{to{transform:translateY(1150px) rotate(720deg)}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}.confetti{display:none}}
+</style>
+
+<style scoped>
+.chip span,.st span{display:block}
+.chip span{max-width:150px}
+.st span{max-width:100px;line-height:1.3}
 </style>

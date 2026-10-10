@@ -1,7 +1,7 @@
 import { visitStatus } from './cc.js';
 export const kinds = {
   lead: { icon: '🔔', title: 'NEW LEAD RECEIVED', color: '#f5c542' },
-  booked: { icon: '📅', title: 'VISIT BOOKED!', color: '#5dff9f' },
+  booked: { icon: '📅', title: 'APPOINTMENT BOOKED!', color: '#5dff9f' },
   walkin: { icon: '🚶', title: 'WALK-IN!', color: '#4da3ff' },
   champ: { icon: '👑', title: 'CONGRATULATIONS!', color: '#f5c542' },
 };

@@ -19,3 +19,5 @@ The first successful load establishes a silent baseline. Subsequent snapshots an
 Errors show a connection warning and retain the last snapshot; authentication/permission failures clear it. All timers, requests and audio resources are released on leaving the component. Normal portal session expiry remains in effect.
 
 Validation: `node --test life_portal/tests/cc-live-tv.test.mjs`, `python3 life_portal/tests/test_cc_live_tv.py`, and `npm run build --prefix life_portal`. A signed-in production browser check is still needed to verify site data and audible playback on the target TV.
+
+Agent podium portraits use the lead owner’s User `user_image` field. Missing or inaccessible photos fall back to initials.
