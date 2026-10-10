@@ -39,6 +39,19 @@ class LiveTVTests(unittest.TestCase):
         self.assertEqual(frappe.get_all.call_args.kwargs['limit_page_length'], 0)
         self.assertEqual(result['today'], '2026-10-09')
 
+    def test_owner_photo_is_returned_with_name(self):
+        module, frappe, _ = self.load()
+        class Row(dict):
+            __getattr__ = dict.__getitem__
+        frappe.get_all.return_value = [Row(lead_owner='agent'), Row(lead_owner=None)]
+        frappe.get_cached_value = Mock(side_effect=lambda doctype, owner, field:
+            {'full_name': 'Agent A', 'user_image': '/files/agent.jpg'}[field])
+        result = module.snapshot()
+        self.assertEqual(result['agents'], {'agent': 'Agent A'})
+        self.assertEqual(result['agent_images'], {'agent': '/files/agent.jpg'})
+        frappe.get_cached_value = Mock(return_value=None)
+        self.assertEqual(module.snapshot()['agent_images'], {'agent': ''})
+
     def test_manager_scope(self):
         module, frappe, _ = self.load(roles=('Sales Manager',))
         self.assertFalse(module.snapshot()['restricted_to_owner'])

@@ -1,8 +1,8 @@
 import { visitStatus } from './cc.js';
 export const kinds = {
   lead: { icon: '🔔', title: 'NEW LEAD RECEIVED', color: '#f5c542' },
-  booked: { icon: '📅', title: 'VISIT BOOKED!', color: '#5dff9f' },
-  walkin: { icon: '🚶', title: 'WALK-IN!', color: '#4da3ff' },
+  booked: { icon: '📅', title: 'APPOINTMENT BOOKED!', color: '#5dff9f' },
+  walkin: { icon: '🚶', title: 'VISITED!', color: '#4da3ff' },
   champ: { icon: '👑', title: 'CONGRATULATIONS!', color: '#f5c542' },
 };
 export const visited = row => ['Visited-BKD', 'Visited-Not BKD', 'Visited · Outcome pending'].includes(visitStatus(row));
@@ -11,7 +11,7 @@ export function leaderboard(data) {
   const agents = new Map();
   for (const row of data.rows) {
     const id = row.lead_owner || 'unassigned';
-    if (!agents.has(id)) agents.set(id, { id, name: data.agents[id] || 'Unassigned', branch: '', today: {leads:0,booked:0,walkins:0}, month: {leads:0,booked:0,walkins:0} });
+    if (!agents.has(id)) agents.set(id, { id, name: data.agents[id] || 'Unassigned', branch: '', today: {leads:0,booked:0,walkins:0,visitedBooked:0}, month: {leads:0,booked:0,walkins:0,visitedBooked:0} });
     const agent = agents.get(id);
     const branch = row.branch || row.lead_assign_to_branch;
     if (branch) agent.branch = agent.branch && agent.branch !== branch ? 'Multiple branches' : branch;
@@ -20,6 +20,7 @@ export function leaderboard(data) {
       if (String(row.custom_appointment_date_and_time || '').startsWith(prefix)) {
         if (booked(row)) agent[period].booked++;
         if (visited(row)) agent[period].walkins++;
+        if (visitStatus(row) === 'Visited-BKD') agent[period].visitedBooked++;
       }
     }
   }

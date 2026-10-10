@@ -37,5 +37,6 @@ def snapshot():
         order_by='creation asc, name asc', limit_page_length=0)
     owners = sorted({row.lead_owner for row in rows if row.get('lead_owner')})
     agents = {owner: frappe.get_cached_value('User', owner, 'full_name') or owner for owner in owners}
-    return dict(rows=rows, agents=agents, today=str(now.date()),
+    agent_images = {owner: frappe.get_cached_value('User', owner, 'user_image') or '' for owner in owners}
+    return dict(rows=rows, agents=agents, agent_images=agent_images, today=str(now.date()),
                 timestamp=str(now), timezone=get_system_timezone(), restricted_to_owner=bool(scoped))
