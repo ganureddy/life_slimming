@@ -1,7 +1,7 @@
 """lifescc.billing.collect_payment_v4
 
 Original API: lifescc.billing.collect_payment_v4
-Source modified: 2026-09-07 22:56:11.026743
+Source modified: 2026-10-09 11:46:48.632982
 See ../CATALOG.md for migration notes and validation limits.
 """
 
@@ -31,7 +31,7 @@ def run(**kwargs):
         "Savein Fintech Card Charges", "Sai Roshini Card Charges",
         "Liqui Loans Charges", "Loan Tap / Uno Finance Charges",
     ]
-    LOAN_MIN = 25000
+    LOAN_MIN = 20000
 
     def fail(msg):
         frappe.response["message"] = {"error": msg}

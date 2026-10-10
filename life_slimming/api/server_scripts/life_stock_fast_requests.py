@@ -1,7 +1,7 @@
 """Stock dashboard
 
 Original API: life_stock_fast_requests
-Source modified: 2026-09-29 13:54:48.909094
+Source modified: 2026-10-09 19:33:27.671658
 See ../CATALOG.md for migration notes and validation limits.
 """
 
@@ -966,6 +966,7 @@ def run(**kwargs):
         }
 
 
+
     def life_action_list_requests(payload):
         life_require_login()
 
@@ -982,140 +983,49 @@ def run(**kwargs):
         ).strip().lower()
 
         page = max(
-            1,
-            life_int(
-                life_arg(payload, "page", 1),
-                1
-            )
+            1, life_int(life_arg(payload, "page", 1), 1)
         )
 
-        limit = life_int(
-            life_arg(payload, "limit", 200),
-            200
+        page_size = min(
+            200,
+            max(1, life_int(
+                life_arg(payload, "page_size", 200), 200
+            ))
         )
-        limit = min(500, max(1, limit))
-
-        page_size_raw = life_arg(
-            payload,
-            "page_size",
-            None
-        )
-
-        if page_size_raw is None or page_size_raw == "":
-            page_size = limit
-        else:
-            page_size = min(
-                200,
-                max(
-                    1,
-                    life_int(page_size_raw, 10)
-                )
-            )
 
         filters = [["docstatus", "<", 2]]
 
-        # ============================================================
-        # BRANCH VIEW
-        # ============================================================
         if view == "branch":
             if not branch:
                 employee = life_current_employee()
-                branch = str(
-                    employee.get("branch") or ""
-                ).strip() if employee else ""
+                branch = (
+                    str(employee.get("branch") or "").strip()
+                    if employee else ""
+                )
 
             if not branch:
                 frappe.throw(
                     "Branch could not be resolved for the logged-in user."
                 )
 
-            filters.append(
-                [
-                    "set_warehouse",
-                    "like",
-                    "%" + branch + "%"
-                ]
-            )
-
-            # Branch users continue to respect normal ERPNext permissions.
-            headers = frappe.get_list(
-                MR_DOCTYPE,
-                filters=filters,
-                fields=["name"],
-                order_by="modified desc",
-                limit_start=0,
-                limit_page_length=limit
-            )
-
-        # ============================================================
-        # HO / STOCK MANAGER VIEW
-        # ============================================================
+            filters.append([
+                "set_warehouse", "like", "%" + branch + "%"
+            ])
         else:
-            # Important security gate before bypassing branch permissions.
             life_require_ho()
 
-            # HO / Stock Manager needs requests from every branch.
-            headers = frappe.get_all(
-                MR_DOCTYPE,
-                filters=filters,
-                fields=["name"],
-                order_by="modified desc",
-                limit_start=0,
-                limit_page_length=limit
-            )
-
-        # ============================================================
-        # COMMON PROCESSING FOR BOTH BRANCH AND HO
-        # ============================================================
-        permitted_names = []
-        for header in headers:
-            name = header.get("name")
-            if name:
-                permitted_names.append(name)
-
-        if not permitted_names:
-            return {
-                "ok": True,
-                "rows": [],
-                "counts": {
-                    "pending": 0,
-                    "approved": 0,
-                    "released": 0,
-                    "rejected": 0
-                },
-                "total": 0,
-                "total_pages": 1,
-                "page": page,
-                "page_size": page_size,
-                "view": view,
-                "branch": branch,
-                "group": group or "all",
-                "limit": limit
-            }
-
         status_fields = [
-            "name",
-            "workflow_state",
-            "status",
-            "docstatus"
+            "name", "workflow_state", "status", "docstatus"
         ]
 
         parent_meta = frappe.get_meta(MR_DOCTYPE)
+
         for fieldname in [
-            "transfer_status",
-            "custom_stock_request_status"
+            "transfer_status", "custom_stock_request_status"
         ]:
             if parent_meta.get_field(fieldname):
                 status_fields.append(fieldname)
 
-        status_rows = frappe.get_all(
-            MR_DOCTYPE,
-            filters={"name": ["in", permitted_names]},
-            fields=status_fields,
-            page_length=len(permitted_names)
-        )
-
-        status_map = {}
         counts = {
             "pending": 0,
             "approved": 0,
@@ -1123,30 +1033,58 @@ def run(**kwargs):
             "rejected": 0
         }
 
-        for row in status_rows:
-            row_group = life_request_group(row)
-            row.update({"_group": row_group})
-            status_map[row.get("name")] = row
-            counts[row_group] = counts.get(row_group, 0) + 1
-
         selected_names = []
-        for name in permitted_names:
-            status_row = status_map.get(name)
-            row_group = status_row.get("_group") if status_row else "pending"
+        offset = 0
 
-            if group in ["pending", "approved", "released", "rejected"]:
-                if row_group == group:
-                    selected_names.append(name)
+        # Scan lightweight headers across every page.
+        # Keep branch permissions and the existing HO access check.
+        while True:
+            if view == "branch":
+                batch = frappe.get_list(
+                    MR_DOCTYPE,
+                    filters=filters,
+                    fields=status_fields,
+                    order_by="modified desc, name desc",
+                    limit_start=offset,
+                    limit_page_length=500
+                )
             else:
-                selected_names.append(name)
+                batch = frappe.get_all(
+                    MR_DOCTYPE,
+                    filters=filters,
+                    fields=status_fields,
+                    order_by="modified desc, name desc",
+                    limit_start=offset,
+                    limit_page_length=500
+                )
+
+            for row in batch:
+                row_group = life_request_group(row)
+
+                counts[row_group] = (
+                    counts.get(row_group, 0) + 1
+                )
+
+                if (
+                    group not in [
+                        "pending", "approved", "released", "rejected"
+                    ]
+                    or row_group == group
+                ):
+                    selected_names.append(row.get("name"))
+
+            if len(batch) < 500:
+                break
+
+            offset += len(batch)
 
         total = len(selected_names)
-        start = (page - 1) * page_size
-        page_names = selected_names[start:start + page_size]
+        first = (page - 1) * page_size
+        page_names = selected_names[first:first + page_size]
 
+        # Hydrate only the requested page.
         rows = life_prepare_request_rows(
-            permitted_names,
-            page_names
+            page_names, page_names
         )
 
         return {
@@ -1155,15 +1093,14 @@ def run(**kwargs):
             "counts": counts,
             "total": total,
             "total_pages": max(
-                1,
-                int((total + page_size - 1) / page_size)
+                1, int((total + page_size - 1) / page_size)
             ),
             "page": page,
             "page_size": page_size,
             "view": view,
             "branch": branch,
             "group": group or "all",
-            "limit": limit
+            "limit": total
         }
 
 
@@ -1633,10 +1570,13 @@ def run(**kwargs):
             # Re-point the existing File document to this Material Request.
             # This makes the file show up under Attachments in the ERPNext Desk.
             fd = frappe.get_doc("File", file_name)
-            fd.attached_to_doctype = MR_DOCTYPE
-            fd.attached_to_name = request_name
-            fd.attached_to_field = REQUEST_ATTACHMENT_TABLE
-            fd.save(ignore_permissions=True)
+            # Keep reusable documents attached to their original request.
+            # Every later request still has its own attachment child reference.
+            if not fd.attached_to_name:
+                fd.attached_to_doctype = MR_DOCTYPE
+                fd.attached_to_name = request_name
+                fd.attached_to_field = REQUEST_ATTACHMENT_TABLE
+                fd.save(ignore_permissions=True)
 
             attached += 1
 
@@ -1712,6 +1652,43 @@ def run(**kwargs):
         return row
 
 
+
+    # LIFE_CLIENT_DOCUMENT_REUSE_V1
+    def life_client_reusable_documents(client):
+        life_require_login()
+        client = str(client or "").strip()
+        if not client:
+            frappe.throw("Select a client first.")
+        patient = frappe.get_doc("Patient", client)
+        patient.check_permission("read")
+        saved = {}
+        start = 0
+        while len(saved) < 2:
+            requests = frappe.get_list(
+                MR_DOCTYPE,
+                filters={"custom_client_name": client, "custom_stock_request_type": REQUEST_TYPE_SPECIAL, "docstatus": ["<", 2]},
+                fields=["name"], order_by="creation desc, name desc",
+                limit_start=start, limit_page_length=100
+            )
+            if not requests:
+                break
+            for request in requests:
+                doc = frappe.get_doc(MR_DOCTYPE, request.name)
+                doc.check_permission("read")
+                for row in (doc.get(REQUEST_ATTACHMENT_TABLE) or []):
+                    slot = life_int(row.get("slot_number"), 0)
+                    url = str(row.get("attachment") or "").strip()
+                    if slot in [1, 2] and str(slot) not in saved and url:
+                        if frappe.db.exists("File", {"file_url": url}):
+                            saved[str(slot)] = {"file_url": url, "slot_number": slot,
+                                "label": "Main Page / Treatment Record Cover Page" if slot == 1 else "Consent Form",
+                                "source_request": doc.name}
+            if len(requests) < 100:
+                break
+            start = start + 100
+        return {"ok": True, "client": client, "documents": saved}
+
+
     def life_action_submit_request(payload):
         life_require_login()
         request_doc = payload.get("request_doc") or payload.get("document") or payload
@@ -1734,6 +1711,14 @@ def run(**kwargs):
         # Consumable / Special Material Request:
         # only Slot 1 and Slot 2 are mandatory.
         if request_type == REQUEST_TYPE_SPECIAL:
+            reusable = life_client_reusable_documents(request_doc.get("custom_client_name")).get("documents") or {}
+            supplied = []
+            for supplied_row in attachments:
+                supplied.append(life_int(supplied_row.get("slot_number"), 0))
+            for slot in [1, 2]:
+                saved_row = reusable.get(str(slot))
+                if slot not in supplied and saved_row:
+                    attachments.append(saved_row)
             present_slots = []
             for row in attachments:
                 slot_number = life_int(row.get("slot_number"), 0)
@@ -1741,7 +1726,7 @@ def run(**kwargs):
                     present_slots.append(slot_number)
 
             missing_slots = []
-            for slot_number in [1, 2]:
+            for slot_number in [1, 2, 3, 4]:
                 if slot_number not in present_slots:
                     missing_slots.append(slot_number)
 
@@ -6179,6 +6164,8 @@ def run(**kwargs):
         result = life_action_get_stock_availability(request_payload)
     elif action == "get_item_stock_availability":
         result = life_action_get_item_stock_availability(request_payload)
+    elif action == "get_client_reusable_documents":
+        result = life_client_reusable_documents(request_payload.get("client"))
     elif action == "submit_request":
         result = life_action_submit_request(request_payload)
     elif action == "approve_request":
@@ -6239,3 +6226,4 @@ def run(**kwargs):
         frappe.throw("Unsupported LIFE Stock API action: " + action)
 
     frappe.response["message"] = result
+    # LIFE_ALL_STOCK_REQUESTS_V1

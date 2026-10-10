@@ -1,7 +1,7 @@
 {
   "source": "ERP Portal / Server Script",
   "exported_on": "2026-09-19",
-  "count": 145,
+  "count": 146,
   "endpoints": [
     {
       "id": "accounts_command_centre_coa",
@@ -708,7 +708,7 @@
       "source_name": "cc_update_lead",
       "legacy_method": "cc_update_lead",
       "method": "life_slimming.api.server_scripts.cc_update_lead.run",
-      "source_modified": "2026-09-06 14:53:19.081176",
+      "source_modified": "2026-10-03 12:00:36.307147",
       "source_sha256": "8ce32d317647b294c171fecc127c8e6c4a23d0e193c11d946611451fd9bfa505",
       "allow_guest": false,
       "source_allow_guest": false,
@@ -723,7 +723,9 @@
         "Has Role",
         "Lead"
       ],
-      "notes": []
+      "notes": [
+        "Live source reviewed 2026-10-09; existing local validation and permission adaptations retained."
+      ]
     },
     {
       "id": "cc_walkin_details",
@@ -1871,8 +1873,8 @@
       "source_name": "LIFE WATI Daily Reports API",
       "legacy_method": "life_wati_daily_reports",
       "method": "life_slimming.api.server_scripts.life_wati_daily_reports.run",
-      "source_modified": "2026-09-15 19:37:24.496147",
-      "source_sha256": "9a6b49d415a92c2d52d9a1dd00ef3bb8d9672caae326fb18410d1f4811d42212",
+      "source_modified": "2026-10-08 12:02:38.569232",
+      "source_sha256": "38b746804721fa9cae84d9d485e677e1450bc48339a301376ec2d45fe67f0539",
       "allow_guest": false,
       "source_allow_guest": false,
       "http_methods": [
@@ -1890,7 +1892,9 @@
         "Shift Assignment",
         "Shift Type"
       ],
-      "notes": []
+      "notes": [
+        "Live source reviewed 2026-10-09; existing local validation and permission adaptations retained."
+      ]
     },
     {
       "id": "life_accounts_dashboard",
@@ -2338,8 +2342,8 @@
       "source_name": "lifescc.billing.bootstrap",
       "legacy_method": "lifescc.billing.bootstrap",
       "method": "life_slimming.api.server_scripts.lifescc_billing_bootstrap.run",
-      "source_modified": "2026-09-16 18:07:53.725729",
-      "source_sha256": "b80f28e4d7336b770e77d2451a85576eab905970d2c14cd68d9bdb600d8fb07c",
+      "source_modified": "2026-10-09 18:20:33.243043",
+      "source_sha256": "3fd5ec6806fc60350ced608cf16d7bc0516388ede8d7e39854000f1937f18399",
       "allow_guest": false,
       "source_allow_guest": false,
       "http_methods": [
@@ -2366,7 +2370,9 @@
         "Therapy Type",
         "User Permission"
       ],
-      "notes": []
+      "notes": [
+        "Live source reviewed 2026-10-09; existing local validation and permission adaptations retained."
+      ]
     },
     {
       "id": "lifescc_billing_bootstrap_test",
@@ -2424,8 +2430,8 @@
       "source_name": "lifescc.billing.collect_payment_v4",
       "legacy_method": "lifescc.billing.collect_payment_v4",
       "method": "life_slimming.api.server_scripts.lifescc_billing_collect_payment_v4.run",
-      "source_modified": "2026-09-07 22:56:11.026743",
-      "source_sha256": "a70e0948809977e32aa9cb5bc47e85e716cdafbeeff0604e8b723861f2f19b17",
+      "source_modified": "2026-10-09 11:46:48.632982",
+      "source_sha256": "c975d4e22987049c880ba16102b27dc13eddca805d806074ab34725b3effae3b",
       "allow_guest": false,
       "source_allow_guest": false,
       "http_methods": [
@@ -2436,7 +2442,9 @@
         "Mode of Payment Account",
         "Sales Invoice"
       ],
-      "notes": []
+      "notes": [
+        "Live source reviewed 2026-10-09; existing local validation and permission adaptations retained."
+      ]
     },
     {
       "id": "lifescc_billing_collections_report",
@@ -2519,8 +2527,8 @@
       "source_name": "lifescc.billing.create_plan_and_invoice_TEST",
       "legacy_method": "lifescc.billing.create_plan_and_invoice_TEST",
       "method": "life_slimming.api.server_scripts.lifescc_billing_create_plan_and_invoice_test.run",
-      "source_modified": "2026-09-20 12:21:45.387178",
-      "source_sha256": "dfb85c4c0b7e2ea2da827d3fd8324a7dc488e1cd0a6a12e516cce0ae70b9587f",
+      "source_modified": "2026-10-09 11:46:48.740138",
+      "source_sha256": "b52e33d66666038b08418b676fbd208efd254097daab378f3289129669cffad5",
       "allow_guest": false,
       "source_allow_guest": false,
       "http_methods": [
@@ -2541,7 +2549,9 @@
         "Therapy Type",
         "Web Coupon"
       ],
-      "notes": []
+      "notes": [
+        "Live source reviewed 2026-10-09; existing local validation and permission adaptations retained."
+      ]
     },
     {
       "id": "lifescc_billing_lead_lookup",
@@ -3454,8 +3464,8 @@
       "source_name": "Stock dashboard",
       "legacy_method": "life_stock_fast_requests",
       "method": "life_slimming.api.server_scripts.life_stock_fast_requests.run",
-      "source_modified": "2026-09-29 13:54:48.909094",
-      "source_sha256": "900bfd1ce4e6d18221966a082acbe443fb34e89f2f5b5ed91eb0d3b3762ae180",
+      "source_modified": "2026-10-09 19:33:27.671658",
+      "source_sha256": "7852434b8e9158610eda7e6eb316829ae130903e9be8b34d8b785ea68ca8da8b",
       "allow_guest": false,
       "source_allow_guest": false,
       "http_methods": [
@@ -3474,6 +3484,7 @@
         "File",
         "Has Role",
         "Item",
+        "Patient",
         "Stock Ledger Entry",
         "Therapy Session",
         "User",
@@ -3481,7 +3492,9 @@
         "Warehouse",
         "Workflow"
       ],
-      "notes": []
+      "notes": [
+        "Live source reviewed 2026-10-09; existing local validation and permission adaptations retained."
+      ]
     },
     {
       "id": "stock_indent_360_api",
@@ -3707,7 +3720,29 @@
         "Patient"
       ],
       "notes": []
+    },
+    {
+      "id": "life_appointment_move_history",
+      "source_name": "LIFE Appointment Move History V1",
+      "legacy_method": "life_appointment_move_history",
+      "method": "life_slimming.api.server_scripts.life_appointment_move_history.run",
+      "source_modified": "2026-10-09 13:43:47.172183",
+      "source_sha256": "ab522ba7bbe54a2e6cb66483a0e3439c3fed44feb05570b7b7cd995a8e47d348",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "branch",
+        "date"
+      ],
+      "doctypes": [
+        "Patient Appointment"
+      ],
+      "notes": []
     }
   ],
-  "last_reviewed_on": "2026-10-04"
+  "last_reviewed_on": "2026-10-04",
+  "reviewed_on": "2026-10-09"
 }

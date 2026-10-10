@@ -125,3 +125,79 @@ cluster, totals and branch table views as the exported page. The server's
 `cluster_dashboard_api` currently has empty `CLUSTER_MAP` and `USER_CLUSTER`
 configuration, so it returns all branches. Configure and enforce actual cluster
 permissions in that API before making this page a production destination.
+
+## Legacy comparison follow-up — 8 October 2026
+
+Compared the native workspace with the exported Billing source in
+`life_portal/src/data/billingV2LiveSource.json`, including its later JavaScript
+patches. The main tab structure, business-month defaults, client summary,
+therapy editor, approval actions, month-grouped dues and collections remain.
+
+Restored the legacy existing-video declaration path: select a video, review it
+with playback controls, explicitly confirm the client declaration, then upload
+privately and pass the verified URL to the existing loan collection payload.
+Recording and speech verification remain available. Object URLs are released
+when cancelling, switching to recording, uploading successfully or unmounting.
+
+Pending dues now accepts optional date bounds, as the legacy query does, with
+All dates and This business month shortcuts. Branch restrictions and pagination
+still apply. Failed list requests no longer also show a misleading empty state.
+Client history is keyboard-scrollable. KPI accent borders, numerical table
+alignment, action spacing and spacing between pending-month groups were polished.
+
+Updated the workflow browser test for the current consultant/therapy search
+controls, invoice generation labels and new-window View bill action. Added
+assertions for clearing pending date bounds and requiring confirmation before
+uploading an existing declaration. The mocked workflow passes at 1440px and
+390px, and the collections browser suite and billing domain tests pass.
+Desktop/mobile screenshots were inspected. An isolated production build to
+`/tmp/billing-review-build` passes with existing chunk-size/import warnings.
+
+This is local verification; no deployment or live financial transactions were
+performed. Live OTP, actual video playback/upload, Razorpay settlement and the
+full role matrix still require acceptance. This comparison does not certify
+complete parity for every legacy patch or live backend configuration.
+
+## Full billing review — 9 October 2026
+
+Reviewed the exported Billing JavaScript, including appended patches, against
+all native Billing components and the local create-invoice/payment adapters.
+This pass also fixes the legacy portal wrapper, not just the Vue preview.
+
+| Area reviewed | Outcome |
+| --- | --- |
+| Header, tabs, branch scope and KPIs | Retained branch scope and business-month defaults; protected count refreshes from stale responses. Legacy date helpers now use India time, including `now_datetime` for loan uploads; date arithmetic is timezone-independent. |
+| Client search and summary | Search requests cancel when typing, clearing, changing views or selecting a client. Client summary loads atomically. Existing-customer source locking queries paid history beyond the 40 displayed invoices. |
+| Registration, lead lookup and OTP | Existing workflow retained; registration inputs lock during asynchronous operations so the verified mobile cannot change mid-request. |
+| Therapy selection and templates | Editing a selected therapy clears its stored selection and pricing. Switching back to individual therapy clears package state. Preview now runs submission validation. |
+| Consultant, source and doctor | Restored optional doctor selector and backend doctor payload. Doctors use strict physical-branch matching, including legacy spelling aliases; all-branch consultant flags do not bypass this rule. |
+| Offers, coupon and fixed packages | Existing quantity/date offer logic retained. Fixed packages clear and hide discount requests like legacy. Both Vue totals and the legacy portal adapter ignore extra coupons/discounts for fixed packages, matching the create-invoice backend. |
+| Complimentary sessions and remarks | Reviewed current slab, cumulative quantity/value limits and 400-word remarks guard; retained existing behavior. |
+| Draft generation and preview | Retained draft reuse/uncertain-result protection. Added print styling that isolates the draft preview from portal navigation and buttons. |
+| Invoice details | Restored server net/GST/discount breakdown, doctor/therapy-plan identifiers and expandable cost justification. Explicit zero cost/profit values remain zero. Grouped invoice actions and removed unnecessary dialog minimum height. |
+| Approvals and submission | Further requests now enforce the same 0.5%–5% per-level range as the editor and legacy patch. Existing combined cap, L4 and fresh-history checks retained. |
+| Manual and online collection | Reject negative/non-finite amounts. Refresh outstanding before initiating online payment and include other unsettled rows when checking the balance. Clear prior polling timers before a new poll. |
+| Loans, uploads and receipts | Retained recorded and reviewed-upload declarations. Recording/upload work blocks closing or recording collection; file size feedback occurs before video preview. Existing receipt workflow retained. |
+| Recent, pending and collections | Existing date presets, pagination, grouped dues and totals retained. Previous follow-up restored optional pending date bounds and all-date shortcut. |
+| Legacy presentation | Improved visible keyboard focus, table row/action spacing and long KPI amount wrapping. No business data or backend records changed. |
+
+Verification:
+
+- All 15 frontend Node test files passed.
+- Expanded native workflow browser checks passed at 1440px and 390px:
+  cancelled searches, doctor branch filtering and payload, package restrictions,
+  stale therapy selection, print styling, older paid-history source lock,
+  approval percentage minimum, normal draft/approval/submission/payment flows,
+  OTP/registration, recorded and reviewed-upload loan consent, and no overflow.
+- Collections desktop/mobile browser checks passed.
+- New legacy browser checks passed at both widths with mocked business APIs,
+  including a frozen 20:00 UTC clock that must resolve to the following India
+  date, timestamp availability, month-boundary arithmetic, fixed-package totals and no runtime errors.
+- Native invoice/preview and legacy mobile screenshots were inspected.
+- Isolated production build succeeds under `/tmp/billing-audit-oct9-build`.
+
+The exported JSON remains a reference snapshot; the legacy portal adapter corrects
+its fixed-package preview formula at load time. Both rendered pages now follow
+the backend fixed-package behavior. Live role permissions, OTP delivery, provider
+settlement, physical camera/speech and actual file persistence remain live
+acceptance items. No deployment or financial transaction was performed.

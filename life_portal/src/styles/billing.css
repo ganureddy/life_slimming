@@ -135,3 +135,12 @@
 /* The workspace header provides the title and session identity. */
 .billing-compat-page #billing-v2-app > .topbar { position:relative;top:auto;min-height:0;padding:10px 20px;box-shadow:none; }
 .billing-compat-page #clock { display:none !important; }
+
+/* Keep keyboard navigation and dense invoice rows readable in the legacy view. */
+#billing-v2-app :is(button, input, select, textarea, a):focus-visible {
+  outline: 3px solid #b69438;
+  outline-offset: 3px;
+}
+#billing-v2-app .tbl tbody tr:hover { background: #f5faf7; }
+#billing-v2-app .tbl td .btn { margin: 3px; }
+#billing-v2-app .kpi-val { overflow-wrap: anywhere; }

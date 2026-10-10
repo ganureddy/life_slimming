@@ -45,6 +45,24 @@ export function practitionersFor(list, branch) {
   }
   return [...best.values()].sort((a, b) => (a.practitioner_name || a.name).localeCompare(b.practitioner_name || b.name));
 }
+export function doctorsFor(list, branch) {
+  const normalize = value => {
+    const name = String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    return ({ himayathnagar: 'himayatnagar', chandhanagar: 'chandanagar' })[name] || name;
+  };
+  if (!branch) return [];
+  return practitionersFor((list || []).filter(p =>
+    /doctor|dermat|physician|medical officer/i.test(p.designation || '') &&
+    normalize(p.branch) === normalize(branch)
+  ), '');
+}
+export function invoiceCosts(doc) {
+  const product = amount(doc.custom_product_cost), clinical = amount(doc.custom_clinical_operational_cost);
+  const gst = amount(doc.total_taxes_and_charges), selling = amount(doc.grand_total);
+  const total = doc.custom_total_cost == null ? product + clinical + gst : amount(doc.custom_total_cost);
+  const profit = doc.custom_net_profit == null ? selling - total : amount(doc.custom_net_profit);
+  return [['Final selling price', selling], ['Product cost', product], ['Clinical & operational cost', clinical], ['GST', gst], ['Total cost', total], ['Net profit', profit]];
+}
 export function offerPrice(offer, base) {
   if (offer.price_or_product_discount !== 'Price') return Number(base);
   if (Number(offer.rate) > 0) return Number(offer.rate);
@@ -56,14 +74,15 @@ export function eligibleOffers(offers, item, qty, today) {
 }
 export function billTotals(lines, { coupon = null, discountPct = 0, packagePrice = 0 } = {}) {
   const subtotal = lines.reduce((sum, line) => sum + Number(line.no_of_sessions || 0) * Number(line.rate || 0), 0);
-  const couponAmount = coupon ? Math.min(subtotal, coupon.discount_type === 'Fixed Amount' ? Number(coupon.discount_value || 0) : Math.round(subtotal * Number(coupon.discount_value || 0)) / 100) : 0;
-  const discount = Math.round(subtotal * Math.min(5, Math.max(0, Number(discountPct))) / 100);
+  const couponAmount = coupon && !(packagePrice > 0) ? Math.min(subtotal, coupon.discount_type === 'Fixed Amount' ? Number(coupon.discount_value || 0) : Math.round(subtotal * Number(coupon.discount_value || 0)) / 100) : 0;
+  const discount = packagePrice > 0 ? 0 : Math.round(subtotal * Math.min(5, Math.max(0, Number(discountPct))) / 100);
   const packageDiscount = packagePrice > 0 ? Math.max(0, Math.round((subtotal - packagePrice) * 100) / 100) : 0;
   const net = Math.max(0, subtotal - couponAmount - discount - packageDiscount);
   const gst = Math.round(net * 5) / 100;
   return { subtotal, couponAmount, discount, packageDiscount, net, gst, total: Math.round((net + gst) * 100) / 100 };
 }
 export function validatePayments(payments, outstanding, modes) {
+  if (payments.some(p => !Number.isFinite(Number(p.amount)) || Number(p.amount) < 0)) throw new Error('Payment amounts must be finite, non-negative numbers.');
   const active = payments.filter(p => Number(p.amount) > 0);
   if (!active.length) throw new Error('Enter at least one payment amount.');
   if (active.some(p => !modes.some(m => m.name === p.mode))) throw new Error('Select a valid payment mode.');
@@ -79,7 +98,7 @@ export function validatePayments(payments, outstanding, modes) {
       if (Number(p.amount) < 25000) throw new Error(`${p.mode} requires at least ₹25,000.`);
       if (!p.loan?.aadhaar_card || !p.loan?.pan_card || !p.loan?.transaction_id) throw new Error('Loan Aadhaar, PAN and transaction ID are required.');
       if (!['do_screenshot', 'aadhaar_image', 'pan_image', 'consent_image'].every(key => p.loan.files?.[key])) throw new Error('All four loan attachments are required.');
-      if (!p.loan.video?.verified || !p.loan.video?.url) throw new Error('Record and verify the loan declaration video.');
+      if (!p.loan.video?.verified || !p.loan.video?.url) throw new Error('Record and verify, or review and upload, the loan declaration video.');
     }
   }
   return active;
