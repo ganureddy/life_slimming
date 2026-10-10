@@ -255,7 +255,8 @@ before_request = ["life_slimming.two_factor_bypass.install"]
 override_doctype_class = {
     "Appointment": "life_slimming.cc_appointment.CCAppointment",
 	# "ToDo": "custom_app.overrides.CustomToDo"
-    "Patient Appointment":"life_slimming.get_availability_data.Validate_Patient_Appointment"
+    "Patient Appointment":"life_slimming.get_availability_data.Validate_Patient_Appointment",
+    "Therapy Session": "life_slimming.therapy_session.CustomTherapySession",
 }
 # override_doctype_class = {
 #	"ToDo": "custom_app.overrides.CustomToDo"
