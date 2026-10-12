@@ -157,7 +157,7 @@ def run(**kwargs):
         # Opt-in pagination for Vue. Legacy callers retain their existing contract.
         paginated = frappe.form_dict.get("page_size") is not None
         try:
-            page_size = max(1, min(100, int(frappe.form_dict.get("page_size") or 40)))
+            page_size = max(1, min(500, int(frappe.form_dict.get("page_size") or 40)))
             start = max(0, int(frappe.form_dict.get("start") or 0)) if paginated else 0
         except (TypeError, ValueError):
             frappe.throw("Invalid pagination")

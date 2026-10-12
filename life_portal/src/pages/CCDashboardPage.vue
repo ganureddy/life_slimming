@@ -242,15 +242,31 @@ async function load(nextPage) {
   const token = ++generation; controller?.abort(); controller = new AbortController();
   page.value = nextPage; loading.value = true; error.value = ''; rows.value = []; total.value = 0;more.value=false;createdIds.value=new Set();appointmentCohort.value=[];incomplete.value=false;assignSelected.value=new Set();tlPage.value=1;
   try {
-    const data = await ccCall('cc_get_leads', { ...filters, ...(searching.value?{start:(nextPage - 1) * 20}:{}) }, controller.signal);
-    if(token!==generation)return;
-    if(!searching.value){
-      const cohorts=await Promise.all(['followup','appointment'].filter(value=>value!==filters.date_mode).map(date_mode=>ccCall('cc_get_leads',{...filters,date_mode,start:0},controller.signal)));
+    let data;
+    if(searching.value){
+      data=await ccCall('cc_get_leads',{...filters,start:(nextPage-1)*20},controller.signal);
       if(token!==generation)return;
-      createdIds.value=new Set((data.rows||[]).map(row=>row.name));
-      appointmentCohort.value=filters.date_mode==='appointment'?(data.rows||[]):cohorts[filters.date_mode==='followup'?0:1]?.rows||[];
-      data.rows=[...new Map([...(data.rows||[]),...cohorts.flatMap(cohort=>cohort.rows||[])].map(row=>[row.name,row])).values()];
-      incomplete.value=!!data.truncated||cohorts.some(cohort=>cohort.truncated);
+    }
+    if(!searching.value){
+      // Load bounded pages concurrently; avoid a redundant 5k-row request.
+      const loadCohort = async date_mode => {
+        const pageSize=500, cohortRows=[];
+        let start=0, cohort;
+        do {
+          cohort=await ccCall('cc_get_leads',{...filters,date_mode,page_size:pageSize,start},controller.signal);
+          cohortRows.push(...(cohort.rows||[]));
+          start+=pageSize;
+        } while(cohort.has_more && token===generation);
+        return {...cohort,rows:cohortRows};
+      };
+      const cohortModes=[filters.date_mode,...['followup','appointment'].filter(value=>value!==filters.date_mode)];
+      const cohorts=await Promise.all(cohortModes.map(loadCohort));
+      if(token!==generation)return;
+      const createdCohort=cohorts[cohortModes.indexOf(filters.date_mode)];
+      createdIds.value=new Set((createdCohort.rows||[]).map(row=>row.name));
+      appointmentCohort.value=cohorts[cohortModes.indexOf('appointment')]?.rows||[];
+      data={...createdCohort,rows:[...new Map(cohorts.flatMap(cohort=>cohort.rows||[]).map(row=>[row.name,row])).values()]};
+      incomplete.value=cohorts.some(cohort=>cohort.truncated);
       if(incomplete.value) error.value='The selected range exceeds the lead limit. Choose a shorter range to view all leads.';
     }
     if (token !== generation) return;
@@ -349,11 +365,12 @@ async function saveFollowup(payload) {
     }
     actionNotice.value=actionType.value==='book'?'Lead saved. Choose the appointment slot next.':'Lead update and call outcome saved.';
     const id=detail.value.name;
-    const refreshed=await ccCall('cc_get_leads',{query:id,detail:1},detailController?.signal);
-    detail.value=refreshed.rows?.find(item=>item.name===id)||detail.value;
-    initLeadDraft(detail.value);
-    await load(page.value);
-    if(actionType.value==='book') { await router.push({name:'cc-appointments',query:{lead:id,branch:leadDraft.value.branch||''}}); }
+    if(actionType.value==='book') {
+      await router.push({name:'cc-appointments',query:{lead:id,branch:leadDraft.value.branch||''}});
+    } else {
+      stopCall();detailGeneration++;detailController?.abort();detail.value=null;selectedView.value='dashboard';
+      load(1);
+    }
   } catch(e) { if(e.message)actionError.value=e.message; }
   finally { savingFollowup.value=false; }
 }

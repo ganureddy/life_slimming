@@ -97,7 +97,8 @@ function toggle(label) {
       :aria-expanded="!collapsed"
       @click="$emit('toggle')"
     >
-      {{ collapsed ? "›" : "‹" }}
+      <span class="collapse-icon" aria-hidden="true">{{ collapsed ? "›" : "‹" }}</span>
+      <span class="collapse-hint" aria-hidden="true">{{ collapsed ? "Expand" : "Collapse" }}</span>
     </button>
   </aside>
 </template>

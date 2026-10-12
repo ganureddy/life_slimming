@@ -26,6 +26,7 @@
 
 
 .cc-erp-root:has(#page-followup.active) .cc-rangebar, .cc-erp-root:has(#page-followup.active) #cc-quick-range, .cc-erp-root:has(#page-followup.active) .cc-quick-ranges{display:none!important}
+.cc-erp-root:not(:has(#page-followup.active)) #cc-quick-range{display:flex!important}
 .cc-erp-root:has(#page-followup.active) #page-followup .page-breadcrumb{display:none!important}
 .cc-erp-root:has(#page-followup.active) #page-followup .ff-sec{margin:8px 0!important}
 .cc-erp-root:has(#page-followup.active) #page-followup .ff-sec-hdr{padding:7px 12px!important;font-size:13px!important}
