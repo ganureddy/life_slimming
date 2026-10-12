@@ -1,7 +1,7 @@
 {
   "source": "ERP Portal / Server Script",
   "exported_on": "2026-09-19",
-  "count": 146,
+  "count": 150,
   "endpoints": [
     {
       "id": "accounts_command_centre_coa",
@@ -3741,6 +3741,113 @@
         "Patient Appointment"
       ],
       "notes": []
+    },
+    {
+      "id": "life_cc_agent_report_v2",
+      "source_name": "LIFE CC Agent Reports v2",
+      "legacy_method": "life_cc_agent_report_v2",
+      "method": "life_slimming.api.server_scripts.life_cc_agent_report_v2.run",
+      "source_modified": "2026-10-05 02:06:25.176853",
+      "source_sha256": "5e2c54bee66e4d82c8aa673bb7421774e2d08eb6ec27bfb708d39a3fec564ace",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "basis",
+        "branches",
+        "compare",
+        "csrf_token",
+        "employees",
+        "from_date",
+        "plan",
+        "to_date"
+      ],
+      "doctypes": [
+        "Branch",
+        "CC Agent Daily Metric",
+        "CC Agent KPI Plan",
+        "DocType",
+        "Employee",
+        "Has Role"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_cc_agent_setup_v2",
+      "source_name": "LIFE CC Agent Reports v2 Setup",
+      "legacy_method": "life_cc_agent_setup_v2",
+      "method": "life_slimming.api.server_scripts.life_cc_agent_setup_v2.run",
+      "source_modified": "2026-10-05 01:10:55.449095",
+      "source_sha256": "45a77609cc14720436c54dcb3174606bdb27da47577e962b48828b07b4b9f3b0",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "csrf_token"
+      ],
+      "doctypes": [
+        "Custom Field",
+        "DocType",
+        "Has Role",
+        "Server Script"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_operations_session_dashboard_v1",
+      "source_name": "LIFE Operations Session Dashboard V1",
+      "legacy_method": "life_operations_session_dashboard_v1",
+      "method": "life_slimming.api.server_scripts.life_operations_session_dashboard_v1.run",
+      "source_modified": "2026-10-10 06:59:29.426893",
+      "source_sha256": "d2737451c4fb2ad37bdd405ca3b0ab7e0b8077995532f6f22e2459abfe7f7d95",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "branch",
+        "category",
+        "from_date",
+        "role",
+        "staff",
+        "to_date"
+      ],
+      "doctypes": [
+        "Branch",
+        "Therapy Session",
+        "Therapy Type"
+      ],
+      "notes": []
+    },
+    {
+      "id": "life_ops_submit_cryo_batch",
+      "source_name": "Operations Service Module cryo multiple sessions executions",
+      "legacy_method": "life_ops_submit_cryo_batch",
+      "method": "life_slimming.api.server_scripts.life_ops_submit_cryo_batch.run",
+      "source_modified": "2026-10-10 13:11:55.420700",
+      "source_sha256": "967e27154ebb915e7a1bcad64be6872c06699c2aa8d69192cab96818b3c4801e",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "source_session"
+      ],
+      "doctypes": [
+        "Therapy Plan",
+        "Therapy Session",
+        "Therapy Type"
+      ],
+      "notes": [
+        "Two active live scripts have identical bodies; use this single canonical endpoint."
+      ]
     }
   ],
   "last_reviewed_on": "2026-10-04",

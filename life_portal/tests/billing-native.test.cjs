@@ -80,3 +80,10 @@ test('invalid payment amounts are rejected before collection', async () => {
  const {validatePayments}=await lib;
  for(const amount of [-1,Infinity,NaN])assert.throws(()=>validatePayments([{mode:'Cash',amount}],100,[{name:'Cash',type:'Cash'}]),/non-negative/);
 });
+test('GLP vial dose display follows legacy names without changing billing quantity', async () => {
+ const {glpDoseMessage}=await lib;
+ assert.equal(glpDoseMessage(' GLP Vial 2.5 mg × 4 Doses ',2),'2 vials × 4 doses = Total 8 doses');
+ for(const dose of ['2.5','5','7.5','10'])assert.equal(glpDoseMessage(`GLP Vial ${dose} mg × 4 Doses`,1),'1 vial × 4 doses = Total 4 doses');
+ assert.equal(glpDoseMessage('GLP Vial 5 mg × 4 Doses',0),'Enter GLP vial quantity.');
+ assert.equal(glpDoseMessage('Other therapy',2),'');
+});
