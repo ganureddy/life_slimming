@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { ccCall } from '../api/cc';
 import { request } from '../api/http';
 import { dateRange, maskPhone, downloadCsv } from '../lib/cc';
+import { ccDashboardGroup } from '../lib/cc-dashboard-groups';
 import { session } from '../lib/session';
 import CCWorksheet from '../components/cc/CCWorksheet.vue';
 import CCAssignmentControls from '../components/cc/CCAssignmentControls.vue';
@@ -92,10 +93,10 @@ function openTile(kind){
   const groups={
     assigned:['All Assigned Leads',created],
     untouched:['Untouched Leads',created.filter(row=>row.custom_cc_stage==='UNTOUCHED')],
-    followup:['Follow-Up Due',rows.value.filter(row=>row.custom_cc_stage==='FOLLOW-UP')],
-    norespnotreach:['No Response / Not Reachable',created.filter(row=>['No Response','Not Reachable'].includes(row.custom_cc_sub_status))],
-    invalid:['Invalid Number',created.filter(row=>row.custom_cc_sub_status==='Invalid Number')],
-    nid:['NID',created.filter(row=>row.custom_cc_sub_status==='NID')],
+    followup:['FOLLOW UPS',dashboardGroups.value.followup],
+    norespnotreach:['NOT RESPONDING / NOT REACHABLE',dashboardGroups.value.norespnotreach],
+    invalid:['INVALID',dashboardGroups.value.invalid],
+    nid:['NID',dashboardGroups.value.nid],
     success:['Successful Conversions',created.filter(row=>row.custom_cc_stage==='SUCCESS')],
     appts:['Appointments Booked',appointmentRows.value],
     apptsame:['Created & Appt Today',created.filter(row=>apptToday(row)&&createdToday(row))],
@@ -160,9 +161,14 @@ const dashQueueRows = computed(()=>rows.value.filter(r=>['UNTOUCHED','FOLLOW-UP'
 const reminderRows = computed(()=>rows.value.filter(r=>r.custom_next_followup_date||['Call Back','Get Back','Followup'].includes(r.status)));
 const reminderBuckets = computed(()=>({overdue:reminderRows.value.filter(r=>r.custom_next_followup_date&&String(r.custom_next_followup_date).slice(0,10)<todayISO),today:reminderRows.value.filter(r=>String(r.custom_next_followup_date||'').slice(0,10)===todayISO),upcoming:reminderRows.value.filter(r=>String(r.custom_next_followup_date||'').slice(0,10)>todayISO),nodate:reminderRows.value.filter(r=>!r.custom_next_followup_date)}));
 const todayISO = dateRange('today')[0];
-const noResponseCount = computed(()=>rows.value.filter(r=>createdIds.value.has(r.name)&&['No Response','Not Reachable'].includes(r.custom_cc_sub_status)).length);
-const invalidCount = computed(()=>rows.value.filter(r=>createdIds.value.has(r.name)&&r.custom_cc_sub_status==='Invalid Number').length);
-const nidCount = computed(()=>rows.value.filter(r=>createdIds.value.has(r.name)&&r.custom_cc_sub_status==='NID').length);
+const dashboardGroups = computed(()=>{
+  const groups={followup:[],norespnotreach:[],invalid:[],nid:[]};
+  for(const row of rows.value){
+    const group=ccDashboardGroup(row);
+    if(group && (group==='followup'||createdIds.value.has(row.name))) groups[group].push(row);
+  }
+  return groups;
+});
 const convertedRows = computed(()=>rows.value.filter(r=>createdIds.value.has(r.name)&&(r.custom_appointment_status==='Visited Booked'||r.status==='Converted')));
 const sameDayAppointments = computed(()=>rows.value.filter(r=>createdIds.value.has(r.name)&&String(r.custom_appointment_date_and_time||'').slice(0,10)===todayISO&&String(r.creation||'').slice(0,10)===todayISO).length);
 const olderLeadAppointments = computed(()=>rows.value.filter(r=>createdIds.value.has(r.name)&&String(r.custom_appointment_date_and_time||'').slice(0,10)===todayISO&&String(r.creation||'').slice(0,10)!==todayISO).length);
@@ -456,10 +462,10 @@ onUnmounted(() => { clearTimeout(globalSearchTimer);globalSearchController?.abor
     <div class="stat-grid">
       <button class="stat-card s-blue" @click="openTile('assigned')"><div class="sl">{{from===today && to===today?'Assigned Today':'Assigned in range'}}</div><div class="sv">{{total}}</div><div class="ss">{{scoped?'Leads assigned to you':'All team leads in range'}} · click to view</div></button>
       <button class="stat-card s-gold" @click="openTile('untouched')"><div class="sl">Untouched</div><div class="sv">{{stageCounts.UNTOUCHED||0}}</div><div class="ss">Call now! · click to view</div></button>
-      <button class="stat-card s-teal" @click="openTile('followup')"><div class="sl">Follow-Up Due</div><div class="sv">{{stageCounts['FOLLOW-UP']||0}}</div><div class="ss">Scheduled callbacks · click to view</div></button>
-      <button class="stat-card s-gold" @click="openTile('norespnotreach')"><div class="sl">No Response / Not Reachable</div><div class="sv">{{noResponseCount}}</div><div class="ss">Combined · click to view</div></button>
-      <button class="stat-card s-red" @click="openTile('invalid')"><div class="sl">Invalid</div><div class="sv">{{invalidCount}}</div><div class="ss">Invalid number · click to view</div></button>
-      <button class="stat-card s-red" @click="openTile('nid')"><div class="sl">NID</div><div class="sv">{{nidCount}}</div><div class="ss">NID · click to view</div></button>
+      <button class="stat-card s-teal" @click="openTile('followup')"><div class="sl">FOLLOW UPS</div><div class="sv">{{dashboardGroups.followup.length}}</div><div class="ss">Call back · Get back</div></button>
+      <button class="stat-card s-gold" @click="openTile('norespnotreach')"><div class="sl">NOT RESPONDING / NOT REACHABLE</div><div class="sv">{{dashboardGroups.norespnotreach.length}}</div><div class="ss">Not responding · Switch off · Not reachable</div></button>
+      <button class="stat-card s-red" @click="openTile('invalid')"><div class="sl">INVALID</div><div class="sv">{{dashboardGroups.invalid.length}}</div><div class="ss">Not in service · Invalid number · Not enquired · Wrong no · Not interested · TNA</div></button>
+      <button class="stat-card s-red" @click="openTile('nid')"><div class="sl">NID</div><div class="sv">{{dashboardGroups.nid.length}}</div><div class="ss">Non local</div></button>
       <button class="stat-card s-green grp-card" @click="groupPanel=groupPanel==='appt'?'':'appt'"><div class="sl">Appointments ▾</div><div class="sv">{{appointmentRows.length}}</div><div class="ss">{{sameDayAppointments}} same-day · {{olderLeadAppointments}} older · tap to break down</div></button>
       <button class="stat-card s-teal grp-card" @click="groupPanel=groupPanel==='converted'?'':'converted'"><div class="sl">Converted ▾</div><div class="sv">{{convertedRows.length}}</div><div class="ss">{{sameDayConverted}} same-day · {{olderConverted}} older · tap to break down</div></button>
       <button class="stat-card s-red" @click="openTile('success')"><div class="sl">Conversion Rate</div><div class="sv">{{total?Math.round((stageCounts.SUCCESS||0)*100/total):0}}%</div><div class="ss">{{stageCounts.SUCCESS||0}} of {{total}} leads · click to view</div></button>

@@ -12,11 +12,11 @@ app_license = "MIT"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/life_slimming/css/life_slimming.css"
-# app_include_js = "/assets/life_slimming/js/life_slimming.js"
+app_include_js = ["/assets/life_slimming/js/session_keepalive.js"]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/life_slimming/css/life_slimming.css"
-# web_include_js = "/assets/life_slimming/js/life_slimming.js"
+web_include_js = ["/assets/life_slimming/js/session_keepalive.js"]
 
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "life_slimming/public/scss/website"

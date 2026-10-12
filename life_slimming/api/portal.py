@@ -5,6 +5,7 @@ import hashlib
 import frappe
 from frappe.sessions import get_csrf_token
 from life_slimming.portal_access import access_settings
+from life_slimming.session_policy import idle_logout_exempt
 
 
 @frappe.whitelist()
@@ -17,6 +18,7 @@ def bootstrap():
 
     return {
         "user": user.name,
+        "idle_logout_exempt": idle_logout_exempt(),
         "session_id": hashlib.sha256(frappe.session.sid.encode()).hexdigest()[:24],
         "full_name": user.full_name or user.name,
         "roles": roles,

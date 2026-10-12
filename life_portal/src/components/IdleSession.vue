@@ -4,6 +4,7 @@ import { session, loginUrl } from "../lib/session";
 import { call } from "../lib/api";
 import { createIdleTimer } from "../lib/idle";
 const emit = defineEmits(["expired"]);
+const exempt = computed(() => session.idle_logout_exempt === true);
 const seconds = ref(0), expired = ref(false), dialog = ref(null);
 const countdown = computed(() => Math.floor(seconds.value / 60) + ":" + String(seconds.value % 60).padStart(2, "0"));
 const key = "life-portal-idle:" + session.user + ":" + session.session_id;
@@ -53,6 +54,7 @@ watch(() => seconds.value > 0 || expired.value, async (show) => {
   else if (!show) dialog.value?.close();
 });
 onMounted(() => {
+  if (exempt.value) return;
   timer = createIdleTimer({ read, write, warning: value => seconds.value = value, expire: logout });
   bind(document);
   observer = new MutationObserver(() => { for (const f of document.querySelectorAll("iframe")) { try { bind(f.contentDocument); } catch { /* External widget. */ } } });
@@ -70,7 +72,7 @@ onUnmounted(() => {
 });
 </script>
 <template>
-  <dialog ref="dialog" class="idle-dialog" aria-labelledby="idle-title" aria-describedby="idle-description" @cancel.prevent>
+  <dialog v-if="!exempt" ref="dialog" class="idle-dialog" aria-labelledby="idle-title" aria-describedby="idle-description" @cancel.prevent>
     <span class="idle-symbol" aria-hidden="true">◷</span>
     <h2 id="idle-title">{{ expired ? "Signing you out" : "ERP is going to auto logout" }}</h2>
     <p id="idle-description">{{ expired ? "You have been inactive for one hour. Redirecting to sign in…" : "Your session is inactive. Continue using ERP to stay signed in." }}</p>
