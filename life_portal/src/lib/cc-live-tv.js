@@ -11,10 +11,12 @@ export function leaderboard(data) {
   const agents = new Map();
   for (const row of data.rows) {
     const id = row.lead_owner || 'unassigned';
-    if (!agents.has(id)) agents.set(id, { id, name: data.agents[id] || 'Unassigned', branch: '', today: {leads:0,booked:0,walkins:0,visitedBooked:0}, month: {leads:0,booked:0,walkins:0,visitedBooked:0} });
+    if (!agents.has(id)) agents.set(id, { id, name: data.agents[id] || 'Unassigned', branch: '', today: {leads:0,booked:0,walkins:0,visitedBooked:0}, month: {leads:0,booked:0,walkins:0,visitedBooked:0}, week: {walkins:0} });
     const agent = agents.get(id);
     const branch = row.branch || row.lead_assign_to_branch;
     if (branch) agent.branch = agent.branch && agent.branch !== branch ? 'Multiple branches' : branch;
+    const appointmentDay = String(row.custom_appointment_date_and_time || '').slice(0,10);
+    if (data.week_start && appointmentDay >= data.week_start && appointmentDay < data.week_end && visited(row)) agent.week.walkins++;
     for (const [period, prefix] of [['today', data.today], ['month', data.today.slice(0,7)]]) {
       if (String(row.creation).startsWith(prefix)) agent[period].leads++;
       if (String(row.custom_appointment_date_and_time || '').startsWith(prefix)) {
@@ -24,9 +26,35 @@ export function leaderboard(data) {
       }
     }
   }
-  return [...agents.values()].filter(a => Object.values(a.month).some(Boolean));
+  return [...agents.values()];
 }
-export const rank = (agents, period) => agents.filter(a => a.id !== 'unassigned' && Object.values(a[period]).some(Boolean)).slice().sort((a,b) => b[period].walkins-a[period].walkins || b[period].booked-a[period].booked || b[period].leads-a[period].leads || a.id.localeCompare(b.id)).slice(0,3);
+export const sortedAgents = (agents, period) => agents.filter(a => a.id !== 'unassigned').slice().sort((a,b) => b[period].walkins-a[period].walkins || (b[period].visitedBooked || 0)-(a[period].visitedBooked || 0) || (b[period].booked || 0)-(a[period].booked || 0) || (b[period].leads || 0)-(a[period].leads || 0) || a.id.localeCompare(b.id));
+export const rank = (agents, period) => sortedAgents(agents, period).filter(a => Object.values(a[period]).some(Boolean)).slice(0,3);
+export const WEEKLY_TARGET = 35 / 4;
+export function highlights(agents) {
+  const lines = [];
+  for (const agent of sortedAgents(agents, 'today')) {
+    const t = agent.today;
+    if (t.walkins >= 5) lines.push(`🔥 ${agent.name} · ${t.walkins} visits today`);
+    if (t.booked >= 5) lines.push(`📅 ${agent.name} · ${t.booked} appointments booked today`);
+    if (agent.month.walkins >= 50) lines.push(`🏆 ${agent.name} · ${agent.month.walkins} visits this month`);
+    if (t.walkins >= 2 && t.visitedBooked / t.walkins >= .5) lines.push(`🎯 ${agent.name} · ${Math.round(t.visitedBooked / t.walkins * 100)}% visited booked ratio`);
+  }
+  return lines.length ? lines : ['⭐ Highlights appear here when agents hit targets'];
+}
+// Frappe timestamps are site-local: compare like-for-like without browser timezone conversion.
+export function waitingLeads(data, elapsedMs = 0) {
+  if (!data) return [];
+  const stamp = value => Date.parse(String(value || '').replace(' ', 'T').slice(0,19) + 'Z');
+  const now = stamp(data.timestamp) + Math.max(0, elapsedMs);
+  return data.rows.filter(row => String(row.creation).startsWith(data.today)
+    && row.custom_call_count != null && Number(row.custom_call_count) === 0
+    && Object.hasOwn(row, 'custom_last_call_time') && !row.custom_last_call_time
+    && !booked(row) && !visited(row)
+    && !['converted', 'lost', 'do not contact'].includes(String(row.status || '').toLowerCase()))
+    .map(row => ({...row, minutes: Math.floor((now-stamp(row.creation))/60000)}))
+    .filter(row => row.minutes >= 10).sort((a,b) => b.minutes-a.minutes);
+}
 export function changes(previous, data) {
   if (!previous || previous.today !== data.today) return [];
   const old = new Map(previous.rows.map(row => [row.name, row]));

@@ -3,6 +3,8 @@
 Leads are counted by creation date. Bookings and visits are counted by the
 lead's scheduled appointment date (one current appointment per lead).
 """
+from datetime import timedelta
+
 import frappe
 from frappe.utils import now_datetime, get_system_timezone
 from life_slimming.portal_access import require_module
@@ -21,10 +23,13 @@ def snapshot():
     scoped = user != 'Administrator' and not roles.intersection(managers)
     now = now_datetime()
     month = str(now.date().replace(day=1))
+    week_start = now.date() - timedelta(days=now.weekday())
+    week_end = week_start + timedelta(days=7)
+    since = min(month, str(week_start))
     fields = ['name', 'lead_name', 'lead_owner', 'creation', 'modified',
               'branch', 'lead_assign_to_branch', 'source', 'enquired_for',
               'custom_appointment_date_and_time', 'custom_appointment_status',
-              'custom_visit_status', 'status']
+              'custom_visit_status', 'status', 'custom_call_count', 'custom_last_call_time']
     meta = frappe.get_meta('Lead')
     fields = [field for field in fields if field in {'name', 'creation', 'modified'} or meta.has_field(field)]
     if 'custom_appointment_date_and_time' not in fields:
@@ -32,11 +37,12 @@ def snapshot():
     # Deliberately not paginated: never silently truncate the leaderboard.
     rows = frappe.get_all('Lead', fields=fields,
         filters={'lead_owner': user} if scoped else {},
-        or_filters=[['creation', '>=', month], ['modified', '>=', month],
-                    ['custom_appointment_date_and_time', '>=', month]],
+        or_filters=[['creation', '>=', since], ['modified', '>=', since],
+                    ['custom_appointment_date_and_time', '>=', since]],
         order_by='creation asc, name asc', limit_page_length=0)
     owners = sorted({row.lead_owner for row in rows if row.get('lead_owner')})
     agents = {owner: frappe.get_cached_value('User', owner, 'full_name') or owner for owner in owners}
     agent_images = {owner: frappe.get_cached_value('User', owner, 'user_image') or '' for owner in owners}
     return dict(rows=rows, agents=agents, agent_images=agent_images, today=str(now.date()),
+                week_start=str(week_start), week_end=str(week_end),
                 timestamp=str(now), timezone=get_system_timezone(), restricted_to_owner=bool(scoped))
