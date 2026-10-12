@@ -25,3 +25,35 @@ test('a previous user response cannot apply events or restart polling', async ()
  s.resolve({cursor:'old', events:[{name:'private-event',received_on:'now'}]}); await first;
  assert.equal(s.context.eventCount(), 0); assert.equal(s.stats().scheduled, 0);
 });
+
+test('logout clears the phone and rejects an in-flight session response', async () => {
+  let resolveSession;
+  const context = {
+    convoxApi: { widgetSession: () => new Promise(resolve => { resolveSession = resolve; }) },
+    clearTimeout() {},
+    validWidgetUrl: () => true,
+  };
+  vm.createContext(context);
+  vm.runInContext(`
+    const ref = value => ({value});
+    const loggedOut=ref(false), starting=ref(false), url=ref(''), phoneConfirmed=ref(true),
+      error=ref(''), notice=ref(''), pollError=ref(''), settings=ref({enabled:true}),
+      events=ref([{name:'private'}]), incoming=ref({}), selectedLead=ref('LEAD-1'), open=ref(true),
+      preferManual=ref(false), manualLogin=ref(false), frameVersion=ref(0);
+    const session={user:'agent'}, controller={signal:null}, seen=new Set(['old']);
+    let sessionGeneration=1, stopped=false, cursor='old', timer;
+    ${source.slice(source.indexOf('async function connect('), source.indexOf('async function callSelected('))}
+    ${source.slice(source.indexOf('function portalLogout()'), source.indexOf('function warnBeforeLeaving('))}
+    this.connect=connect; this.logout=portalLogout;
+    this.state=()=>({loggedOut:loggedOut.value,url:url.value,events:events.value.length,starting:starting.value});
+  `, context);
+  const pending = context.connect();
+  context.logout();
+  resolveSession({url:'https://phone.example',mode:'sso'});
+  await pending;
+  assert.equal(context.state().loggedOut, true);
+  assert.equal(context.state().url, '');
+  assert.equal(context.state().events, 0);
+  assert.equal(context.state().starting, false);
+  await context.connect();
+});

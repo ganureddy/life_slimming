@@ -28,6 +28,26 @@ shared across ports only when the browser hostname matches; if needed, sign in
 through the Vite login link. No credentials for the connected remote ERP are
 stored or used by this application.
 
+### Idle logout exemptions
+
+The portal warns at 57 minutes and logs out after one hour of inactivity by
+default. `narendhar@lifescc.com` and `life@gmail.com` are exempt. The server owns
+this policy, shared with Frappe Desk and standalone website pages. Override the
+list using the site-config key `life_idle_logout_exempt_users` (a JSON list or
+comma-separated usernames); an empty list removes all exemptions.
+
+While an app page remains open, exempt accounts send an authenticated heartbeat
+at most every 60 seconds, adjusted for shorter Frappe session limits. Other
+accounts stop heartbeats after the initial policy check. Explicit logout and
+expired sessions still require login. Closing the browser, device sleep, browser
+tab suspension, or loss of connectivity can prevent renewal; this is not a
+permanent session or automatic re-login.
+
+Deploy the Python and public JS changes, rebuild the portal, clear the site's
+cache and restart workers so Desk/website hooks and bootstrap use the policy.
+Reload existing tabs after deployment. No production settings are changed by
+building locally.
+
 For a fresh checkout, install only the portal dependencies:
 
 ```sh

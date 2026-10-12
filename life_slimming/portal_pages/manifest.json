@@ -102,7 +102,7 @@
   "stock": {
     "route": "stock-dashboard",
     "source": "stock-dashboard",
-    "modified": "2026-10-09 19:33:29.189540"
+    "modified": "2026-10-11 01:27:24.689694"
   },
   "approvals": {
     "route": "approvals-report",
@@ -177,7 +177,7 @@
   "service": {
     "route": "operations-&-service-module",
     "source": "operations-service-module",
-    "modified": "2026-10-09 16:21:41.701297"
+    "modified": "2026-10-11 12:11:24.371904"
   },
   "followup": {
     "route": "followup-master",
@@ -202,7 +202,7 @@
   "bdash": {
     "route": "branch-command-center",
     "source": "branch-command-center",
-    "modified": "2026-09-27 17:22:12.272446"
+    "modified": "2026-10-12 16:02:40.354073"
   },
   "enrollment-register": {
     "route": "enrollment-register-testing",

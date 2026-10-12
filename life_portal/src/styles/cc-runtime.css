@@ -25,7 +25,6 @@
 @media(max-width:900px){.cc-erp-root .cc-appointments-table{min-width:850px!important}}
 
 
-.cc-erp-root:has(#page-followup.active) .cc-rangebar, .cc-erp-root:has(#page-followup.active) #cc-quick-range, .cc-erp-root:has(#page-followup.active) .cc-quick-ranges{display:none!important}
 .cc-erp-root:has(#page-followup.active) #page-followup .page-breadcrumb{display:none!important}
 .cc-erp-root:has(#page-followup.active) #page-followup .ff-sec{margin:8px 0!important}
 .cc-erp-root:has(#page-followup.active) #page-followup .ff-sec-hdr{padding:7px 12px!important;font-size:13px!important}
@@ -157,6 +156,8 @@
 .cc-erp-root .wf-q-side .btn{white-space:nowrap}
 /* Match the legacy date filter: wrap quick ranges and fields without horizontal overflow. */
 .cc-erp-root #cc-quick-range.cc-rangebar{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:7px!important;overflow:visible!important;min-width:0}
+.cc-erp-root .cc-select-checkbox{appearance:auto!important;-webkit-appearance:checkbox!important;width:19px!important;height:19px!important;margin:0 5px!important;accent-color:#126342!important;cursor:pointer!important;vertical-align:middle}
+.cc-erp-root .cc-select-checkbox:focus-visible{outline:3px solid #7dbd91!important;outline-offset:2px}
 .cc-erp-root #cc-quick-range.cc-rangebar>*{flex:0 1 auto!important;margin-top:0!important;margin-bottom:0!important}
 .cc-erp-root #cc-quick-range.cc-rangebar input[type=date]{width:132px!important;min-width:0!important;height:32px!important;flex:0 0 auto!important;align-self:auto!important}
 .cc-erp-root #cc-quick-range.cc-rangebar #cc-date-mode{width:auto!important;min-width:min(150px,100%)!important;max-width:190px!important;flex:0 1 auto!important;height:30px!important}

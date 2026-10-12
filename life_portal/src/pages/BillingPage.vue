@@ -170,6 +170,15 @@ function scopedBillingCss(code) {
 }
 
 async function mountBilling() {
+  // Web Page exports may contain raw strings with inline blocks, or the
+  // original pre-extracted arrays. Preserve document order for legacy patches.
+  const parsed = new DOMParser().parseFromString(billingSource.html, "text/html");
+  const blocks = (value, selector) => Array.isArray(value) ? value : [
+    ...Array.from(parsed.querySelectorAll(selector), (element, index) => ({ index, code: element.textContent })),
+    ...(value ? [{ index: "page", code: value }] : []),
+  ];
+  const styles = blocks(billingSource.css, "style");
+  const scripts = blocks(billingSource.javascript, "script:not([src])");
   installFrappeBridge();
   host.value.innerHTML = extractBillingApp();
   const alertStack = host.value.querySelector("#alert-stack");
@@ -181,7 +190,7 @@ async function mountBilling() {
   billingMounted = true;
 
 
-  for (const block of billingSource.css) {
+  for (const block of styles) {
     const style = document.createElement("style");
     style.dataset.lifeBillingV2 = String(block.index);
     style.textContent = scopedBillingCss(block.code);
@@ -195,7 +204,7 @@ async function mountBilling() {
   injected.push(polish);
 
   await nextTick();
-  for (const block of billingSource.javascript) {
+  for (const block of scripts) {
     const script = document.createElement("script");
     script.dataset.lifeBillingV2 = String(block.index);
     script.textContent = adaptCode(block.code);

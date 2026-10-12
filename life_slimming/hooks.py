@@ -12,11 +12,11 @@ app_license = "MIT"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/life_slimming/css/life_slimming.css"
-# app_include_js = "/assets/life_slimming/js/life_slimming.js"
+app_include_js = ["/assets/life_slimming/js/session_keepalive.js"]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/life_slimming/css/life_slimming.css"
-# web_include_js = "/assets/life_slimming/js/life_slimming.js"
+web_include_js = ["/assets/life_slimming/js/session_keepalive.js"]
 
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "life_slimming/public/scss/website"
@@ -283,6 +283,9 @@ doc_events = {
 "Lead": {
             "on_update": "life_slimming.events.restrict_duplicate_lead",
         },
+"ConVox Call Event": {
+    "on_update": "life_slimming.convox_lead_sync.sync_event",
+},
 "Lead Entry": {
             "after_insert":"life_slimming.events.new_lead_doc",
             "before_save": "life_slimming.events.duplicate_lead_details"
@@ -482,6 +485,7 @@ except Exception:
 
 # Staff-based CC scheduler fields.
 after_migrate = [
+    "life_slimming.convox_lead_sync.install_fields",
     "life_slimming.api.cc_appointment_setup.execute",
     "life_slimming.api.data_correction_setup.execute",
 ]

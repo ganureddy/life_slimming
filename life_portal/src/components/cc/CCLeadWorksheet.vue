@@ -6,6 +6,7 @@ import { request } from '../../api/http';
 import { session } from '../../lib/session';
 import { maskPhone } from '../../lib/cc';
 import { useRouter } from 'vue-router';
+import CCCallSummary from './CCCallSummary.vue';
 
 const props = defineProps({ lead: { type: Object, required: true }, manager: Boolean, busy: Boolean, error: String, notice: String });
 const router = useRouter();
@@ -166,6 +167,7 @@ watch(()=>props.error,value=>{if(value)showToast(value,'error')});
     </div>
     <div class="cc-bar-actions"><button class="btn btn-g btn-sm" @click="emit('start-call')">Start Call</button><button class="btn btn-gy btn-sm" @click="emit('stop-call')">Open phone / hang up</button></div>
   </div>
+  <CCCallSummary :lead="lead" />
   <div id="wf-shell">
     <div id="followup-form-body"><div class="ff-form">
       <div id="ff-prog-wrap" class="ff-progress-wrap"><div id="ff-prog-steps" class="ff-prog-steps"><button v-for="(step,index) in progressSteps" :key="step" type="button" class="ff-prog-step" :class="{done:stepComplete[index]}" @click="jumpToStep(index)"><span class="ff-prog-dot" :class="{done:stepComplete[index]}">{{stepComplete[index]?'✓':index+1}}</span><span class="ff-prog-label">{{step}}</span></button></div><div class="ff-prog-bar-wrap"><div id="ff-prog-bar" class="ff-prog-bar" :style="{width:progress+'%'}"></div></div><div class="ff-progress-meta"><span class="ff-progress-identity">Lead ID: <strong>{{lead.name}}</strong> <span aria-hidden="true">·</span> Assigned to: <strong>{{lead.lead_owner_name||lead.lead_owner||'—'}}</strong></span><span class="ff-progress-actions"><button type="button" class="btn btn-gy btn-sm" @click="showHistory">🕘 Lead History</button><button type="button" class="btn btn-gy btn-sm" :disabled="!primary" :title="`ConVox call history matched by mobile ${maskPhone(primary)}`" @click="openConvoxHistory">🎧 ConVox History <span v-if="primary">· {{maskPhone(primary)}}</span></button></span><span id="ff-prog-pct" class="ff-prog-pct">{{progress}}% complete</span></div></div>

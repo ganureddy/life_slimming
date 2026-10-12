@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { leaderboard, rank, changes } from '../src/lib/cc-live-tv.js';
+import { leaderboard, rank, changes, sortedAgents, waitingLeads, highlights } from '../src/lib/cc-live-tv.js';
 const row = {name:'L1',lead_name:'Client',lead_owner:'a',creation:'2026-10-09 09:00:00',modified:'2026-10-09 09:00:00',custom_appointment_date_and_time:'2026-10-09 14:00:00',custom_appointment_status:'Scheduled'};
 const snapshot = rows => ({rows,agents:{a:'Agent A',b:'Agent B'},today:'2026-10-09',timestamp:'2026-10-09 10:00:00'});
 test('counts use creation and scheduled dates, not modification; unassigned excluded from podium', () => {
@@ -48,4 +48,33 @@ test('visited booked is a subset of visits and uses appointment day and month', 
  const updated = leaderboard(snapshot([{...row,custom_appointment_status:'Visited Not Booked'}]))[0];
  assert.equal(updated.today.visitedBooked,0);
  assert.equal(updated.today.walkins,1);
+});
+
+test('weekly ranking spans month boundaries and excludes next week', () => {
+ const data = {...snapshot([]),today:'2026-11-01',week_start:'2026-10-26',week_end:'2026-11-02'};
+ data.rows = ['2026-10-25','2026-10-26','2026-11-01','2026-11-02'].map((day,i)=>({...row,name:`week-${i}`,custom_appointment_status:'Visited Booked',custom_appointment_date_and_time:day+' 10:00:00'}));
+ const agent = leaderboard(data)[0];
+ assert.equal(agent.week.walkins,2);
+ assert.equal(agent.today.walkins,1);
+ assert.equal(agent.month.walkins,2);
+});
+test('visited booked breaks ranking ties; roster retains zero-activity owners', () => {
+ const agents = leaderboard(snapshot([{...row,lead_owner:'a',custom_appointment_status:'Visited'}, {...row,name:'b',lead_owner:'b',custom_appointment_status:'Visited Booked'}, {...row,name:'c',lead_owner:'c',creation:'2026-09-01',custom_appointment_date_and_time:null}]));
+ assert.equal(rank(agents,'today')[0].id,'b');
+ assert.equal(sortedAgents(agents,'today').length,3);
+ assert.equal(rank(agents,'today').length,2);
+});
+test('waiting uses confirmed zero calls, site timestamp, threshold and current day', () => {
+ const waiting = {...row, custom_appointment_date_and_time:null,custom_appointment_status:'',custom_call_count:0,custom_last_call_time:null,creation:'2026-10-09 09:50:00'};
+ const data = snapshot([waiting,{...waiting,name:'called',custom_call_count:1}, {...waiting,name:'last-call',custom_last_call_time:'2026-10-09 09:55:00'}, {...waiting,name:'unknown',custom_call_count:null}, {...waiting,name:'yesterday',creation:'2026-10-08 09:00:00'}, {...waiting,name:'recent',creation:'2026-10-09 09:51:00'}, {...waiting,name:'converted',status:'Converted'}]);
+ assert.deepEqual(waitingLeads(data).map(r=>r.name),['L1']);
+ assert.equal(waitingLeads(data)[0].minutes,10);
+ assert.equal(waitingLeads(data,60000).length,2);
+ assert.equal(waitingLeads(snapshot([row])).length,0);
+});
+test('highlights require actual thresholds', () => {
+ const agent = {id:'a',name:'Agent A',today:{walkins:5,visitedBooked:3,booked:5,leads:2},month:{walkins:50}};
+ assert.equal(highlights([agent]).length,4);
+ assert.match(highlights([agent])[3],/60%/);
+ assert.equal(highlights([]).length,1);
 });

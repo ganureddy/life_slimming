@@ -29,6 +29,13 @@ export function billingBranches(bootstrap) {
 
 export const loanModes = ['Bajaj Card Charges', 'Carepay', 'Fibe Finance', 'ShopSE', 'Savein Fintech Card Charges', 'Sai Roshini Card Charges', 'Liqui Loans Charges', 'Loan Tap / Uno Finance Charges'];
 export const isOnlineMode = name => /razorpay/i.test(name || '');
+export function glpDoseMessage(therapy, quantity) {
+  const name = String(therapy || '').trim().replace(/\s+/g, ' ');
+  if (!['2.5', '5', '7.5', '10'].some(dose => name === `GLP Vial ${dose} mg × 4 Doses`)) return '';
+  const qty = Number(quantity);
+  if (!Number.isFinite(qty) || qty <= 0) return 'Enter GLP vial quantity.';
+  return `${qty} ${qty === 1 ? 'vial' : 'vials'} × 4 doses = Total ${qty * 4} doses`;
+}
 export function normalizeMobile(value) {
   let digits = String(value || '').replace(/\D/g, '');
   if (digits.length === 12 && digits.startsWith('91')) digits = digits.slice(2);

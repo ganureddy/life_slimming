@@ -1,9 +1,11 @@
 <script setup>
 import { computed, watch, nextTick, onMounted, onUnmounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { ccCall } from '../api/cc';
+import { convoxApi } from '../api/convox';
 import { request } from '../api/http';
 import { dateRange, maskPhone, downloadCsv } from '../lib/cc';
+import { ccDashboardGroup } from '../lib/cc-dashboard-groups';
 import { session } from '../lib/session';
 import CCWorksheet from '../components/cc/CCWorksheet.vue';
 import CCAssignmentControls from '../components/cc/CCAssignmentControls.vue';
@@ -11,13 +13,17 @@ import CCDataTable from '../components/cc/CCDataTable.vue';
 import CCPager from '../components/cc/CCPager.vue';
 import CCConsultationBooking from '../components/cc/CCConsultationBooking.vue';
 import CCLeadWorksheet from '../components/cc/CCLeadWorksheet.vue';
+import CCAppointmentStatus from '../components/cc/CCAppointmentStatus.vue';
 import '../styles/cc.css';
 import '../styles/cc-legacy.css';
 import '../styles/cc-runtime.css';
 import ccReference from '../data/cc-reference.json';
 const [today] = dateRange('today');
 const router=useRouter();
-const from = ref(today), to = ref(today), mode = ref('created'), query = ref('');
+const route=useRoute();
+const routeValue=value=>Array.isArray(value)?String(value[0]||''):String(value||'');
+const validDate=value=>/^\d{4}-\d{2}-\d{2}$/.test(value);
+const from = ref(validDate(routeValue(route.query.from))?routeValue(route.query.from):today), to = ref(validDate(routeValue(route.query.to))?routeValue(route.query.to):today), mode = ref(['created','posting','updated'].includes(routeValue(route.query.mode))?routeValue(route.query.mode):'created'), query = ref('');
 const rows = ref([]), total = ref(0), page = ref(1), more = ref(false), searching = ref(false), scoped = ref(false);
 const queueOwner=ref('');
 const matrixFilter=ref(null);
@@ -41,7 +47,20 @@ const matchNotice=ref('');
 const createDuplicate=ref(null),createSources=ref([]),createBranches=ref([]),createCategories=ref([]),createOwners=ref([]),createMastersLoading=ref(false);
 const followup = ref({stage:'', sub_status:'', status:'', next_followup:'', conclusion:'', remarks:''});
 const savingFollowup = ref(false), actionError = ref(''), actionNotice = ref('');
-const selectedView = ref('dashboard');
+const viewNames=['dashboard','queue','followup','appointments','worksheet','tl','reports','assign','duplicates','scripts','faq','treatments','objections','branches','doctors'];
+const initialView=routeValue(route.query.view);
+const selectedView = ref(viewNames.includes(initialView)?initialView:'dashboard');
+watch([selectedView,from,to,mode],([view,start,end,dateMode])=>{
+  const next={...route.query,view:view==='dashboard'?undefined:view,from:start||undefined,to:end||undefined,mode:dateMode==='created'?undefined:dateMode};
+  if(['view','from','to','mode'].some(key=>String(route.query[key]||'')!==String(next[key]||'')))router.replace({query:next});
+});
+watch(()=>[route.query.view,route.query.from,route.query.to,route.query.mode],([view,start,end,dateMode])=>{
+  let nextView=routeValue(view);if(['assign','duplicates'].includes(nextView)&&!canManageLeads.value)nextView='dashboard';
+  selectedView.value=viewNames.includes(nextView)?nextView:'dashboard';
+  if(validDate(routeValue(start)))from.value=routeValue(start);
+  if(validDate(routeValue(end)))to.value=routeValue(end);
+  mode.value=['created','posting','updated'].includes(routeValue(dateMode))?routeValue(dateMode):'created';
+});
 const ownerRoles=['System Manager','Call Center Export','Sales Manager'];
 const canEditLeadOwner=computed(()=>ownerRoles.some(role=>session.roles.includes(role)));
 const canManageLeads=canEditLeadOwner;
@@ -75,10 +94,10 @@ function openTile(kind){
   const groups={
     assigned:['All Assigned Leads',created],
     untouched:['Untouched Leads',created.filter(row=>row.custom_cc_stage==='UNTOUCHED')],
-    followup:['Follow-Up Due',rows.value.filter(row=>row.custom_cc_stage==='FOLLOW-UP')],
-    norespnotreach:['No Response / Not Reachable',created.filter(row=>['No Response','Not Reachable'].includes(row.custom_cc_sub_status))],
-    invalid:['Invalid Number',created.filter(row=>row.custom_cc_sub_status==='Invalid Number')],
-    nid:['NID',created.filter(row=>row.custom_cc_sub_status==='NID')],
+    followup:['FOLLOW UPS',dashboardGroups.value.followup],
+    norespnotreach:['NOT RESPONDING / NOT REACHABLE',dashboardGroups.value.norespnotreach],
+    invalid:['INVALID',dashboardGroups.value.invalid],
+    nid:['NID',dashboardGroups.value.nid],
     success:['Successful Conversions',created.filter(row=>row.custom_cc_stage==='SUCCESS')],
     appts:['Appointments Booked',appointmentRows.value],
     apptsame:['Created & Appt Today',created.filter(row=>apptToday(row)&&createdToday(row))],
@@ -143,9 +162,14 @@ const dashQueueRows = computed(()=>rows.value.filter(r=>['UNTOUCHED','FOLLOW-UP'
 const reminderRows = computed(()=>rows.value.filter(r=>r.custom_next_followup_date||['Call Back','Get Back','Followup'].includes(r.status)));
 const reminderBuckets = computed(()=>({overdue:reminderRows.value.filter(r=>r.custom_next_followup_date&&String(r.custom_next_followup_date).slice(0,10)<todayISO),today:reminderRows.value.filter(r=>String(r.custom_next_followup_date||'').slice(0,10)===todayISO),upcoming:reminderRows.value.filter(r=>String(r.custom_next_followup_date||'').slice(0,10)>todayISO),nodate:reminderRows.value.filter(r=>!r.custom_next_followup_date)}));
 const todayISO = dateRange('today')[0];
-const noResponseCount = computed(()=>rows.value.filter(r=>createdIds.value.has(r.name)&&['No Response','Not Reachable'].includes(r.custom_cc_sub_status)).length);
-const invalidCount = computed(()=>rows.value.filter(r=>createdIds.value.has(r.name)&&r.custom_cc_sub_status==='Invalid Number').length);
-const nidCount = computed(()=>rows.value.filter(r=>createdIds.value.has(r.name)&&r.custom_cc_sub_status==='NID').length);
+const dashboardGroups = computed(()=>{
+  const groups={followup:[],norespnotreach:[],invalid:[],nid:[]};
+  for(const row of rows.value){
+    const group=ccDashboardGroup(row);
+    if(group && (group==='followup'||createdIds.value.has(row.name))) groups[group].push(row);
+  }
+  return groups;
+});
 const convertedRows = computed(()=>rows.value.filter(r=>createdIds.value.has(r.name)&&(r.custom_appointment_status==='Visited Booked'||r.status==='Converted')));
 const sameDayAppointments = computed(()=>rows.value.filter(r=>createdIds.value.has(r.name)&&String(r.custom_appointment_date_and_time||'').slice(0,10)===todayISO&&String(r.creation||'').slice(0,10)===todayISO).length);
 const olderLeadAppointments = computed(()=>rows.value.filter(r=>createdIds.value.has(r.name)&&String(r.custom_appointment_date_and_time||'').slice(0,10)===todayISO&&String(r.creation||'').slice(0,10)!==todayISO).length);
@@ -175,8 +199,18 @@ async function loadDoctors(){
 function branchManager(branch,assistant=false){return directoryManagers.value.find(row=>row.branch===branch&&(assistant?['Assistant Centre Manager','ACM','ACM(TRAINEE)']:['Center Manager','CM(TRAINEE)']).includes(row.designation))?.employee_name||'Not assigned'}
 async function loadTlConfig(){if(tlConfigBusy.value)return;tlConfigBusy.value=true;tlConfigError.value='';try{tlConfig.value=await ccCall('lead_assignment_configuration',{action:'get'})}catch(e){tlConfigError.value=e.message||'Team assignment settings are unavailable for this account.'}finally{tlConfigBusy.value=false}}
 async function previewTlAssignment(){if(!tlPreviewSource.value.trim()){tlPreviewError.value='Select a lead source to preview assignment.';return}tlPreviewBusy.value=true;tlPreviewError.value='';try{tlPreview.value=await ccCall('lead_assignment_preview',{source:tlPreviewSource.value.trim()})}catch(e){tlPreviewError.value=e.message||'Could not preview lead assignment.'}finally{tlPreviewBusy.value=false}}
-async function loadSales(){salesData.value=null;salesClientPage.value=1;const token=++salesRequest,range=`${from.value}|${to.value}`;salesBusy.value=true;salesError.value='';try{const data=await ccCall('life_cc_agent_marketing_data',{from_date:from.value,to_date:to.value});if(token!==salesRequest)return;salesData.value=data;salesLoadedRange.value=range}catch(e){if(token===salesRequest)salesError.value=e.message||'Call-centre invoice report is unavailable.'}finally{if(token===salesRequest)salesBusy.value=false}}
-function showView(view){selectedView.value=view;detail.value=null;if(['doctors','branches'].includes(view)&&!directoryLoaded.value)loadDoctors();if(view==='tl'&&!tlConfig.value&&!tlConfigError.value)loadTlConfig();if(view==='reports'&&salesLoadedRange.value!==`${from.value}|${to.value}`)loadSales();if(view==='duplicates'&&canManageLeads.value)loadDuplicateLeads();if(view==='assign'){if(!canManageLeads.value)selectedView.value='dashboard';else{loadCreateMasters()}}}
+async function loadSales(preserve=false){if(!preserve){salesData.value=null;salesClientPage.value=1;}const token=++salesRequest,range=`${from.value}|${to.value}`;salesBusy.value=true;salesError.value='';try{const data=await ccCall('life_cc_agent_marketing_data',{from_date:from.value,to_date:to.value});if(token!==salesRequest)return;salesData.value=data;salesLoadedRange.value=range}catch(e){if(token===salesRequest)salesError.value=e.message||'Call-centre invoice report is unavailable.'}finally{if(token===salesRequest)salesBusy.value=false}}
+function showView(view){
+  if(['assign','duplicates'].includes(view)&&!canManageLeads.value)view='dashboard';
+  const changed=selectedView.value!==view;selectedView.value=view;detail.value=null;
+  if(['doctors','branches'].includes(view)&&!directoryLoaded.value)loadDoctors();
+  if(view==='tl'&&!tlConfig.value&&!tlConfigError.value)loadTlConfig();
+  if(view==='reports'&&salesLoadedRange.value!==`${from.value}|${to.value}`)loadSales();
+  if(view==='assign')loadCreateMasters();
+  if(changed&&view==='duplicates'){generation++;controller?.abort();loading.value=false;loadDuplicateLeads();}
+  else if(changed&&['dashboard','queue','followup','appointments','tl','reports','assign'].includes(view))load(1,{preserveSelection:view==='assign'});
+  else if(changed){generation++;controller?.abort();loading.value=false;}
+}
 function printReport(){window.print()}
 const callOutcomes = ['No Response','Not Reachable','Switch OFF','Call Disconnected','Appointment no response','Invalid Number','Wrong number','Not in Service','Callback: Scheduled','Price Negotiation','Get Back','Very Positive','Call & Confirm','Out Station','Appointment Booked','Existing Client','Walked In & Booked','Walked In: Not Booked','Not Interested','Other clinic','Joined Competition','Do Not Contact','Job enquiry','Franchise Lead','Junk/Wrong Call','Not Enquired','TNA','NID'];
 const steps = ['Source','Personal','Location','Treatment','Assessment','Status','Action'];
@@ -197,7 +231,7 @@ const treatmentInterests = computed(()=>[...new Set(selectedCategories.value.fla
 const leadDraft = ref({}), selectedCategories=ref([]), selectedInterests=ref([]), actionType=ref(''), historyRows=computed(()=>detail.value?.workflow_hint?.legacy_events||[]);
 const stepComplete=computed(()=>[!!leadDraft.value.source,!!leadDraft.value.first_name&&!!leadDraft.value.gender,!!leadDraft.value.city,selectedCategories.value.length>0,!!(leadDraft.value.weight||leadDraft.value.medical_history),!!followup.value.sub_status,!!actionType.value]);
 const progress=computed(()=>Math.round(stepComplete.value.filter(Boolean).length*100/steps.length));
-const callSeconds=ref(0), callRunning=ref(false); let callInterval;
+const callSeconds=ref(0), callRunning=ref(false); let callInterval, autoRefreshTimer;
 const callClock=computed(()=>`${String(Math.floor(callSeconds.value/60)).padStart(2,'0')}:${String(callSeconds.value%60).padStart(2,'0')}`);
 function startCall(){if(callRunning.value||!detail.value)return;window.dispatchEvent(new CustomEvent('life-convox-native',{detail:{type:'life-convox-call',lead_id:detail.value.name,onResult:result=>{if(!result.success){actionError.value=result.message||'Call could not be started.';return;}callRunning.value=true;callSeconds.value=0;callInterval=setInterval(()=>callSeconds.value++,1000);}}}));}
 function openPhone(){window.dispatchEvent(new CustomEvent('life-convox-native',{detail:{type:'life-convox-open',lead_id:detail.value?.name}}));}
@@ -208,11 +242,17 @@ async function refreshOpenLead(){if(selectedView.value!=='followup'||!detail.val
 function handleWindowFocus(){refreshOpenLead()}
 onMounted(()=>window.addEventListener('focus',handleWindowFocus));
 onUnmounted(()=>window.removeEventListener('focus',handleWindowFocus));
+function appointmentStatusSaved(updated) {
+  for (const row of [...rows.value, ...appointmentCohort.value, ...(detail.value ? [detail.value] : [])]) {
+    if (row.name === updated.name) Object.assign(row, updated);
+  }
+}
 const columns = [
   { key: 'name', label: 'Lead ID' }, { key: 'lead_name', label: 'Client' },
   { key: 'mobile_no', label: 'Phone', value: r => maskPhone(r.mobile_no) },
   { key: 'branch', label: 'Branch', value: r => r.branch || r.lead_assign_to_branch },
   { key: 'lead_owner', label: 'Agent' }, { key: 'custom_cc_sub_status', label: 'Status', value: r => r.custom_cc_sub_status || r.status },
+  { key: 'custom_appointment_status', label: 'Appointment Status' },
   { key: 'custom_appointment_date_and_time', label: 'Appointment' }, { key: 'custom_next_followup_date', label: 'Next follow-up' },
 ];
 const queuePageRows=computed(()=>searching.value?visibleLeads.value:visibleLeads.value.slice((page.value-1)*10,page.value*10));
@@ -229,28 +269,63 @@ function apply() {
   filters = query.value.trim() ? { query: query.value.trim() } : { from_date: from.value, to_date: to.value, date_mode: mode.value };
   searching.value = !!filters.query;
   applied.value = filters.query ? 'Search across permitted history: ' + filters.query : `${from.value} → ${to.value} · ${mode.value}`;
-  matrixFilter.value=null;load(1);if(selectedView.value==='reports')loadSales();if(selectedView.value==='duplicates')loadDuplicateLeads();
+  matrixFilter.value=null;
+  if(selectedView.value==='duplicates'){
+    generation++;controller?.abort();rows.value=[];loading.value=false;loadDuplicateLeads();return;
+  }
+  load(1);if(selectedView.value==='reports')loadSales();
 }
-async function load(nextPage) {
+async function load(nextPage,{preserveRows=false,preserveSelection=false}={}) {
   const token = ++generation; controller?.abort(); controller = new AbortController();
-  page.value = nextPage; loading.value = true; error.value = ''; rows.value = []; total.value = 0;more.value=false;createdIds.value=new Set();appointmentCohort.value=[];incomplete.value=false;assignSelected.value=new Set();tlPage.value=1;
+  page.value = nextPage; loading.value = true; error.value = '';
+  if(!preserveRows){rows.value=[];total.value=0;more.value=false;createdIds.value=new Set();appointmentCohort.value=[];incomplete.value=false;tlPage.value=1;}
+  if(!preserveSelection)assignSelected.value=new Set();
   try {
-    const data = await ccCall('cc_get_leads', { ...filters, ...(searching.value?{start:(nextPage - 1) * 20}:{}) }, controller.signal);
-    if(token!==generation)return;
-    if(!searching.value){
-      const cohorts=await Promise.all(['followup','appointment'].filter(value=>value!==filters.date_mode).map(date_mode=>ccCall('cc_get_leads',{...filters,date_mode,start:0},controller.signal)));
+    let data;
+    if(searching.value){
+      if(filters.convoxMobile){
+        const result=await convoxApi.findLeads(filters.convoxMobile,controller.signal);
+        data={rows:result.rows||[],more:false};
+        if(token===generation&&result.truncated)error.value='More than 100 leads match this number. Narrow the search in CRM.';
+      }else data=await ccCall('cc_get_leads',{...filters,start:(nextPage-1)*20},controller.signal);
       if(token!==generation)return;
-      createdIds.value=new Set((data.rows||[]).map(row=>row.name));
-      appointmentCohort.value=filters.date_mode==='appointment'?(data.rows||[]):cohorts[filters.date_mode==='followup'?0:1]?.rows||[];
-      data.rows=[...new Map([...(data.rows||[]),...cohorts.flatMap(cohort=>cohort.rows||[])].map(row=>[row.name,row])).values()];
-      incomplete.value=!!data.truncated||cohorts.some(cohort=>cohort.truncated);
+    }
+    if(!searching.value){
+      // Load bounded pages concurrently; avoid a redundant 5k-row request.
+      const loadCohort = async date_mode => {
+        const pageSize=500, cohortRows=[];
+        let start=0, cohort;
+        do {
+          cohort=await ccCall('cc_get_leads',{...filters,date_mode,page_size:pageSize,start},controller.signal);
+          cohortRows.push(...(cohort.rows||[]));
+          start+=pageSize;
+        } while(cohort.has_more && token===generation);
+        return {...cohort,rows:cohortRows};
+      };
+      const cohortModes=selectedView.value==='appointments'?['appointment']:
+        selectedView.value==='assign'?[filters.date_mode]:
+        [filters.date_mode,...['followup','appointment'].filter(value=>value!==filters.date_mode)];
+      const cohorts=await Promise.all(cohortModes.map(loadCohort));
+      if(token!==generation)return;
+      const createdCohort=cohorts[cohortModes.indexOf(filters.date_mode)]||null;
+      createdIds.value=new Set((createdCohort?.rows||[]).map(row=>row.name));
+      appointmentCohort.value=cohorts[cohortModes.indexOf('appointment')]?.rows||[];
+      data={...(createdCohort||cohorts[0]),rows:[...new Map(cohorts.flatMap(cohort=>cohort.rows||[]).map(row=>[row.name,row])).values()]};
+      incomplete.value=cohorts.some(cohort=>cohort.truncated);
       if(incomplete.value) error.value='The selected range exceeds the lead limit. Choose a shorter range to view all leads.';
     }
     if (token !== generation) return;
     if(searching.value){createdIds.value=new Set((data.rows||[]).map(row=>row.name));appointmentCohort.value=(data.rows||[]).filter(row=>row.custom_appointment_date_and_time)}
-    rows.value = data.rows || []; total.value = createdIds.value.size; more.value = !!data.more; scoped.value = !!data.scoped_to_owner; contactManager.value=!!data.contact_manager;
+    rows.value = data.rows || []; total.value = searching.value?createdIds.value.size:(data.total??createdIds.value.size); more.value = !!data.more; scoped.value = !!data.scoped_to_owner; contactManager.value=!!data.contact_manager;
   } catch (e) { if (token === generation && e.name !== 'AbortError') error.value = e.message; }
   finally { if (token === generation) loading.value = false; }
+}
+function refreshCurrentView(){
+  if(document.hidden||detail.value||savingFollowup.value||loading.value)return;
+  if(selectedView.value==='duplicates'){if(canManageLeads.value&&!duplicateLoading.value)loadDuplicateLeads(true);return;}
+  if(!['dashboard','queue','followup','appointments','tl','reports','assign'].includes(selectedView.value))return;
+  load(page.value,{preserveRows:true,preserveSelection:true});
+  if(selectedView.value==='reports'&&!salesBusy.value)loadSales(true);
 }
 
 async function openDetail(row) {
@@ -310,7 +385,7 @@ const duplicateRows=ref([]),duplicateLoading=ref(false),duplicateError=ref(''),d
 watch([tlSearch,tlOwner,tlStatus],()=>tlPage.value=1);
 watch(duplicateSearch,()=>duplicatePage.value=1);
 const duplicateFiltered=computed(()=>{const query=duplicateSearch.value.trim().toLowerCase();return duplicateRows.value.filter(row=>!query||[row.name1,row.phone,row.enquired_for].some(value=>String(value||'').toLowerCase().includes(query)))});
-async function loadDuplicateLeads(){if(!canManageLeads.value)return;duplicateLoading.value=true;duplicateError.value='';try{const result=await request('frappe.client.get_list',{args:{doctype:'Duplicate Lead',fields:['name','name1','phone','enquired_for','creation'],filters:[['creation','>=',from.value+' 00:00:00'],['creation','<=',to.value+' 23:59:59']],order_by:'creation desc',limit_page_length:500},csrfToken:session.csrf_token});duplicateRows.value=result.message||[];duplicatePage.value=1}catch(e){duplicateError.value=e.message||'Could not load duplicate submissions (check Duplicate Lead permissions).'}finally{duplicateLoading.value=false}}
+async function loadDuplicateLeads(preservePage=false){if(!canManageLeads.value)return;duplicateLoading.value=true;duplicateError.value='';try{const result=await request('frappe.client.get_list',{args:{doctype:'Duplicate Lead',fields:['name','name1','phone','enquired_for','creation'],filters:[['creation','>=',from.value+' 00:00:00'],['creation','<=',to.value+' 23:59:59']],order_by:'creation desc',limit_page_length:500},csrfToken:session.csrf_token});duplicateRows.value=result.message||[];if(!preservePage)duplicatePage.value=1}catch(e){duplicateError.value=e.message||'Could not load duplicate submissions (check Duplicate Lead permissions).'}finally{duplicateLoading.value=false}}
 const assignSearch=ref(''),assignOwnerFilter=ref(''),assignStatusFilter=ref(''),assignEnquiryFilter=ref(''),assignSelected=ref(new Set()),assignTo=ref(''),assignBusy=ref(false),assignError=ref(''),autoTransferStatus=ref('');
 const assignRows=computed(()=>rows.value.filter(row=>(!assignOwnerFilter.value||row.lead_owner===assignOwnerFilter.value)&&(!assignStatusFilter.value||(row.custom_cc_stage||row.status)===assignStatusFilter.value)&&(!assignEnquiryFilter.value||row.enquired_for===assignEnquiryFilter.value)&&(!assignSearch.value.trim()||[row.name,row.lead_name,row.mobile_no,row.city,row.lead_owner,row.source].some(value=>String(value||'').toLowerCase().includes(assignSearch.value.trim().toLowerCase())))));
 const assignOwners=computed(()=>{const map=new Map();[...createOwners.value,...rows.value.filter(row=>row.lead_owner).map(row=>({id:row.lead_owner,name:row.lead_owner_name||row.lead_owner}))].forEach(row=>{if(row.id&&!map.has(row.id))map.set(row.id,row)});return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name))});
@@ -342,11 +417,12 @@ async function saveFollowup(payload) {
     }
     actionNotice.value=actionType.value==='book'?'Lead saved. Choose the appointment slot next.':'Lead update and call outcome saved.';
     const id=detail.value.name;
-    const refreshed=await ccCall('cc_get_leads',{query:id,detail:1},detailController?.signal);
-    detail.value=refreshed.rows?.find(item=>item.name===id)||detail.value;
-    initLeadDraft(detail.value);
-    await load(page.value);
-    if(actionType.value==='book') { await router.push({name:'cc-appointments',query:{lead:id,branch:leadDraft.value.branch||''}}); }
+    if(actionType.value==='book') {
+      await router.push({name:'cc-appointments',query:{lead:id,branch:leadDraft.value.branch||''}});
+    } else {
+      stopCall();detailGeneration++;detailController?.abort();detail.value=null;selectedView.value='dashboard';
+      load(1);
+    }
   } catch(e) { if(e.message)actionError.value=e.message; }
   finally { savingFollowup.value=false; }
 }
@@ -369,14 +445,25 @@ function clearRange(){
 }
 async function findConvoxLead(event){
   if(typeof event.detail?.mobile_number!=='string')return;
-  const mobile=event.detail.mobile_number.replace(/\D/g,'').slice(-10);
-  if(mobile.length!==10)return;
-  showView('queue');query.value=mobile;filters={query:mobile};searching.value=true;applied.value='ConVox caller: '+maskPhone(mobile);await load(1);
-  const match=rows.value.find(row=>String(row.mobile_no||row.phone||'').replace(/\D/g,'').slice(-10)===mobile);
-  if(match)await openDetail(match);
+  let mobile=event.detail.mobile_number.replace(/[\s()+.-]/g,'');
+  if(mobile.length===12&&mobile.startsWith('91'))mobile=mobile.slice(2);
+  else if(mobile.length===11&&mobile.startsWith('0'))mobile=mobile.slice(1);
+  if(!/^\d{10}$/.test(mobile))return;
+    showView('queue');query.value=mobile;filters={convoxMobile:mobile};searching.value=true;applied.value='ConVox caller: '+maskPhone(mobile);
+  controller?.abort(); controller=new AbortController(); const token=++generation;
+  loading.value=true;error.value='';
+  try {
+    const result=await convoxApi.findLeads(mobile,controller.signal);
+    if(token!==generation)return;
+    rows.value=result.rows||[];total.value=rows.value.length;page.value=1;more.value=false;
+    createdIds.value=new Set(rows.value.map(row=>row.name));
+    if(result.truncated)error.value='More than 100 leads match this number. Narrow the search in CRM.';
+    if(rows.value.length===1)await openDetail(rows.value[0]);
+  } catch(e){if(token===generation&&e.name!=='AbortError')error.value=e.message;}
+  finally{if(token===generation)loading.value=false;}
 }
-onMounted(()=>{apply();window.addEventListener('life-convox-find-native',findConvoxLead)});
-onUnmounted(() => { clearTimeout(globalSearchTimer);globalSearchController?.abort();globalSearchGeneration++;generation++;historyGeneration++;salesRequest++; detailGeneration++; controller?.abort(); detailController?.abort(); clearInterval(callInterval);window.removeEventListener('life-convox-find-native',findConvoxLead); });
+onMounted(()=>{if(['assign','duplicates'].includes(selectedView.value)&&!canManageLeads.value)selectedView.value='dashboard';if(route.query.caller)findConvoxLead({detail:{mobile_number:routeValue(route.query.caller)}});else apply();window.addEventListener('life-convox-find-native',findConvoxLead);autoRefreshTimer=setInterval(refreshCurrentView,60000)});
+onUnmounted(() => { clearTimeout(globalSearchTimer);globalSearchController?.abort();globalSearchGeneration++;generation++;historyGeneration++;salesRequest++; detailGeneration++; controller?.abort(); detailController?.abort(); clearInterval(callInterval);clearInterval(autoRefreshTimer);window.removeEventListener('life-convox-find-native',findConvoxLead); });
 </script>
 <template>
 <section class="cc-native cc-native-shell cc-erp-root cc-dashboard-vue">
@@ -391,10 +478,10 @@ onUnmounted(() => { clearTimeout(globalSearchTimer);globalSearchController?.abor
     <div class="stat-grid">
       <button class="stat-card s-blue" @click="openTile('assigned')"><div class="sl">{{from===today && to===today?'Assigned Today':'Assigned in range'}}</div><div class="sv">{{total}}</div><div class="ss">{{scoped?'Leads assigned to you':'All team leads in range'}} · click to view</div></button>
       <button class="stat-card s-gold" @click="openTile('untouched')"><div class="sl">Untouched</div><div class="sv">{{stageCounts.UNTOUCHED||0}}</div><div class="ss">Call now! · click to view</div></button>
-      <button class="stat-card s-teal" @click="openTile('followup')"><div class="sl">Follow-Up Due</div><div class="sv">{{stageCounts['FOLLOW-UP']||0}}</div><div class="ss">Scheduled callbacks · click to view</div></button>
-      <button class="stat-card s-gold" @click="openTile('norespnotreach')"><div class="sl">No Response / Not Reachable</div><div class="sv">{{noResponseCount}}</div><div class="ss">Combined · click to view</div></button>
-      <button class="stat-card s-red" @click="openTile('invalid')"><div class="sl">Invalid</div><div class="sv">{{invalidCount}}</div><div class="ss">Invalid number · click to view</div></button>
-      <button class="stat-card s-red" @click="openTile('nid')"><div class="sl">NID</div><div class="sv">{{nidCount}}</div><div class="ss">NID · click to view</div></button>
+      <button class="stat-card s-teal" @click="openTile('followup')"><div class="sl">FOLLOW UPS</div><div class="sv">{{dashboardGroups.followup.length}}</div><div class="ss">Call back · Get back</div></button>
+      <button class="stat-card s-gold" @click="openTile('norespnotreach')"><div class="sl">NOT RESPONDING / NOT REACHABLE</div><div class="sv">{{dashboardGroups.norespnotreach.length}}</div><div class="ss">Not responding · Switch off · Not reachable</div></button>
+      <button class="stat-card s-red" @click="openTile('invalid')"><div class="sl">INVALID</div><div class="sv">{{dashboardGroups.invalid.length}}</div><div class="ss">Not in service · Invalid number · Not enquired · Wrong no · Not interested · TNA</div></button>
+      <button class="stat-card s-red" @click="openTile('nid')"><div class="sl">NID</div><div class="sv">{{dashboardGroups.nid.length}}</div><div class="ss">Non local</div></button>
       <button class="stat-card s-green grp-card" @click="groupPanel=groupPanel==='appt'?'':'appt'"><div class="sl">Appointments ▾</div><div class="sv">{{appointmentRows.length}}</div><div class="ss">{{sameDayAppointments}} same-day · {{olderLeadAppointments}} older · tap to break down</div></button>
       <button class="stat-card s-teal grp-card" @click="groupPanel=groupPanel==='converted'?'':'converted'"><div class="sl">Converted ▾</div><div class="sv">{{convertedRows.length}}</div><div class="ss">{{sameDayConverted}} same-day · {{olderConverted}} older · tap to break down</div></button>
       <button class="stat-card s-red" @click="openTile('success')"><div class="sl">Conversion Rate</div><div class="sv">{{total?Math.round((stageCounts.SUCCESS||0)*100/total):0}}%</div><div class="ss">{{stageCounts.SUCCESS||0}} of {{total}} leads · click to view</div></button>
@@ -407,8 +494,8 @@ onUnmounted(() => { clearTimeout(globalSearchTimer);globalSearchController?.abor
     <section v-if="!scoped" class="card"><header class="card-hdr">📊 Today’s Team Performance (TL View)</header><div class="card-body"><div class="tbl-wrap"><table><thead><tr><th>Agent</th><th>Assigned</th><th>Called</th><th>Appointments</th><th>Conversion %</th><th>Status</th></tr></thead><tbody><tr v-for="agent in agentRows" :key="agent.name"><td><strong>{{agent.name}}</strong></td><td>{{agent.total}}</td><td>{{agent.called}}</td><td>{{rows.filter(r=>r.lead_owner===agent.name&&r.custom_appointment_date_and_time).length}}</td><td>{{agent.total?Math.round(agent.success*100/agent.total):0}}%</td><td><span class="pill p-green">active</span></td></tr><tr v-if="!agentRows.length"><td colspan="6">No team data for this range.</td></tr></tbody></table></div></div></section>
   </div>
   <template v-else-if="selectedView==='queue'"><div class="cc-queue-toolbar"><span class="cc-status-line">{{ loading ? 'Loading leads…' : searching ? rows.length + ' matches on this page' : total + ' matching leads' }} · {{ applied }}<span v-if="scoped"> · Your assigned leads</span></span><span class="cc-quick-links"><button @click="load(page)">↻ Refresh</button></span></div><div id="cc-ml-filterbar" class="cc-queue-filters"><input id="cc-ml-search" aria-label="Filter loaded leads" v-model="queueSearch" type="search" placeholder="🔍 Search leads by name, phone or Lead ID"><select v-if="!scoped" id="cc-ml-owner" aria-label="Lead owner" v-model="queueOwner"><option value="">All Owners</option><option v-for="owner in [...new Set(rows.map(row=>row.lead_owner).filter(Boolean))]" :key="owner">{{owner}}</option></select><select id="cc-ml-status" aria-label="Lead status" v-model="queueStatus"><option value="">All Status</option><option>UNTOUCHED</option><option>FOLLOW-UP</option><option>SUCCESS</option><option>LOST</option><option>INVALID</option></select><select aria-label="Call result" v-model="queueSubStatus"><option value="">All Call Results</option><option>No Response / Not Reachable</option><option v-for="result in callOutcomes" :key="result">{{result}}</option></select><select aria-label="Treatment category" v-model="queueCategory"><option value="">All Categories</option><option v-for="category in treatmentCategories" :key="category">{{category}}</option></select><button class="btn btn-gy btn-sm" @click="matrixFilter=null;queueOwner='';queueStatus='';queueSubStatus='';queueCategory='';queueSearch=''">Clear</button></div><section class="card"><header class="card-hdr">📋 My Lead Queue <span class="badge">{{visibleLeads.length}}</span></header><div id="my-leads-list" class="card-body"><p class="cc-status-line">{{searching?'Search page '+page+' · '+visibleLeads.length+' matches on this page':'Showing '+(visibleLeads.length?(page-1)*10+1:0)+'–'+Math.min(page*10,visibleLeads.length)+' of '+visibleLeads.length+' leads'}}</p><article v-for="row in queuePageRows" :key="row.name" class="queue-item wf-qrow"><div class="wf-q-main"><div class="wf-q-l1"><strong class="wf-q-name">{{row.lead_name||row.name}}</strong><span class="wf-f ag">👤 {{row.lead_owner||'Unassigned'}}</span><span class="wf-f st">{{row.custom_cc_stage||row.status}}</span><span v-if="row.custom_cc_sub_status" class="wf-f sub">{{row.custom_cc_sub_status}}</span><small>{{row.name}}</small></div><div class="wf-q-l2">📞 {{maskPhone(row.mobile_no)}} · 📍 {{row.city||'—'}} · 📡 {{row.source||'—'}} · 🗓 {{String(row.creation||'').slice(0,10)}} · 📞×{{row.custom_call_count||0}}</div><div class="wf-q-l1"><span v-if="row.custom_treatment_interests" class="wf-f">{{row.custom_treatment_interests}}</span><span v-if="row.branch||row.lead_assign_to_branch" class="wf-f br">🏥 {{row.branch||row.lead_assign_to_branch}}</span><span v-if="row.custom_next_followup_date" class="wf-f fu">📅 {{row.custom_next_followup_date}}</span><span v-if="row.custom_appointment_date_and_time" class="wf-f ap">📅 Appt: {{row.custom_appointment_date_and_time}}</span></div><p v-if="row.custom_conclusion_remark" class="wf-q-l2">💬 {{row.custom_conclusion_remark}}</p></div><div class="wf-q-side"><button class="wf-q-btn" @click="openDetail(row)">📞 Call &amp; Update</button><button class="btn btn-gy btn-sm" @click="viewLead(row)">👁 View</button></div></article><p v-if="!loading&&!error&&!visibleLeads.length" class="cc-empty-state">No leads match the selected filter.</p></div></section><CCPager :page="page" :pages="pages" :busy="loading" @change="searching?load($event):page=$event" /></template>
-  <template v-else-if="selectedView==='appointments'"><section class="cc-card"><header>📅 Appointments in selected date range <RouterLink :to="{name:'cc-appointments'}">Open booking calendar →</RouterLink></header><p class="cc-note">{{appointmentRows.length}} appointments found · summary is based on leads visible to your account.</p><div class="cc-report-metrics"><div v-for="(count,source) in sourceCounts" :key="source"><strong>{{count}}</strong><span>{{source}}</span></div></div><CCDataTable :columns="columns" :rows="appointmentRows" :busy="loading"><template #actions="{row}"><button @click="openDetail(row)">Open lead</button><RouterLink :to="{name:'cc-appointments',query:{lead:row.name}}">Book / reschedule</RouterLink></template></CCDataTable></section></template>
-  <template v-else-if="selectedView==='assign'"><section class="cc-card"><header>🔀 Manual Lead Assignment <span>{{from}} → {{to}}</span></header><p class="cc-note">Tick leads in the selected date range, choose an owner, then apply. Date filter: {{mode}}.</p><div class="cc-queue-filters"><input v-model="assignSearch" placeholder="Search name / phone / owner"><select v-model="assignOwnerFilter"><option value="">All owners</option><option v-for="owner in assignOwners" :key="owner.id" :value="owner.id">{{owner.name}}</option></select><select v-model="assignStatusFilter"><option value="">All status</option><option v-for="stage in stages" :key="stage">{{stage}}</option></select><select v-model="assignEnquiryFilter"><option value="">All enquiries</option><option v-for="item in assignmentEnquiries" :key="item">{{item}}</option></select></div><p v-if="loading" role="status">Loading leads…</p><div class="tbl-wrap"><table class="cc-simple-table"><thead><tr><th><input type="checkbox" :checked="assignRows.length>0&&assignRows.every(row=>assignSelected.has(row.name))" aria-label="Select all filtered leads" @change="selectAllAssign($event.target.checked)"></th><th>Lead ID</th><th>Name</th><th>Phone</th><th>Area</th><th>Source</th><th>Owner</th><th>Status</th></tr></thead><tbody><tr v-for="row in assignRows" :key="row.name"><td><input type="checkbox" :checked="assignSelected.has(row.name)" @change="toggleAssignLead(row.name,$event.target.checked)"></td><td>{{row.name}}</td><td>{{row.lead_name||row.first_name}}</td><td>{{maskPhone(row.mobile_no)}}</td><td>{{row.city||'—'}}</td><td>{{row.source||'—'}}</td><td>{{row.lead_owner||'—'}}</td><td>{{row.custom_cc_stage||row.status}}</td></tr><tr v-if="!assignRows.length"><td colspan="8">No leads match this date range and filter.</td></tr></tbody></table></div><div class="cc-assign-sticky"><strong>{{assignSelected.size}} leads selected</strong><select v-model="assignTo"><option value="">Choose lead owner</option><option v-for="owner in assignOwners" :key="owner.id" :value="owner.id">{{owner.name}}</option></select><button class="cc-primary" :disabled="assignBusy" @click="applyManualAssignment">{{assignBusy?'Assigning…':'✅ Apply Assignment'}}</button></div><p v-if="assignError" class="cc-note">{{assignError}}</p></section><section class="cc-card"><header>⚡ Auto Transfer (Round Robin)</header><p class="cc-note">Spread every lead with a selected status across the available owners.</p><div class="cc-queue-filters"><select v-model="autoTransferStatus"><option value="">Select a status</option><option v-for="stage in stages" :key="stage">{{stage}}</option></select><strong>{{assignAutoRows.length}} matching leads</strong><button class="cc-primary" :disabled="assignBusy" @click="runAutoTransfer">{{assignBusy?'Transferring…':'🔀 Auto Transfer'}}</button></div><p>{{assignOwners.map(owner=>owner.name).join(' · ')||'No owners found in loaded range.'}}</p></section></template>
+  <template v-else-if="selectedView==='appointments'"><section class="cc-card"><header>📅 Appointments in selected date range <RouterLink :to="{name:'cc-appointments'}">Open booking calendar →</RouterLink></header><p class="cc-note">{{appointmentRows.length}} appointments found · summary is based on leads visible to your account.</p><div class="cc-report-metrics"><div v-for="(count,source) in sourceCounts" :key="source"><strong>{{count}}</strong><span>{{source}}</span></div></div><CCDataTable :columns="columns" :rows="appointmentRows" :busy="loading"><template #actions="{row}"><CCAppointmentStatus :lead="row" @saved="appointmentStatusSaved" /><button @click="openDetail(row)">Open lead</button><RouterLink :to="{name:'cc-appointments',query:{lead:row.name}}">Book / reschedule</RouterLink></template></CCDataTable></section></template>
+  <template v-else-if="selectedView==='assign'"><section class="cc-card"><header>🔀 Manual Lead Assignment <span>{{from}} → {{to}}</span></header><p class="cc-note">Tick leads in the selected date range, choose an owner, then apply. Date filter: {{mode}}.</p><div class="cc-queue-filters"><input v-model="assignSearch" placeholder="Search name / phone / owner"><select v-model="assignOwnerFilter"><option value="">All owners</option><option v-for="owner in assignOwners" :key="owner.id" :value="owner.id">{{owner.name}}</option></select><select v-model="assignStatusFilter"><option value="">All status</option><option v-for="stage in stages" :key="stage">{{stage}}</option></select><select v-model="assignEnquiryFilter"><option value="">All enquiries</option><option v-for="item in assignmentEnquiries" :key="item">{{item}}</option></select></div><p v-if="loading" role="status">Loading leads…</p><div class="tbl-wrap"><table class="cc-simple-table"><thead><tr><th><input class="cc-select-checkbox" type="checkbox" :checked="assignRows.length>0&&assignRows.every(row=>assignSelected.has(row.name))" :indeterminate="assignRows.some(row=>assignSelected.has(row.name))&&!assignRows.every(row=>assignSelected.has(row.name))" aria-label="Select all filtered leads" @change="selectAllAssign($event.target.checked)"></th><th>Lead ID</th><th>Name</th><th>Phone</th><th>Area</th><th>Source</th><th>Owner</th><th>Status</th></tr></thead><tbody><tr v-for="row in assignRows" :key="row.name"><td><input class="cc-select-checkbox" type="checkbox" :checked="assignSelected.has(row.name)" :aria-label="'Select ' +(row.lead_name||row.name)" @change="toggleAssignLead(row.name,$event.target.checked)"></td><td>{{row.name}}</td><td>{{row.lead_name||row.first_name}}</td><td>{{maskPhone(row.mobile_no)}}</td><td>{{row.city||'—'}}</td><td>{{row.source||'—'}}</td><td>{{row.lead_owner||'—'}}</td><td>{{row.custom_cc_stage||row.status}}</td></tr><tr v-if="!assignRows.length"><td colspan="8">No leads match this date range and filter.</td></tr></tbody></table></div><div class="cc-assign-sticky"><strong>{{assignSelected.size}} leads selected</strong><select v-model="assignTo"><option value="">Choose lead owner</option><option v-for="owner in assignOwners" :key="owner.id" :value="owner.id">{{owner.name}}</option></select><button class="cc-primary" :disabled="assignBusy" @click="applyManualAssignment">{{assignBusy?'Assigning…':'✅ Apply Assignment'}}</button></div><p v-if="assignError" class="cc-note">{{assignError}}</p></section><section class="cc-card"><header>⚡ Auto Transfer (Round Robin)</header><p class="cc-note">Spread every lead with a selected status across the available owners.</p><div class="cc-queue-filters"><select v-model="autoTransferStatus"><option value="">Select a status</option><option v-for="stage in stages" :key="stage">{{stage}}</option></select><strong>{{assignAutoRows.length}} matching leads</strong><button class="cc-primary" :disabled="assignBusy" @click="runAutoTransfer">{{assignBusy?'Transferring…':'🔀 Auto Transfer'}}</button></div><p>{{assignOwners.map(owner=>owner.name).join(' · ')||'No owners found in loaded range.'}}</p></section></template>
   <template v-else-if="selectedView==='duplicates'"><section class="cc-card"><header>🧬 Duplicate Leads <span>({{from}} → {{to}})</span><button class="cc-outline" :disabled="duplicateLoading" @click="loadDuplicateLeads">{{duplicateLoading?'Loading…':'↻ Refresh'}}</button></header><p class="cc-note">Duplicate submissions in the selected date range. Find Original searches the lead by mobile number.</p><div class="cc-queue-filters"><input v-model="duplicateSearch" type="search" placeholder="Search name, phone or enquiry"><span>{{duplicateFiltered.length}} duplicate records</span></div><p v-if="duplicateLoading" role="status">Loading duplicate submissions…</p><p v-if="duplicateError" class="cc-error" role="alert">{{duplicateError}}</p><div class="tbl-wrap"><table class="cc-simple-table"><thead><tr><th>Name</th><th>Phone</th><th>Enquired For</th><th>Created</th><th>Action</th></tr></thead><tbody><tr v-for="row in duplicateVisible" :key="row.name"><td>{{row.name1||'—'}}</td><td>{{maskPhone(row.phone)}}</td><td>{{row.enquired_for||'—'}}</td><td>{{String(row.creation||'').slice(0,16)}}</td><td><button class="cc-primary" @click="openDuplicateLead(row)">Find Original</button></td></tr><tr v-if="!duplicateLoading&&!duplicateError&&!duplicateVisible.length"><td colspan="5">No duplicate leads in this date range.</td></tr></tbody></table></div><div class="cc-pager-row"><button :disabled="duplicatePage<=1" @click="duplicatePage--">Previous</button><span>Page {{duplicatePage}} of {{duplicatePages}}</span><button :disabled="duplicatePage>=duplicatePages" @click="duplicatePage++">Next</button></div></section></template>
   <template v-else-if="selectedView==='worksheet'"><CCWorksheet /></template>
   <template v-else-if="selectedView==='tl'">
@@ -422,7 +509,7 @@ onUnmounted(() => { clearTimeout(globalSearchTimer);globalSearchController?.abor
   </template>
   <template v-else-if="selectedView==='reports'"><div class="cc-dashboard-tiles cc-stage-tiles"><button v-for="stage in stages" :key="stage" @click="queueStatus=stage;showView('queue')"><small>{{stage}}</small><strong>{{stageCounts[stage]}}</strong><span>{{rows.length?Math.round(stageCounts[stage]*100/rows.length):0}}% of visible leads · open leads</span></button><button><small>TOTAL LEADS</small><strong>{{total}}</strong><span>{{applied}}</span></button><button><small>APPOINTMENTS</small><strong>{{appointmentRows.length}}</strong><span>In selected range</span></button></div>
     <section class="cc-card"><header>📊 Lead Status Summary <button class="cc-outline" @click="printReport">🖨️ Print Report</button></header><div class="cc-dashboard-tiles cc-stage-tiles"><button v-for="stage in stages" :key="stage" @click="queueStatus=stage;showView('queue')"><small>{{stage}}</small><strong>{{stageCounts[stage]||0}}</strong></button></div><div class="cc-dashboard-columns"><section class="tl-inner-section"><header>By Treatment Category</header><table class="cc-simple-table"><thead><tr><th>Category</th><th>Leads</th><th>%</th></tr></thead><tbody><tr v-for="[category,count] in categoryCounts" :key="category"><td>{{category}}</td><td>{{count}}</td><td>{{total?Math.round(count*100/total):0}}%</td></tr><tr v-if="!categoryCounts.length"><td colspan="3">No category data.</td></tr></tbody></table></section><section class="tl-inner-section"><header>By Lead Source (Top 10)</header><table class="cc-simple-table"><thead><tr><th>Source</th><th>Leads</th></tr></thead><tbody><tr v-for="[source,count] in sourceCounts" :key="source"><td>{{source}}</td><td>{{count}}</td></tr><tr v-if="!sourceCounts.length"><td colspan="2">No source data.</td></tr></tbody></table></section></div></section>
-    <section class="cc-card"><header>📅 Appointments Report <span>{{appointmentRows.length}} appointments in range</span></header><div class="tbl-wrap"><table class="cc-simple-table"><thead><tr><th>Agent</th><th>Appointments Booked</th><th>Visited Booked</th><th>Visited Not Booked</th><th>Total Visited</th><th>Not Visited</th><th>Pending</th><th>Converted</th><th>Conversion %</th><th>Billed</th><th>Paid</th><th>Preferred Branch</th></tr></thead><tbody><tr v-for="agent in appointmentAgentRows" :key="agent.key"><td><strong>{{agent.name}}</strong></td><td>{{agent.booked}}</td><td>{{agent.vb}}</td><td>{{agent.vnb}}</td><td>{{agent.visited}}</td><td>{{agent.nv}}</td><td>{{agent.pending+agent.cancelled}}</td><td>{{agent.converted}}</td><td>{{agent.rate}}%</td><td>{{money(agent.billed)}}</td><td>{{money(agent.paid)}}</td><td>{{agent.preferredBranch}}</td></tr><tr v-if="!appointmentAgentRows.length"><td colspan="12">No appointments in the selected range.</td></tr></tbody></table></div><p class="cc-note">Converted means portal status Converted or an appointment marked Visited Booked. Billed and Paid totals use the Call Centre invoice report.</p><CCDataTable :columns="columns" :rows="appointmentRows" :busy="loading"><template #actions="{row}"><button @click="openDetail(row)">Open lead</button><RouterLink :to="{name:'cc-appointments',query:{lead:row.name}}">View booking</RouterLink></template></CCDataTable></section>
+    <section class="cc-card"><header>📅 Appointments Report <span>{{appointmentRows.length}} appointments in range</span></header><div class="tbl-wrap"><table class="cc-simple-table"><thead><tr><th>Agent</th><th>Appointments Booked</th><th>Visited Booked</th><th>Visited Not Booked</th><th>Total Visited</th><th>Not Visited</th><th>Pending</th><th>Converted</th><th>Conversion %</th><th>Billed</th><th>Paid</th><th>Preferred Branch</th></tr></thead><tbody><tr v-for="agent in appointmentAgentRows" :key="agent.key"><td><strong>{{agent.name}}</strong></td><td>{{agent.booked}}</td><td>{{agent.vb}}</td><td>{{agent.vnb}}</td><td>{{agent.visited}}</td><td>{{agent.nv}}</td><td>{{agent.pending+agent.cancelled}}</td><td>{{agent.converted}}</td><td>{{agent.rate}}%</td><td>{{money(agent.billed)}}</td><td>{{money(agent.paid)}}</td><td>{{agent.preferredBranch}}</td></tr><tr v-if="!appointmentAgentRows.length"><td colspan="12">No appointments in the selected range.</td></tr></tbody></table></div><p class="cc-note">Converted means portal status Converted or an appointment marked Visited Booked. Billed and Paid totals use the Call Centre invoice report.</p><CCDataTable :columns="columns" :rows="appointmentRows" :busy="loading"><template #actions="{row}"><CCAppointmentStatus :lead="row" @saved="appointmentStatusSaved" /><button @click="openDetail(row)">Open lead</button><RouterLink :to="{name:'cc-appointments',query:{lead:row.name}}">View booking</RouterLink></template></CCDataTable></section>
     <div class="cc-dashboard-columns"><section class="cc-card"><header>📊 Lead source report</header><table class="cc-simple-table"><thead><tr><th>Source</th><th>Leads</th><th>Share</th></tr></thead><tbody><tr v-for="[source,count] in sourceCounts" :key="source"><td>{{source}}</td><td>{{count}}</td><td>{{rows.length?Math.round(count*100/rows.length):0}}%</td></tr><tr v-if="!sourceCounts.length"><td colspan="3">No source data in this date range.</td></tr></tbody></table></section>
     <section class="cc-card"><header>📑 Source-wise Appointment &amp; Revenue Report</header><template v-if="canViewSourceReports"><p class="cc-note">Appointment and invoice values follow your report permissions and the selected date range.</p><div class="tbl-wrap"><table class="cc-simple-table"><thead><tr><th>Source</th><th>Leads</th><th>Appointments</th><th>Converted</th><th>Conversion %</th><th>Billed</th><th>Paid</th></tr></thead><tbody><tr v-for="[source,count] in sourceCounts" :key="source"><td>{{source}}</td><td>{{count}}</td><td>{{appointmentRows.filter(row=>(row.source||row.custom_media||'Unknown')===source).length}}</td><td>{{appointmentRows.filter(row=>(row.source||row.custom_media||'Unknown')===source&&(row.status==='Converted'||row.custom_appointment_status==='Visited Booked')).length}}</td><td>{{appointmentRows.filter(row=>(row.source||row.custom_media||'Unknown')===source).length?Math.round(appointmentRows.filter(row=>(row.source||row.custom_media||'Unknown')===source&&(row.status==='Converted'||row.custom_appointment_status==='Visited Booked')).length*100/appointmentRows.filter(row=>(row.source||row.custom_media||'Unknown')===source).length):0}}%</td><td>{{money(visibleSalesRows.filter(row=>row.source===source).reduce((sum,row)=>sum+Number(row.with_gst??row.grand_total??0),0))}}</td><td>{{money(visibleSalesRows.filter(row=>row.source===source).reduce((sum,row)=>sum+Number(row.paid_with_gst??row.paid_amount??row.paid??0),0))}}</td></tr><tr v-if="!sourceCounts.length"><td colspan="7">No source report rows.</td></tr></tbody></table></div></template><div v-else class="cc-access-restricted">🔒 Access Restricted — this report is available to Team Leads and Managers.</div></section>
     <section class="cc-card"><header>🏥 Branch performance</header><table class="cc-simple-table"><thead><tr><th>Branch</th><th>Leads</th><th>Success</th></tr></thead><tbody><tr v-for="branch in [...new Set(rows.map(r=>r.branch||r.lead_assign_to_branch||'Unassigned'))]" :key="branch"><td>{{branch}}</td><td>{{rows.filter(r=>(r.branch||r.lead_assign_to_branch||'Unassigned')===branch).length}}</td><td>{{rows.filter(r=>(r.branch||r.lead_assign_to_branch||'Unassigned')===branch&&(r.custom_cc_stage||r.status)==='SUCCESS').length}}</td></tr></tbody></table></section>
@@ -440,7 +527,7 @@ onUnmounted(() => { clearTimeout(globalSearchTimer);globalSearchController?.abor
   <template v-else-if="selectedView==='branches'"><section id="branches-area" class="card"><header class="card-hdr">🏥 Branch Directory — All Branches<button class="btn btn-gy btn-sm" :disabled="doctorLoading" @click="loadDoctors">↻ Refresh</button></header><div class="card-body"><p v-if="doctorLoading" role="status">Loading branch contacts…</p><p v-if="doctorError" class="cc-error" role="alert">{{doctorError}}</p><div class="cc-legacy-branch-grid"><article v-for="branch in branches" :key="branch.code" class="form-section"><div class="form-section-title">🏥 {{branch.name}} ({{branch.code}}) — {{branch.city}}</div><div class="cc-branch-details"><div>📍 {{branch.address}}</div><div>📞 {{branch.phone}}</div><div>🕐 {{branch.hours}}</div><div>👤 Center Manager: <strong>{{branchManager(branch.name)}}</strong></div><div>👥 ACM: <strong>{{branchManager(branch.name,true)}}</strong></div></div><div class="btn-row"><a class="btn btn-teal btn-sm" :href="branch.maps" target="_blank" rel="noopener">🗺️ Open Maps</a><button class="copy-btn" @click="copyText(`${branch.name} (${branch.city})\n${branch.address}\n${branch.phone}\n${branch.hours}\n${branch.maps}`)">📋 Copy Location + Map Link</button></div></article></div></div></section><p v-if="copyNotice" class="cc-success" role="status">{{copyNotice}}</p></template>
   <template v-else-if="selectedView==='doctors'"><section id="doctors-area" class="card"><header class="card-hdr">👨‍⚕️ Doctor Directory <span class="badge">{{doctorRows.length}}</span><button class="btn btn-gy btn-sm" :disabled="doctorLoading" @click="loadDoctors">↻ Refresh</button></header><div class="card-body"><p v-if="doctorLoading" role="status">Loading doctor directory…</p><p v-if="doctorError" class="cc-error" role="alert">{{doctorError}}</p><section v-for="branch in doctorBranches" :key="branch" class="cc-doctor-branch"><div class="form-section-title">🏥 {{branch}} ({{doctorRows.filter(row=>(row.branch||'Head Office / Unassigned')===branch).length}})</div><div class="tbl-wrap"><table><thead><tr><th>Doctor</th><th>Designation</th><th>Contact</th><th>Emp ID</th></tr></thead><tbody><tr v-for="doctor in doctorRows.filter(row=>(row.branch||'Head Office / Unassigned')===branch)" :key="doctor.name"><td><strong>{{doctor.employee_name}}</strong></td><td><span class="pill" :class="({'Chief HT Surgeon':'p-red','HOD Hair transplant surgery':'p-red','Consultant Doctor':'p-gold',Doctor:'p-blue','Assistant Doctor':'p-teal',Dermatologist:'p-green'})[doctor.designation]||'p-gy'">{{doctor.designation}}</span></td><td>{{doctor.cell_number||'—'}}</td><td class="cc-employee-id">{{doctor.name}}</td></tr></tbody></table></div></section><p v-if="!doctorLoading&&!doctorRows.length" class="cc-empty-state">Doctor data not available for this login.</p></div></section></template>
   <template v-else-if="selectedView==='followup'&&!detail"><p class="cc-status-line">{{loading?'Searching…':rows.length?'Select the client to start the follow-up form.':'Search by mobile number, client name or Lead ID.'}}</p><CCDataTable :columns="columns" :rows="rows" :busy="loading"><template #actions="{row}"><button class="cc-primary" @click="openDetail(row)">Open Follow-Up Form</button></template></CCDataTable><CCPager :page="page" :pages="pages" :busy="loading" @change="load" /></template>
-  <template v-else-if="selectedView==='followup'&&detail"><p v-if="detailLoading" role="status">Loading lead…</p><p v-else-if="detailError" class="cc-error" role="alert">{{detailError}}</p><CCLeadWorksheet v-else :lead="detail" :manager="contactManager" :busy="savingFollowup" :error="actionError" :notice="actionNotice" v-model:draft="leadDraft" v-model:followup="followup" v-model:categories="selectedCategories" v-model:interests="selectedInterests" @save="saveFollowup" @back="closeDetail" @start-call="startCall" @stop-call="openPhone" /></template>
+  <template v-else-if="selectedView==='followup'&&detail"><p v-if="detailLoading" role="status">Loading lead…</p><p v-else-if="detailError" class="cc-error" role="alert">{{detailError}}</p><CCAppointmentStatus v-if="!detailLoading && !detailError" :lead="detail" @saved="appointmentStatusSaved" /><CCLeadWorksheet v-if="!detailLoading && !detailError" :lead="detail" :manager="contactManager" :busy="savingFollowup" :error="actionError" :notice="actionNotice" v-model:draft="leadDraft" v-model:followup="followup" v-model:categories="selectedCategories" v-model:interests="selectedInterests" @save="saveFollowup" @back="closeDetail" @start-call="startCall" @stop-call="openPhone" /></template>
   </div></main></div>
   <CCConsultationBooking ref="booking" @saved="appointmentSaved" />
   <dialog ref="tileDialog" class="modal-box cc-summary-modal" aria-labelledby="cc-tile-title"><h2 id="cc-tile-title" class="modal-title">{{tileTitle}} ({{tileRows.length}})</h2><article v-for="row in tileRows" :key="row.name" class="queue-item"><div><div class="qi-name">{{row.lead_name||row.name}}</div><div class="qi-sub">{{maskPhone(row.mobile_no)}} | {{row.city||'—'}} | {{row.custom_cc_stage||row.status}}</div><div class="qi-sub">👤 {{row.lead_owner||'Unassigned'}}</div><div class="qi-tags"><span class="pill p-green">{{row.custom_appointment_status||'Pending'}}</span><span v-if="row.custom_next_followup_date" class="pill p-gold">📅 {{row.custom_next_followup_date}}</span></div></div><button class="btn btn-n btn-sm" @click="tileDialog.close();openDetail(row)">Open</button></article><p v-if="!tileRows.length" class="cc-empty-state">No leads in this category.</p><div class="btn-row"><button class="btn btn-gy btn-sm" @click="tileDialog.close()">Close</button></div></dialog>

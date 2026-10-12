@@ -9,7 +9,7 @@ const assert = require('node:assert/strict');
  const send=(method,params={})=>new Promise((resolve,reject)=>{jobs.set(++id,m=>m.error?reject(m.error):resolve(m.result));ws.send(JSON.stringify({id,method,params}));});
 
 
- const boot={user:'Administrator',branches:['A','B'],allowed_branches:['A'],user_branch:'A',is_head_office:0,practitioners:[{name:'DOC-1',practitioner_name:'Doctor One',designation:'Doctor',branch:'A',status:'Active'},{name:'DOC-2',practitioner_name:'Other Branch Doctor',designation:'Doctor',branch:'B',all_branches:1,status:'Active'},{name:'EMP-1',practitioner_name:'Consultant One',branch:'A',status:'Active'}],therapies:[{n:'Therapy A',item:'TA',rate:1000,min:800,max:1200,show_in_billing:1}],templates:[{name:'PKG',plan_name:'Package',offer_price:900,lines:[{therapy_type:'Therapy A',no_of_sessions:1,rate:1000}]}],comp_items:[],offers:[],approvers:[{user:'Administrator',full_name:'Admin',approval_level:'L1'},{user:'md',full_name:'MD',approval_level:'L4'}],modes:[{name:'Cash',type:'Cash'},{name:'Bank',type:'Bank'},{name:'Carepay',type:'Bank'}]};
+ const boot={user:'Administrator',branches:['A','B'],allowed_branches:['A'],user_branch:'A',is_head_office:0,practitioners:[{name:'DOC-1',practitioner_name:'Doctor One',designation:'Doctor',branch:'A',status:'Active'},{name:'DOC-2',practitioner_name:'Other Branch Doctor',designation:'Doctor',branch:'B',all_branches:1,status:'Active'},{name:'EMP-1',practitioner_name:'Consultant One',branch:'A',status:'Active'}],therapies:[{n:'Therapy A',item:'TA',rate:1000,min:800,max:1200,show_in_billing:1}],templates:[{name:'GLP',plan_name:'GLP',lines:[{therapy_type:'GLP Vial 2.5 mg × 4 Doses',no_of_sessions:2,rate:1000}]},{name:'PKG',plan_name:'Package',offer_price:900,lines:[{therapy_type:'Therapy A',no_of_sessions:1,rate:1000}]}],comp_items:[],offers:[],approvers:[{user:'Administrator',full_name:'Admin',approval_level:'L1'},{user:'md',full_name:'MD',approval_level:'L4'}],modes:[{name:'Cash',type:'Cash'},{name:'Bank',type:'Bank'},{name:'Carepay',type:'Bank'}]};
  const patient={name:'PAT-1',patient_name:'Test Client',mobile:'9876543210',custom_branch:'A'};
  const invoice=()=>({name:'INV-1',patient:'PAT-1',patient_name:'Test Client',branch:'A',docstatus,grand_total:1050,outstanding_amount:outstanding,status:docstatus?'Unpaid':'Draft',posting_date:'2026-10-05',net_total:1000,total_taxes_and_charges:50,custom_product_cost:300,custom_clinical_operational_cost:700,custom_total_cost:1050,custom_net_profit:0,items:[{name:'I1',item_name:'Therapy A',qty:1,rate:1000,amount:1000}]});
  ws.on('message',async raw=>{
@@ -22,12 +22,14 @@ const assert = require('node:assert/strict');
   if(request.url.includes('frappe.client.get_list')){
     if(args.doctype==='Patient')result=(args.filters?.some(f=>f[0]==='mobile'&&f[1]==='=')&&!registered)?[]:[patient];
     else if(args.doctype==='Sales Invoice')result=args.fields.some(f=>f.includes('sum('))?[{outstanding, count:1, billed:1050, due:outstanding}]:[invoice()];
+    else if(args.doctype==='Pricing Rule')result=[{name:'OFFER'}];
     else result=[];
     if(args.doctype==='Patient' && args.or_filters?.some(f=>f[2]==='%Slow%')){result=[{...patient,patient_name:'Slow Client'}];await new Promise(r=>setTimeout(r,500));}
   }
   if(request.url.includes('frappe.client.get_count'))result=args.filters?.some(f=>f[0]==='patient')?(olderPaid?1:0):1;
   if(request.url.includes('get_html_and_style'))result={html:'<h1>Rendered invoice INV-1</h1>',style:'h1{color:green}'};
   if(request.url.endsWith('frappe.client.get'))result=args.doctype==='Patient'?patient:invoice();
+  if(request.url.endsWith('frappe.client.get') && args.doctype==='Pricing Rule')result={name:'OFFER',apply_on:'Item Code',price_or_product_discount:'Price',discount_percentage:10,min_qty:2,items:[{item_code:'TA'}]};
   if(request.url.includes('create_plan_and_invoice_test.run'))result={sales_invoice:'INV-1',grand_total:1050};
   if(request.url.includes('apply_invoice_discount_net_final_v2.run')){approved=true;result={grand_total:997.5};}
   if(request.url.includes('frappe.client.set_value')){if(args.doctype==='Discount Approval Request')rejected=true;result={name:args.name};}
@@ -67,13 +69,30 @@ const assert = require('node:assert/strict');
    assert.ok(!await evaluate("Array.from(document.querySelectorAll('label')).find(l=>l.firstChild.textContent.trim()==='Doctor consultant (optional)').textContent.includes('Other Branch Doctor')"));
    assert.equal(await evaluate("document.querySelectorAll('.billing-block').length"),5);
    assert.ok(await evaluate("document.querySelector('.billing-sticky-summary')"));
-   await click('📦 Package / Template');await fill('📋 Load from Therapy Plan Template','PKG');
+   await click('📦 Package / Template');
+   assert.equal(await evaluate("Array.from(document.querySelectorAll('.billing-editor button')).some(b=>b.textContent==='＋ Add Therapy')"),false);
+   await fill('📋 Load from Therapy Plan Template','GLP');
+   await wait("document.querySelector('.billing-glp-doses')?.textContent.includes('2 vials × 4 doses = Total 8 doses')");
+   assert.equal(await evaluate("Array.from(document.querySelectorAll('label')).find(l=>l.firstChild.textContent.trim()==='Sessions').querySelector('input').value"),'2');
+   await fill('📋 Load from Therapy Plan Template','PKG');
    await wait("document.querySelector('.billing-sticky-summary').textContent.includes('Package discount')");
    assert.equal(await evaluate("document.querySelector('#bl-disc-sec')===null && document.querySelector('#bl-coupon-sec')===null"),true);
    await click('🧾 Individual Therapy');
    await wait("document.querySelector('#bl-disc-sec') && !document.querySelector('.billing-sticky-summary').textContent.includes('Package discount')");
    await screenshot('editor-'+width);
    await fill('Therapy','Therapy A');await evaluate("document.querySelector('.billing-therapy-results button').click()");
+   await fill('Rate/session','1100');await fill('Sessions','2');
+   await evaluate("Array.from(document.querySelectorAll('label')).find(l=>l.firstChild.textContent.trim()==='Sessions').querySelector('input').dispatchEvent(new Event('change',{bubbles:true}))");
+   assert.equal(await evaluate("Array.from(document.querySelectorAll('label')).find(l=>l.firstChild.textContent.trim()==='Rate/session').querySelector('input').value"),'1100');
+   await evaluate("document.querySelector('.billing-offer-toggle input').click()");
+   assert.equal(await evaluate("Array.from(document.querySelectorAll('label')).find(l=>l.firstChild.textContent.trim()==='Rate/session').querySelector('input').value"),'900');
+   await evaluate("document.querySelector('.billing-offer-toggle input').click()");
+   assert.equal(await evaluate("Array.from(document.querySelectorAll('label')).find(l=>l.firstChild.textContent.trim()==='Rate/session').querySelector('input').value"),'1100');
+   await evaluate("document.querySelector('.billing-offer-toggle input').click()");
+   await fill('Sessions','1');
+   await evaluate("Array.from(document.querySelectorAll('label')).find(l=>l.firstChild.textContent.trim()==='Sessions').querySelector('input').dispatchEvent(new Event('change',{bubbles:true}))");
+   assert.equal(await evaluate("Array.from(document.querySelectorAll('label')).find(l=>l.firstChild.textContent.trim()==='Rate/session').querySelector('input').value"),'1100');
+   assert.equal(await evaluate("document.querySelector('.billing-offer-toggle')===null"),true);
    await fill('Therapy','Unknown therapy');await click('👁 Preview Invoice');
    assert.equal(await evaluate("document.querySelector('.billing-review-panel')===null"),true);
    await fill('Therapy','Therapy A');await evaluate("document.querySelector('.billing-therapy-results button').click()");await click('👁 Preview Invoice');await wait("document.querySelector('.billing-review-panel')");
@@ -110,6 +129,14 @@ const assert = require('node:assert/strict');
    assert.equal(calls.find(c=>c.url.includes('create_client.run')).args.pd_form_file,'/private/files/pd.pdf');
    assert.equal(await evaluate("document.documentElement.scrollWidth<=innerWidth"),true);
    await click('Recent bills');await wait("document.querySelector('.billing-native tbody tr')");
+   await fill('Date field','modified');await wait("document.querySelector('.billing-native tbody tr')");
+   let recentCall=calls.filter(c=>c.url.includes('frappe.client.get_list')&&c.args.doctype==='Sales Invoice').at(-1);
+   assert.ok(recentCall.args.filters.some(f=>f[0]==='modified'&&f[1]==='<='&&f[2].endsWith('23:59:59')));
+   assert.equal(recentCall.args.order_by,'modified desc, creation desc');
+   await fill('Date field','posting_date');await wait("document.querySelector('.billing-native tbody tr')");
+   recentCall=calls.filter(c=>c.url.includes('frappe.client.get_list')&&c.args.doctype==='Sales Invoice').at(-1);
+   assert.ok(recentCall.args.filters.some(f=>f[0]==='posting_date'&&f[1]==='<='&&f[2].length===10));
+   assert.equal(await evaluate("localStorage.getItem('life_recent_datefield_v1')"),'posting_date');
    await click('Pending dues');await wait("document.querySelector('.billing-month')");
    await screenshot('pending-'+width);
    await click('All dates');await wait("document.querySelector('.billing-month tbody tr')");

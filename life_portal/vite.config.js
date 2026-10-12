@@ -30,6 +30,11 @@ export default defineConfig(({ command }) => ({
           return [
             {
               tag: "script",
+              attrs: { src: "/assets/life_slimming/js/session_keepalive.js", defer: true },
+              injectTo: "head",
+            },
+            {
+              tag: "script",
               attrs: {
                 src:
                   command === "build"

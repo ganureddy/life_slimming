@@ -157,3 +157,12 @@ Read `MIGRATION.md` for missing local schema and explicit behavior changes.
 | [cc_phone_lookup](server_scripts/cc_phone_lookup.py) | `cc_phone_lookup` | No | Added 2026-10-04 for portal page compatibility. |
 | [life_client360_branch_patient_lookup](server_scripts/life_client360_branch_patient_lookup.py) | `life_client360_branch_patient_lookup` | No | Added 2026-10-04 for portal page compatibility. |
 | [life_client_record_book_api](server_scripts/life_client_record_book_api.py) | `life_client_record_book_api` | No | Added 2026-10-04 for portal page compatibility. |
+
+## Legacy page refresh — 2026-10-12
+
+Added local mappings for service session reporting, cryotherapy batch submission, CC agent reports and the explicit System Manager setup action. The two live cryotherapy scripts have identical bodies and share one canonical endpoint. Existing native APIs were preserved. No setup action or business transaction was executed.
+
+- [life_cc_agent_report_v2](server_scripts/life_cc_agent_report_v2.py)
+- [life_cc_agent_setup_v2](server_scripts/life_cc_agent_setup_v2.py)
+- [life_operations_session_dashboard_v1](server_scripts/life_operations_session_dashboard_v1.py)
+- [life_ops_submit_cryo_batch](server_scripts/life_ops_submit_cryo_batch.py)

@@ -68,4 +68,6 @@ def install():
                 doc.append("fields", item)
         doc.save(ignore_permissions=True)
     frappe.clear_cache()
+    from life_slimming.convox_lead_sync import install_fields
+    install_fields()
     return {"installed": True, "message": "Configure System Settings and User agent mappings before enabling ConVox."}

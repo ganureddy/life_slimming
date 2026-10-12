@@ -52,6 +52,15 @@ class LiveTVTests(unittest.TestCase):
         frappe.get_cached_value = Mock(return_value=None)
         self.assertEqual(module.snapshot()['agent_images'], {'agent': ''})
 
+    def test_week_can_start_in_previous_month(self):
+        module, frappe, _ = self.load()
+        module.now_datetime = lambda: datetime(2026, 11, 1, 10)
+        result = module.snapshot()
+        self.assertEqual(result['week_start'], '2026-10-26')
+        self.assertEqual(result['week_end'], '2026-11-02')
+        self.assertTrue(all(item[2] == '2026-10-26' for item in frappe.get_all.call_args.kwargs['or_filters']))
+        self.assertIn('custom_call_count', frappe.get_all.call_args.kwargs['fields'])
+
     def test_manager_scope(self):
         module, frappe, _ = self.load(roles=('Sales Manager',))
         self.assertFalse(module.snapshot()['restricted_to_owner'])

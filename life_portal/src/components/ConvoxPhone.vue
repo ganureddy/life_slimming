@@ -1,11 +1,12 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { convoxApi, CONVOX_ORIGIN, createCallRequests, isDashboardMessage, validWidgetUrl } from '../api/convox';
 import { session, visibleMenu } from '../lib/session';
 import '../../../life_slimming/public/js/cc_notifications.js';
 
 const route = useRoute();
+const router = useRouter();
 const permitted = computed(() => visibleMenu.value.some(group => group.items.some(item => item.id === 'leads')));
 const settings = ref(null);
 const open = ref(false);
@@ -96,9 +97,10 @@ function fitPanel() {
 function resetPosition() { position.value = null; resizeTo(760, 780); }
 
 const isCcDashboard = computed(() => ['leads', 'leads-native'].includes(route.name));
-const visible = computed(() => permitted.value && (isCcDashboard.value || Boolean(url.value)));
+const visible = computed(() => Boolean(phoneIdentity.value) && (isCcDashboard.value || Boolean(url.value)));
 const controller = new AbortController();
 let stopped = false, timer, cursor = '';
+const loggedOut = ref(false);
 let sessionGeneration = 0;
 let pollingGeneration = null;
 const dashboardCallPending = ref(false);
@@ -110,12 +112,21 @@ async function loadConfig() {
   error.value = '';
   try {
     const result = await convoxApi.config(controller.signal);
-    if (stopped || generation !== sessionGeneration) return;
+    if (stopped || loggedOut.value || generation !== sessionGeneration) return;
     settings.value = result;
-    if (!cursor) cursor = settings.value.server_time;
+    if (!cursor) {
+      cursor = settings.value.server_time;
+      if (settings.value.callbacks_ready) {
+        try {
+          const recent = await convoxApi.recent(controller.signal);
+          if (stopped || loggedOut.value || generation !== sessionGeneration) return;
+          events.value = (recent.events || []).slice(0, 20);
+        } catch { /* Polling below will retry retrieving updates. */ }
+      }
+    }
     if (!settings.value.callbacks_ready) { clearTimeout(timer); timer = undefined; }
     if (settings.value.callbacks_ready && !timer && pollingGeneration !== generation) timer = setTimeout(pollEvents, 5000);
-  } catch (e) { if (e.name !== 'AbortError') error.value = e.message; }
+  } catch (e) { if (e.name !== 'AbortError' && generation === sessionGeneration) error.value = e.message; }
 }
 async function pollEvents() {
   const generation = sessionGeneration;
@@ -131,6 +142,7 @@ async function pollEvents() {
       if (seen.has(key)) continue;
       seen.add(key);
       events.value = [event, ...events.value.filter(row => row.name !== event.name)].slice(0, 20);
+      window.dispatchEvent(new CustomEvent('life-convox-event', { detail: event }));
       if (isCcDashboard.value) {
         document.querySelector('.portal-source-page iframe')?.contentWindow?.postMessage({
           type: 'life-convox-status', call_reference: event.call_reference,
@@ -162,7 +174,7 @@ function minimize() {
   launcher.value?.focus();
 }
 async function connect(manual = preferManual.value, reconnect = false) {
-  if (starting.value || (url.value && !reconnect)) return;
+  if (loggedOut.value || starting.value || (url.value && !reconnect)) return;
   if (url.value && !window.confirm('Reload the phone for sign-in? This will disconnect any active phone session.')) return;
   const generation = sessionGeneration;
   starting.value = true;
@@ -182,7 +194,7 @@ async function connect(manual = preferManual.value, reconnect = false) {
     } catch { /* Storage can be disabled. */ }
     frameVersion.value++;
     notice.value = '';
-  } catch (e) { if (e.name !== 'AbortError') error.value = e.message; }
+  } catch (e) { if (e.name !== 'AbortError' && generation === sessionGeneration) error.value = e.message; }
   finally { if (generation === sessionGeneration) starting.value = false; }
 }
 async function callSelected(lead = selectedLead.value) {
@@ -265,15 +277,16 @@ function receiveNative(event) {
   if(data.type==='life-convox-open')showPhone();
   if(data.type==='life-convox-call'&&selectedLead.value)callFromDashboard({data,origin:window.location.origin,source:{postMessage:result=>data.onResult?.(result)}});
 }
-function findCaller(event) {
-  if (route.name === 'leads-native') {
-    window.dispatchEvent(new CustomEvent('life-convox-find-native', { detail: { mobile_number: event.mobile_number } }));
-    minimize();
-    return;
+async function findCaller(event) {
+  if (!event.mobile_number) return;
+  // Both /leads and its preview now render the native dashboard.
+  if (!isCcDashboard.value) {
+    await router.push({ name: 'leads', query: { caller: event.mobile_number } });
+  } else {
+    window.dispatchEvent(new CustomEvent('life-convox-find-native', {
+      detail: { mobile_number: event.mobile_number },
+    }));
   }
-  if (route.name !== 'leads') return;
-  const frame = document.querySelector('.portal-source-page iframe');
-  frame?.contentWindow?.postMessage({ type: 'life-convox-find', mobile: event.mobile_number }, window.location.origin);
   minimize();
 }
 watch(() => route.name, () => { selectedLead.value = ''; });
@@ -290,7 +303,8 @@ watch([selectedLead, () => settings.value?.enabled], async ([lead, enabled]) => 
 });
 // Keep the iframe alive while ERP refreshes the same user's session data.
 const phoneIdentity = computed(previous => {
-  if (session.loading) return previous || '';
+  if (loggedOut.value || route.meta.public) return '';
+  if (session.loading || (session.error && ![401, 403].includes(session.status))) return previous || '';
   return session.user && session.user !== 'Guest' && permitted.value ? session.user : '';
 });
 watch(phoneIdentity, async (user, _, onCleanup) => {
@@ -315,12 +329,32 @@ watch(phoneIdentity, async (user, _, onCleanup) => {
   // must not permanently disable automatic login for this account.
   if (!cancelled && settings.value?.enabled) await connect(!settings.value.sso_ready);
 }, { immediate: true });
+function portalLogout() {
+  loggedOut.value = true;
+  sessionGeneration++;
+  starting.value = false;
+  seen.clear();
+  cursor = '';
+  error.value = '';
+  notice.value = '';
+  pollError.value = '';
+  url.value = '';
+  settings.value = null;
+  phoneConfirmed.value = false;
+  events.value = [];
+  incoming.value = null;
+  selectedLead.value = '';
+  open.value = false;
+  clearTimeout(timer);
+  timer = undefined;
+}
 function warnBeforeLeaving(event) {
   if (!url.value) return;
   event.preventDefault();
   event.returnValue = '';
 }
 onMounted(() => {
+  window.addEventListener('life-portal:logout', portalLogout);
   window.addEventListener('message', receive);
   window.addEventListener('life-convox-native', receiveNative);
   window.addEventListener('resize', fitPanel);
@@ -330,6 +364,7 @@ onBeforeUnmount(() => {
   stopped = true;
   clearTimeout(timer);
   controller.abort();
+  window.removeEventListener('life-portal:logout', portalLogout);
   window.removeEventListener('message', receive);
   window.removeEventListener('life-convox-native', receiveNative);
   window.removeEventListener('resize', fitPanel);
@@ -338,7 +373,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div v-if="visible" class="convox-phone">
+  <div v-show="visible" class="convox-phone">
     <div v-if="dragging || resizing" class="convox-drag-shield" aria-hidden="true"></div>
     <aside v-if="incoming && !open" class="convox-incoming" role="status">
       <strong>Incoming call</strong><span>{{ incoming.mobile_number }}</span>
@@ -388,7 +423,7 @@ onBeforeUnmount(() => {
             <small v-if="!settings.click_to_call_ready">Calling setup incomplete.</small>
           </div>
         </template>
-        <div v-if="events.length" class="convox-events"><h3>Recent call updates</h3><article v-for="event in events" :key="event.name"><strong>{{ event.call_status || event.call_type || event.event_type }}</strong><span>{{ event.mobile_number }} <span v-if="event.disposition">· {{ event.disposition }}</span></span><button v-if="isCcDashboard && event.mobile_number" @click="findCaller(event)">Find caller in leads</button></article></div>
+        <div v-if="events.length" class="convox-events"><h3>Recent call updates</h3><article v-for="event in events" :key="event.name"><strong>{{ event.call_status || event.call_type || event.event_type }}</strong><small>{{ event.call_datetime || event.received_on }} · {{ event.call_reference }}</small><span>{{ event.mobile_number }} <span v-if="event.disposition">· {{ event.disposition }}</span></span><button v-if="event.mobile_number" @click="findCaller(event)">Find caller in CRM</button><RouterLink v-if="event.crm_lead" :to="{name: 'convox-history', params: {leadId: event.crm_lead}}" @click="minimize">Lead call details</RouterLink></article></div>
       </div>
       <button class="convox-resize" aria-label="Resize phone panel" title="Drag to resize, or use arrow keys"
         @pointerdown="startResize" @pointermove="moveResize" @pointerup="stopResize" @pointercancel="stopResize" @lostpointercapture="stopResize"

@@ -6,6 +6,7 @@ import { useRoute, useRouter } from "vue-router";
 import PortalLoader from "./components/PortalLoader.vue";
 import IdleSession from "./components/IdleSession.vue";
 import PortalLayout from "./layouts/PortalLayout.vue";
+import ConvoxPhone from "./components/ConvoxPhone.vue";
 import { session, loadSession, loginUrl } from "./lib/session";
 const idleExpired = ref(false);
 const busy = computed(() => routeLoading.value || workspaceLoading.value);
@@ -38,6 +39,7 @@ watch(
 </script>
 
 <template>
+  <ConvoxPhone v-show="!route.meta.public && !idleExpired" />
   <RouterView v-if="route.meta.public" />
   <div v-else-if="session.loading" class="startup" role="status">
     <PortalLoader />

@@ -12,7 +12,7 @@ Counting rules:
 - Booked: leads with a current scheduled appointment in the period, excluding cancelled appointments.
 - Visited (formerly Walk-ins): those scheduled leads whose status is visited, using the existing CC visit-report status rules.
 - Today and month mean the site calendar day and calendar month. These are current lead snapshots, not a historical count of every appointment or an arrival timestamp report.
-- Unassigned leads contribute to totals but do not occupy an agent podium. Ties use bookings, leads, then agent ID.
+- Unassigned leads contribute to totals but do not occupy an agent podium. Ties use visited-booked counts, appointment bookings, leads, then agent ID.
 
 The first successful load establishes a silent baseline. Subsequent snapshots announce new leads, booking/reschedule changes and transitions to visited. Changed leaders trigger a celebration after a walk-in. Existing activity is not replayed on page reload. Events are observed snapshot differences; intermediate changes between polls cannot be reconstructed. The visible feed keeps seven events; the alert queue keeps the latest twelve to avoid prolonged alerts after bulk updates or reconnects. No persistent event history is created.
 
@@ -23,3 +23,13 @@ Validation: `node --test life_portal/tests/cc-live-tv.test.mjs`, `python3 life_p
 Agent podium portraits use the lead owner’s User `user_image` field. Missing or inaccessible photos fall back to initials.
 
 - Visited Booked: the subset of visited leads resolving to `Visited-BKD`, counted by scheduled appointment date for today and the calendar month. Displayed in the daily totals and both agent podiums.
+
+The v2 design follows the supplied `life-cc-tv-v2 (3).html`: gold frame, compact podiums, weekly ranking band, breaking highlights, idle roster, volume slider (M toggles sound), and booking confetti. It uses authenticated snapshots; demo data, random events, and unauthenticated postMessage input are not imported.
+
+Weekly visits use Monday–Sunday in the site timezone, including prior-month appointments when the week crosses a month boundary. Target: 35 / 4 = 8.75 visits per week, as in the supplied design. Percent bars cap at 100%. Agent lists include owners represented in the scoped snapshot, not every ERP User. After 40 seconds without observed activity, the right panel displays these agents, rotating every eight seconds (ten rows, or eight when a waiting alert is present).
+
+Waiting alerts use today's leads at least ten minutes old with an explicit zero `custom_call_count` and empty `custom_last_call_time`. Scheduled/visited and converted/lost/do-not-contact leads are excluded. Missing fields do not imply no calls. The label is “No call recorded”: these fields record CC follow-ups, not definitive telephony dial events. Alerts clear after the next snapshot records a call; audio reminders are at most once per two minutes, only when sound is enabled and the connection is fresh.
+
+Highlights use the reference thresholds: five visits/day, five appointments/day, fifty visits/month, or at least a 50% visited-booked ratio with two visits. High-package highlights are omitted because the TV snapshot has no verified package amount attribution. Sound still needs an initial user click under browser autoplay rules.
+
+Browser verification: `node life_portal/tests/cc-live-tv.browser.cjs` with Vite on port 5175 and an isolated Chrome debugger on port 9225. Tests mock all API data and cover totals, roster pagination, waiting-alert removal, screen scaling, and clearing data after permission denial.

@@ -9,6 +9,7 @@ export const session = reactive({
   status: null,
   user: "",
   session_id: "",
+  idle_logout_exempt: false,
   full_name: "",
   roles: [],
   portal_role: "",
@@ -79,6 +80,7 @@ export function loadSession() {
   sessionRequest = (async () => {
     try {
       Object.assign(session, await call("life_slimming.api.portal.bootstrap", undefined, { signal: controller.signal }));
+      window.dispatchEvent(new Event("life-portal:session-loaded"));
     } catch (error) {
       session.user = "";
       session.error = error.name === "AbortError" ? "Loading took too long. Please check your connection and try again." : error.message;

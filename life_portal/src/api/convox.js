@@ -8,6 +8,8 @@ async function call(action, args = {}, signal) {
   return body.message;
 }
 export const convoxApi = {
+  recent: (signal) => call('history', {}, signal),
+  findLeads: (mobile_number, signal) => call('find_leads', { mobile_number }, signal),
   leadHistory: (lead_id, start = 0, signal) => call("lead_history", { lead_id, start }, signal),
   config: (signal) => call('config', {}, signal),
   widgetSession: (signal, manual = false) => call('widget_session', { manual: manual ? 1 : 0 }, signal),
