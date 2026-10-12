@@ -202,4 +202,8 @@ def run(**kwargs):
                                     prior_connected = value
                 item["workflow_hint"] = {"prior_connected": prior_connected, "legacy_events": events}
 
-    enrich_lead_appointments(frappe.response["message"].get("rows") or [])
+    # The dashboard list never displays these scheduling enrichment fields.
+    # Restrict the appointment/check-in lookup to a single opened lead instead
+    # of repeating it for every page in each date cohort.
+    if query and frappe.form_dict.get("detail"):
+        enrich_lead_appointments(frappe.response["message"].get("rows") or [])

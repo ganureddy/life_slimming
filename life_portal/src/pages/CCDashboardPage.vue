@@ -236,7 +236,11 @@ function apply() {
   filters = query.value.trim() ? { query: query.value.trim() } : { from_date: from.value, to_date: to.value, date_mode: mode.value };
   searching.value = !!filters.query;
   applied.value = filters.query ? 'Search across permitted history: ' + filters.query : `${from.value} → ${to.value} · ${mode.value}`;
-  matrixFilter.value=null;load(1);if(selectedView.value==='reports')loadSales();if(selectedView.value==='duplicates')loadDuplicateLeads();
+  matrixFilter.value=null;
+  if(selectedView.value==='duplicates'){
+    generation++;controller?.abort();rows.value=[];loading.value=false;loadDuplicateLeads();return;
+  }
+  load(1);if(selectedView.value==='reports')loadSales();
 }
 async function load(nextPage) {
   const token = ++generation; controller?.abort(); controller = new AbortController();
@@ -259,19 +263,21 @@ async function load(nextPage) {
         } while(cohort.has_more && token===generation);
         return {...cohort,rows:cohortRows};
       };
-      const cohortModes=[filters.date_mode,...['followup','appointment'].filter(value=>value!==filters.date_mode)];
+      const cohortModes=selectedView.value==='appointments'?['appointment']:
+        selectedView.value==='assign'?[filters.date_mode]:
+        [filters.date_mode,...['followup','appointment'].filter(value=>value!==filters.date_mode)];
       const cohorts=await Promise.all(cohortModes.map(loadCohort));
       if(token!==generation)return;
-      const createdCohort=cohorts[cohortModes.indexOf(filters.date_mode)];
-      createdIds.value=new Set((createdCohort.rows||[]).map(row=>row.name));
+      const createdCohort=cohorts[cohortModes.indexOf(filters.date_mode)]||null;
+      createdIds.value=new Set((createdCohort?.rows||[]).map(row=>row.name));
       appointmentCohort.value=cohorts[cohortModes.indexOf('appointment')]?.rows||[];
-      data={...createdCohort,rows:[...new Map(cohorts.flatMap(cohort=>cohort.rows||[]).map(row=>[row.name,row])).values()]};
+      data={...(createdCohort||cohorts[0]),rows:[...new Map(cohorts.flatMap(cohort=>cohort.rows||[]).map(row=>[row.name,row])).values()]};
       incomplete.value=cohorts.some(cohort=>cohort.truncated);
       if(incomplete.value) error.value='The selected range exceeds the lead limit. Choose a shorter range to view all leads.';
     }
     if (token !== generation) return;
     if(searching.value){createdIds.value=new Set((data.rows||[]).map(row=>row.name));appointmentCohort.value=(data.rows||[]).filter(row=>row.custom_appointment_date_and_time)}
-    rows.value = data.rows || []; total.value = createdIds.value.size; more.value = !!data.more; scoped.value = !!data.scoped_to_owner; contactManager.value=!!data.contact_manager;
+    rows.value = data.rows || []; total.value = searching.value?createdIds.value.size:(data.total??createdIds.value.size); more.value = !!data.more; scoped.value = !!data.scoped_to_owner; contactManager.value=!!data.contact_manager;
   } catch (e) { if (token === generation && e.name !== 'AbortError') error.value = e.message; }
   finally { if (token === generation) loading.value = false; }
 }
