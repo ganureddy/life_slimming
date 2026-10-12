@@ -31,11 +31,8 @@ def run(**kwargs):
     #   and the conversion rate were simply wrong with no warning. The response is
     #   now an object: {"rows": [...], "total": N, "truncated": 0/1} so the UI can
     #   warn when a range is still too large.
-    # v5 (16-Jul-2026): OWNER SCOPING. Non-manager roles (i.e. plain Sales User) now
-    #   only receive leads where lead_owner = their own user. Managers
-    #   (System Manager / Sales Manager / Call Center Export) still see everything.
-    #   Enforced HERE, server-side, on purpose: filtering only in the dashboard JS
-    #   would let an agent call the API directly and pull every lead.
+    # All users with an allowed CC dashboard role can see the full lead list.
+    # The role check below remains enforced server-side.
     # Replaces every frappe.client.get_list on Lead in the CC dashboard.
     # Runs with ignore_permissions (frappe.get_all), so it keeps working
     # after agent roles are downgraded to select-only on Lead.
@@ -59,13 +56,7 @@ def run(**kwargs):
     if not has_access:
         frappe.throw("Not permitted")
 
-    # Managers see all leads; everyone else is scoped to leads they own.
-    MANAGER_ROLES = ["System Manager", "Sales Manager", "Call Center Export"]
-    is_manager = False
-    for r in MANAGER_ROLES:
-        if r in user_roles:
-            is_manager = True
-            break
+    can_view_all_leads = True
 
     # LEAD_FIELDS = [
     #     "name", "lead_name", "first_name", "mobile_no", "phone", "age", "gender", "city", "branch",
@@ -101,12 +92,12 @@ def run(**kwargs):
     if query:
         if len(query) < 2:
             frappe.throw("Enter at least two characters")
-        scoped = [] if is_manager else [["lead_owner", "=", user]]
+        scoped = [] if can_view_all_leads else [["lead_owner", "=", user]]
         pattern = "%" + query.replace("%", "").replace("_", "") + "%"
         rows = frappe.get_all("Lead", fields=LEAD_FIELDS, filters=scoped,
             or_filters=[["lead_name", "like", pattern], ["name", "like", pattern], ["mobile_no", "like", pattern], ["phone", "like", pattern], ["custom_remarks", "like", pattern]],
             order_by="modified desc", limit_start=int(frappe.form_dict.get("start") or 0), limit_page_length=21)
-        frappe.response["message"] = {"rows": rows[:20], "more": len(rows) > 20, "contact_manager": contact_manager, "scoped_to_owner": 0 if is_manager else 1}
+        frappe.response["message"] = {"rows": rows[:20], "more": len(rows) > 20, "contact_manager": contact_manager, "scoped_to_owner": 0 if can_view_all_leads else 1}
     elif phone:
         digits = ""
         for ch in phone:
@@ -116,7 +107,7 @@ def run(**kwargs):
         if len(digits) < 5:
             frappe.throw("Phone search needs at least 5 digits")
         phone_filters = []
-        if not is_manager:
+        if not can_view_all_leads:
             phone_filters.append(["lead_owner", "=", user])
         rows = frappe.get_all(
             "Lead",
@@ -130,7 +121,7 @@ def run(**kwargs):
             limit_page_length=10
         )
         frappe.response["message"] = {"rows": rows, "total": len(rows), "truncated": 0,
-                                     "scoped_to_owner": 0 if is_manager else 1}
+                                     "scoped_to_owner": 0 if can_view_all_leads else 1}
     else:
         from_date = frappe.form_dict.get("from_date")
         to_date = frappe.form_dict.get("to_date")
@@ -151,7 +142,7 @@ def run(**kwargs):
             # v2: "created" now uses the portal's REAL creation timestamp, not the
             # editable custom_posting_date business field.
             filters = [["creation", "between", [from_date + " 00:00:00", to_date + " 23:59:59"]]]
-        if not is_manager:
+        if not can_view_all_leads:
             filters.append(["lead_owner", "=", user])
 
         # Opt-in pagination for Vue. Legacy callers retain their existing contract.
@@ -182,7 +173,7 @@ def run(**kwargs):
             "truncated": 1 if not paginated and total > PAGE_LIMIT else 0,
             "has_more": start + len(rows) < total,
             "start": start,
-            "scoped_to_owner": 0 if is_manager else 1
+            "scoped_to_owner": 0 if can_view_all_leads else 1
         }
     frappe.response["message"]["contact_manager"] = contact_manager
 
