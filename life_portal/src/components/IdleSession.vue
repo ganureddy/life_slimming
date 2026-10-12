@@ -15,6 +15,7 @@ function read() { try { return JSON.parse(localStorage.getItem(key)) || memory; 
 function write(value) { memory = value; try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* Memory fallback when storage is unavailable. */ } }
 async function logout() {
   expired.value = true;
+  window.dispatchEvent(new Event('life-portal:logout'));
   emit("expired");
   try { sessionStorage.setItem("life-portal-logout-pending", "1"); } catch { /* Logout still runs. */ }
   const controller = new AbortController();

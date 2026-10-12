@@ -16,6 +16,7 @@ async function logout() {
   error.value = "";
   try {
     await call("logout", {}, { csrfToken: session.csrf_token });
+    window.dispatchEvent(new Event('life-portal:logout'));
     window.location.assign(loginUrl());
   } catch (err) {
     error.value = err.message;

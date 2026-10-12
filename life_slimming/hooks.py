@@ -282,6 +282,9 @@ doc_events = {
 "Lead": {
             "on_update": "life_slimming.events.restrict_duplicate_lead",
         },
+"ConVox Call Event": {
+    "on_update": "life_slimming.convox_lead_sync.sync_event",
+},
 "Lead Entry": {
             "after_insert":"life_slimming.events.new_lead_doc",
             "before_save": "life_slimming.events.duplicate_lead_details"
@@ -481,6 +484,7 @@ except Exception:
 
 # Staff-based CC scheduler fields.
 after_migrate = [
+    "life_slimming.convox_lead_sync.install_fields",
     "life_slimming.api.cc_appointment_setup.execute",
     "life_slimming.api.data_correction_setup.execute",
 ]

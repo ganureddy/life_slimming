@@ -4,7 +4,6 @@ import { useRoute } from "vue-router";
 import ConvoxHistoryDialog from "../components/ConvoxHistoryDialog.vue";
 import PortalSidebar from "../components/PortalSidebar.vue";
 import AccountDialog from "../components/AccountDialog.vue";
-import ConvoxPhone from "../components/ConvoxPhone.vue";
 import { session, initials, roleLabel, canAccessModule } from "../lib/session";
 const route = useRoute();
 const allowed = computed(() => route.name === 'not-found' || canAccessModule(route.meta.accessModule || route.name));
@@ -94,7 +93,6 @@ watch(
       <section v-else class="panel"><h1>Access unavailable</h1><p>This module is not enabled for your portal role.</p></section>
     </main>
     <AccountDialog ref="account" />
-    <ConvoxPhone />
     <ConvoxHistoryDialog />
   </div>
 </template>

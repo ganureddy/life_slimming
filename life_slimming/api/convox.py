@@ -21,7 +21,7 @@ API_URL = ORIGIN + "/ConVoxCCS/rest/api"
 MANAGERS = {"System Manager", "Sales Manager", "Call Center Export"}
 ROLES = MANAGERS | {"Sales User", "Branch Sales Invoice"}
 EVENT_FIELDS = ["name", "event_type", "call_reference", "mobile_number", "lead_id", "call_type",
-                "call_status", "disposition", "call_duration", "received_on"]
+                "call_status", "disposition", "call_duration", "received_on", "call_datetime"]
 STATUS_MESSAGES = {
     "CL000": "Call request accepted. Answer through the ConVox phone.",
     "GE001": "ConVox rejected the request method. Contact your administrator.",
@@ -282,6 +282,8 @@ def click_to_call(lead_id, request_id):
         except frappe.ValidationError as error:
             return {"success": False, "status": "TOKEN_ERROR", "message": str(error)}
         refno = "LIFE" + secrets.token_hex(8).upper()
+        from life_slimming.convox_lead_sync import reference_key
+        cache.set_value(reference_key(agent, refno), lead.name, expires_in_sec=604800)
         pending = {"success": False, "status": "UNKNOWN", "refno": refno,
                    "message": "Call outcome is unconfirmed. Check the ConVox phone before making another call."}
         cache.set_value(request_key, pending, expires_in_sec=86400)
@@ -318,7 +320,7 @@ def poll(after=None):
         raise frappe.ValidationError("Invalid callback cursor.")
     since = max(now - timedelta(hours=24), min(since, now))
     rows = frappe.db.sql(
-        "SELECT " + ", ".join(EVENT_FIELDS) + " FROM `tabConVox Call Event` "
+        "SELECT " + ", ".join(EVENT_FIELDS + ["agent_id"]) + " FROM `tabConVox Call Event` "
         "WHERE agent_id = %(agent)s AND received_on <= %(now)s "
         "AND (received_on > %(since)s OR (received_on = %(since)s AND name > %(name)s)) "
         "ORDER BY received_on ASC, name ASC LIMIT 100",
@@ -326,6 +328,9 @@ def poll(after=None):
     # Stable composite cursor handles batches sharing a timestamp. A short overlap
     # on the final page catches transactions that committed during this request.
     cursor = (str(rows[-1].received_on) + "|" + rows[-1].name) if len(rows) == 100 else str(now - timedelta(seconds=2))
+    from life_slimming.convox_lead_sync import resolve_lead
+    for event in rows:
+        event["crm_lead"] = resolve_lead(event)
     return {"events": rows, "cursor": cursor}
 
 
@@ -343,8 +348,29 @@ def history(lead_id=None, mobile_number=None, call_reference=None):
         filters["mobile_number"] = normalize_phone(mobile_number)
     if call_reference:
         filters["call_reference"] = str(call_reference)[:140]
-    return {"events": frappe.get_all("ConVox Call Event", filters=filters,
-        fields=EVENT_FIELDS, order_by="received_on desc", limit_page_length=50)}
+    events = frappe.get_all("ConVox Call Event", filters=filters,
+        fields=EVENT_FIELDS + ["agent_id"], order_by="received_on desc", limit_page_length=50)
+    from life_slimming.convox_lead_sync import resolve_lead
+    for event in events:
+        event["crm_lead"] = resolve_lead(event)
+    return {"events": events}
+
+
+@frappe.whitelist(methods=["POST"])
+def find_leads(mobile_number):
+    """Exact phone lookup, including unanswered calls and alternate phones."""
+    _identity()
+    number = normalize_phone(mobile_number)
+    manager = bool(MANAGERS.intersection(frappe.get_roles()))
+    where = """(REGEXP_REPLACE(COALESCE(mobile_no, ''), '[[:space:]()+.-]', '') IN %(numbers)s
+        OR REGEXP_REPLACE(COALESCE(phone, ''), '[[:space:]()+.-]', '') IN %(numbers)s)"""
+    args = {"numbers": (number, "91" + number, "0" + number)}
+    if not manager:
+        where += " AND lead_owner=%(owner)s"
+        args["owner"] = frappe.session.user
+    rows = frappe.db.sql("SELECT name, lead_name, mobile_no, phone, status, custom_cc_sub_status, lead_owner "
+                         "FROM `tabLead` WHERE " + where + " ORDER BY modified DESC LIMIT 101", args, as_dict=True)
+    return {"rows": rows[:100], "truncated": len(rows) > 100}
 
 
 def recording_url(value):
@@ -354,7 +380,7 @@ def recording_url(value):
 
 
 HISTORY_FIELDS = EVENT_FIELDS + [
-    "agent_id", "process_name", "call_datetime", "station", "disposition_2",
+    "agent_id", "process_name", "station", "disposition_2",
     "disposition_3", "call_mode", "completed_by", "queue_name", "queue_duration",
     "ring_duration", "followup_time", "list_id", "did", "recording_file_name",
     "recording_available", "recording_received_on", "remarks",
@@ -389,7 +415,16 @@ def lead_history(lead_id, start=0):
                         for field in fields]
     # Match the complete normalized number, never an arbitrary trailing suffix.
     where = "REGEXP_REPLACE(COALESCE(mobile_number, ''), '[[:space:]()+.-]', '') IN %(numbers)s"
-    args = {"numbers": (number, "91" + number, "0" + number), "start": start}
+    numbers = [number, "91" + number, "0" + number]
+    for raw in (lead.get("mobile_no"), lead.get("phone")):
+        try:
+            alternate = normalize_phone(raw)
+        except frappe.ValidationError:
+            continue
+        for variant in (alternate, "91" + alternate, "0" + alternate):
+            if variant not in numbers:
+                numbers.append(variant)
+    args = {"numbers": tuple(numbers), "start": start}
     if not manager:
         where += " AND agent_id = %(agent)s"
         args["agent"] = agent
@@ -444,7 +479,7 @@ def receive_callback(event_type, data):
         call_date = datetime.fromisoformat(str(data["entry_date" if is_popup else "CALL_DATE"]))
         if call_date.tzinfo:
             raise ValueError()
-        durations = {key: int(data.get(key) or 0) for key in ("CALL_DURATION", "QUEUE_DURATION", "RING_DURATION")}
+        durations = {key: int(data.get(key) or 0) for key in ("CALL_DURATION", "QUEUE_DURATION", "RING_DURATION") if key in data}
         if any(value < 0 for value in durations.values()):
             raise ValueError()
     except (ValueError, TypeError, frappe.ValidationError):

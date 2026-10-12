@@ -2,6 +2,7 @@
 import { computed, watch, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ccCall } from '../api/cc';
+import { convoxApi } from '../api/convox';
 import { request } from '../api/http';
 import { dateRange, maskPhone, downloadCsv } from '../lib/cc';
 import { ccDashboardGroup } from '../lib/cc-dashboard-groups';
@@ -282,7 +283,11 @@ async function load(nextPage,{preserveRows=false,preserveSelection=false}={}) {
   try {
     let data;
     if(searching.value){
-      data=await ccCall('cc_get_leads',{...filters,start:(nextPage-1)*20},controller.signal);
+      if(filters.convoxMobile){
+        const result=await convoxApi.findLeads(filters.convoxMobile,controller.signal);
+        data={rows:result.rows||[],more:false};
+        if(token===generation&&result.truncated)error.value='More than 100 leads match this number. Narrow the search in CRM.';
+      }else data=await ccCall('cc_get_leads',{...filters,start:(nextPage-1)*20},controller.signal);
       if(token!==generation)return;
     }
     if(!searching.value){
@@ -440,13 +445,24 @@ function clearRange(){
 }
 async function findConvoxLead(event){
   if(typeof event.detail?.mobile_number!=='string')return;
-  const mobile=event.detail.mobile_number.replace(/\D/g,'').slice(-10);
-  if(mobile.length!==10)return;
-  showView('queue');query.value=mobile;filters={query:mobile};searching.value=true;applied.value='ConVox caller: '+maskPhone(mobile);await load(1);
-  const match=rows.value.find(row=>String(row.mobile_no||row.phone||'').replace(/\D/g,'').slice(-10)===mobile);
-  if(match)await openDetail(match);
+  let mobile=event.detail.mobile_number.replace(/[\s()+.-]/g,'');
+  if(mobile.length===12&&mobile.startsWith('91'))mobile=mobile.slice(2);
+  else if(mobile.length===11&&mobile.startsWith('0'))mobile=mobile.slice(1);
+  if(!/^\d{10}$/.test(mobile))return;
+    showView('queue');query.value=mobile;filters={convoxMobile:mobile};searching.value=true;applied.value='ConVox caller: '+maskPhone(mobile);
+  controller?.abort(); controller=new AbortController(); const token=++generation;
+  loading.value=true;error.value='';
+  try {
+    const result=await convoxApi.findLeads(mobile,controller.signal);
+    if(token!==generation)return;
+    rows.value=result.rows||[];total.value=rows.value.length;page.value=1;more.value=false;
+    createdIds.value=new Set(rows.value.map(row=>row.name));
+    if(result.truncated)error.value='More than 100 leads match this number. Narrow the search in CRM.';
+    if(rows.value.length===1)await openDetail(rows.value[0]);
+  } catch(e){if(token===generation&&e.name!=='AbortError')error.value=e.message;}
+  finally{if(token===generation)loading.value=false;}
 }
-onMounted(()=>{if(['assign','duplicates'].includes(selectedView.value)&&!canManageLeads.value)selectedView.value='dashboard';apply();window.addEventListener('life-convox-find-native',findConvoxLead);autoRefreshTimer=setInterval(refreshCurrentView,60000)});
+onMounted(()=>{if(['assign','duplicates'].includes(selectedView.value)&&!canManageLeads.value)selectedView.value='dashboard';if(route.query.caller)findConvoxLead({detail:{mobile_number:routeValue(route.query.caller)}});else apply();window.addEventListener('life-convox-find-native',findConvoxLead);autoRefreshTimer=setInterval(refreshCurrentView,60000)});
 onUnmounted(() => { clearTimeout(globalSearchTimer);globalSearchController?.abort();globalSearchGeneration++;generation++;historyGeneration++;salesRequest++; detailGeneration++; controller?.abort(); detailController?.abort(); clearInterval(callInterval);clearInterval(autoRefreshTimer);window.removeEventListener('life-convox-find-native',findConvoxLead); });
 </script>
 <template>
