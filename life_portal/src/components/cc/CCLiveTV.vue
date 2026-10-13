@@ -53,6 +53,10 @@ async function poll() {
     const events = changes(data.value, next);
     const oldWinner = rank(agents.value, 'today')[0];
     if (data.value?.today !== next.today) { feed.value = []; queue.length = 0; active.value = null; clearTimeout(alertTimer); }
+    const visibleEvent = event => !event.agentId || Object.hasOwn(next.agents, event.agentId);
+    feed.value = feed.value.filter(visibleEvent);
+    for (let i = queue.length - 1; i >= 0; i--) if (!visibleEvent(queue[i])) queue.splice(i, 1);
+    if (active.value && !visibleEvent(active.value)) { active.value = null; clearTimeout(alertTimer); }
     if (events.length) lastActivity.value = Date.now();
     data.value = next;
     const winner = rank(agents.value, 'today')[0];
@@ -140,7 +144,7 @@ onUnmounted(() => {
         <div class="clock">{{ timeText }}<small>{{ dateText }}</small></div>
       </header>
       <main><section><template v-for="period in ['today','month']" :key="period">
-        <div class="sec" :class="{'month-heading':period==='month'}">{{ period === 'today' ? '⭐ TODAY’S TOP 3 · VISITED' : '🏆 THIS MONTH TOP 3' }}</div>
+        <div class="sec" :class="{'month-heading':period==='month'}">{{ period === 'today' ? '⭐ TODAY’S TOP 3 · VISITED' : '🏆 THIS MONTH TOP 3 · 6TH–5TH' }}</div>
         <div class="pod" :class="{m:period==='month'}">
           <template v-for="slot in podium(period)" :key="slot.rank"><article v-if="slot.agent" class="ag" :class="`r${slot.rank}`">
             <div v-if="slot.rank===1" class="crown">👑</div><div class="rank">#{{ slot.rank }}</div>

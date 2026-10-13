@@ -21,9 +21,9 @@ class NativeReads(unittest.TestCase):
 
     def read_leads(self, roles, **args):
         frappe.local.form_dict.update(args)
-        with patch.object(frappe, 'get_all', side_effect=[roles, [{'name':'LEAD-1'}]]) as query:
+        with patch.object(frappe, 'get_all', side_effect=[roles, [{'name':'LEAD-1'}], []]) as query:
             leads.run.__wrapped__()
-        return query.call_args, frappe.response['message']
+        return query.call_args_list[1], frappe.response['message']
 
     def test_agent_pagination_keeps_owner_filter(self):
         query, response = self.read_leads(['Sales User'], page_size=40, start=40)
@@ -40,9 +40,19 @@ class NativeReads(unittest.TestCase):
         self.assertFalse(response['scoped_to_owner'])
         self.assertFalse(any(f[0] == 'lead_owner' for f in query.kwargs['filters']))
 
+    def test_agent_search_can_find_other_owners(self):
+        for args in ({'query': 'Other client'}, {'phone': '9876543210'},
+                     {'query': 'LEAD-1', 'detail': 1}):
+            with self.subTest(args=args):
+                frappe.local.form_dict = frappe._dict(args)
+                query, response = self.read_leads(['Sales User'])
+                self.assertFalse(any(f[0] == 'lead_owner' for f in query.kwargs['filters']))
+                self.assertFalse(response['scoped_to_owner'])
+                self.assertEqual(response['rows'][0]['name'], 'LEAD-1')
+
     def test_page_size_clamped(self):
         query, _ = self.read_leads(['Sales User'], page_size=100000, start=-1)
-        self.assertEqual(query.kwargs['limit_page_length'], 100)
+        self.assertEqual(query.kwargs['limit_page_length'], 500)
         self.assertEqual(query.kwargs['limit_start'], 0)
 
     def test_essential_report_uses_only_lead_and_role_queries(self):

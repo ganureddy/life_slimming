@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { leaderboard, rank, changes, sortedAgents, waitingLeads, highlights } from '../src/lib/cc-live-tv.js';
 const row = {name:'L1',lead_name:'Client',lead_owner:'a',creation:'2026-10-09 09:00:00',modified:'2026-10-09 09:00:00',custom_appointment_date_and_time:'2026-10-09 14:00:00',custom_appointment_status:'Scheduled'};
-const snapshot = rows => ({rows,agents:{a:'Agent A',b:'Agent B'},today:'2026-10-09',timestamp:'2026-10-09 10:00:00'});
+const snapshot = rows => ({rows,agents:{a:'Agent A',b:'Agent B',c:'Agent C'},month_start:'2026-10-06',month_end:'2026-11-06',today:'2026-10-09',timestamp:'2026-10-09 10:00:00'});
 test('counts use creation and scheduled dates, not modification; unassigned excluded from podium', () => {
  const data = snapshot([row,{...row,name:'L2',lead_owner:'b',creation:'2026-09-01 10:00:00',custom_appointment_status:'Visited Booked'}, {...row,name:'L3',lead_owner:null}, {...row,name:'L4',custom_appointment_status:'Cancelled'}]);
  const agents = leaderboard(data);
@@ -27,7 +27,7 @@ test('new leads, reschedules and visited transitions announce once', () => {
 });
 
 test('daily podium excludes agents with only earlier monthly activity', () => {
- const agents = leaderboard(snapshot([{...row,creation:'2026-10-02 09:00:00',custom_appointment_date_and_time:'2026-10-02 14:00:00'}]));
+ const agents = leaderboard(snapshot([{...row,creation:'2026-10-07 09:00:00',custom_appointment_date_and_time:'2026-10-07 14:00:00'}]));
  assert.equal(rank(agents,'today').length,0);
  assert.equal(rank(agents,'month').length,1);
 });
@@ -37,7 +37,7 @@ test('visited booked is a subset of visits and uses appointment day and month', 
   {...row,name:'booked',custom_appointment_status:'Visited Booked'},
   {...row,name:'not-booked',custom_appointment_status:'Visited Not Booked'},
   {...row,name:'pending',custom_appointment_status:'Visited'},
-  {...row,name:'earlier',custom_appointment_status:'Visited Booked',custom_appointment_date_and_time:'2026-10-02 10:00:00'},
+  {...row,name:'earlier',custom_appointment_status:'Visited Booked',custom_appointment_date_and_time:'2026-10-07 10:00:00'},
   {...row,name:'undated',custom_appointment_status:'Visited Booked',custom_appointment_date_and_time:null},
  ]);
  const agent = leaderboard(data)[0];
@@ -56,7 +56,7 @@ test('weekly ranking spans month boundaries and excludes next week', () => {
  const agent = leaderboard(data)[0];
  assert.equal(agent.week.walkins,2);
  assert.equal(agent.today.walkins,1);
- assert.equal(agent.month.walkins,2);
+ assert.equal(agent.month.walkins,4);
 });
 test('visited booked breaks ranking ties; roster retains zero-activity owners', () => {
  const agents = leaderboard(snapshot([{...row,lead_owner:'a',custom_appointment_status:'Visited'}, {...row,name:'b',lead_owner:'b',custom_appointment_status:'Visited Booked'}, {...row,name:'c',lead_owner:'c',creation:'2026-09-01',custom_appointment_date_and_time:null}]));
@@ -77,4 +77,19 @@ test('highlights require actual thresholds', () => {
  assert.equal(highlights([agent]).length,4);
  assert.match(highlights([agent])[3],/60%/);
  assert.equal(highlights([]).length,1);
+});
+
+
+test('monthly cycle includes the 6th through the next 5th for all metrics', () => {
+ const data = snapshot(['2026-10-05','2026-10-06','2026-10-31','2026-11-01','2026-11-05','2026-11-06'].map((day,i) => ({...row,name:`month-${i}`,creation:day+' 23:59:59',custom_appointment_date_and_time:day+' 23:59:59',custom_appointment_status:'Visited Booked'})));
+ assert.deepEqual(leaderboard(data)[0].month,{leads:4,booked:4,walkins:4,visitedBooked:4});
+});
+test('disabled owners never rank or announce but their activity remains in totals', () => {
+ const before = snapshot([row]);
+ const data = {...snapshot([{...row,custom_appointment_status:'Visited Booked',modified:'2026-10-09 10:01:00'}]),agents:{}};
+ const agents = leaderboard(data);
+ for (const period of ['today','month','week']) assert.deepEqual(sortedAgents(agents,period),[]);
+ assert.equal(agents[0].today.walkins,1);
+ assert.equal(highlights(agents).length,1);
+ assert.deepEqual(changes(before,data),[]);
 });
