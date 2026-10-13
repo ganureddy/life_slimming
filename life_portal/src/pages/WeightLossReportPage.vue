@@ -1,63 +1,301 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-import { request } from '../api/http';
-import { session } from '../lib/session';
-import '../styles/weight-loss-report.css';
-
-const slimming='Slimming - LSACPL',cardStart='2025-03-01',monthStart='2023-08-01',pageSize=10,openPageSize=20;
-const month=ref(''),branch=ref(''),weightFilter=ref(''),search=ref(''),selectedClient=ref(null),branches=ref([]);
-const rows=ref([]),loading=ref(false),error=ref(''),notice=ref(''),page=ref(1),detail=ref(null),openRows=ref([]),openModal=ref(false),openPage=ref(1),openSearch=ref('');
-let controller,alive=true,searchTimer;
-const todayIso=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
-const months=computed(()=>{const out=[],start=new Date(2023,7,1),end=new Date();for(let d=start;d<=end;d=new Date(d.getFullYear(),d.getMonth()+1,1)){const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;out.push({key,label:new Intl.DateTimeFormat('en',{month:'long',year:'numeric'}).format(d)});}return out.reverse();});
-const monthLabel=key=>months.value.find(m=>m.key===key)?.label||key;
-const visibleRows=computed(()=>{let list=rows.value;if(branch.value)list=list.filter(r=>r.branch===branch.value);if(weightFilter.value)list=list.filter(r=>{const d=r.month_difference;if(weightFilter.value==='one_and_above')return d>1;if(weightFilter.value==='two_and_above')return d>2;if(weightFilter.value==='three_and_above')return d>3;if(weightFilter.value==='gain')return d<0;if(weightFilter.value==='no_change')return d===0;return true;});if(selectedClient.value)list=list.filter(r=>r.patient===selectedClient.value.name);return list;});
-const pagedRows=computed(()=>visibleRows.value.slice((page.value-1)*pageSize,page.value*pageSize));
-const pageCount=computed(()=>Math.max(1,Math.ceil(visibleRows.value.length/pageSize)));
-const totalLoss=computed(()=>visibleRows.value.reduce((s,r)=>s+(r.month_difference>0?r.month_difference:0),0));
-const avgLoss=computed(()=>visibleRows.value.length?totalLoss.value/visibleRows.value.length:0);
-const sessionCount=computed(()=>visibleRows.value.reduce((s,r)=>s+r.completed_sessions,0));
-const filteredOpenRows=computed(()=>{let list=openRows.value;if(branch.value)list=list.filter(r=>r.branch===branch.value);if(selectedClient.value)list=list.filter(r=>r.patient===selectedClient.value.name);if(openSearch.value.trim()){const q=openSearch.value.trim().toLowerCase();list=list.filter(r=>[r.patient,r.mobile,r.branch].some(v=>String(v||'').toLowerCase().includes(q)));}return list;});
-const openPaged=computed(()=>filteredOpenRows.value.slice((openPage.value-1)*openPageSize,openPage.value*openPageSize));
-const openPageCount=computed(()=>Math.max(1,Math.ceil(filteredOpenRows.value.length/openPageSize)));
-const num=v=>{const n=Number(v);return Number.isFinite(n)?n:0;};
-const kg=v=>num(v)?`${num(v).toFixed(1)} kg`:'—';
-const moneyMobile=v=>{const s=String(v||'');return s.length>4?`${'•'.repeat(Math.max(0,s.length-4))}${s.slice(-4)}`:s;};
-const dateText=v=>v?new Date(`${String(v).slice(0,10)}T00:00:00`).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
-function prevMonth(key){const[y,m]=key.split('-').map(Number),d=new Date(y,m-2,1);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
-function range(key){const[y,m]=key.split('-').map(Number);return{start:`${key}-01`,end:`${y}-${String(m).padStart(2,'0')}-${String(new Date(y,m,0).getDate()).padStart(2,'0')}`};}
-function toRows(message){if(Array.isArray(message?.values)&&Array.isArray(message?.keys))return message.values.map(values=>Object.fromEntries(message.keys.map((key,i)=>[key,values[i]])));return Array.isArray(message)?message:[];}
-async function call(method,args,signal){return request(method,{args,signal,csrfToken:session.csrf_token});}
-async function listAll(doctype,fields,filters,signal,order='modified desc, name desc'){const out=[];let start=0;while(true){const r=await call('frappe.desk.reportview.get',{doctype,fields,filters,order_by:order,start,page_length:5000},signal),batch=toRows(r.message);out.push(...batch);if(batch.length<5000)break;start+=batch.length;if(start>500000)throw Error(`Stopped after too many ${doctype} rows.`);}return out;}
-function submitted(rows){return rows.filter(r=>num(r.docstatus)===1);}
-function sorted(rows){return[...rows].sort((a,b)=>String(a.start_date||'').localeCompare(String(b.start_date||''))||String(a.name||'').localeCompare(String(b.name||'')));}
-function patientGroups(items){const m=new Map();for(const s of items){if(!s.patient)continue;if(!m.has(s.patient))m.set(s.patient,[]);m.get(s.patient).push(s);}for(const[k,v]of m)m.set(k,sorted(v));return m;}
-function lastWeight(items){for(const s of [...items].reverse()){if(num(s.after_weight)>0)return num(s.after_weight);if(num(s.before_weight)>0)return num(s.before_weight);}return 0;}
-function firstWeight(items){for(const s of items){if(num(s.before_weight)>0)return num(s.before_weight);if(num(s.after_weight)>0)return num(s.after_weight);}return 0;}
-function weightChange(items){const first=firstWeight(items),last=lastWeight(items);return first&&last?first-last:0;}
-async function loadBranches(){try{const r=await call('frappe.desk.reportview.get',{doctype:'Branch',fields:['name','branch'],filters:[],order_by:'modified desc',page_length:100});branches.value=[...new Set(toRows(r.message).map(x=>x.branch||x.name).filter(x=>x&&!['testing branch','head office'].includes(String(x).trim().toLowerCase())))].sort();}catch{branches.value=[];}}
-async function fetchOpenCards(signal){const today=todayIso(),sessions=await listAll('Therapy Session',['name','patient','therapy_plan','start_date','service_unit','docstatus'],[['Therapy Session','service_unit','=',slimming],['Therapy Session','docstatus','=',1],['Therapy Session','start_date','>=',cardStart],['Therapy Session','start_date','<=',today]],signal,'start_date desc, name desc'),latest=new Map();for(const s of submitted(sessions).sort((a,b)=>String(b.start_date).localeCompare(String(a.start_date))||String(b.name).localeCompare(String(a.name))))if(s.patient&&!latest.has(s.patient))latest.set(s.patient,s);const data=[...latest.values()];if(!data.length)return[];const patientNames=data.map(s=>s.patient),planNames=[...new Set(data.map(s=>s.therapy_plan).filter(Boolean))];const [patients,plans]=await Promise.all([listAll('Patient',['name','mobile','phone','branch_name'],[['Patient','name','in',patientNames]],signal,'name asc'),planNames.length?listAll('Therapy Plan',['name','patient','branch','category','status','start_date','modified'],[['Therapy Plan','name','in',planNames]],signal,'modified desc, name desc'):[]]);const pmap=new Map(patients.map(p=>[p.name,p])),tmap=new Map(plans.map(p=>[p.name,p]));return data.map(s=>{const p=pmap.get(s.patient)||{},plan=tmap.get(s.therapy_plan)||{},b=plan.branch||p.branch_name||'';return{patient:s.patient,mobile:moneyMobile(p.mobile||p.phone),branch:b,therapy_session:s.name,therapy_session_date:s.start_date,therapy_plan:s.therapy_plan,plan_found:!!plan.name,plan_patient_matches:plan.patient===s.patient,plan_status:plan.status};}).filter(r=>r.therapy_plan&&r.plan_found&&r.plan_patient_matches&&String(r.plan_status||'').toLowerCase()!=='completed'&&r.branch&&!['testing branch','head office'].includes(r.branch.trim().toLowerCase())).sort((a,b)=>a.branch.localeCompare(b.branch)||a.patient.localeCompare(b.patient));}
-async function refresh(){if(!month.value){error.value='Select a month.';return;}controller?.abort();const c=new AbortController();controller=c;loading.value=true;error.value='';notice.value='';rows.value=[];page.value=1;try{const cr=range(month.value),pr=range(prevMonth(month.value)),base=[['Therapy Session','service_unit','=',slimming],['Therapy Session','docstatus','=',1]],current=await listAll('Therapy Session',['name','patient','therapy_plan','therapy_type','service_unit','start_date','before_weight','after_weight','weight_loss','docstatus'],[...base,['Therapy Session','start_date','>=',cr.start],['Therapy Session','start_date','<=',cr.end]],c.signal,'start_date asc');const nowSessions=submitted(current),patients=[...new Set(nowSessions.map(s=>s.patient).filter(Boolean))];if(!patients.length){notice.value='No submitted slimming sessions for the selected month.';openRows.value=await fetchOpenCards(c.signal);return;}const [previous,history,plans,patientRows]=await Promise.all([listAll('Therapy Session',['name','patient','therapy_plan','therapy_type','service_unit','start_date','before_weight','after_weight','weight_loss','docstatus'],[...base,['Therapy Session','patient','in',patients],['Therapy Session','start_date','>=',pr.start],['Therapy Session','start_date','<=',pr.end]],c.signal,'start_date asc'),listAll('Therapy Session',['name','patient','therapy_plan','therapy_type','service_unit','start_date','before_weight','after_weight','weight_loss','docstatus'],[...base,['Therapy Session','patient','in',patients],['Therapy Session','start_date','<=',cr.end]],c.signal,'start_date asc'),listAll('Therapy Plan',['name','patient','branch','category','status','start_date','total_sessions','total_sessions_completed','modified'],[['Therapy Plan','patient','in',patients],['Therapy Plan','branch','!=','']],c.signal,'modified desc'),listAll('Patient',['name','mobile','phone'],[['Patient','name','in',patients]],c.signal,'name asc')]);const prevGroups=patientGroups(submitted(previous)),histGroups=patientGroups(submitted(history)),curGroups=patientGroups(nowSessions),best=new Map();for(const p of plans.filter(x=>x.branch)){if(!best.has(p.patient)){best.set(p.patient,p);continue;}const old=best.get(p.patient),isSlim=x=>/slimming|weight|slim/i.test(String(x.category||''));if(isSlim(p)&&!isSlim(old))best.set(p.patient,p);}const mobiles=new Map(patientRows.map(p=>[p.name,p.mobile||p.phone||'']));rows.value=patients.map(patient=>{const cur=curGroups.get(patient)||[],prev=prevGroups.get(patient)||[],hist=histGroups.get(patient)||[],plan=best.get(patient)||{},last=lastWeight(prev),opening=firstWeight(cur),reference=last||opening,closing=lastWeight(cur),diff=reference&&closing?reference-closing:0;return{patient,branch:plan.branch||'—',previous_closing_weight:reference,current_closing_weight:closing,month_difference:diff,completed_sessions:cur.length,total_sessions:num(plan.total_sessions),mobile:moneyMobile(mobiles.get(patient)),first_session_date:hist[0]?.start_date||'—',previous_sessions:prev,current_sessions:cur,lifetime_sessions:hist,joined_weight:firstWeight(hist),present_weight:lastWeight(hist),total_change:weightChange(hist),reference_source:last?'Previous month closing':opening?'Current month opening':'No weight'};}).sort((a,b)=>a.branch.localeCompare(b.branch)||a.patient.localeCompare(b.patient));openRows.value=await fetchOpenCards(c.signal);notice.value=`Loaded ${rows.value.length.toLocaleString('en-IN')} clients for ${monthLabel(month.value)}.`;}catch(e){if(alive&&controller===c&&e.name!=='AbortError')error.value=e.message;}finally{if(alive&&controller===c)loading.value=false;}}
-function clearFilters(){branch.value='';weightFilter.value='';search.value='';selectedClient.value=null;page.value=1;}
-async function findClients(){const q=search.value.trim();if(q.length<2){selectedClient.value=null;return;}try{const r=await call('frappe.desk.search.search_link',{txt:q,doctype:'Patient',reference_doctype:'Therapy Session',page_length:10});clientOptions.value=Array.isArray(r.message)?r.message:[];}catch{clientOptions.value=[];}}
-const clientOptions=ref([]);
-function selectClient(row){selectedClient.value=row;search.value=row.label||row.value;clientOptions.value=[];page.value=1;openPage.value=1;}
-function clearClient(){selectedClient.value=null;search.value='';clientOptions.value=[];}
-function openDetail(row){detail.value=row;}
-function exportCsv(items,filename,headers,values){const esc=v=>{const s=String(v??'');return/[",\r\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s;};const csv=[headers,...items.map(values)].map(r=>r.map(esc).join(',')).join('\r\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-function exportMain(){exportCsv(visibleRows.value,`Weight_Loss_${month.value}.csv`,['Month','Client','Last Month Weight','Current Month Weight','Weight Difference','Sessions','Branch'],r=>[monthLabel(month.value),r.patient,r.previous_closing_weight,r.current_closing_weight,r.month_difference,r.completed_sessions,r.branch]);}
-function exportOpen(){exportCsv(filteredOpenRows.value,`Open_Cards_${month.value}.csv`,['Client','Mobile','Branch','Latest Slimming Session','Session Date'],r=>[r.patient,r.mobile,r.branch,r.therapy_session,r.therapy_session_date]);}
-onMounted(()=>{month.value=todayIso().slice(0,7);loadBranches().then(refresh);});
-onBeforeUnmount(()=>{alive=false;controller?.abort();clearTimeout(searchTimer);});
+import { useWeightLoss } from '../composables/useWeightLoss';
+import { kg, difference, differenceClass, sessionDifference, excelTable, monthLabel, previousMonth } from '../lib/weight-loss';
+import { indiaDate, dateText } from '../lib/unjoined';
+import ReportPagination from '../components/ReportPagination.vue';
+import '../styles/weight-loss-parity.css';
+const { month, branch, weightFilter, search, selectedClient, branches, clientOptions, searchVisible, searchError, loading, openLoading, error, openError, notice, page, openPage, detail, openModal, months, visibleRows, filteredOpenRows, pageCount, openPageCount, pagedRows, openPaged, totalLoss, avgLoss, sessionCount, refresh, refreshMonthly, searchChanged, selectClient, clearClient } = useWeightLoss();
+function download(headers, rows, filename) {
+  const url = URL.createObjectURL(new Blob([excelTable(headers, rows)], { type: 'application/vnd.ms-excel;charset=utf-8;' }));
+  const link = document.createElement('a'); link.href = url; link.download = filename; link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function exportMain() {
+  if (!visibleRows.value.length || loading.value) return;
+  download(['Month', 'Client', 'Mobile', monthLabel(previousMonth(month.value)), monthLabel(month.value), 'Weight Difference', 'Sessions', 'Branch'], visibleRows.value.map(row => [row.month_label, row.patient, row.mobile, kg(row.previous_closing_weight), kg(row.current_closing_weight), difference(row.month_difference), row.completed_sessions + ' of ' + (row.total_sessions || '-'), row.branch]), 'Client_Weight_Loss_' + monthLabel(month.value).replace(/\s+/g, '_') + '.xls');
+}
+function exportOpen() {
+  if (!filteredOpenRows.value.length || openLoading.value || openError.value) return;
+  download(['Client Name', 'Mobile Number', 'Branch'], filteredOpenRows.value.map(row => [row.patient, row.mobile || '-', row.branch]), 'Open_Cards_' + (branch.value || 'All Branches').replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') + '_' + indiaDate() + '.xls');
+}
 </script>
 
 <template>
-  <main class="weight-loss"><header class="wl-header"><div><span>CLIENTS &amp; CLINICAL · RESULTS</span><h1>Client Weight Loss Info</h1><p>Month-wise slimming progress report</p></div><div><button @click="refresh" :disabled="loading">{{ loading?'Refreshing…':'↻ Refresh' }}</button><button class="wl-primary" @click="exportMain" :disabled="!visibleRows.length">Export CSV</button></div></header>
-    <section class="wl-filters"><label>Month<select v-model="month"><option v-for="m in months" :key="m.key" :value="m.key">{{ m.label }}</option></select></label><label>Branch<select v-model="branch"><option value="">All Branches</option><option v-for="b in branches" :key="b">{{ b }}</option></select></label><label class="wl-client">Search Client<div class="wl-search"><input v-model="search" placeholder="Search client…" @input="clearTimeout(searchTimer);searchTimer=setTimeout(findClients,300)"><button v-if="search" @click="clearClient">×</button><div v-if="clientOptions.length" class="wl-options"><button v-for="o in clientOptions" :key="o.value" @click="selectClient(o)">{{ o.label }}</button></div></div></label><label>Weight Loss<select v-model="weightFilter"><option value="">All Clients</option><option value="one_and_above">Above 1 kg</option><option value="two_and_above">Above 2 kg</option><option value="three_and_above">Above 3 kg</option><option value="gain">Weight Gain</option><option value="no_change">No Change</option></select></label><button class="wl-clear" @click="clearFilters">Clear Filters</button></section>
-    <p v-if="error" class="wl-error" role="alert">{{ error }}</p><p v-else-if="loading" class="wl-status" role="status">Loading submitted slimming sessions, patient details, and therapy plans…</p><p v-else-if="notice" class="wl-status" role="status">{{ notice }}</p>
-    <section class="wl-kpis"><article><span>Total Clients</span><strong>{{ visibleRows.length.toLocaleString('en-IN') }}</strong><small>Clients in selected month</small></article><article class="wl-open-card" role="button" tabindex="0" @click="openModal=true" @keydown.enter="openModal=true"><span>Total Open Cards</span><strong>{{ openRows.length.toLocaleString('en-IN') }}</strong><small>Attended since 01 Mar 2025 · click to view</small></article><article><span>Average Weight Loss</span><strong>{{ avgLoss.toFixed(1) }} kg</strong><small>Total weight difference: {{ totalLoss.toFixed(1) }} kg</small></article><article><span>Total Sessions</span><strong>{{ sessionCount.toLocaleString('en-IN') }}</strong><small>Submitted slimming sessions</small></article></section>
-    <section class="wl-report"><div class="wl-report-title"><div><h2>Month-wise Client Weight Loss Report</h2><p>Last Month Weight uses the previous month’s last submitted slimming session. Current Month Weight uses the selected month’s last submitted session.</p></div><span>{{ monthLabel(month) }}</span></div><div class="wl-table-scroll"><table><thead><tr><th>Month</th><th>Client</th><th>Last Month Weight</th><th>Current Month Weight</th><th>Weight Difference</th><th>Sessions</th><th>Branch</th></tr></thead><tbody><tr v-for="r in pagedRows" :key="r.patient" @click="openDetail(r)"><td>{{ monthLabel(month) }}</td><td><strong>{{ r.patient }}</strong><small>{{ r.mobile }}</small></td><td>{{ kg(r.previous_closing_weight) }}<small>{{ r.reference_source }}</small></td><td>{{ kg(r.current_closing_weight) }}</td><td :class="r.month_difference>0?'loss':r.month_difference<0?'gain':'neutral'">{{ r.month_difference>0?`${r.month_difference.toFixed(1)} kg ↓`:r.month_difference<0?`${Math.abs(r.month_difference).toFixed(1)} kg ↑`:'0.0 kg' }}</td><td>{{ r.completed_sessions }} / {{ r.total_sessions||'—' }}</td><td>{{ r.branch }}</td></tr><tr v-if="!pagedRows.length"><td colspan="7" class="wl-empty">No client records match these filters.</td></tr></tbody></table></div><footer class="wl-pager"><button :disabled="page<=1" @click="page=1">First</button><button :disabled="page<=1" @click="page--">Previous</button><span>Page {{ page }} of {{ pageCount }} · {{ visibleRows.length }} clients</span><button :disabled="page>=pageCount" @click="page++">Next</button><button :disabled="page>=pageCount" @click="page=pageCount">Last</button></footer></section>
-    <div v-if="openModal" class="wl-overlay" @click.self="openModal=false"><section class="wl-modal"><header><div><h2>Open Cards Client List</h2><p>{{ filteredOpenRows.length }} open cards · based on latest submitted slimming visit</p></div><button @click="openModal=false">×</button></header><div class="wl-modal-tools"><input v-model="openSearch" placeholder="Search client, mobile, or branch"><button @click="exportOpen">Export CSV</button></div><div class="wl-table-scroll"><table><thead><tr><th>Client Name</th><th>Mobile Number</th><th>Branch</th><th>Latest Session</th><th>Session Date</th></tr></thead><tbody><tr v-for="r in openPaged" :key="r.patient"><td>{{ r.patient }}</td><td>{{ r.mobile }}</td><td>{{ r.branch }}</td><td>{{ r.therapy_session }}</td><td>{{ dateText(r.therapy_session_date) }}</td></tr><tr v-if="!openPaged.length"><td colspan="5" class="wl-empty">No open cards found.</td></tr></tbody></table></div><footer class="wl-pager"><button :disabled="openPage<=1" @click="openPage=1">First</button><button :disabled="openPage<=1" @click="openPage--">Previous</button><span>Page {{ openPage }} of {{ openPageCount }}</span><button :disabled="openPage>=openPageCount" @click="openPage++">Next</button><button :disabled="openPage>=openPageCount" @click="openPage=openPageCount">Last</button></footer></section></div>
-    <div v-if="detail" class="wl-overlay" @click.self="detail=null"><section class="wl-modal wl-detail"><header><div><h2>{{ detail.patient }}</h2><p>{{ monthLabel(month) }} · {{ detail.branch }} · {{ detail.mobile }}</p></div><button @click="detail=null">×</button></header><div class="wl-detail-grid"><article><span>First Session</span><strong>{{ dateText(detail.first_session_date) }}</strong></article><article><span>Joined Weight</span><strong>{{ kg(detail.joined_weight) }}</strong></article><article><span>Present Weight</span><strong>{{ kg(detail.present_weight) }}</strong></article><article><span>Total Progress</span><strong :class="detail.total_change>0?'loss':detail.total_change<0?'gain':'neutral'">{{ detail.total_change.toFixed(1) }} kg</strong></article><article><span>Previous Month Closing</span><strong>{{ kg(detail.previous_closing_weight) }}</strong></article><article><span>Current Month Closing</span><strong>{{ kg(detail.current_closing_weight) }}</strong></article><article><span>Monthly Difference</span><strong>{{ detail.month_difference.toFixed(1) }} kg</strong></article><article><span>Plan Sessions</span><strong>{{ detail.completed_sessions }} / {{ detail.total_sessions||'—' }}</strong></article></div><h3>Previous Month Sessions</h3><div class="wl-table-scroll"><table><thead><tr><th>Date</th><th>Session</th><th>Before</th><th>After</th><th>Difference</th></tr></thead><tbody><tr v-for="s in detail.previous_sessions" :key="s.name"><td>{{ dateText(s.start_date) }}</td><td>{{ s.name }}</td><td>{{ kg(s.before_weight) }}</td><td>{{ kg(s.after_weight) }}</td><td>{{ (num(s.before_weight)-num(s.after_weight)).toFixed(1) }} kg</td></tr><tr v-if="!detail.previous_sessions.length"><td colspan="5" class="wl-empty">No sessions in previous month.</td></tr></tbody></table></div><h3>Selected Month Sessions</h3><div class="wl-table-scroll"><table><thead><tr><th>Date</th><th>Session</th><th>Before</th><th>After</th><th>Difference</th></tr></thead><tbody><tr v-for="s in detail.current_sessions" :key="s.name"><td>{{ dateText(s.start_date) }}</td><td>{{ s.name }}</td><td>{{ kg(s.before_weight) }}</td><td>{{ kg(s.after_weight) }}</td><td>{{ (num(s.before_weight)-num(s.after_weight)).toFixed(1) }} kg</td></tr><tr v-if="!detail.current_sessions.length"><td colspan="5" class="wl-empty">No sessions in selected month.</td></tr></tbody></table></div></section></div>
-  </main>
+<div @click="searchVisible = false" @keydown.esc="detail = null; openModal = false; searchVisible = false" class="wl-dashboard">
+
+<div class="wl-header">
+<div>
+<h2>Client Weight Loss Info</h2>
+<p>Month-wise Slimming Progress Report</p>
+</div>
+<div class="wl-actions">
+<button :disabled="loading || openLoading" @click="refresh" class="wl-btn secondary" id="refreshDashboard" type="button">
+                Refresh
+            </button>
+<button :disabled="loading || !visibleRows.length" @click="exportMain" class="wl-btn primary" id="sendMailBtn" type="button">
+                Export Excel
+            </button>
+</div>
+</div>
+
+<div class="wl-filter-panel">
+<div class="wl-filters wl-filters-main">
+
+<div class="wl-field">
+<label for="monthFilter">Month</label>
+<select @change="refreshMonthly" id="monthFilter" v-model="month"><option :key="item.key" :value="item.key" v-for="item in months">{{ item.label }}</option></select>
+</div>
+
+<div class="wl-field">
+<label for="branchFilter">Branch</label>
+<select id="branchFilter" v-model="branch"><option value="">All Branches</option><option :key="item" :value="item" v-for="item in branches">{{ item }}</option></select>
+</div>
+
+<div class="wl-field search">
+<label for="clientSearch">Search Client</label>
+<div class="wl-search-row">
+<div class="wl-autocomplete-container">
+<input @click.stop="searchVisible = true" @focus="searchVisible = true" @input="searchChanged" autocomplete="off" id="clientSearch" placeholder="Search Client" type="text" v-model="search"/>
+<div class="wl-custom-dropdown" id="clientList" v-if="searchVisible"><p class="wl-dropdown-item" v-if="searchError">{{ searchError }}</p><p class="wl-dropdown-item" v-else-if="!clientOptions.length">No clients found</p><button :key="option.value" @click.stop="selectClient(option)" class="wl-dropdown-item" type="button" v-else="" v-for="option in clientOptions"><strong>{{ option.value }}</strong><br/><small>{{ option.description || option.value }}</small></button></div>
+</div>
+<button @click="clearClient" class="wl-btn secondary wl-clear-btn" id="clearClientSearch" type="button">
+                        Clear
+                    </button>
+</div>
+</div>
+
+<div class="wl-field">
+<label for="weightLossFilter">Weight Loss</label>
+<select id="weightLossFilter" v-model="weightFilter">
+<option value="">
+                        All Clients
+                    </option>
+<option value="one_and_above">
+                        Above 1 kg
+                    </option>
+<option value="two_and_above">
+                        Above 2 kg
+                    </option>
+<option value="three_and_above">
+                        Above 3 kg
+                    </option>
+<option value="gain">
+                        Weight Gain
+                    </option>
+<option value="no_change">
+                        No Change
+                    </option>
+</select>
+</div>
+</div>
+</div><p class="wl-native-status" role="status" v-if="error || notice || openError">{{ error || openError || notice }}</p>
+
+<div class="wl-kpis">
+
+<div class="wl-card">
+<span>Total Clients</span>
+<h3 id="totalClients">{{ visibleRows.length.toLocaleString('en-IN') }}</h3>
+<small class="wl-card-note">
+                Clients in the selected month
+            </small>
+</div>
+<div @click="openModal = true" @keydown.enter.prevent="openModal = true" @keydown.space.prevent="openModal = true" class="wl-card wl-open-cards-card" id="totalOpenCardsCard" role="button" tabindex="0" title="Click to view Open Cards">
+<span>Total Open Cards</span>
+<h3 id="totalOpenCards">{{ openLoading ? '...' : openError ? '-' : filteredOpenRows.length.toLocaleString('en-IN') }}</h3>
+<small class="wl-card-note">
+                From 01-Jan-2026 · New slimming joiners included · Completed plans excluded
+                <br/>
+                Click to view client list
+            </small>
+</div>
+
+<div class="wl-card">
+<span>Average Weight Loss</span>
+<h3 id="avgLoss">{{ avgLoss.toFixed(1) + ' kg' }}</h3>
+<small class="wl-card-note wl-total-loss-note">
+                Total Weight Loss:
+                <strong id="totalLossSummary">{{ totalLoss.toFixed(1) + ' kg' }}</strong>
+</small>
+</div>
+
+<div class="wl-card">
+<span>Total Sessions</span>
+<h3 id="totalSessions">{{ sessionCount.toLocaleString('en-IN') }}</h3>
+<small class="wl-card-note">
+                Submitted slimming sessions
+            </small>
+</div>
+</div>
+
+<div class="wl-table-wrap">
+<div class="wl-table-header">
+<h3>Month-wise Client Weight Loss Report</h3>
+<p class="wl-table-note">
+                Select a month to view clients who took submitted
+                slimming sessions in that month. Last Month Weight is
+                taken from the previous month’s last submitted slimming
+                session. Current Month Weight is taken from the selected
+                month’s last submitted slimming session.
+            </p>
+</div>
+<div class="wl-table-scroll">
+<table class="wl-table">
+<thead>
+<tr>
+<th>Month</th>
+<th>Client</th>
+<th>Last Month</th>
+<th>Current Month</th>
+<th>Weight Difference</th>
+<th>Sessions</th>
+<th>Branch</th>
+</tr>
+</thead>
+<tbody id="weightTableBody"><tr :key="row.patient" @click="detail = row" @keydown.enter="detail = row" class="wl-clickable-row" tabindex="0" v-for="row in pagedRows"><td><b>{{ row.month_label }}</b></td><td>{{ row.patient }}</td><td>{{ kg(row.previous_closing_weight) }}<br/><small :class="{ 'wl-reference-warning': row.used_current_opening_as_reference }">{{ row.reference_source }}</small></td><td>{{ kg(row.current_closing_weight) }}</td><td :class="differenceClass(row.month_difference)">{{ difference(row.month_difference) }}</td><td>{{ row.completed_sessions }} of {{ row.total_sessions || '-' }}</td><td>{{ row.branch }}</td></tr><tr v-if="!pagedRows.length"><td class="wl-empty-row" colspan="7">{{ loading ? 'Loading month-wise weight loss data...' : 'No submitted slimming sessions found for selected month' }}</td></tr></tbody>
+</table>
+</div>
+
+<div class="wl-pagination" id="mainPagination"><reportpagination :total="pageCount" v-model="page"></reportpagination></div>
+</div>
+
+<div @click.self="openModal = false" class="wl-modal-overlay" id="openCardsModalOverlay" v-if="openModal">
+<div class="wl-modal wl-open-cards-modal">
+<div class="wl-modal-header">
+<div>
+<h3>Open Cards Client List</h3>
+<p id="openCardsModalSummary">{{ filteredOpenRows.length.toLocaleString('en-IN') + ' open cards' }}</p>
+</div>
+<button @click="openModal = false" aria-label="Close" class="wl-modal-close" id="openCardsModalClose" type="button">
+                ×
+            </button>
+</div>
+<div class="wl-modal-body">
+<div class="wl-open-cards-toolbar">
+<div class="wl-open-cards-filter-info">
+                    The displayed Branch and selected Client filters
+                    are applied to this list.
+                </div>
+<button :disabled="openLoading || !!openError || !filteredOpenRows.length" @click="exportOpen" class="wl-btn primary" id="exportOpenCardsBtn" type="button">
+                    Export Excel
+                </button>
+</div>
+<div class="wl-open-cards-table-wrap">
+<table class="wl-open-cards-table">
+<thead>
+<tr>
+<th>Client Name</th>
+<th>Mobile Number</th>
+<th>Branch</th>
+</tr>
+</thead>
+<tbody id="openCardsTableBody"><tr :key="row.patient" v-for="row in openPaged"><td>{{ row.patient }}</td><td>{{ row.mobile || '-' }}</td><td>{{ row.branch }}</td></tr><tr v-if="!openPaged.length"><td class="wl-empty-row" colspan="3">{{ openError || 'No Open Cards found' }}</td></tr></tbody>
+</table>
+</div>
+<div class="wl-pagination" id="openCardsPagination"><reportpagination :total="openPageCount" v-model="openPage"></reportpagination></div>
+</div>
+</div>
+</div>
+
+<div @click.self="detail = null" class="wl-modal-overlay" id="wlDetailsModalOverlay" v-if="detail">
+<div class="wl-modal">
+
+<div class="wl-modal-header">
+<div>
+<h3 id="modalClientName">{{ detail.patient + (detail.mobile ? ' — ' + detail.mobile : '') }}</h3>
+<p id="modalMonthInfo">{{ detail.previous_month_label + ' vs ' + detail.month_label }}</p>
+</div>
+<button @click="detail = null" aria-label="Close" class="wl-modal-close" id="wlModalClose" type="button">
+                    ×
+                </button>
+</div>
+
+<div class="wl-modal-body">
+
+<div class="wl-modal-section">
+<h4>Overall Weight Summary</h4>
+<div class="wl-summary-grid">
+<div>
+<span>Branch</span>
+<b id="modalBranch">{{ detail.branch }}</b>
+</div>
+<div>
+<span>First Slimming Session</span>
+<b id="modalFirstSession">{{ dateText(detail.first_session_date) }}</b>
+</div>
+<div>
+<span>Joined Weight</span>
+<b id="modalJoinedWeight">{{ kg(detail.joined_weight) }}</b>
+</div>
+<div>
+<span>Present Weight</span>
+<b id="modalPresentWeight">{{ kg(detail.present_weight) }}</b>
+</div>
+<div>
+<span>Total Change</span>
+<b :class="differenceClass(detail.total_change)" id="modalTotalLoss">{{ difference(detail.total_change) }}</b>
+</div>
+<div>
+<span>Total Sessions</span>
+<b id="modalTotalSessionSummary">{{ detail.lifetime_sessions.length + ' / ' + (detail.total_sessions || '-') }}</b>
+</div>
+</div>
+</div>
+
+<div class="wl-modal-section">
+<h4>Selected Month Comparison</h4>
+<div class="wl-summary-grid">
+<div>
+<span>Previous Month Closing</span>
+<b id="modalPrevClosing">{{ kg(detail.previous_closing_weight) + (detail.used_current_opening_as_reference ? ' (' + detail.reference_source + ')' : '') }}</b>
+</div>
+<div>
+<span>Current Month Closing</span>
+<b id="modalCurrentClosing">{{ kg(detail.current_closing_weight) }}</b>
+</div>
+<div>
+<span>Month Difference</span>
+<b :class="differenceClass(detail.month_difference)" id="modalMonthDifference">{{ difference(detail.month_difference) }}</b>
+</div>
+</div>
+</div>
+
+<div class="wl-modal-section">
+<h4 id="previousMonthTitle">{{ detail.previous_month_label + ' Sessions' }}</h4>
+<div class="wl-inner-table-wrap">
+<table class="wl-inner-table">
+<thead>
+<tr>
+<th>Date</th>
+<th>Session</th>
+<th>Opening Weight</th>
+<th>Closing Weight</th>
+<th>Difference</th>
+</tr>
+</thead>
+<tbody id="previousMonthSessionsBody"><tr :key="row.name" v-for="row in detail.previous_sessions"><td>{{ dateText(row.start_date) }}</td><td>{{ row.name || '-' }}</td><td>{{ kg(row.before_weight) }}</td><td>{{ kg(row.after_weight) }}</td><td :class="differenceClass(sessionDifference(row))">{{ difference(sessionDifference(row)) }}</td></tr><tr v-if="!detail.previous_sessions.length"><td class="wl-empty-row" colspan="5">No sessions found</td></tr></tbody>
+</table>
+</div>
+</div>
+
+<div class="wl-modal-section">
+<h4 id="currentMonthTitle">{{ detail.month_label + ' Sessions' }}</h4>
+<div class="wl-inner-table-wrap">
+<table class="wl-inner-table">
+<thead>
+<tr>
+<th>Date</th>
+<th>Session</th>
+<th>Opening Weight</th>
+<th>Closing Weight</th>
+<th>Difference</th>
+</tr>
+</thead>
+<tbody id="currentMonthSessionsBody"><tr :key="row.name" v-for="row in detail.current_sessions"><td>{{ dateText(row.start_date) }}</td><td>{{ row.name || '-' }}</td><td>{{ kg(row.before_weight) }}</td><td>{{ kg(row.after_weight) }}</td><td :class="differenceClass(sessionDifference(row))">{{ difference(sessionDifference(row)) }}</td></tr><tr v-if="!detail.current_sessions.length"><td class="wl-empty-row" colspan="5">No sessions found</td></tr></tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
 </template>

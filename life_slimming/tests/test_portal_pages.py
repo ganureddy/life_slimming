@@ -65,6 +65,14 @@ class PortalPagesTest(unittest.TestCase):
         frontend = ROOT.parent / "life_portal/src/data/portalPages.json"
         self.assertEqual(json.loads(frontend.read_text()), self.manifest)
 
+    def test_previous_page_links_keep_their_portal_destination(self):
+        routes = self.context()["module_config"]["routes"]
+        self.assertEqual(routes["/stores-360"], "stores360")
+        self.assertEqual(routes["/stores-360-testing-2"], "stores360")
+        self.assertEqual(routes["/branch-visit-report"], "ccvisit")
+        self.assertEqual(routes["/branch-visit-report-NEW-Bhuvan"], "ccvisit")
+        self.assertEqual(routes["/unjoined-data"], "unjoined")
+
     def test_dom_helper_does_not_shadow_frappe_jquery(self):
         source = 'const $=id=>document.getElementById(id); $("field"); window.$.extend({});'
         adapted = page.adapt_source(source, "accounts-command-center")

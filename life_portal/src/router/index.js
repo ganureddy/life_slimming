@@ -6,12 +6,15 @@ const menu = access.menu;
 import portalPages from "../data/portalPages.json";
 import PortalSourcePage from "../pages/PortalSourcePage.vue";
 
-// Keep the existing ERP screen active from the portal menu until Vue parity is approved.
-const keepLegacyModule = (id) => Boolean(portalPages[id]);
+// Keep remaining source screens active while their native Vue parity work is pending.
+const nativeModules = new Set(["unjoined", "wlres", "clusterhome", "conv", "pricelist"]);
+const keepLegacyModule = (id) => Boolean(portalPages[id]) && !nativeModules.has(id);
 
 export const routeLoading = ref(false);
 
 const pageComponents = {
+  unjoined: () => import("../pages/UnjoinedClientsPage.vue"),
+  clusterhome: () => import("../pages/ClusterDashboardPage.vue"),
   control: () => import("../pages/ControlPage.vue"),
   clireg: () => import("../pages/ClientRegistrationPage.vue"),
   stores360: () => import("../pages/Stores360NativePage.vue"),
@@ -39,6 +42,16 @@ const pageComponents = {
 };
 
 export const routes = [
+  {
+    path: "/native/weight-loss", name: "wlres-native",
+    component: () => import("../pages/WeightLossReportPage.vue"),
+    meta: { title: "Client Weight Loss Info", accessModule: "wlres" },
+  },
+  {
+    path: "/native/unjoined", name: "unjoined-native",
+    component: () => import("../pages/UnjoinedClientsPage.vue"),
+    meta: { title: "Unjoined Clients", accessModule: "unjoined" },
+  },
   {
     path: "/native/cc-live-tv", name: "cc-live-tv",
     component: () => import("../components/cc/CCLiveTV.vue"),
@@ -124,6 +137,8 @@ export const routes = [
       name: item.id,
       component: keepLegacyModule(item.id)
         ? PortalSourcePage
+        : nativeModules.has(item.id)
+          ? pageComponents[item.id]
         : item.id === "control"
           ? pageComponents.control
           : ["clireg", "stores360", "stock", "pricelist", "conv", "documents", "appt", "salemaster", "empsale", "wlres", "vendors", "pendbal", "receivables", "bexp", "ccvisit", "leads", "approvals", "approvalsreport", "service", "payables"].includes(item.id)

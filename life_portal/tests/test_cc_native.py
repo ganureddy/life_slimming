@@ -55,17 +55,64 @@ class NativeReads(unittest.TestCase):
         self.assertEqual(query.kwargs['limit_page_length'], 500)
         self.assertEqual(query.kwargs['limit_start'], 0)
 
-    def test_essential_report_uses_only_lead_and_role_queries(self):
+    def test_essential_report_keeps_owner_scope_without_financial_reads(self):
         frappe.local.session.user = 'lifescc13@gmail.com'
         frappe.local.form_dict.update(view='appointments', agent_owner='other@example.test')
         with patch.object(frappe, 'get_meta', return_value=Mock(has_field=lambda field: True)), \
-             patch.object(frappe, 'get_all', side_effect=[[], [{'name':'LEAD-1'}]]) as query:
+             patch.object(frappe, 'get_list', return_value=[]) as permission_query, \
+             patch.object(frappe, 'get_all', side_effect=[[], [{'name':'LEAD-1'}], [], []]) as query:
             report.run.__wrapped__()
-        self.assertEqual([c.args[0] for c in query.call_args_list], ['Has Role','Lead'])
-        self.assertEqual(query.call_args.kwargs['filters']['lead_owner'], 'lifescc13@gmail.com')
+        self.assertEqual([c.args[0] for c in query.call_args_list], ['Has Role','Lead','Lead','Lead'])
+        permission_query.assert_called_once()
+        for call in query.call_args_list[1:]:
+            self.assertEqual(call.kwargs['filters']['lead_owner'], 'lifescc13@gmail.com')
+            self.assertIn('custom_visit_status', call.kwargs['fields'])
         self.assertTrue(frappe.response['message']['restricted_to_owner'])
-        self.assertTrue(frappe.response['message']['truncated'])
-        self.assertIn('custom_visit_status', query.call_args.kwargs['fields'])
+        self.assertEqual(frappe.response['message']['count'], 1)
+        self.assertEqual(frappe.response['message']['financial_events'], [])
+
+    def test_visit_report_recognizes_assigned_agent_without_email_pattern(self):
+        self.db.exists.return_value = True
+        frappe.local.form_dict.update(view='appointments', agent_owner='other@example.test')
+        with patch.object(frappe, 'get_meta', return_value=Mock(has_field=lambda field: False)), \
+             patch.object(frappe, 'get_list', return_value=[]), \
+             patch.object(frappe, 'get_all', side_effect=[[], [], [], []]) as query:
+            report.run.__wrapped__()
+        for call in query.call_args_list[1:]:
+            self.assertEqual(call.kwargs['filters']['lead_owner'], 'agent@example.test')
+        self.assertTrue(frappe.response['message']['restricted_to_owner'])
+
+    def test_visit_report_reads_every_page_and_deduplicates_cohorts(self):
+        frappe.local.session.user = 'Administrator'
+        frappe.local.form_dict.update(view='appointments')
+        batch = [{'name': 'LEAD-' + str(i)} for i in range(500)]
+        with patch.object(frappe, 'get_meta', return_value=Mock(has_field=lambda field: False)), \
+             patch.object(frappe, 'get_all', side_effect=[batch, [{'name': 'LEAD-500'}],
+                                                        [{'name': 'LEAD-0'}], []]) as query:
+            report.run.__wrapped__()
+        self.assertEqual([c.kwargs['limit_start'] for c in query.call_args_list], [0, 500, 0, 0])
+        self.assertTrue(all(c.kwargs['limit_page_length'] == 500 for c in query.call_args_list))
+        self.assertEqual(frappe.response['message']['count'], 501)
+
+    def test_visit_report_respects_permissions_for_non_agent_readers(self):
+        frappe.local.form_dict.update(view='appointments')
+        with patch.object(frappe, 'get_meta', return_value=Mock(has_field=lambda field: False)), \
+             patch.object(frappe, 'get_all', return_value=[]) as unrestricted, \
+             patch.object(frappe, 'get_list', side_effect=[[], [{'name': 'LEAD-1'}], [], []]) as permitted:
+            report.run.__wrapped__()
+        self.assertEqual([c.args[0] for c in unrestricted.call_args_list], ['Has Role'])
+        self.assertEqual([c.args[0] for c in permitted.call_args_list], ['Lead'] * 4)
+        self.assertEqual(frappe.response['message']['count'], 1)
+
+    def test_visit_report_permission_denial_stops_data_reads(self):
+        frappe.local.form_dict.update(view='appointments')
+        with patch.object(frappe, 'get_all', return_value=[]) as query, \
+             patch.object(frappe, 'get_list', side_effect=frappe.PermissionError), \
+             patch.object(frappe, 'get_meta') as meta:
+            with self.assertRaises(frappe.PermissionError):
+                report.run.__wrapped__()
+        self.assertEqual([c.args[0] for c in query.call_args_list], ['Has Role'])
+        meta.assert_not_called()
 
     def test_guest_rejected_before_any_reads(self):
         frappe.local.session.user = 'Guest'

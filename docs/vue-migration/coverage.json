@@ -1,0 +1,1356 @@
+{
+  "reviewed_on": "2026-10-13",
+  "requested_scope": "Full rewrite into Vue state and event handlers; same legacy UI and workflows.",
+  "mapped_modules": 44,
+  "mapped_sources": 39,
+  "workflow_tested_native_sources": 5,
+  "pending_mapped_sources": 34,
+  "sources": [
+    {
+      "source": "stores-360",
+      "source_modified": "2026-10-10 07:11:16.228701",
+      "source_sha256": "d3bc393aebbf27900bad39c7dc829ce4db9c56759fd0564e4e0cceb4d7831033",
+      "modules": [
+        "stores360"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [
+        "Stores360NativePage.vue"
+      ],
+      "reference_headings": [
+        "Stock Reports",
+        "Next Order List",
+        "Already in the list"
+      ],
+      "static_controls": {
+        "inputs": 12,
+        "selects": 25,
+        "buttons": 42,
+        "tables": 0
+      },
+      "static_api_methods": [
+        "frappe.client.get",
+        "frappe.model.workflow.apply_workflow",
+        "frappe.model.workflow.get_transitions",
+        "life_stores_360_live_api"
+      ]
+    },
+    {
+      "source": "task-management",
+      "source_modified": "2026-08-17 17:25:34.069904",
+      "source_sha256": "a5e23e367d39e5729fa69a3000ce35c0cee93e8a7397918636507707164d0945",
+      "modules": [
+        "tasks"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [],
+      "reference_headings": [],
+      "static_controls": {
+        "inputs": 10,
+        "selects": 11,
+        "buttons": 6,
+        "tables": 6
+      },
+      "static_api_methods": [
+        "frappe.client.get",
+        "frappe.client.get_list",
+        "frappe.client.insert",
+        "frappe.client.save",
+        "method",
+        "upload_file"
+      ]
+    },
+    {
+      "source": "branch-home-target",
+      "source_modified": "2026-08-18 19:42:50.920730",
+      "source_sha256": "31321973d14748ebbc103835d86adbdc1fa5e7bfe4aade830c031891bf6363b9",
+      "modules": [
+        "conv"
+      ],
+      "status": "workflow_tests_passed",
+      "existing_vue_components": [
+        "BranchTargetPage.vue"
+      ],
+      "reference_headings": [],
+      "static_controls": {
+        "inputs": 2,
+        "selects": 1,
+        "buttons": 3,
+        "tables": 0
+      },
+      "static_api_methods": [
+        "branch_command_center",
+        "frappe.client.get_list"
+      ]
+    },
+    {
+      "source": "employee-sale-master-data",
+      "source_modified": "2026-09-04 18:48:09.850544",
+      "source_sha256": "9c4fcb333ab113185067503a88df6b77e7b6d7e5ef551757f0ba6e6a5057c86d",
+      "modules": [
+        "empsale"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [
+        "EmployeeSaleMasterPage.vue"
+      ],
+      "reference_headings": [],
+      "static_controls": {
+        "inputs": 8,
+        "selects": 2,
+        "buttons": 10,
+        "tables": 4
+      },
+      "static_api_methods": [
+        "frappe.client.get_list",
+        "frappe.desk.query_report.run"
+      ]
+    },
+    {
+      "source": "sales-master-data",
+      "source_modified": "2026-08-18 17:44:48.747400",
+      "source_sha256": "a6df21cf8a2e6aa884142b63a135d89f761787c0ecd1ec4e04154715599aa58e",
+      "modules": [
+        "salemaster"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [
+        "SalesMasterDataPage.vue"
+      ],
+      "reference_headings": [],
+      "static_controls": {
+        "inputs": 14,
+        "selects": 1,
+        "buttons": 10,
+        "tables": 0
+      },
+      "static_api_methods": [
+        "frappe.client.get_list",
+        "frappe.desk.query_report.run"
+      ]
+    },
+    {
+      "source": "audit",
+      "source_modified": "2026-08-18 14:40:04.103719",
+      "source_sha256": "05d57cb56440da5a283a1a11886216409a0828c0fbc35e48d98dc014c06f57eb",
+      "modules": [
+        "audit"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [],
+      "reference_headings": [
+        "Audit details",
+        "Audits",
+        "Report filters",
+        "Results",
+        "Section averages",
+        "COO — Audit Topic Approvals",
+        "Approved Added Topics",
+        "Audit sections — hide / show Score auto-adjusts",
+        "Branch score visibility Branch Dashboards",
+        "Audit topics — enable / disable Score auto-adjusts",
+        "Request a New Audit Topic",
+        "📷 Capture Audit Evidence",
+        "Audit Topic Marks",
+        "Audit Evidence Files"
+      ],
+      "static_controls": {
+        "inputs": 8,
+        "selects": 10,
+        "buttons": 18,
+        "tables": 0
+      },
+      "static_api_methods": [
+        "method",
+        "upload_file"
+      ]
+    },
+    {
+      "source": "branch-expenditure-entry",
+      "source_modified": "2026-09-26 19:24:56.495013",
+      "source_sha256": "14d5e3e9d2d687898fd354db7946371e2ad13de13dec3d9e1686ca572a4d7f6a",
+      "modules": [
+        "bexp"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [
+        "BranchExpenditurePage.vue"
+      ],
+      "reference_headings": [
+        "LIFE SLIMMING & COSMETIC PVT.LTD.",
+        "Cash Overview",
+        "New Expenditure Entry",
+        "Submitted Entries"
+      ],
+      "static_controls": {
+        "inputs": 5,
+        "selects": 3,
+        "buttons": 6,
+        "tables": 2
+      },
+      "static_api_methods": [
+        "frappe.client.delete",
+        "frappe.client.get",
+        "frappe.client.get_list",
+        "frappe.client.insert",
+        "frappe.client.set_value",
+        "frappe.client.submit",
+        "life_get_expenditure_branch_employees",
+        "upload_file"
+      ]
+    },
+    {
+      "source": "cc-new-dashboard-bhuvan-oct2",
+      "source_modified": "2026-10-03 20:26:30.330893",
+      "source_sha256": "be9521460d4cd87ebc33d697b5edaa4cae849057ee61557d1d0afa1b65004ceb",
+      "modules": [
+        "leads"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [
+        "CCDashboardPage.vue"
+      ],
+      "reference_headings": [],
+      "static_controls": {
+        "inputs": 5,
+        "selects": 4,
+        "buttons": 7,
+        "tables": 2
+      },
+      "static_api_methods": [
+        "cc_add_lead_followup",
+        "cc_create_lead",
+        "cc_get_lead_history",
+        "cc_get_leads",
+        "cc_phone_lookup",
+        "cc_set_visit_status",
+        "cc_update_lead",
+        "cc_worksheet",
+        "frappe.client.get",
+        "frappe.client.get_list",
+        "frappe.client.get_value",
+        "frappe.core.doctype.user.user.get_roles",
+        "frappe.desk.query_report.run",
+        "lead_assignment_configuration",
+        "lead_assignment_preview"
+      ]
+    },
+    {
+      "source": "branch-visit-report",
+      "source_modified": "2026-10-13 14:38:16.171296",
+      "source_sha256": "8c324a3dc763a16e04b6b9ea5874ec5d3ff6e91c7fb3f0e319de2c604d16a286",
+      "modules": [
+        "ccvisit"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [
+        "CCVisitReportPage.vue"
+      ],
+      "reference_headings": [
+        "LIFE CC REPORTS",
+        "📅 Today's Appointments LIVE · ALL BRANCHES",
+        "🎧 On-Floor Staff — Support LIVE · SUPPORT DEPARTMENT · Check-in / Check-out (today)",
+        "—"
+      ],
+      "static_controls": {
+        "inputs": 5,
+        "selects": 4,
+        "buttons": 21,
+        "tables": 0
+      },
+      "static_api_methods": [
+        "frappe.client.get_list",
+        "frappe.client.set_value",
+        "life_cc_agent_marketing_data"
+      ]
+    },
+    {
+      "source": "new-client-registration",
+      "source_modified": "2026-08-18 14:09:50.126561",
+      "source_sha256": "674e73f9445252307053cabac72c39f11f73e8d87fcfdc3b853204df010f4948",
+      "modules": [
+        "clireg"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [
+        "ClientRegistrationPage.vue"
+      ],
+      "reference_headings": [
+        "1 Client Identity",
+        "2 Contact & Address",
+        "3 Walk-in Details",
+        "4 Booking Status & PD Form",
+        "5 Consultation Handling",
+        "6 Medical Condition Risk Level Auto colour status",
+        "7 Relative in LIFE",
+        "Today's Registrations"
+      ],
+      "static_controls": {
+        "inputs": 19,
+        "selects": 5,
+        "buttons": 6,
+        "tables": 2
+      },
+      "static_api_methods": [
+        "frappe.client.get_list",
+        "frappe.client.get_value",
+        "frappe.client.insert"
+      ]
+    },
+    {
+      "source": "client-info",
+      "source_modified": "2026-09-27 18:27:57.847460",
+      "source_sha256": "2a154c8d24cb95f15b57bf81df09246e4b98691c93ff0fdb67cf4e9cb128b37f",
+      "modules": [
+        "cliinfo"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [],
+      "reference_headings": [
+        "CLIENT - 360",
+        "📈 Active plans by branch",
+        "📊 Daily sessions by branch",
+        "🗂️ Monthly sessions by branch"
+      ],
+      "static_controls": {
+        "inputs": 3,
+        "selects": 3,
+        "buttons": 26,
+        "tables": 1
+      },
+      "static_api_methods": [
+        "life_client360_branch_patient_lookup",
+        "upload_file"
+      ]
+    },
+    {
+      "source": "client-weight-loss-info",
+      "source_modified": "2026-10-12 18:43:45.058975",
+      "source_sha256": "a02f2d9dc20f36b0968e669bfd0c05de69acae6ffeca17adc7c733770e22a428",
+      "modules": [
+        "wlres"
+      ],
+      "status": "workflow_tests_passed",
+      "existing_vue_components": [
+        "WeightLossReportPage.vue"
+      ],
+      "reference_headings": [
+        "Client Weight Loss Info",
+        "0",
+        "0.0 kg",
+        "Month-wise Client Weight Loss Report",
+        "Open Cards Client List",
+        "Client Details",
+        "Overall Weight Summary",
+        "Selected Month Comparison",
+        "Previous Month Sessions",
+        "Current Month Sessions"
+      ],
+      "static_controls": {
+        "inputs": 1,
+        "selects": 3,
+        "buttons": 6,
+        "tables": 4
+      },
+      "static_api_methods": [
+        "frappe.desk.reportview.get",
+        "frappe.desk.search.search_link"
+      ]
+    },
+    {
+      "source": "life-audit-report",
+      "source_modified": "2026-09-28 14:58:06.576708",
+      "source_sha256": "e82153854e5c7b0a4e5f4a2376bef6377e74d8bd26e9d1e71a6f767f12a9e034",
+      "modules": [
+        "discountaudit"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [
+        "DiscountAuditPage.vue"
+      ],
+      "reference_headings": [],
+      "static_controls": {
+        "inputs": 0,
+        "selects": 0,
+        "buttons": 0,
+        "tables": 0
+      },
+      "static_api_methods": []
+    },
+    {
+      "source": "appointment-shedular",
+      "source_modified": "2026-10-09 17:10:18.338279",
+      "source_sha256": "efc618b19decc5c3ae340f0c13f44aa855d08dce959fe827b3e689522255e260",
+      "modules": [
+        "appt"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [
+        "AppointmentSchedulerPage.vue"
+      ],
+      "reference_headings": [
+        "Client Appointment Scheduler",
+        "Add Appointment",
+        "Appointment Details"
+      ],
+      "static_controls": {
+        "inputs": 8,
+        "selects": 3,
+        "buttons": 7,
+        "tables": 1
+      },
+      "static_api_methods": [
+        "frappe.desk.form.load.getdoc"
+      ]
+    },
+    {
+      "source": "accounts-command-center",
+      "source_modified": "2026-08-20 23:57:51.482100",
+      "source_sha256": "e24a53b3b3b81fb4b4a28c82195e5c832ce064da09fc35774e41efb824f451b1",
+      "modules": [
+        "accounts"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [],
+      "reference_headings": [
+        "LIFE SLIMMING & COSMETIC PVT.LTD. Accounts Command Centre",
+        "💵 Cash Position — Month ALL BRANCHES + HO",
+        "—",
+        "Detail tap outside to close"
+      ],
+      "static_controls": {
+        "inputs": 2,
+        "selects": 2,
+        "buttons": 4,
+        "tables": 0
+      },
+      "static_api_methods": [
+        "RECON_METHOD",
+        "method"
+      ]
+    },
+    {
+      "source": "pending-balances-updates",
+      "source_modified": "2026-09-18 00:15:57.994469",
+      "source_sha256": "6bf562f09171c0fb6aba0c29d7629585379f81f6efb6e0014b59c009a80d5e80",
+      "modules": [
+        "pendbal",
+        "receivables"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [
+        "PendingBalancesPage.vue"
+      ],
+      "reference_headings": [
+        "Pending Balances · Recovery Desk",
+        "Collection Calendar",
+        "Employee Pending Balances",
+        "Pending Collection List",
+        "Recovery Overview",
+        "Filters & Actions",
+        "Invoice Recovery Register",
+        "Balance Reconciliation",
+        "Branch Recovery Summary",
+        "Recovery Process"
+      ],
+      "static_controls": {
+        "inputs": 5,
+        "selects": 6,
+        "buttons": 15,
+        "tables": 5
+      },
+      "static_api_methods": [
+        "dues_recovery_data",
+        "dues_recovery_save",
+        "frappe.client.get_list"
+      ]
+    },
+    {
+      "source": "payables-planner",
+      "source_modified": "2026-08-18 19:30:14.767258",
+      "source_sha256": "53fafc102c78d559a5085123b60901a4db6ed67461f598adbef543c7dc6ee856",
+      "modules": [
+        "payables"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [
+        "PayablesNativePage.vue"
+      ],
+      "reference_headings": [
+        "Title"
+      ],
+      "static_controls": {
+        "inputs": 1,
+        "selects": 1,
+        "buttons": 0,
+        "tables": 0
+      },
+      "static_api_methods": [
+        "payables_planner_api"
+      ]
+    },
+    {
+      "source": "asset-master",
+      "source_modified": "2026-09-28 14:59:18.451262",
+      "source_sha256": "a8abfec00732687c6b8a84fe3c6253e9a432146835a55a3318e35001c8ed0c3a",
+      "modules": [
+        "assets"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [],
+      "reference_headings": [
+        "Asset Command Centre",
+        "Asset Register",
+        "Check Desk",
+        "Technicians & Visits",
+        "Complaints",
+        "Transfer & Shifting",
+        "Depreciation",
+        "Machine 360",
+        "Reports",
+        "Approvals Desk",
+        "Asset Label Printing",
+        "Masters & Control Panel",
+        "Details"
+      ],
+      "static_controls": {
+        "inputs": 3,
+        "selects": 6,
+        "buttons": 21,
+        "tables": 0
+      },
+      "static_api_methods": [
+        "asset.depreciation_method",
+        "frappe.client.get_list",
+        "method",
+        "row.depreciation_method",
+        "upload_file"
+      ]
+    },
+    {
+      "source": "price-list",
+      "source_modified": "2026-09-26 19:25:18.697344",
+      "source_sha256": "d54011b7ebad834df843a63b4f36a5f59200cd9d00a293be8c9983ca991f56dc",
+      "modules": [
+        "pricelist"
+      ],
+      "status": "workflow_tests_passed",
+      "existing_vue_components": [
+        "PriceListNativePage.vue"
+      ],
+      "reference_headings": [
+        "💊 Billable Therapy Types In Plan Templates",
+        "📦 Therapy Plan Templates Packages",
+        "🌟 LIFErise Packages LIFErise",
+        "Package Details"
+      ],
+      "static_controls": {
+        "inputs": 3,
+        "selects": 0,
+        "buttons": 11,
+        "tables": 3
+      },
+      "static_api_methods": [
+        "frappe.client.get",
+        "frappe.client.get_list"
+      ]
+    },
+    {
+      "source": "stock-dashboard",
+      "source_modified": "2026-10-11 01:27:24.689694",
+      "source_sha256": "f4f477ecf64b77a2b9efca027e7689aaf956ede49c205db89febcdb0387d71a6",
+      "modules": [
+        "stock"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [
+        "StockDashboardNativePage.vue"
+      ],
+      "reference_headings": [
+        "Stock Management"
+      ],
+      "static_controls": {
+        "inputs": 25,
+        "selects": 16,
+        "buttons": 43,
+        "tables": 11
+      },
+      "static_api_methods": [
+        "API_METHOD",
+        "String",
+        "erpnext.stock.get_item_details.get_item_details",
+        "erpnext.stock.get_item_details.get_item_tax_template",
+        "frappe.client.get",
+        "frappe.client.get_count",
+        "frappe.client.get_list",
+        "frappe.client.get_value",
+        "frappe.client.insert",
+        "frappe.model.workflow.apply_workflow",
+        "frappe.model.workflow.get_transitions",
+        "life_stock_fast_requests",
+        "life_stock_item_editor",
+        "life_stock_receipt_employee_search",
+        "method",
+        "option.label",
+        "vendorSaveMethod"
+      ]
+    },
+    {
+      "source": "approvals-report",
+      "source_modified": "2026-10-03 13:30:07.502255",
+      "source_sha256": "6c94f83dbc999fd5e4e3dc60a64350a706bb7ebff32ae2d411000ff6098bb09c",
+      "modules": [
+        "approvals",
+        "approvalsreport"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [
+        "ApprovalsPage.vue"
+      ],
+      "reference_headings": [
+        "LIFE APPROVALS DASHBOARD",
+        "Your approvals workspace",
+        "⛁ Approvals by Type click to filter",
+        "⌂ Approvals by Branch click to filter",
+        "⏱ Recent Approvals latest activity · click to open",
+        "Request"
+      ],
+      "static_controls": {
+        "inputs": 3,
+        "selects": 8,
+        "buttons": 15,
+        "tables": 1
+      },
+      "static_api_methods": [
+        "life_approval_report_user_context",
+        "method"
+      ]
+    },
+    {
+      "source": "v",
+      "source_modified": "2026-09-26 19:47:59.831357",
+      "source_sha256": "f033d04d747925abe49612b3ed1acb8fa0ffbcefe702c53ef2050f25bb9e1cea",
+      "modules": [
+        "documents"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [
+        "FormsDocumentsPage.vue"
+      ],
+      "reference_headings": [
+        "Forms & Documents"
+      ],
+      "static_controls": {
+        "inputs": 0,
+        "selects": 0,
+        "buttons": 10,
+        "tables": 0
+      },
+      "static_api_methods": [
+        "method"
+      ]
+    },
+    {
+      "source": "hrms-dashboard---copy",
+      "source_modified": "2026-09-13 15:54:09.292441",
+      "source_sha256": "da29bf9ce358639861bc94ad221f2fe0f0edca8c3f67d6ef89d6c033c83d1db0",
+      "modules": [
+        "employees",
+        "attend",
+        "payroll"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [],
+      "reference_headings": [
+        "HRMS 360°",
+        "Title"
+      ],
+      "static_controls": {
+        "inputs": 2,
+        "selects": 3,
+        "buttons": 15,
+        "tables": 1
+      },
+      "static_api_methods": [
+        "fieldValue",
+        "life_hrms_360_api"
+      ]
+    },
+    {
+      "source": "life-master-report",
+      "source_modified": "2026-08-12 15:48:08.178415",
+      "source_sha256": "8743858ac7173e7c2a4ebbd731de739562574c00ef575e3ff77371e017ae94ab",
+      "modules": [
+        "repmaster"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [],
+      "reference_headings": [
+        "LIFE MASTER REPORTS",
+        "—"
+      ],
+      "static_controls": {
+        "inputs": 1,
+        "selects": 0,
+        "buttons": 6,
+        "tables": 0
+      },
+      "static_api_methods": [
+        "report_master_api"
+      ]
+    },
+    {
+      "source": "coo-dashboard",
+      "source_modified": "2026-08-16 10:57:42.630222",
+      "source_sha256": "92c9246a4d62122bff0c97bc931f12ff06741ac465be669bbf5b7ec59ee9ed7a",
+      "modules": [
+        "execdash"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [],
+      "reference_headings": [
+        "LIFE SLIMMING AND COSMETIC PVT. LTD.",
+        "—"
+      ],
+      "static_controls": {
+        "inputs": 2,
+        "selects": 3,
+        "buttons": 7,
+        "tables": 0
+      },
+      "static_api_methods": [
+        "frappe.client.get",
+        "frappe.client.get_list",
+        "frappe.desk.query_report.run",
+        "options.method"
+      ]
+    },
+    {
+      "source": "md-dashboard",
+      "source_modified": "2026-09-26 19:25:40.788081",
+      "source_sha256": "49ca6997db27111f317965e94e0bccf9f103d6b388e5ced13a19cd726b6ac74f",
+      "modules": [
+        "mis"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [],
+      "reference_headings": [
+        "📅 Today's Appointments",
+        "🎧 On-Floor Staff — Support",
+        "Detail"
+      ],
+      "static_controls": {
+        "inputs": 3,
+        "selects": 3,
+        "buttons": 16,
+        "tables": 0
+      },
+      "static_api_methods": [
+        "frappe.client.get",
+        "frappe.client.get_list",
+        "get_collection_gst_data",
+        "get_media_sale_data",
+        "get_media_sale_testing",
+        "md_approvals_api",
+        "md_audit_api",
+        "md_command_center_api",
+        "md_dashboard_prefs",
+        "md_forecast_api",
+        "md_my_approvals_api",
+        "md_target_daily_api",
+        "md_vendor_ageing_api"
+      ]
+    },
+    {
+      "source": "cluster-head-dashboard",
+      "source_modified": "2026-08-27 12:45:10.817449",
+      "source_sha256": "676bdab6d57cccf4325e0faf51ea9ea0a30f78a361b6adf46aeb55dc443fb63f",
+      "modules": [
+        "clusterhome"
+      ],
+      "status": "workflow_tests_passed",
+      "existing_vue_components": [
+        "ClusterDashboardPage.vue"
+      ],
+      "reference_headings": [],
+      "static_controls": {
+        "inputs": 2,
+        "selects": 1,
+        "buttons": 1,
+        "tables": 1
+      },
+      "static_api_methods": [
+        "cluster_dashboard_api"
+      ]
+    },
+    {
+      "source": "contols-command",
+      "source_modified": "2026-08-01 13:15:17.290029",
+      "source_sha256": "d4abae71cb2f5d24e529ba4ed7f50c0bfa38131d64ce16efc1a5a2bade0a6b38",
+      "modules": [
+        "control"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [
+        "ControlPage.vue"
+      ],
+      "reference_headings": [
+        "LIFE ERP — Master Control Panel"
+      ],
+      "static_controls": {
+        "inputs": 61,
+        "selects": 48,
+        "buttons": 53,
+        "tables": 9
+      },
+      "static_api_methods": [
+        "method"
+      ]
+    },
+    {
+      "source": "knowledge-centre",
+      "source_modified": "2026-09-26 19:26:44.171691",
+      "source_sha256": "540dfffd04f6b516544bb9065206fd96c8db288c0bd3c7d4680fbf27e0a5e3e1",
+      "modules": [
+        "hrpol",
+        "knowledge"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [],
+      "reference_headings": [
+        "Everything in one place",
+        "Knowledge Centre",
+        "1.0 Where to go",
+        "2.0 The five things that are true of every treatment",
+        "3.0 How to use this document",
+        "Before a session",
+        "During a session",
+        "After a session",
+        "What is LIFE",
+        "1.0 What we stand for",
+        "One standard, every branch",
+        "Doctor-led, therapist-delivered",
+        "Documented or it did not happen",
+        "Say no when the answer is no",
+        "2.0 The network",
+        "3.0 How we are organised",
+        "4.0 The client journey",
+        "5.0 Who may operate what",
+        "Programmes",
+        "&mdash; Slimming",
+        "&mdash; Skin",
+        "&mdash; Hair",
+        "&mdash; Hair Transplant",
+        "&mdash; Laser",
+        "&mdash; Aesthetics",
+        "&mdash; LIFE RISE",
+        "&mdash; Package lines currently live in the ERP",
+        "Body Transformation Programme",
+        "1.0 Who this is for",
+        "2.0 What it includes",
+        "3.0 Tiers",
+        "4.0 Treatments used in this programme",
+        "5.0 Matching ERP lines",
+        "Medical Weight Loss / GLP-1 Programme",
+        "Advanced Skin Correction & Glow",
+        "Age Reverse & Glow Programme",
+        "Full Body Glow & Age Reverse (IV Drip)",
+        "Hair Recovery & Regrowth Programme",
+        "Hair Transformation & HT Programme",
+        "Smooth Skin & Clear Glow (LHR + Laser)",
+        "PMU Beauty Transformation",
+        "LIFE RISE — Online Nutrition & Medical Programme",
+        "Service directory",
+        "1.0 Slimming",
+        "Clinical protocols behind this category",
+        "2.0 Skin (Dermatology)",
+        "3.0 Aesthetic Medicine",
+        "4.0 Hair Treatment",
+        "5.0 Hair Transplant (HT)",
+        "6.0 Hair Patches (NSHR)",
+        "7.0 LIFE RISE",
+        "8.0 Diagnostics & Assessments",
+        "9.0 Physiotherapy & PM",
+        "10.0 Administrative Services",
+        "11.0 Offers and campaign variants",
+        "Treatments A–Z",
+        "1.0 Slimming & Body Contouring",
+        "2.0 Skin & Dermatology",
+        "3.0 Laser Hair Removal",
+        "5.0 Hair Transplant & Restoration",
+        "6.0 Diagnostics & Assessment",
+        "7.0 LIFE RISE & Nutrition",
+        "Contraindications matrix",
+        "2.0 Skin typing",
+        "3.0 Medication screen",
+        "4.0 The ten questions that catch most problems",
+        "Red flags & escalation",
+        "1.0 Severity grades",
+        "2.0 Before treatment — do not begin",
+        "Stop at the chair",
+        "3.0 During treatment — stop immediately",
+        "Stop mid-session",
+        "4.0 After treatment — recall the client",
+        "Act the same day",
+        "5.0 Emergency response by event",
+        "Room & equipment standards",
+        "1.0 Operator matrix",
+        "2.0 Cleaning and sterilisation",
+        "3.0 Machine register by department",
+        "4.0 Consumables that must always be in the room",
+        "Consent forms",
+        "1.0 The uniform format",
+        "2.0 Consent form register",
+        "3.0 Forms — download, print or share",
+        "1   Overview of the procedure",
+        "2   Possible side effects and risks",
+        "3   Declarations specific to this treatment",
+        "4   General declarations",
+        "Client handouts",
+        "Body Contouring — Before & After Your Session",
+        "&mdash; Treatments this sheet covers",
+        "Laser & Energy Facial Treatments — Before & After",
+        "Chemical Peel — Before, During & After",
+        "Laser Hair Removal — Before & After Your Session",
+        "Injectable Treatments — Before & After",
+        "Microneedling & MNRF — Before & After",
+        "Hair & Scalp Treatments — Before & After",
+        "Hair Transplant — Your Complete Recovery Guide",
+        "GLP-1 Weight Management — Your Programme Guide",
+        "IV Drip Therapy — Before & After",
+        "Thread Lift — Your Recovery Guide",
+        "Permanent Makeup — Healing Guide",
+        "After a Removal Procedure — Wound Care",
+        "Facials & HydraFacial — Before & After",
+        "Your Nutrition Plan — How to Make It Work",
+        "Laser Tattoo Removal — Aftercare",
+        "Training programme",
+        "1.0 How branch training runs",
+        "2.0 Supervised sessions required before independent practice",
+        "3.0 All modules",
+        "Laser Hair Removal — Therapist Certification",
+        "&mdash; Clinical protocol for this module",
+        "Carbon Laser Peel — Therapist Certification",
+        "Q-Switch Nd:YAG — Doctor & Assistant Module",
+        "Chemical Peels — Dermatologist-Supervised Module",
+        "NSLS Cavitation + RF — Therapist Certification",
+        "Cryolipolysis — Therapist Certification",
+        "HIFU Body and Face — Certification",
+        "RF Body and Face Tightening — Therapist Certification",
+        "MNRF & Microneedling — Doctor and Assistant Module",
+        "Injectables — Botox, Fillers, Threads (Doctor Module)",
+        "GLP-1 Medical Weight Management — Prescriber & Support Module",
+        "PRP & GFC — Doctor Module",
+        "Hair Transplant — Surgical Team Module",
+        "IV Drip Therapy — Doctor Module",
+        "EMS / EMSculpt — Therapist Certification",
+        "Scalp Therapy & Hair Treatments — Therapist Certification",
+        "HydraFacial & Medi-Facials — Therapist Certification",
+        "Permanent Makeup — Artist Certification",
+        "Injection Lipolysis — Doctor Module",
+        "Lesion Removal & Keloid Management — Doctor Module",
+        "Clinical Nutrition & LIFE RISE — Dietician Module",
+        "Lymphatic Drainage & Whole Body Therapy",
+        "Body Composition Analysis — Front Office & Therapist",
+        "Trichoscopy & Skin Analysis",
+        "Non-Surgical Hair Restoration — Technician Certification",
+        "Inch-Loss Wraps & FDS",
+        "Lipo Laser",
+        "Cryolipolysis (Fat Freezing)",
+        "1.0 What this treatment is",
+        "The mechanism",
+        "Equipment used",
+        "Reference SOP",
+        "2.0 What it treats",
+        "3.0 Who can and cannot be treated",
+        "✓ Eligible — suitable candidate",
+        "✕ Absolute — do not treat",
+        "Relative contraindications — clearance required first",
+        "4.0 Parameters and settings",
+        "5.0 Step-by-step protocol",
+        "Before the client leaves the chair",
+        "6.0 What the client is told",
+        "Do this",
+        "Avoid this",
+        "7.0 Adverse events and immediate action",
+        "Red flags — stop and escalate",
+        "8.0 Documents and training for this treatment",
+        "NSLS — Non-Surgical Liposuction (Cavitation + RF)",
+        "Settings by treatment area",
+        "Area-specific rules",
+        "RF Body Tightening & Contouring",
+        "HIFU Body",
+        "Injection Lipolysis (Mesolipo)",
+        "EMSculpt / EMS Body Toning",
+        "GLP-1 Medical Weight Management",
+        "Lipo Laser (Low-Level Laser Lipolysis)",
+        "Inch-Loss Wrap & FDS Application",
+        "Carbon Laser Peel (Hollywood Facial)",
+        "Sessions, intervals and course length",
+        "Q-Switch Nd:YAG — Pigmentation & Skin Toning",
+        "Q-Switch Tattoo Removal",
+        "Chemical Peels",
+        "Settings by Fitzpatrick skin type",
+        "Complete peel guide",
+        "Frosting endpoint guide",
+        "Cosmelan Depigmentation System",
+        "HydraFacial & Medi-Facials",
+        "MNRF — Microneedling Radiofrequency",
+        "Derma Pen / Microneedling",
+        "HIFU Face & Neck",
+        "RF Face Tightening & Contouring",
+        "Skin PRP & Vampire Facial",
+        "IV Skin Glow & Antioxidant Drips",
+        "Botulinum Toxin (Botox)",
+        "Dermal Fillers",
+        "Skin Boosters & Bio-remodelling",
+        "Thread Lift",
+        "Mole, Wart, Skin Tag & Keloid Management",
+        "Permanent Makeup (PMU) & Microblading",
+        "Laser Hair Removal (Diode)",
+        "Patch test protocol",
+        "Hair PRP",
+        "GFC — Growth Factor Concentrate",
+        "Scalp Treatments — Anti-Hairfall, Anti-Dandruff & HFT",
+        "Hair Transplant (FUE)",
+        "Non-Surgical Hair Restoration (Hair Patch / System)",
+        "Body Composition Analysis (BCA / InBody)",
+        "Clinical Nutrition & LIFE RISE Programme"
+      ],
+      "static_controls": {
+        "inputs": 1,
+        "selects": 0,
+        "buttons": 338,
+        "tables": 142
+      },
+      "static_api_methods": []
+    },
+    {
+      "source": "glp-programme",
+      "source_modified": "2026-09-01 12:13:05.827427",
+      "source_sha256": "d49a2475598e43bcd8cb30a735e34e3e7c95bb8d3c7104e2d4a9de4c3159c5bb",
+      "modules": [
+        "riseprog"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [],
+      "reference_headings": [],
+      "static_controls": {
+        "inputs": 5,
+        "selects": 1,
+        "buttons": 9,
+        "tables": 0
+      },
+      "static_api_methods": [
+        "frappe.client.get",
+        "frappe.client.set_value",
+        "glp_dose_approval",
+        "life_glp_prepare_client_v61",
+        "lifescc.billing.create_client",
+        "method",
+        "upload_file"
+      ]
+    },
+    {
+      "source": "operations-service-module",
+      "source_modified": "2026-10-11 12:11:24.371904",
+      "source_sha256": "910e95d8a37398a6ba26e1d9ae1f17adf1fc4e40717c64e854d4109a725e17a5",
+      "modules": [
+        "service"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [
+        "ServicePage.vue"
+      ],
+      "reference_headings": [
+        "📊 Therapy Session Report",
+        "Client Appointment Scheduler",
+        "Appointment Register",
+        "⚡ Session Execution — Search Client",
+        "Client Name",
+        "📋 Active Therapy Plans",
+        "⚡ Session Entry — Therapy Service",
+        "🟢 Slimming Therapy Sessions",
+        "🔵 Dermat Therapy Sessions",
+        "Add Appointment"
+      ],
+      "static_controls": {
+        "inputs": 87,
+        "selects": 20,
+        "buttons": 91,
+        "tables": 6
+      },
+      "static_api_methods": [
+        "frappe.client.get",
+        "frappe.client.get_count",
+        "frappe.client.get_list",
+        "frappe.desk.form.load.getdoctype",
+        "life_operations_session_dashboard_v1",
+        "method",
+        "upload_file"
+      ]
+    },
+    {
+      "source": "followup-master",
+      "source_modified": "2026-09-28 14:55:37.397921",
+      "source_sha256": "e85e30a61b965ec96964222a5a2d4c5391a4609d85bf2ee11c4722c145558389",
+      "modules": [
+        "followup"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [],
+      "reference_headings": [
+        "Dashboard",
+        "Today’s queue",
+        "Followups by type",
+        "Latest activity",
+        "Client search",
+        "Followup type",
+        "Appointment followup",
+        "Followup record",
+        "Channel used",
+        "Client 360",
+        "Unjoined desk",
+        "Appointment register",
+        "Diet followups",
+        "Pending dues",
+        "Feedback",
+        "Diet chart desk",
+        "Followup reports",
+        "Followup types",
+        "Filters for the types you ticked",
+        "Followup report results",
+        "Masters",
+        "Branch details"
+      ],
+      "static_controls": {
+        "inputs": 21,
+        "selects": 17,
+        "buttons": 31,
+        "tables": 0
+      },
+      "static_api_methods": []
+    },
+    {
+      "source": "package-conversion-for-p2p",
+      "source_modified": "2026-10-03 13:20:43.795084",
+      "source_sha256": "269f9c6aa535d404c5106a37c1f583608b99912fb8fd3e3677c406263d158dc8",
+      "modules": [
+        "p2p"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [],
+      "reference_headings": [],
+      "static_controls": {
+        "inputs": 5,
+        "selects": 4,
+        "buttons": 12,
+        "tables": 5
+      },
+      "static_api_methods": [
+        "frappe.client.get",
+        "frappe.client.get_list",
+        "frappe.client.insert",
+        "frappe.client.save",
+        "frappe.desk.reportview.get",
+        "frappe.desk.search.search_link",
+        "method",
+        "p2p_run_final_automation",
+        "upload_file"
+      ]
+    },
+    {
+      "source": "package-conversion-c2c",
+      "source_modified": "2026-09-26 19:37:52.493427",
+      "source_sha256": "aa64a20e5752a39304963df209d3011069ce06316b40ea01a3396eee88363606",
+      "modules": [
+        "c2c"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [],
+      "reference_headings": [
+        "Transferor Details",
+        "Transferee Details"
+      ],
+      "static_controls": {
+        "inputs": 54,
+        "selects": 7,
+        "buttons": 19,
+        "tables": 6
+      },
+      "static_api_methods": [
+        "frappe.client.get",
+        "frappe.client.get_list",
+        "frappe.client.insert",
+        "frappe.client.save",
+        "send_client_conversion_step_email",
+        "upload_file"
+      ]
+    },
+    {
+      "source": "b2b-testing",
+      "source_modified": "2026-10-02 11:17:27.377758",
+      "source_sha256": "2b6cc427295ae88c85f9feb9cf5b2866bddf439d582de8fb8e6ed2b5dcc3e24a",
+      "modules": [
+        "b2b"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [],
+      "reference_headings": [],
+      "static_controls": {
+        "inputs": 1,
+        "selects": 2,
+        "buttons": 6,
+        "tables": 0
+      },
+      "static_api_methods": [
+        "method",
+        "upload_file"
+      ]
+    },
+    {
+      "source": "branch-command-center",
+      "source_modified": "2026-10-12 16:02:40.354073",
+      "source_sha256": "2d2723287561c584cdea5c4bf0e4302c09292a615155a55538ea149383db6a64",
+      "modules": [
+        "bdash"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [],
+      "reference_headings": [
+        "Branch Command Center",
+        "Sales Race Board",
+        "Events & Offer Packages",
+        "--",
+        "Offer Packages",
+        "Branch Today Attendance",
+        "Live Attendance · Punch In → Out",
+        "Pending Dues & Recovery",
+        "Dashboard & Money Summary",
+        "Walk In Appointments By HO-CC",
+        "Walk-in UPDATE",
+        "Walk-ins assigned today Now —",
+        "Branch Operations",
+        "Employee Sales & People",
+        "💼 Employee Sales · Active Staff",
+        "Employee Roster Tracking",
+        "Roster Submission",
+        "Weekly · Planned vs Actual",
+        "Monthly · Attendance Summary",
+        "—"
+      ],
+      "static_controls": {
+        "inputs": 5,
+        "selects": 3,
+        "buttons": 57,
+        "tables": 2
+      },
+      "static_api_methods": [
+        "branch_command_center",
+        "cc_walkin_details",
+        "cc_walkin_update",
+        "cc_walkins_range",
+        "dues_recovery_data",
+        "frappe.auth.get_logged_user",
+        "frappe.client.cancel",
+        "frappe.client.get",
+        "frappe.client.get_list",
+        "frappe.client.get_value",
+        "frappe.client.insert",
+        "frappe.client.save",
+        "frappe.client.set_value",
+        "frappe.client.submit",
+        "frappe.desk.form.load.getdoc",
+        "frappe.desk.reportview.get",
+        "life_stock_fast_requests",
+        "roster_employees",
+        "upload_file"
+      ]
+    },
+    {
+      "source": "enrollment-register-testing",
+      "source_modified": "2026-09-28 11:03:40.233081",
+      "source_sha256": "8dcbfbc7ce32cf13954dea746e463c21de548075fa92bf5b2072361a862f3099",
+      "modules": [
+        "enrollment-register"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [],
+      "reference_headings": [
+        "Life Slimming & Cosmetic Pvt. Ltd.",
+        "Enrollment Register",
+        "▶ Master Filter"
+      ],
+      "static_controls": {
+        "inputs": 16,
+        "selects": 41,
+        "buttons": 30,
+        "tables": 1
+      },
+      "static_api_methods": []
+    },
+    {
+      "source": "data-correction",
+      "source_modified": "2026-09-20 18:53:46.496723",
+      "source_sha256": "2fede031add8dc6e24c4cb7940da39d9c5ec9d5c78591eb86c5ab78d5c295434",
+      "modules": [
+        "data-correction"
+      ],
+      "status": "parity_pending",
+      "existing_vue_components": [],
+      "reference_headings": [
+        "Details"
+      ],
+      "static_controls": {
+        "inputs": 1,
+        "selects": 1,
+        "buttons": 4,
+        "tables": 0
+      },
+      "static_api_methods": [
+        "API",
+        "upload_file"
+      ]
+    },
+    {
+      "source": "unjoined-data",
+      "source_modified": "2026-10-13 12:35:17.628630",
+      "source_sha256": "c9fe2c6320c8de965f01c00310b131ba25ff440c706ec6891610dd9c0d3d769a",
+      "modules": [
+        "unjoined"
+      ],
+      "status": "workflow_tests_passed",
+      "existing_vue_components": [
+        "UnjoinedClientsPage.vue"
+      ],
+      "reference_headings": [
+        "Unjoined Data",
+        "Client Workspace"
+      ],
+      "static_controls": {
+        "inputs": 3,
+        "selects": 3,
+        "buttons": 8,
+        "tables": 0
+      },
+      "static_api_methods": [
+        "upload_file"
+      ]
+    }
+  ],
+  "additional_scope": [
+    {
+      "source": "billing-v2",
+      "reference": "life_portal/src/data/billingV2LiveSource.json",
+      "component": "BillingNativePage.vue",
+      "status": "parity_pending",
+      "note": "BillingPage.vue retains injected legacy workflow code and does not fulfill the requested full rewrite."
+    },
+    {
+      "source": "life-portal-home",
+      "component": "HomePage.vue",
+      "status": "parity_pending",
+      "note": "Current native Home is a module launcher; live Home dashboard, pinning and embedded blocks still need parity work."
+    }
+  ]
+}

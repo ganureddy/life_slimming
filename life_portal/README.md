@@ -200,3 +200,11 @@ from portal-owned source and exported page scripts. Production builds also
 strip console and debugger statements; existing UI error messages remain.
 
 Checks: `node --test tests/api-config.test.cjs tests/portal-bridge.test.cjs tests/control.test.cjs`.
+
+### Legacy source refresh — 13 October 2026
+
+Reviewed all ERP Web Pages updated October 10–13. The active legacy modules now
+use the live Stores 360 and CC Visit Report sources; Unjoined Clients is connected
+and the Weight Loss source is refreshed. Old Stores and CC Report links remain
+portal aliases. See [the source review](../docs/portal-source-review-2026-10-13.md)
+for all 18 records, preserved local adapters, API updates and validation limits.

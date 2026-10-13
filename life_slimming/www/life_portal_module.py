@@ -77,7 +77,8 @@ def get_context(context):
     routes = {}
     for key, item in manifest.items():
         if item.get("source") and key in allowed:
-            routes.setdefault("/" + item["route"], key)
+            for route in [item["route"], *item.get("aliases", [])]:
+                routes.setdefault("/" + route, key)
     routes["/" + entry["route"]] = module
 
     # These are reviewed, checked-in application sources, not user-supplied HTML.

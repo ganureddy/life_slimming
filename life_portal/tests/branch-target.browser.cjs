@@ -1,8 +1,11 @@
-// Requires local Vite :5175 and isolated Chrome :9225; APIs are mocked.
+// Native Vue target parity; isolated Chrome and Vue servers; APIs are mocked.
 const WebSocket = require('../node_modules/ws');
 const assert = require('node:assert/strict');
 (async()=>{
-  const target=await(await fetch('http://127.0.0.1:9225/json/new?about:blank',{method:'PUT'})).json();
+  const endpoint = process.env.PORTAL_BROWSER_URL || 'http://127.0.0.1:9230';
+  const base = process.env.PORTAL_PREVIEW_URL || 'http://127.0.0.1:5178';
+  const { targetCycleRange } = await import('../src/lib/branch-target.js');
+  const target=await(await fetch(endpoint+'/json/new?about:blank',{method:'PUT'})).json();
   const ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise(resolve=>ws.on('open',resolve));
   let id=0;const jobs=new Map(),errors=[],calls=[];
   const send=(method,params={})=>new Promise((resolve,reject)=>{jobs.set(++id,message=>message.error?reject(message.error):resolve(message.result));ws.send(JSON.stringify({id,method,params}));});
@@ -20,19 +23,19 @@ const assert = require('node:assert/strict');
   const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(result.exceptionDetails)throw Error(result.exceptionDetails.text);return result.result.value;};
   const wait=async expression=>{for(let attempt=0;attempt<100;attempt++){if(await evaluate(expression))return;await new Promise(resolve=>setTimeout(resolve,75));}throw Error('Timed out: '+expression+'\n'+await evaluate('document.body.innerText'));};
   try{
-    await send('Page.enable');await send('Runtime.enable');await send('Fetch.enable',{patterns:[{urlPattern:'http://127.0.0.1:5175/api/*'}]});
+    await send('Page.enable');await send('Runtime.enable');await send('Fetch.enable',{patterns:[{urlPattern:'*/api/method/*'}]});
     for(const width of [1440,390]){
       await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});
-      await send('Page.navigate',{url:'http://127.0.0.1:5175/life_portal/'+(width===1440?'conv':'native/branch-target')});
-      await wait("document.querySelector('.target-kpis')?.textContent.includes('Cycle realisation')");
-      assert.equal(await evaluate("document.querySelectorAll('.target-table-wrap tbody tr').length"),2);
+      await send('Page.navigate',{url:base+'/life_portal/'+(width===1440?'conv':'native/branch-target')});
+      await wait("document.querySelector('.target-kpis')?.textContent.includes('Cycle Realisation')");
+      assert.equal(await evaluate("document.querySelectorAll('.target-table-wrap tbody tr.tgt-hit, .target-table-wrap tbody tr.tgt-miss').length"),2);
       assert.equal(await evaluate("document.querySelectorAll('.target-bar').length"),2);
       assert.equal(await evaluate("document.documentElement.scrollWidth<=innerWidth"),true);
       await evaluate("Array.from(document.querySelectorAll('.target-filters button')).find(b=>b.textContent==='Last Cycle').click()");
       await wait("document.querySelector('.target-filters button.selected')?.textContent==='Last Cycle'");
-      assert.equal(calls.filter(call=>call.url.includes('branch_command_center.run')).at(-1).args.from_date,'2026-08-06');
+      assert.equal(calls.filter(call=>call.url.includes('branch_command_center.run')).at(-1).args.from_date,targetCycleRange('last')[0]);
       await evaluate("(()=>{const s=document.querySelector('.target-filters select');s.value='B';s.dispatchEvent(new Event('change',{bubbles:true}));})()");
-      await wait("document.querySelector('.target-kpis')?.textContent.includes('Cycle realisation')");
+      await wait("document.querySelector('.target-kpis')?.textContent.includes('Cycle Realisation')");
       assert.equal(calls.filter(call=>call.url.includes('branch_command_center.run')).at(-1).args.branch,'B');
     }
     assert.deepEqual(errors,[]);

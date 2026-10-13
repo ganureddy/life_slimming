@@ -443,8 +443,8 @@
       "source_name": "Branch visit report",
       "legacy_method": "life_cc_agent_marketing_data",
       "method": "life_slimming.api.server_scripts.life_cc_agent_marketing_data.run",
-      "source_modified": "2026-09-04 14:44:12.586677",
-      "source_sha256": "b5329b9a5bdc4fb7e7608a8a5c658f9b65c450fbf246a230c3257772adfec83a",
+      "source_modified": "2026-10-13 14:29:46.409469",
+      "source_sha256": "250c20447a5f5fec23a798e3899eccf95402bf2220bcb6770305f71c91265e24",
       "allow_guest": false,
       "source_allow_guest": false,
       "http_methods": [
@@ -453,7 +453,8 @@
       "parameters": [
         "agent_owner",
         "from_date",
-        "to_date"
+        "to_date",
+        "view"
       ],
       "doctypes": [
         "Has Role",

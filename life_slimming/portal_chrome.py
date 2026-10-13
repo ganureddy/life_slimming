@@ -44,6 +44,8 @@ PAGE_CHROME = {
     'price-list': ('', ''),  # These headings label individual tables.
     'sales-master-data': ('', '.rr-hdr'),
     'stock-dashboard': ('.life-stock-app-header', '.life-stock-app-brand, .life-stock-header-profile, .life-stock-header-clock'),
+    'stores-360': ('.topbar', '.brandmark, .topbar > div:nth-child(2), .tb-clock, .tb-user'),
+    'unjoined-data': ('.uj-header', '.uj-header > div:first-child, .uj-header > a'),
     'stores-360-testing-2': ('.topbar', '.brandmark, .topbar > div:nth-child(2), .tb-clock, .tb-user'),
     'task-management': ('', '.header, .gold-bar'),
     'v': ('.fad-hero', '.fad-hero-left'),
