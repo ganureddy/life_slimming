@@ -208,3 +208,12 @@ use the live Stores 360 and CC Visit Report sources; Unjoined Clients is connect
 and the Weight Loss source is refreshed. Old Stores and CC Report links remain
 portal aliases. See [the source review](../docs/portal-source-review-2026-10-13.md)
 for all 18 records, preserved local adapters, API updates and validation limits.
+
+### Native Vue workflow migration
+
+Unjoined Clients, Weight Loss, Cluster Dashboard, Target & Realisation, Price List,
+Forms & Documents, and Sales Master now use native Vue components on their menu
+routes. Each has desktop/mobile workflow fixtures with mocked APIs. Remaining
+legacy screens stay active while their complete native workflow/UI parity is
+implemented. See [migration coverage](../docs/vue-migration/README.md) for the
+full source inventory, implemented routes and outstanding modules.

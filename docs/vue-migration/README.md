@@ -1,6 +1,6 @@
 # Native Vue rewrite coverage — 13 October 2026
 
-The requested full migration is **not complete**. Five of the 39 mapped legacy sources now use native Vue state, templates and event handlers and have passed mocked desktop/mobile workflow tests. The other 34 sources remain on their working legacy routes; existing Vue previews are not proof of complete parity. Billing and live Home are tracked separately because they are outside the legacy module manifest.
+The requested full migration is **not complete**. Seven of the 39 mapped legacy sources now use native Vue state, templates and event handlers and have passed mocked desktop/mobile workflow tests. The other 32 sources remain on their working legacy routes; existing Vue previews are not proof of complete parity. Billing and live Home are tracked separately because they are outside the legacy module manifest.
 
 ## Native routes implemented and tested
 
@@ -12,6 +12,9 @@ The requested full migration is **not complete**. Five of the 39 mapped legacy s
 | Target & Realisation | branch-home-target | BranchTargetPage.vue | Legacy KPI/accordion/chart/table layouts, elapsed days, cycle presets, branch changes and net-collection formula |
 | Price List | price-list | PriceListNativePage.vue | Legacy tab/table/modal styling, therapy/category and package searches, offer precedence, regular/LIFErise split, package children and rich descriptions |
 
+| Forms & Documents | v | FormsDocumentsPage.vue | Seven categories, permitted document reads, child-attachment field fallbacks, parent counts, concurrent tab loading, document actions, empty/denied states and retry |
+| Sales Master Data | sales-master-data | SalesMasterDataPage.vue / useSalesMaster.js | Searchable selectors, date/amount/employee filters, permitted-branch merging, original report row indexes, GST normalization, pagination/totals, filter refresh before download, client-side restricted-branch exports and server XLSX/CSV exports |
+
 ## Remaining mapped sources
 
 | Source | Portal modules | Existing Vue preview |
@@ -19,7 +22,6 @@ The requested full migration is **not complete**. Five of the 39 mapped legacy s
 | stores-360 | stores360 | Stores360NativePage.vue |
 | task-management | tasks | No native component |
 | employee-sale-master-data | empsale | EmployeeSaleMasterPage.vue |
-| sales-master-data | salemaster | SalesMasterDataPage.vue |
 | audit | audit | No native component |
 | branch-expenditure-entry | bexp | BranchExpenditurePage.vue |
 | cc-new-dashboard-bhuvan-oct2 | leads | CCDashboardPage.vue |
@@ -34,7 +36,6 @@ The requested full migration is **not complete**. Five of the 39 mapped legacy s
 | asset-master | assets | No native component |
 | stock-dashboard | stock | StockDashboardNativePage.vue |
 | approvals-report | approvals, approvalsreport | ApprovalsPage.vue |
-| v | documents | FormsDocumentsPage.vue |
 | hrms-dashboard---copy | employees, attend, payroll | No native component |
 | life-master-report | repmaster | No native component |
 | coo-dashboard | execdash | No native component |
@@ -53,7 +54,7 @@ The requested full migration is **not complete**. Five of the 39 mapped legacy s
 
 ## APIs and delivery
 
-The existing catalogue contains 150 authenticated/native API modules (including two token-checked guest callback endpoints); their schema, permission and source-registration checks remain in place. The five rewritten pages use existing native APIs and standard permission-checked Frappe document/report APIs. No production transactions were executed.
+The existing catalogue contains 150 authenticated/native API modules (including two token-checked guest callback endpoints); their schema, permission and source-registration checks remain in place. The seven rewritten pages use existing native APIs and standard permission-checked Frappe document/report APIs. No production transactions were executed.
 
 The Cluster page now calls the mapped Python endpoint with CSRF. Price List preserves the source page’s item-rule discount precedence and reads its supplemental Pricing Rule documents through Frappe permissions; native pricing helpers used by other consumers remain unchanged.
 
@@ -61,4 +62,12 @@ The coverage JSON lists every mapped source, source revision/hash, existing Vue 
 
 Validation: native Vue production build, pure calculation/masking/linking/export tests, and desktop/mobile browser workflows with mocked APIs. Exact visual parity with signed-in production data has not been established. Deploy the HTML entry and generated assets together; the separate legacy refresh also includes Python/page-source changes.
 
-Reproduction: start Vite and an isolated headless Chrome debugging session, set PORTAL_PREVIEW_URL and PORTAL_BROWSER_URL, then run the five browser scripts in life_portal/tests. API responses and write operations are intercepted by the fixtures.
+Reproduction: start Vite and an isolated headless Chrome debugging session, set PORTAL_PREVIEW_URL and PORTAL_BROWSER_URL, then run the seven browser scripts in life_portal/tests. API responses and write operations are intercepted by the fixtures.
+
+## Latest verification fixes
+
+The Forms & Documents source loads all category counts at startup; the native implementation now does the same, with eight concurrent full-document reads per batch. Failure remains visible until the user chooses Retry.
+
+Sales Master preserves `REFERRAL REPORT – FIXED`'s original result indexes for server export. Restricted users selecting all permitted branches receive merged and deduplicated client-side exports, so no blank-branch export request is sent. A changed draft filter refreshes report data before download.
+
+Corrected the Weight Loss pagination component tags and tested report/open-card datasets with 14 clients and 23 cards. Browser fixtures use unique session IDs to avoid stale idle timestamps between runs. The runtime-config unit check selects the configuration script by URL, allowing the separate session keepalive script to coexist.

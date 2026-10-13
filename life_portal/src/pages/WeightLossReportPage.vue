@@ -155,7 +155,7 @@ function exportOpen() {
 </table>
 </div>
 
-<div class="wl-pagination" id="mainPagination"><reportpagination :total="pageCount" v-model="page"></reportpagination></div>
+<div class="wl-pagination" id="mainPagination"><ReportPagination :total="pageCount" v-model="page"></ReportPagination></div>
 </div>
 
 <div @click.self="openModal = false" class="wl-modal-overlay" id="openCardsModalOverlay" v-if="openModal">
@@ -191,7 +191,7 @@ function exportOpen() {
 <tbody id="openCardsTableBody"><tr :key="row.patient" v-for="row in openPaged"><td>{{ row.patient }}</td><td>{{ row.mobile || '-' }}</td><td>{{ row.branch }}</td></tr><tr v-if="!openPaged.length"><td class="wl-empty-row" colspan="3">{{ openError || 'No Open Cards found' }}</td></tr></tbody>
 </table>
 </div>
-<div class="wl-pagination" id="openCardsPagination"><reportpagination :total="openPageCount" v-model="openPage"></reportpagination></div>
+<div class="wl-pagination" id="openCardsPagination"><ReportPagination :total="openPageCount" v-model="openPage"></ReportPagination></div>
 </div>
 </div>
 </div>

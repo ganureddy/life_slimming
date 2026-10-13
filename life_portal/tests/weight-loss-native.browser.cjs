@@ -4,7 +4,7 @@ const WebSocket=require('ws');
  const endpoint=process.env.PORTAL_BROWSER_URL||'http://127.0.0.1:9230',base=process.env.PORTAL_PREVIEW_URL||'http://127.0.0.1:5178';
  const target=await(await fetch(endpoint+'/json/new?about:blank',{method:'PUT'})).json();
  const ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise(resolve=>ws.on('open',resolve));
- let sequence=0,denyOpen=false;const jobs=new Map(),calls=[],errors=[];
+ let sequence=0,denyOpen=false,pagedFixture=false;const jobs=new Map(),calls=[],errors=[];
  const send=(method,params={})=>new Promise((resolve,reject)=>{jobs.set(++sequence,m=>m.error?reject(m.error):resolve(m.result));ws.send(JSON.stringify({id:sequence,method,params}));});
  const fulfill=(id,message,status=200)=>send('Fetch.fulfillRequest',{requestId:id,responseCode:status,responseHeaders:[{name:'Content-Type',value:'application/json'}],body:Buffer.from(JSON.stringify({message,...(status!==200?{exc_type:'PermissionError'}:{})})).toString('base64')});
  const slimming='Slimming - LSACPL';
@@ -21,7 +21,7 @@ const WebSocket=require('ws');
   const{requestId,request}=m.params;
   try{
    const method=decodeURIComponent(new URL(request.url).pathname.split('/api/method/')[1]||''),args=JSON.parse(request.postData||'{}');calls.push({method,args});
-   if(method==='life_slimming.api.portal.bootstrap')return fulfill(requestId,{user:'weight-fixture@example.test',session_id:'weight-fixture',full_name:'Weight Fixture',roles:['Sales User'],portal_role:'IT',csrf_token:'fixture'});
+   if(method==='life_slimming.api.portal.bootstrap')return fulfill(requestId,{user:'weight-fixture@example.test',session_id:'weight-fixture-'+target.id,full_name:'Weight Fixture',roles:['Sales User'],portal_role:'IT',csrf_token:'fixture'});
    if(method==='life_slimming.api.convox.config')return fulfill(requestId,{enabled:false});
    if(method==='frappe.desk.search.search_link')return fulfill(requestId,[{value:'ALPHA',description:'Alpha Client'}]);
    if(method==='frappe.desk.reportview.get'){
@@ -29,11 +29,11 @@ const WebSocket=require('ws');
     if(args.doctype==='Branch')rows=[{name:'Branch A',branch:'Branch A'},{name:'Branch B',branch:'Branch B'},{name:'Testing Branch',branch:'Testing Branch'},{name:'Head Office',branch:'Head Office'}];
     if(args.doctype==='Therapy Session'){
      if(args.fields.includes('therapy_plan')&&!args.fields.includes('before_weight'))rows=[visit('ATTEND-OLD','ALPHA','2026-10-01',90,88)];
-     else rows=has('start_date','>=','2026-09-01')?previous:has('start_date','>=','2026-10-01')?current:history;
+     else { rows=has('start_date','>=','2026-09-01')?previous:has('start_date','>=','2026-10-01')?current:history; if(pagedFixture&&!has('start_date','>=','2026-09-01'))rows=[...rows,...Array.from({length:12},(_,i)=>visit('EXTRA-'+i,'EXTRA-PAT-'+i,'2026-10-13',90,89))]; }
      const selected=filters.find(f=>f[1]==='patient'&&f[2]==='=');if(selected)rows=rows.filter(row=>row.patient===selected[3]);
     }
     if(args.doctype==='Therapy Plan'){
-     if(args.fields.includes('docstatus')){if(denyOpen)return fulfill(requestId,'Open Cards unavailable',403);rows=plans;}
+     if(args.fields.includes('docstatus')){if(denyOpen)return fulfill(requestId,'Open Cards unavailable',403);rows=pagedFixture?[...plans,...Array.from({length:21},(_,i)=>plan('OPEN-EXTRA-'+i,'OPEN-PAT-'+i,'2026-10-01'))]:plans;}
      else rows=plans.filter(plan=>['ALPHA','BETA'].includes(plan.patient));
     }
     if(args.doctype==='Patient')rows=['ALPHA','BETA','NEW','COMPLETE','CANCEL'].map(name=>({name,mobile:'+919876543210',branch_name:'Branch A'}));
@@ -87,6 +87,8 @@ const WebSocket=require('ws');
    denyOpen=false;await click('#refreshDashboard');await wait('document.querySelector("#totalOpenCards").textContent.trim()==="2"');
    console.log('Weight Loss Vue workflows passed at width '+width);
   }
+  pagedFixture=true;await send('Page.navigate',{url:base+'/life_portal/native/weight-loss'});await wait('document.querySelector("#totalClients")?.textContent.trim()==="14" && document.querySelector("#totalOpenCards")?.textContent.trim()==="23"');
+  assert.equal(await evaluate('document.querySelectorAll("#weightTableBody tr").length'),10);await click('#mainPagination .wl-page-btn:last-child');await wait('document.querySelectorAll("#weightTableBody tr").length === 4');await click('#totalOpenCardsCard');assert.equal(await evaluate('document.querySelectorAll("#openCardsTableBody tr").length'),20);await click('#openCardsPagination .wl-page-btn:last-child');await wait('document.querySelectorAll("#openCardsTableBody tr").length === 3');
   assert.deepEqual(errors,[]);
   console.log('Passed: native Vue layout, monthly/lifetime weights, new joiners, attendance, completed/cancelled exclusion, multi-branch deduplication, client selection, filters, masked XLS exports and independent errors/retry.');
  }finally{ws.close();await fetch(endpoint+'/json/close/'+target.id);}

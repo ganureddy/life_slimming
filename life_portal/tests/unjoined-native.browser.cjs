@@ -4,6 +4,7 @@ const WebSocket = require('ws');
 (async () => {
  const endpoint = process.env.PORTAL_BROWSER_URL || 'http://127.0.0.1:9230';
  const base = process.env.PORTAL_PREVIEW_URL || 'http://127.0.0.1:5178';
+ const { indiaDate } = await import('../src/lib/unjoined.js');
  const target = await (await fetch(endpoint + '/json/new?about:blank', {method:'PUT'})).json();
  const ws = new WebSocket(target.webSocketDebuggerUrl); await new Promise(resolve => ws.on('open',resolve));
  const jobs = new Map(), calls = [], errors = [], forms = new Map();
@@ -19,7 +20,7 @@ const WebSocket = require('ws');
   try {
    const method=decodeURIComponent(new URL(request.url).pathname.split('/api/method/')[1]||'');
    const args=method==='upload_file'?{}:JSON.parse(request.postData||'{}');calls.push({method,args});
-   if(method==='life_slimming.api.portal.bootstrap')return fulfill(requestId,{user:'vue-agent@example.test',session_id:'unjoined-vue-fixture',full_name:'Vue Agent',roles:manager?['System Manager']:['Sales User'],portal_role:'IT',csrf_token:'fixture'});
+   if(method==='life_slimming.api.portal.bootstrap')return fulfill(requestId,{user:'vue-agent@example.test',session_id:'unjoined-vue-fixture-'+target.id,full_name:'Vue Agent',roles:manager?['System Manager']:['Sales User'],portal_role:'IT',csrf_token:'fixture'});
    if(method==='life_slimming.api.convox.config')return fulfill(requestId,{enabled:false});
    if(method==='frappe.client.get_list'){
     const {doctype,fields=[],filters={}}=args;
@@ -37,7 +38,7 @@ const WebSocket = require('ws');
     if(fields.includes('count(name) as total'))return fulfill(requestId,[{total:doctype==='Patient'?21:doctype==='Unjoined Client Form'?forms.size:1}]);
     if(doctype==='Patient')return fulfill(requestId,args.limit_start===20?[patient('PAT-21')]:Array.from({length:args.limit_page_length===500?21:20},(_,i)=>patient('PAT-'+(i+1))));
     if(doctype==='Lead')return fulfill(requestId,[{name:'LEAD-1',lead_name:'Lead Client',mobile_no:'9876543210',branch:'Branch A',category:'Slimming',custom_appointment_status:'Booked',custom_appointment_date_and_time:'2026-10-12 10:00:00'}]);
-    if(doctype==='Patient Appointment')return fulfill(requestId,[{name:'APPT-1',patient:'PAT-LINKED',patient_name:'Appointment Client',custom_client_mobile_no:'9876543210',branch:'Branch A',appointment_date:'2026-10-13',status:'Scheduled'}]);
+    if(doctype==='Patient Appointment')return fulfill(requestId,[{name:'APPT-1',patient:'PAT-LINKED',patient_name:'Appointment Client',custom_client_mobile_no:'9876543210',branch:'Branch A',appointment_date:indiaDate(),status:'Scheduled'}]);
     if(doctype==='Unjoined Client Form')return fulfill(requestId,[...forms.values()]);
     return fulfill(requestId,[]);
    }

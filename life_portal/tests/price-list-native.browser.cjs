@@ -6,15 +6,15 @@ const assert = require('node:assert/strict');
   const base = process.env.PORTAL_PREVIEW_URL || 'http://127.0.0.1:5178';
   const target=await(await fetch(endpoint+'/json/new?about:blank',{method:'PUT'})).json();
   const ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise(resolve=>ws.on('open',resolve));
-  let id=0;const jobs=new Map(),errors=[],calls=[];
-  const send=(method,params={})=>new Promise((resolve,reject)=>{jobs.set(++id,message=>message.error?reject(message.error):resolve(message.result));ws.send(JSON.stringify({id,method,params}));});
+  let id=0,closing=false;const jobs=new Map(),errors=[],calls=[];
+  const send=(method,params={})=>new Promise((resolve,reject)=>{jobs.set(++id,message=>message.error?reject(new Error(JSON.stringify(message.error))):resolve(message.result));ws.send(JSON.stringify({id,method,params}));});
   ws.on('message',async raw=>{
     const message=JSON.parse(raw);if(message.id){jobs.get(message.id)?.(message);jobs.delete(message.id);}
     if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails.text);
     if(message.method!=='Fetch.requestPaused')return;
     const {requestId,request}=message.params;let args={};try{args=JSON.parse(request.postData||'{}');}catch{}
     calls.push({url:request.url,args});let result={};
-    if(request.url.includes('portal.bootstrap'))result={user:'Administrator',full_name:'Tester',roles:['System Manager'],csrf_token:'test'};
+    if(request.url.includes('portal.bootstrap'))result={user:'Administrator',session_id:'price-fixture-'+target.id,full_name:'Tester',roles:['System Manager'],csrf_token:'test'};
     if(request.url.includes('frappe.client.get_list')){
       if(args.doctype==='Therapy Type')result=[{therapy_type:'Laser',healthcare_service_unit:'Hair - LSACPL',item_code:'T-1',rate:1000,minimum_price:800,maximum_price:1200},{therapy_type:'Facial',healthcare_service_unit:'Skin - LSACPL',item_code:'T-2',rate:500}];
       else if(args.doctype==='Pricing Rule')result=[{name:'OFFER-1'}];
@@ -22,9 +22,9 @@ const assert = require('node:assert/strict');
     }
     if(request.url.includes('price_list_api.active_offers'))result={offers:[{name:'OFFER-1',item_code:'T-1',apply_on:'Item Code',price_or_product_discount:'Price',discount_percentage:10,priority:1}]};
     if(request.url.includes('frappe.client.get')&&!request.url.includes('get_list'))result=args.doctype==='Pricing Rule'?{name:'OFFER-1',discount_percentage:10,items:[{item_code:'T-1'}]}:{name:'PKG-1',plan_name:'Hair Package',item_code:'P-1',is_active:1,total_sessions:4,total_amount:4000,offer_price:3500,custom_including_gst:3675,description:'<p><strong>Formatted package</strong></p><script>window.descriptionExecuted=true</script><img src=x onerror=window.descriptionExecuted=true>',therapy_types:[{therapy_type:'Laser',no_of_sessions:4,rate:1000,amount:4000}]};
-    await send('Fetch.fulfillRequest',{requestId,responseCode:200,responseHeaders:[{name:'Content-Type',value:'application/json'}],body:Buffer.from(JSON.stringify({message:result})).toString('base64')});
+    await send('Fetch.fulfillRequest',{requestId,responseCode:200,responseHeaders:[{name:'Content-Type',value:'application/json'}],body:Buffer.from(JSON.stringify({message:result})).toString('base64')}).catch(error=>{if(!closing)errors.push(error.message);});
   });
-  const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(result.exceptionDetails)throw Error(result.exceptionDetails.text);return result.result.value;};
+  const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(result.exceptionDetails)throw Error(result.exceptionDetails.exception?.description || result.exceptionDetails.text);return result.result.value;};
   const wait=async expression=>{for(let attempt=0;attempt<100;attempt++){if(await evaluate(expression))return;await new Promise(resolve=>setTimeout(resolve,75));}throw Error('Timed out: '+expression+'\n'+await evaluate('document.body.innerText'));};
   try{
     await send('Page.enable');await send('Runtime.enable');await send('Fetch.enable',{patterns:[{urlPattern:'*/api/method/*'}]});
@@ -52,5 +52,5 @@ const assert = require('node:assert/strict');
     assert.equal(calls.some(call=>call.args.doctype==='Pricing Rule'),true);
     assert.deepEqual(errors,[]);
     console.log('Price-List browser checks passed on desktop and mobile.');
-  }finally{await send('Page.close');ws.close();}
+  }catch(error){console.error({errors,calls:calls.slice(-8),body:await evaluate('document.body?.innerText').catch(()=>null)});throw error;}finally{closing=true;await send('Page.close');ws.close();}
 })().catch(error=>{console.error(error);process.exit(1);});

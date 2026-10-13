@@ -3,8 +3,8 @@
   "requested_scope": "Full rewrite into Vue state and event handlers; same legacy UI and workflows.",
   "mapped_modules": 44,
   "mapped_sources": 39,
-  "workflow_tested_native_sources": 5,
-  "pending_mapped_sources": 34,
+  "workflow_tested_native_sources": 7,
+  "pending_mapped_sources": 32,
   "sources": [
     {
       "source": "stores-360",
@@ -113,7 +113,7 @@
       "modules": [
         "salemaster"
       ],
-      "status": "parity_pending",
+      "status": "workflow_tests_passed",
       "existing_vue_components": [
         "SalesMasterDataPage.vue"
       ],
@@ -633,7 +633,7 @@
       "modules": [
         "documents"
       ],
-      "status": "parity_pending",
+      "status": "workflow_tests_passed",
       "existing_vue_components": [
         "FormsDocumentsPage.vue"
       ],

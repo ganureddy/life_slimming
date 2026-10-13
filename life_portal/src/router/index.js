@@ -7,7 +7,7 @@ import portalPages from "../data/portalPages.json";
 import PortalSourcePage from "../pages/PortalSourcePage.vue";
 
 // Keep remaining source screens active while their native Vue parity work is pending.
-const nativeModules = new Set(["unjoined", "wlres", "clusterhome", "conv", "pricelist"]);
+const nativeModules = new Set(["unjoined", "wlres", "clusterhome", "conv", "pricelist", "documents", "salemaster"]);
 const keepLegacyModule = (id) => Boolean(portalPages[id]) && !nativeModules.has(id);
 
 export const routeLoading = ref(false);
@@ -42,6 +42,16 @@ const pageComponents = {
 };
 
 export const routes = [
+  {
+    path: "/native/sales-master", name: "salemaster-native",
+    component: () => import("../pages/SalesMasterDataPage.vue"),
+    meta: { title: "Sales Master Data", accessModule: "salemaster" },
+  },
+  {
+    path: "/native/documents", name: "documents-native",
+    component: () => import("../pages/FormsDocumentsPage.vue"),
+    meta: { title: "Forms & Documents", accessModule: "documents" },
+  },
   {
     path: "/native/weight-loss", name: "wlres-native",
     component: () => import("../pages/WeightLossReportPage.vue"),

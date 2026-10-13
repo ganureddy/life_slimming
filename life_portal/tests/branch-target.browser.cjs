@@ -15,7 +15,7 @@ const assert = require('node:assert/strict');
     if(message.method!=='Fetch.requestPaused')return;
     const {requestId,request}=message.params;let args={};try{args=JSON.parse(request.postData||'{}');}catch{}
     calls.push({url:request.url,args});let result={};
-    if(request.url.includes('portal.bootstrap'))result={user:'Administrator',full_name:'Tester',roles:['System Manager'],csrf_token:'test'};
+    if(request.url.includes('portal.bootstrap'))result={user:'Administrator',session_id:'target-fixture-'+target.id,full_name:'Tester',roles:['System Manager'],csrf_token:'test'};
     if(request.url.includes('frappe.client.get_list'))result=[{name:'A'},{name:'B'}];
     if(request.url.includes('branch_command_center.run'))result={daily:{basis:'net',cycle_from:'2026-09-06',cycle_to:'2026-10-05',is_closed:0,target:100000,achieved:50000,gross:52500,gst:2500,cut:0,gap:50000,pct:50,total_days:30,days_left:1,req_per_day:50000,run_rate:2000,projected:60000,on_track:0,hit_days:1,miss_days:1,days:[{d:'2026-10-04',gross:2100,gst:100,cut:0,got:2000,req:1800,diff:200,cum:2000,hit:1,future:0},{d:'2026-10-05',gross:1000,gst:48,cut:0,got:952,req:2000,diff:-1048,cum:2952,hit:0,future:0},{d:'2026-10-06',got:0,req:2000,future:1}]}};
     await send('Fetch.fulfillRequest',{requestId,responseCode:200,responseHeaders:[{name:'Content-Type',value:'application/json'}],body:Buffer.from(JSON.stringify({message:result})).toString('base64')});

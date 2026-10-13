@@ -10,7 +10,7 @@ const assert=require('node:assert/strict'),WebSocket=require('ws');
   if(m.method!=='Fetch.requestPaused')return;
   const{requestId,request}=m.params;const method=new URL(request.url).pathname.split('/api/method/')[1];let message={};
   const args=JSON.parse(request.postData||'{}');calls.push({method,args,headers:request.headers});
-  if(method==='life_slimming.api.portal.bootstrap')message={user:'cluster-fixture',session_id:'cluster-fixture',full_name:'Cluster Fixture',roles:['System Manager'],portal_role:'IT',csrf_token:'cluster-csrf'};
+  if(method==='life_slimming.api.portal.bootstrap')message={user:'cluster-fixture',session_id:'cluster-fixture-'+target.id,full_name:'Cluster Fixture',roles:['System Manager'],portal_role:'IT',csrf_token:'cluster-csrf'};
   if(method==='life_slimming.api.convox.config')message={enabled:false};
   if(method==='life_slimming.api.server_scripts.cluster_dashboard_api.run')message={cluster:args.cluster||'My Cluster',from_date:args.from_date,to_date:args.to_date,available_clusters:['Cluster A','Cluster B'],branches:['Branch A'],totals:{sales_amt:123456,sales_count:8,collections:99999,outstanding:23457},rows:mode==='empty'?[]:[{branch:'Branch A',sales_amt:123456,sales_count:8,collections:99999,outstanding:23457}]};
   const failure=mode==='denied'&&method==='life_slimming.api.server_scripts.cluster_dashboard_api.run';
