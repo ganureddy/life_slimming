@@ -32,4 +32,10 @@ Waiting alerts use today's leads at least ten minutes old with an explicit zero 
 
 Highlights use the reference thresholds: five visits/day, five appointments/day, fifty visits/month, or at least a 50% visited-booked ratio with two visits. High-package highlights are omitted because the TV snapshot has no verified package amount attribution. Sound still needs an initial user click under browser autoplay rules.
 
-Browser verification: `node life_portal/tests/cc-live-tv.browser.cjs` with Vite on port 5175 and an isolated Chrome debugger on port 9225. Tests mock all API data and cover totals, roster pagination, waiting-alert removal, screen scaling, and clearing data after permission denial.
+Browser verification: `node life_portal/tests/cc-live-tv.browser.cjs` with Vite on port 5178 and an isolated Chrome debugger on port 9230. Tests mock all API data and cover totals, roster pagination, waiting-alert removal, screen scaling, and clearing data after permission denial.
+
+TV latest-lead and waiting cards, activity entries and lead alerts display the raw Lead `custom_visit_status` as **Visit Status**, or **Not set** when empty. Appointment status remains separate; counting rules are unchanged.
+
+Visit Status breakdowns also appear in today’s overall totals, daily/monthly podiums, each agent ranking row, weekly rankings and champion alerts. Each raw `custom_visit_status` value shows its lead count; empty values count as Not set. Periods use appointment date, falling back to creation for unscheduled leads. Roster pages contain six agents with a waiting alert or eight otherwise to fit the additional field.
+
+Visit Status is now a numeric metric tile/column matching the other metrics in totals, podiums and agent rankings (and a count in weekly rankings). It counts leads explicitly marked Visited in `custom_visit_status`, using scheduled date or creation for unscheduled leads. An appointment still marked Booked no longer hides an explicit Visit Status of Visited when calculating visits or announcing a visit. This replaces the textual aggregate breakdown in those views.

@@ -6,8 +6,8 @@ const snapshot = rows => ({rows,agents:{a:'Agent A',b:'Agent B',c:'Agent C'},mon
 test('counts use creation and scheduled dates, not modification; unassigned excluded from podium', () => {
  const data = snapshot([row,{...row,name:'L2',lead_owner:'b',creation:'2026-09-01 10:00:00',custom_appointment_status:'Visited Booked'}, {...row,name:'L3',lead_owner:null}, {...row,name:'L4',custom_appointment_status:'Cancelled'}]);
  const agents = leaderboard(data);
- assert.deepEqual(agents.find(a=>a.id==='a').today,{leads:2,booked:1,walkins:0,visitedBooked:0});
- assert.deepEqual(agents.find(a=>a.id==='b').today,{leads:0,booked:1,walkins:1,visitedBooked:1});
+ assert.deepEqual(agents.find(a=>a.id==='a').today,{leads:2,booked:1,walkins:0,visitedBooked:0,visitStatus:0});
+ assert.deepEqual(agents.find(a=>a.id==='b').today,{leads:0,booked:1,walkins:1,visitedBooked:1,visitStatus:0});
  assert.equal(rank(agents,'today')[0].id,'b');
  assert.equal(rank(agents,'today').length,2);
 });
@@ -82,7 +82,7 @@ test('highlights require actual thresholds', () => {
 
 test('monthly cycle includes the 6th through the next 5th for all metrics', () => {
  const data = snapshot(['2026-10-05','2026-10-06','2026-10-31','2026-11-01','2026-11-05','2026-11-06'].map((day,i) => ({...row,name:`month-${i}`,creation:day+' 23:59:59',custom_appointment_date_and_time:day+' 23:59:59',custom_appointment_status:'Visited Booked'})));
- assert.deepEqual(leaderboard(data)[0].month,{leads:4,booked:4,walkins:4,visitedBooked:4});
+ assert.deepEqual(leaderboard(data)[0].month,{leads:4,booked:4,walkins:4,visitedBooked:4,visitStatus:0});
 });
 test('disabled owners never rank or announce but their activity remains in totals', () => {
  const before = snapshot([row]);
@@ -92,4 +92,35 @@ test('disabled owners never rank or announce but their activity remains in total
  assert.equal(agents[0].today.walkins,1);
  assert.equal(highlights(agents).length,1);
  assert.deepEqual(changes(before,data),[]);
+});
+
+ test('activity carries the exact Lead Visit Status independently of appointment status', () => {
+ const before = snapshot([row]);
+ const next = snapshot([{...row, custom_visit_status:'Follow up required', custom_appointment_date_and_time:'2026-10-10 14:00:00'}]);
+ assert.equal(changes(before,next)[0].visitStatus,'Follow up required');
+ assert.equal(changes(before,snapshot([{...row,custom_appointment_date_and_time:'2026-10-10 14:00:00'}]))[0].visitStatus,'');
+ });
+
+test('raw visit status breakdowns use scheduled dates, falling back to creation for unscheduled leads', () => {
+ const data = {...snapshot([]), week_start:'2026-10-05', week_end:'2026-10-12'};
+ data.rows = [
+  {...row,custom_visit_status:'Visited',creation:'2026-09-01'},
+  {...row,name:'pending',custom_visit_status:'Pending',custom_appointment_date_and_time:null},
+  {...row,name:'older',custom_visit_status:'Visited',custom_appointment_date_and_time:'2026-10-08 10:00:00'},
+  {...row,name:'unset',custom_appointment_date_and_time:null},
+ ];
+ const agent=leaderboard(data)[0];
+ assert.deepEqual(agent.visitStatuses.today, {Visited:1,Pending:1,'Not set':1});
+ assert.deepEqual(agent.visitStatuses.month, {Visited:2,Pending:1,'Not set':1});
+ assert.deepEqual(agent.visitStatuses.week, {Visited:2,Pending:1,'Not set':1});
+});
+
+test('Visit Status tile counts explicit visits and refreshes even when appointment status stays Booked', () => {
+ const before=snapshot([{...row,custom_appointment_status:'Booked',custom_visit_status:''}]);
+ const next=snapshot([{...row,custom_appointment_status:'Booked',custom_visit_status:'Visited'}]);
+ assert.equal(leaderboard(before)[0].today.visitStatus,0);
+ assert.equal(leaderboard(next)[0].today.visitStatus,1);
+ assert.equal(leaderboard(next)[0].today.walkins,1);
+ assert.equal(changes(before,next)[0].type,'walkin');
+ assert.equal(leaderboard(snapshot([{...row,custom_visit_status:'Not Visited'}]))[0].today.visitStatus,0);
 });
