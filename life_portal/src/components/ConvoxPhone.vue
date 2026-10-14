@@ -279,13 +279,16 @@ function receiveNative(event) {
 }
 async function findCaller(event) {
   if (!event.mobile_number) return;
-  // Both /leads and its preview now render the native dashboard.
   if (!isCcDashboard.value) {
     await router.push({ name: 'leads', query: { caller: event.mobile_number } });
-  } else {
+  } else if (route.name === 'leads-native') {
     window.dispatchEvent(new CustomEvent('life-convox-find-native', {
       detail: { mobile_number: event.mobile_number },
     }));
+  } else {
+    document.querySelector('.portal-source-page iframe')?.contentWindow?.postMessage({
+      type: 'life-convox-find', mobile: event.mobile_number,
+    }, window.location.origin);
   }
   minimize();
 }

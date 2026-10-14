@@ -47,8 +47,11 @@
       return;
     }
     if (event.data?.type !== 'life-convox-find') return;
-    const mobile = event.data.mobile;
-    if (typeof mobile !== 'string' || !/^[0-9]{10}$/.test(mobile)) return;
+    if (typeof event.data.mobile !== 'string') return;
+    let mobile = event.data.mobile.replace(/[\s()+.-]/g, '');
+    if (mobile.length === 12 && mobile.startsWith('91')) mobile = mobile.slice(2);
+    else if (mobile.length === 11 && mobile.startsWith('0')) mobile = mobile.slice(1);
+    if (!/^[0-9]{10}$/.test(mobile)) return;
     const input = document.getElementById('global-search');
     if (input) {
       input.value = mobile;
