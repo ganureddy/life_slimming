@@ -1,0 +1,858 @@
+/* =========================================================
+   CLIENT WEIGHT LOSS INFO — COMPLETE CSS
+========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+.wl-dashboard {
+    padding: 24px;
+    background: #f7faf7;
+    color: #1f2937;
+    font-family: Inter, Arial, sans-serif;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.navbar { display: none; }
+.web-footer { display: none; }
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.wl-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 22px;
+}
+
+.wl-header h2 {
+    margin: 0;
+    color: #15803d;
+    font-size: 28px;
+    font-weight: 800;
+}
+
+.wl-header p {
+    margin: 5px 0 0;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.wl-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.wl-btn {
+    min-height: 42px;
+    padding: 0 16px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 750;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.wl-btn:hover {
+    transform: translateY(-1px);
+}
+
+.wl-btn.primary {
+    background: #16a34a;
+    color: #ffffff;
+    box-shadow: 0 5px 14px rgba(22, 163, 74, 0.2);
+}
+
+.wl-btn.primary:hover {
+    background: #15803d;
+}
+
+.wl-btn.secondary {
+    border-color: #d1d5db;
+    background: #ffffff;
+    color: #374151;
+}
+
+.wl-btn.secondary:hover {
+    border-color: #16a34a;
+    color: #15803d;
+}
+
+/* =========================================================
+   FILTERS
+========================================================= */
+
+.wl-filter-panel {
+    margin-bottom: 20px;
+    padding: 18px;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+}
+
+.wl-filters-main {
+    display: grid;
+    grid-template-columns:
+        minmax(130px, 0.75fr)
+        minmax(180px, 1fr)
+        minmax(320px, 1.8fr)
+        minmax(180px, 1fr);
+    gap: 12px;
+    align-items: end;
+    width: 100%;
+}
+
+.wl-field {
+    min-width: 0;
+}
+
+.wl-field label {
+    display: block;
+    margin-bottom: 6px;
+    color: #4b5563;
+    font-size: 13px;
+    font-weight: 750;
+}
+
+.wl-field input,
+.wl-field select {
+    width: 100%;
+    height: 42px;
+    padding: 0 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    outline: none;
+    background: #ffffff;
+    color: #1f2937;
+    font-size: 14px;
+}
+
+.wl-field input:focus,
+.wl-field select:focus {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+}
+
+.wl-search-row {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.wl-autocomplete-container {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.wl-clear-btn {
+    flex: 0 0 auto;
+}
+
+.wl-custom-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    left: 0;
+    z-index: 1000;
+    max-height: 280px;
+    overflow-y: auto;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.15);
+}
+
+.wl-dropdown-item {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f3f4f6;
+    cursor: pointer;
+}
+
+.wl-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.wl-dropdown-item:hover {
+    background: #f0fdf4;
+}
+
+.wl-dropdown-item strong {
+    color: #1f2937;
+    font-size: 13px;
+}
+
+.wl-dropdown-item small {
+    color: #6b7280;
+    font-size: 11px;
+}
+
+/* =========================================================
+   KPI CARDS
+========================================================= */
+
+.wl-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.wl-card {
+    min-height: 132px;
+    padding: 18px;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #16a34a;
+    border-radius: 15px;
+    background: #ffffff;
+    box-shadow: 0 5px 16px rgba(15, 23, 42, 0.06);
+}
+
+.wl-card > span {
+    display: block;
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 750;
+}
+
+.wl-card h3 {
+    margin: 9px 0 0;
+    color: #15803d;
+    font-size: 28px;
+    font-weight: 850;
+    line-height: 1.1;
+}
+
+.wl-card-note {
+    display: block;
+    margin-top: 8px;
+    color: #6b7280;
+    font-size: 11.5px;
+    font-weight: 550;
+    line-height: 1.4;
+}
+
+.wl-total-loss-note {
+    color: #4b5563;
+}
+
+.wl-total-loss-note strong {
+    color: #15803d;
+    font-weight: 800;
+}
+
+.wl-open-cards-card {
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.wl-open-cards-card:hover {
+    transform: translateY(-2px);
+    border-left-color: #15803d;
+    box-shadow: 0 9px 24px rgba(15, 23, 42, 0.11);
+}
+
+.wl-open-cards-card:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18);
+}
+
+/* =========================================================
+   MAIN REPORT TABLE
+========================================================= */
+
+.wl-table-wrap {
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 5px 18px rgba(15, 23, 42, 0.06);
+}
+
+.wl-table-header {
+    padding: 18px 20px 12px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.wl-table-header h3 {
+    margin: 0;
+    color: #15803d;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.wl-table-note {
+    margin: 6px 0 0;
+    color: #6b7280;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.wl-table-scroll {
+    overflow-x: auto;
+}
+
+.wl-table {
+    width: 100%;
+    min-width: 1000px;
+    border-collapse: collapse;
+}
+
+.wl-table thead {
+    background: #ecfdf3;
+}
+
+.wl-table th {
+    padding: 14px 16px;
+    color: #374151;
+    font-size: 12.5px;
+    font-weight: 800;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.wl-table td {
+    padding: 14px 16px;
+    border-top: 1px solid #eef2f0;
+    color: #1f2937;
+    font-size: 13.5px;
+    vertical-align: middle;
+}
+
+.wl-table tbody tr:nth-child(odd) {
+    background: #ffffff;
+}
+
+.wl-table tbody tr:nth-child(even) {
+    background: #f0fdf4;
+}
+
+.wl-table tbody tr:hover,
+.wl-table tbody tr:nth-child(odd):hover,
+.wl-table tbody tr:nth-child(even):hover {
+    background: #dcfce7 !important;
+}
+
+.wl-clickable-row {
+    cursor: pointer;
+}
+
+.wl-table td small {
+    color: #6b7280;
+    font-size: 11px;
+}
+
+.wl-reference-warning {
+    color: #b45309 !important;
+    font-weight: 700;
+}
+
+.loss-good {
+    color: #15803d !important;
+}
+
+.weight-gain {
+    color: #dc2626 !important;
+}
+
+.loss-neutral {
+    color: #6b7280 !important;
+}
+
+.wl-empty-row,
+.wl-loading-row {
+    padding: 30px !important;
+    color: #6b7280 !important;
+    text-align: center !important;
+}
+
+.wl-loading-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.wl-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #bbf7d0;
+    border-top-color: #16a34a;
+    border-radius: 50%;
+    animation: wl-spin 0.8s linear infinite;
+}
+
+@keyframes wl-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+
+.wl-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 14px 18px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.wl-page-info {
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.wl-page-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.wl-page-btn {
+    min-width: 34px;
+    height: 34px;
+    padding: 0 9px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #374151;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.wl-page-btn:hover:not(:disabled) {
+    border-color: #16a34a;
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+.wl-page-btn.active {
+    border-color: #16a34a;
+    background: #16a34a;
+    color: #ffffff;
+}
+
+.wl-page-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   MODALS
+========================================================= */
+
+.wl-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(15, 23, 42, 0.58);
+}
+
+.wl-modal {
+    display: flex;
+    flex-direction: column;
+    width: min(1180px, 96vw);
+    max-height: 90vh;
+    overflow: hidden;
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.25);
+}
+
+.wl-open-cards-modal {
+    width: min(950px, 96vw);
+}
+
+.wl-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 19px 22px;
+    background: linear-gradient(135deg, #15803d, #16a34a);
+    color: #ffffff;
+}
+
+.wl-modal-header h3 {
+    margin: 0;
+    font-size: 21px;
+    font-weight: 820;
+}
+
+.wl-modal-header p {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+    opacity: 0.92;
+}
+
+.wl-modal-close {
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    font-size: 27px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.wl-modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.wl-modal-body {
+    padding: 20px 22px;
+    overflow-y: auto;
+}
+
+.wl-modal-section {
+    margin-bottom: 22px;
+}
+
+.wl-modal-section:last-child {
+    margin-bottom: 0;
+}
+
+.wl-modal-section h4 {
+    margin: 0 0 11px;
+    color: #15803d;
+    font-size: 15.5px;
+    font-weight: 800;
+}
+
+.wl-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.wl-summary-grid > div {
+    padding: 13px 15px;
+    border: 1px solid #e5e7eb;
+    border-radius: 13px;
+    background: #f9fafb;
+}
+
+.wl-summary-grid span {
+    display: block;
+    margin-bottom: 5px;
+    color: #6b7280;
+    font-size: 11.5px;
+    font-weight: 700;
+}
+
+.wl-summary-grid b {
+    display: block;
+    color: #111827;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.wl-inner-table-wrap,
+.wl-open-cards-table-wrap {
+    overflow: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 13px;
+}
+
+.wl-open-cards-table-wrap {
+    max-height: 55vh;
+}
+
+.wl-inner-table,
+.wl-open-cards-table {
+    width: 100%;
+    min-width: 700px;
+    border-collapse: collapse;
+}
+
+.wl-inner-table thead,
+.wl-open-cards-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #ecfdf3;
+}
+
+.wl-inner-table th,
+.wl-open-cards-table th {
+    padding: 12px 14px;
+    color: #374151;
+    font-size: 12.5px;
+    font-weight: 800;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.wl-inner-table td,
+.wl-open-cards-table td {
+    padding: 12px 14px;
+    border-top: 1px solid #eef2f0;
+    color: #1f2937;
+    font-size: 13px;
+}
+
+.wl-open-cards-table tbody tr:nth-child(odd) {
+    background: #ffffff;
+}
+
+.wl-open-cards-table tbody tr:nth-child(even) {
+    background: #f0fdf4;
+}
+
+.wl-open-cards-table tbody tr:hover {
+    background: #dcfce7;
+}
+
+.wl-open-cards-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.wl-open-cards-filter-info {
+    color: #6b7280;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1100px) {
+    .wl-kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 950px) {
+    .wl-filters-main {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .wl-field.search {
+        grid-column: 1 / -1;
+    }
+
+    .wl-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .wl-dashboard {
+        padding: 15px;
+    }
+
+    .wl-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .wl-actions {
+        width: 100%;
+    }
+
+    .wl-actions .wl-btn {
+        flex: 1;
+    }
+
+    .wl-modal-overlay {
+        padding: 9px;
+    }
+
+    .wl-modal {
+        width: 98vw;
+        max-height: 94vh;
+        border-radius: 14px;
+    }
+}
+
+@media (max-width: 600px) {
+    .wl-filters-main,
+    .wl-kpis,
+    .wl-summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .wl-field.search {
+        grid-column: auto;
+    }
+
+    .wl-search-row,
+    .wl-open-cards-toolbar,
+    .wl-pagination {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .wl-clear-btn,
+    .wl-open-cards-toolbar .wl-btn {
+        width: 100%;
+    }
+
+    .wl-actions {
+        flex-direction: column;
+    }
+}
+
+
+/* Average and Total Weight Loss card text */
+.wl-average-loss-card h3 {
+    color: #111827;
+}
+
+.wl-average-loss-card .wl-total-loss-note {
+    color: #4b5563;
+}
+
+.wl-average-loss-card .wl-total-loss-note strong {
+    color: #111827;
+}
+
+/* Force Average and Total Weight Loss text to black */
+#avgLoss,
+#totalLossSummary {
+    color: #111827 !important;
+}
+
+.wl-total-loss-note {
+    color: #111827 !important;
+}
+
+/* Make all KPI card text black */
+.wl-card,
+.wl-card > span,
+.wl-card h3,
+.wl-card .wl-card-note,
+.wl-card .wl-card-note strong {
+    color: #111827 !important;
+}
+
+/* =========================================================
+   SUB-PAGE TABLE SCROLL FIX
+   ========================================================= */
+
+.wl-table-wrap {
+    overflow: hidden;
+}
+
+.wl-table-scroll {
+    width: 100%;
+    max-height: 520px;
+
+    overflow-x: auto;
+    overflow-y: auto;
+
+    scrollbar-width: thin;
+    scrollbar-color: #a7c9ae #f3f8f4;
+}
+
+.wl-table-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.wl-table-scroll::-webkit-scrollbar-track {
+    background: #f3f8f4;
+}
+
+.wl-table-scroll::-webkit-scrollbar-thumb {
+    background: #a7c9ae;
+    border-radius: 10px;
+}
+
+.wl-table {
+    min-width: 1050px;
+}
+
+/* Keep table headings visible while scrolling */
+.wl-table thead {
+    background: #ecfdf3;
+}
+
+.wl-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #ecfdf3;
+}
+
+/* =========================================================
+   SUB-PAGE KPI CARDS — COMPACT 4 COLUMN
+   ========================================================= */
+
+.wl-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.wl-card {
+    min-height: 98px;
+
+    padding: 13px 15px;
+
+    border-radius: 12px;
+    border-left-width: 4px;
+
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.05);
+}
+
+.wl-card > span {
+    font-size: 11.5px;
+    line-height: 1.25;
+}
+
+.wl-card h3 {
+    margin-top: 6px;
+
+    font-size: 24px;
+    line-height: 1.05;
+}
+
+.wl-card-note {
+    margin-top: 6px;
+
+    font-size: 10.5px;
+    line-height: 1.3;
+}
+
+@media (max-width: 850px) {
+    .wl-kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 560px) {
+    .wl-kpis {
+        grid-template-columns: 1fr !important;
+    }
+}
+.wl-dashboard .wl-native-status{padding:0 24px;color:#5f6f63}.wl-dashboard .wl-dropdown-item{width:100%;text-align:left;background:white;border:0}

@@ -39,3 +39,13 @@ export function filterPriceRows(rows, query, offerOnly = false) {
     return text.includes(term) && (!offerOnly || !!row.offer);
   });
 }
+
+// The legacy price page uses the last applicable item rule and applies its
+// percentage, amount, then fixed rate in that order.
+export function legacyPageOffer(therapy, rules, today) {
+  const rule = [...rules].reverse().find(rule => rule.item_code === therapy.item_code && therapy.item_code && (!rule.valid_from || today >= rule.valid_from) && (!rule.valid_upto || today <= rule.valid_upto));
+  if (!rule) return null;
+  const base = Number(therapy.rate || 0);
+  const final = Number(rule.discount_percentage) ? base - base * Number(rule.discount_percentage) / 100 : Number(rule.discount_amount) ? base - Number(rule.discount_amount) : Number(rule.rate) ? Number(rule.rate) : base;
+  return { name: rule.name, rate: Math.max(0, final) };
+}

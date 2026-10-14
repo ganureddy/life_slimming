@@ -24,7 +24,7 @@ const fs = require('node:fs');
   if(request.url.includes('cc_live_tv.snapshot')){
    calls++;
    if(called){rows[13].custom_call_count=1;rows[13].custom_last_call_time='2026-10-11 10:00:00';}
-   result={rows,agents,agent_images:{agent0:'/files/missing-tv-image.png'},today:'2026-10-11',timestamp:'2026-10-11 10:00:00',timezone:'Asia/Kolkata',week_start:'2026-10-05',week_end:'2026-10-12'};
+   result={rows,agents,agent_images:{agent0:'/files/missing-tv-image.png'},today:'2026-10-11',timestamp:'2026-10-11 10:00:00',timezone:'Asia/Kolkata',month_start:'2026-10-06',month_end:'2026-11-06',week_start:'2026-10-05',week_end:'2026-10-12'};
    if(denied){status=403;result=null;}
   }
   await send('Fetch.fulfillRequest',{requestId,responseCode:status,responseHeaders:[{name:'Content-Type',value:'application/json'}],body:Buffer.from(JSON.stringify({message:result})).toString('base64')});

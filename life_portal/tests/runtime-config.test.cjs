@@ -6,7 +6,7 @@ const vm = require('node:vm');
 test('development serves the shared runtime config without a backend request', async () => {
   const {default: config} = await import('../vite.config.js');
   const plugin = config({command:'serve'}).plugins.find(p=>p.name==='life-portal-runtime-config');
-  const [tag] = plugin.transformIndexHtml.handler();
+  const tag = plugin.transformIndexHtml.handler().find(item => item.attrs.src.endsWith("/portal_config.js"));
   assert.equal(tag.attrs.src,'/life_portal/portal_config.js');
   assert.equal(plugin.transformIndexHtml.order,'post');
   let handler; plugin.configureServer({middlewares:{use(fn){handler=fn;}}});

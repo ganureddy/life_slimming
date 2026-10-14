@@ -1,0 +1,2624 @@
+{
+  "meta": {
+    "Patient": [
+      {
+        "fieldname": "basic_info",
+        "label": "Client Demographics",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_client_photo_attach",
+        "label": "Client Photo Attach",
+        "fieldtype": "Attach Image"
+      },
+      {
+        "fieldname": "naming_series",
+        "label": "Series",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_column_break_hdoz5",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom__photo_preview",
+        "label": " Photo Preview",
+        "fieldtype": "HTML"
+      },
+      {
+        "fieldname": "custom_column_break_77hbz",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_client_video",
+        "label": "Client Video",
+        "fieldtype": "Attach"
+      },
+      {
+        "fieldname": "custom_section_break_3ltr1",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_kpcc_lead",
+        "label": "KPCC Lead",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "custom_client_photo",
+        "label": "Client Photo",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_lead",
+        "label": "Lead",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "first_name",
+        "label": "Full Name",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "middle_name",
+        "label": "Middle Name (optional)",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "last_name",
+        "label": "Last Name",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "patient_name",
+        "label": "Full Name",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "sex",
+        "label": "Gender",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "blood_group",
+        "label": "Blood Group",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_heightin_cm",
+        "label": "Height (cm)",
+        "fieldtype": "Float"
+      },
+      {
+        "fieldname": "custom_column_break_ivb1p",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_joining_date",
+        "label": "Joining Date",
+        "fieldtype": "Date"
+      },
+      {
+        "fieldname": "dob",
+        "label": "Date of birth",
+        "fieldtype": "Date"
+      },
+      {
+        "fieldname": "custom_medical_history",
+        "label": "Health Status",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_client_visited_for_",
+        "label": "Visited For",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_final_decision",
+        "label": "Booked Or Not Booked",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "age_html",
+        "label": "Age",
+        "fieldtype": "HTML"
+      },
+      {
+        "fieldname": "image",
+        "label": "Image",
+        "fieldtype": "Attach Image"
+      },
+      {
+        "fieldname": "custom_media",
+        "label": "Media",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "custom_weightin_kg",
+        "label": "Weight (kg)",
+        "fieldtype": "Float"
+      },
+      {
+        "fieldname": "custom_pd_form_number",
+        "label": "PD Form Number",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_column_break_bwcsx",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_branch",
+        "label": "Branch",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "column_break_14",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_column_break_7z7yu",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_column_break_itwmx",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_section_break_duycd",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_remarks",
+        "label": "Remarks",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "custom_vip_category",
+        "label": "VIP Category",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_column_break_o3jsk",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_client_address",
+        "label": "Client Address",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "custom_vip_remarks",
+        "label": "VIP Remarks",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "custom_section_break_ehq41",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_client_concerns",
+        "label": "Client Concerns",
+        "fieldtype": "Table"
+      },
+      {
+        "fieldname": "custom_section_break_fph6u",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_column_break_8wksn",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_medical_history_guide",
+        "label": "Medical History Guide",
+        "fieldtype": "HTML"
+      },
+      {
+        "fieldname": "custom_column_break_podrq",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_severity_update",
+        "label": "Severity",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_column_break_shdrz",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_section_2_smart_medical_history",
+        "label": "Section 2 Smart Medical History",
+        "fieldtype": "Heading"
+      },
+      {
+        "fieldname": "custom_section_break_d7wm7",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_treatment_category",
+        "label": "Treatment Category",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_column_break_aor6b",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_medication_status",
+        "label": "Medication Status",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_column_break_sz5qu",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_health_flag",
+        "label": "Health Flag",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_section_break_jrurp",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_thyroid",
+        "label": "Thyroid",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_chronic_hair_fall",
+        "label": "Chronic Hair Fall",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_photosensitivity",
+        "label": "Photosensitivity",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_diabetes",
+        "label": "Diabetes",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_column_break_fsz9u",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_hormonal_imbalance",
+        "label": "Hormonal Imbalance",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_anemia",
+        "label": "Anemia",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_kelloids",
+        "label": "Kelloids",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_heart_conditions",
+        "label": "Heart Conditions",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_column_break_lamla",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_active_acne",
+        "label": "Active Acne",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_pcodpcos",
+        "label": "PCOD/PCOS",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_scalp_infections",
+        "label": "Scalp Infections",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_bp",
+        "label": "BP",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_recent_surgery",
+        "label": "Recent Surgery",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_section_break_t7d1a",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_pd_form",
+        "label": "PD Form",
+        "fieldtype": "Table"
+      },
+      {
+        "fieldname": "custom_section_break_9gyoa",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_brnch_list",
+        "label": "Brnch List",
+        "fieldtype": "Table"
+      },
+      {
+        "fieldname": "custom_section_break_zswpg",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_contact_numbers_",
+        "label": "Contact Numbers ",
+        "fieldtype": "Table"
+      },
+      {
+        "fieldname": "custom_sharing_incentive",
+        "label": "Sharing Incentive",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_incentive_employee_id",
+        "label": "Incentive Employee",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "custom_section_break_air8z",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_client_remarks_",
+        "label": "Client Remarks ",
+        "fieldtype": "Table"
+      },
+      {
+        "fieldname": "custom_family_details_section",
+        "label": "Family Details",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_family_members",
+        "label": "Family Members",
+        "fieldtype": "Table"
+      },
+      {
+        "fieldname": "custom_record_book_section",
+        "label": "Record Book Details",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_record_book_numbers",
+        "label": "Record Book Numbers",
+        "fieldtype": "Table"
+      },
+      {
+        "fieldname": "custom_mini_record_section",
+        "label": "Mini Record Details",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_mini_record_numbers",
+        "label": "Mini Record Numbers",
+        "fieldtype": "Table"
+      },
+      {
+        "fieldname": "custom_section_break_mivjc",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_column_break_txgfy",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "status",
+        "label": "Status",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "abha_address",
+        "label": "PHR Address",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_section_break_ycemb",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "abha_number",
+        "label": "ABHA Number",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_profile_type",
+        "label": "Profile Type",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_section_break_zymzx",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "uid",
+        "label": "Identification Number (UID)",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "inpatient_record",
+        "label": "Inpatient Record",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "inpatient_status",
+        "label": "Inpatient Status",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "report_preference",
+        "label": "Report Preference",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_section_1_core_client_data_and_bmi",
+        "label": "Section 1 Core Client Data And BMI",
+        "fieldtype": "Heading"
+      },
+      {
+        "fieldname": "custom_section_break_nxpuu",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_section_break_nexn2",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_section_break_cc3er",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_section_break_5ya5w",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_section_break_gl7ve",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_bmi",
+        "label": "BMI",
+        "fieldtype": "Float"
+      },
+      {
+        "fieldname": "mobile",
+        "label": "Mobile",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_column_break_lqm3a",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_employee_id",
+        "label": "Consultation Employee",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "custom_column_break_2i8yf",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_manager_name",
+        "label": "Manager Name",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "custom_section_break_646ki",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "phone",
+        "label": "Alternative Mobile  No",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "email",
+        "label": "Email",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "card_no",
+        "label": "Card No",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "agent_name",
+        "label": "Agent Name",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "branch_name",
+        "label": "Branch Name",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "invite_user",
+        "label": "Invite as User",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "user_id",
+        "label": "User ID",
+        "fieldtype": "Read Only"
+      },
+      {
+        "fieldname": "custom_diabete",
+        "label": "Diabete",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "customer_details_section",
+        "label": "Customer Details",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_skin_cancer_history",
+        "label": "Skin Cancer History",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "customer",
+        "label": "Customer",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "custom_chronic_kidney_disease",
+        "label": "Chronic Kidney Disease",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "customer_group",
+        "label": "Customer Group",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "territory",
+        "label": "Territory",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "column_break_24",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "default_currency",
+        "label": "Billing Currency",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "default_price_list",
+        "label": "Default Price List",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "language",
+        "label": "Print Language",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "more_info",
+        "label": "More Information",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "patient_details",
+        "label": "Client Details",
+        "fieldtype": "Text"
+      },
+      {
+        "fieldname": "abha_card",
+        "label": "ABHA Card",
+        "fieldtype": "Attach"
+      },
+      {
+        "fieldname": "consent_for_aadhaar_use",
+        "label": "Consent For Aadhaar Use",
+        "fieldtype": "Attach"
+      },
+      {
+        "fieldname": "dashboard_tab",
+        "label": "Dashboard",
+        "fieldtype": "Tab Break"
+      },
+      {
+        "fieldname": "address_and_contact_tab",
+        "label": "Address & Contact",
+        "fieldtype": "Tab Break"
+      },
+      {
+        "fieldname": "address_contacts",
+        "label": "Address and Contact",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "address_html",
+        "label": "Address HTML",
+        "fieldtype": "HTML"
+      },
+      {
+        "fieldname": "column_break_22",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "contact_html",
+        "label": "Contact HTML",
+        "fieldtype": "HTML"
+      },
+      {
+        "fieldname": "sb_relation",
+        "label": "Client Relation",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "patient_relation",
+        "label": "Client Relation",
+        "fieldtype": "Table"
+      },
+      {
+        "fieldname": "medical_history_tab",
+        "label": "Medical History",
+        "fieldtype": "Tab Break"
+      },
+      {
+        "fieldname": "personal_and_social_history",
+        "label": "Personal and Social History",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "occupation",
+        "label": "Occupation",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "column_break_25",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "marital_status",
+        "label": "Marital Status",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "allergy_medical_and_surgical_history",
+        "label": "Allergies, Medical and Surgical History",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "allergies",
+        "label": "Allergies",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "custom_column_break_xxuga",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "medication",
+        "label": "Medication",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "column_break_20",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "medical_history",
+        "label": "Medical History",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "surgical_history",
+        "label": "Surgical History",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "risk_factors",
+        "label": "Risk Factors",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "tobacco_past_use",
+        "label": "Tobacco Consumption (Past)",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "tobacco_current_use",
+        "label": "Tobacco Consumption (Present)",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "alcohol_past_use",
+        "label": "Alcohol Consumption (Past)",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "alcohol_current_use",
+        "label": "Alcohol Consumption (Present)",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "column_break_32",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "surrounding_factors",
+        "label": "Occupational Hazards and Environmental Factors",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "other_risk_factors",
+        "label": "Other Risk Factors",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "custom_otp_code",
+        "label": "otp_code",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_otp_verified",
+        "label": "otp_verified",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_column_break_uq8d0",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_otp_generated_time",
+        "label": "otp_generated_time",
+        "fieldtype": "Datetime"
+      },
+      {
+        "fieldname": "custom_section_break_x6hz7",
+        "label": null,
+        "fieldtype": "Section Break"
+      }
+    ],
+    "Lead": [
+      {
+        "fieldname": "custom_convox_last_call_time",
+        "label": "Last Call Time",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_convox_call_reference",
+        "label": "Call Reference",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_convox_disposition_3",
+        "label": "Disposition 3",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_convox_disposition_2",
+        "label": "Disposition 2",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_convox_call_duration",
+        "label": "Call Duration",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_convox_disposition",
+        "label": "Disposition",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_convox_call_status",
+        "label": "Call Status",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_convox_last_event",
+        "label": "Last Event",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "custom_convox_call_count",
+        "label": "ConVox completed call events",
+        "fieldtype": "Int"
+      },
+      {
+        "fieldname": "custom_convox_recording",
+        "label": "Recording",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "custom_convox_summary",
+        "label": "Latest ConVox call",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_convox_remarks",
+        "label": "Remarks",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "custom_cc_original_appointment",
+        "label": "Original appointment date",
+        "fieldtype": "Datetime"
+      },
+      {
+        "fieldname": "custom_cc_first_assigned_at",
+        "label": "First assigned at",
+        "fieldtype": "Datetime"
+      },
+      {
+        "fieldname": "custom_cc_appointment_agent",
+        "label": "Original appointment author",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "custom_cc_reschedule_count",
+        "label": "Reschedule count",
+        "fieldtype": "Int"
+      },
+      {
+        "fieldname": "custom_cc_first_touched_at",
+        "label": "First touched at",
+        "fieldtype": "Datetime"
+      },
+      {
+        "fieldname": "custom_cc_cancel_reason",
+        "label": "Cancellation reason",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "custom_cc_first_agent",
+        "label": "First assigned agent",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "naming_series",
+        "label": "Series",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "salutation",
+        "label": "Salutation",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "custom_posting_date",
+        "label": "Posting Date",
+        "fieldtype": "Date"
+      },
+      {
+        "fieldname": "custom_status_updated_date",
+        "label": "Status Updated Date",
+        "fieldtype": "Date"
+      },
+      {
+        "fieldname": "first_name",
+        "label": "First Name",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "middle_name",
+        "label": "Middle Name",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "last_name",
+        "label": "Last Name",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "date_of_birth",
+        "label": "Date of Birth",
+        "fieldtype": "Date"
+      },
+      {
+        "fieldname": "age",
+        "label": "Age",
+        "fieldtype": "Int"
+      },
+      {
+        "fieldname": "branch",
+        "label": "Branch",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "lead_owner",
+        "label": "Lead Owner",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "custom_assignment_audit_section",
+        "label": "Lead Assignment Audit",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_assignment_method",
+        "label": "Assignment Method",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_auto_assigned_on",
+        "label": "Auto Assigned On",
+        "fieldtype": "Datetime"
+      },
+      {
+        "fieldname": "custom_assignment_source",
+        "label": "Assignment Source",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "custom_assignment_rule",
+        "label": "Assignment Rule",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_assignment_score",
+        "label": "Assignment Score",
+        "fieldtype": "Float"
+      },
+      {
+        "fieldname": "custom_assignment_conversion_rate",
+        "label": "Agent Conversion Rate",
+        "fieldtype": "Percent"
+      },
+      {
+        "fieldname": "custom_assignment_daily_count",
+        "label": "Agent Leads Before Assignment",
+        "fieldtype": "Int"
+      },
+      {
+        "fieldname": "custom_assignment_team_leader",
+        "label": "Assignment Team Leader",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "phone",
+        "label": "Alternate Phone",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_contact_numbers_",
+        "label": "Contact Numbers",
+        "fieldtype": "Table"
+      },
+      {
+        "fieldname": "city",
+        "label": "Client Area",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_column_break_xq5ly",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "lead_name",
+        "label": "Full Name",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "job_title",
+        "label": "Client Profession",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "source",
+        "label": "Source",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "custom_external_lead_id",
+        "label": "External Lead ID",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "gender",
+        "label": "Gender",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "mobile_no",
+        "label": "Mobile No",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "status",
+        "label": "Status",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "status_1",
+        "label": "Status",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "enquired_for",
+        "label": "Enquired For",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_otp_verified",
+        "label": "OTP Verified",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_lead_quality",
+        "label": "Lead Quality",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "ad_set",
+        "label": "Ad Set",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_ad_name",
+        "label": "Ad Name",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_platform",
+        "label": "Platform",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_client_category",
+        "label": "Client Category",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_chat_script",
+        "label": "Chat Script",
+        "fieldtype": "Long Text"
+      },
+      {
+        "fieldname": "service_and_location",
+        "label": "",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_media",
+        "label": "Media",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_section_break_5mu9m",
+        "label": "",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_google_lead_data_details",
+        "label": "Appointment Booking",
+        "fieldtype": "Heading"
+      },
+      {
+        "fieldname": "custom_section_break_y6ifd",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_appointment_date_and_time",
+        "label": "Appointment Date and Time",
+        "fieldtype": "Datetime"
+      },
+      {
+        "fieldname": "custom_remarks",
+        "label": "Remarks",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "column_break_1",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_appointment_duration",
+        "label": "Appointment Duration",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_consulting_doctor",
+        "label": "Consulting Doctor",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "custom_appointment_status",
+        "label": "Appointment Status",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_wati_confirmation_sent",
+        "label": "WATI Appointment Confirmation Sent",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_wati_reminder_sent",
+        "label": "WATI Appointment Reminder Sent",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_wati_distance_sent",
+        "label": "WATI Distance Message Sent",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_wati_callback_sent",
+        "label": "WATI Callback Message Sent",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_wati_no_show_sent",
+        "label": "WATI No Show Message Sent",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_wati_visited_not_booked_sent",
+        "label": "WATI Visited Not Booked Sent",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_wati_interested_followup_sent",
+        "label": "WATI Interested Follow-up Sent",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_wati_welcome_sent",
+        "label": "WATI Welcome Message Sent",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_wati_journey_sent",
+        "label": "WATI Journey Message Sent",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_wati_next_step_sent",
+        "label": "WATI Next Step Message Sent",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "custom_wati_last_template",
+        "label": "Last WATI Template",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_wati_last_sent_on",
+        "label": "Last WATI Sent On",
+        "fieldtype": "Datetime"
+      },
+      {
+        "fieldname": "custom_wati_last_error",
+        "label": "Last WATI Error",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "custom_visit_status",
+        "label": "Visit Status",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_status_updated_by_employee",
+        "label": "Status Updated By (Employee)",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "custom_status_updated_by_name",
+        "label": "Status Updated By (Name)",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_status_updated_on",
+        "label": "Status Updated On",
+        "fieldtype": "Datetime"
+      },
+      {
+        "fieldname": "custom_status_updated_by_user",
+        "label": "Status Updated By (Login)",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "custom_cc_details_section",
+        "label": "Call Centre Details",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_cc_stage",
+        "label": "CC Stage",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_cc_sub_status",
+        "label": "CC Sub Status",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_next_followup_date",
+        "label": "Next Followup Date",
+        "fieldtype": "Datetime"
+      },
+      {
+        "fieldname": "custom_pipeline_date_and_time",
+        "label": "Pipeline Date and Time",
+        "fieldtype": "Datetime"
+      },
+      {
+        "fieldname": "custom_cc_col_break_1",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_call_count",
+        "label": "Call Count",
+        "fieldtype": "Int"
+      },
+      {
+        "fieldname": "custom_last_call_time",
+        "label": "Last Call Time",
+        "fieldtype": "Datetime"
+      },
+      {
+        "fieldname": "custom_conclusion_remark",
+        "label": "Conclusion Remark",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "custom_health_profile_section",
+        "label": "Health Profile (CC)",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_bmi",
+        "label": "BMI",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_target_weight",
+        "label": "Target Weight Loss (kg)",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_previous_attempts",
+        "label": "Previous Weight-Loss Attempts",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "custom_cc_col_break_2",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_current_medication",
+        "label": "Current Medication",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "custom_hospitalized",
+        "label": "Hospitalized Recently",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_personal_profile_section",
+        "label": "Personal Profile (CC)",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_marital_status",
+        "label": "Marital Status",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_married_years",
+        "label": "Years Married",
+        "fieldtype": "Int"
+      },
+      {
+        "fieldname": "custom_cc_col_break_3",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_no_of_kids",
+        "label": "No. of Kids",
+        "fieldtype": "Int"
+      },
+      {
+        "fieldname": "custom_delivery_type",
+        "label": "Delivery Type",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_breastfeeding",
+        "label": "Breastfeeding",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_section_break_saohi",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "customer",
+        "label": "From Customer",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "type",
+        "label": "Lead Type",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "request_type",
+        "label": "Request Type",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "contact_info_tab",
+        "label": "",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "priority",
+        "label": "Priority",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "prefer_call_time_",
+        "label": "Prefer Time ",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_utm_device",
+        "label": "utm_device",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_column_break_n1v8n",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "category",
+        "label": "Category",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "consultant",
+        "label": "Concern",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "custom_treatment_interests",
+        "label": "Treatment Interests",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "custom_specific_interests",
+        "label": "Specific Interests",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "lead_assign_to_branch",
+        "label": "Lead Assign To Branch",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "column_break_wh97e",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "height",
+        "label": "Height",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "weight",
+        "label": "Weight",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "medical_history",
+        "label": "Medical History",
+        "fieldtype": "Small Text"
+      },
+      {
+        "fieldname": "custom_section_break_wwsgq",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_meta_deatils",
+        "label": "Meta Deatils",
+        "fieldtype": "Heading"
+      },
+      {
+        "fieldname": "custom_section_break_eccno",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_column_break_spjtv",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "custom_campaignaudience",
+        "label": "Campaign+Audience",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_section_break_arxzt",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "email_id",
+        "label": "Email",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "client_location",
+        "label": "Client Location",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "column_break_20",
+        "label": "",
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "website",
+        "label": "Website",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "whatsapp_no",
+        "label": "Whatsapp number",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "column_break_16",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "state",
+        "label": "State/Province",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "phone_ext",
+        "label": "Phone Ext.",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_section_break_1xaqm",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_therapy_history_table",
+        "label": "Therapy History Table",
+        "fieldtype": "Heading"
+      },
+      {
+        "fieldname": "custom_therapy_history",
+        "label": "Therapy History",
+        "fieldtype": "Table"
+      },
+      {
+        "fieldname": "custom_section_break_oe7py",
+        "label": null,
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_sales_history_table",
+        "label": "Sales History Table",
+        "fieldtype": "Heading"
+      },
+      {
+        "fieldname": "custom_sales_history",
+        "label": "Sales History",
+        "fieldtype": "Table"
+      },
+      {
+        "fieldname": "custom_followups_team",
+        "label": "Followups Team",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "custom_followups_callcenter",
+        "label": "Followups Callcenter",
+        "fieldtype": "Table"
+      },
+      {
+        "fieldname": "organization_section",
+        "label": "Organization",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "company_name",
+        "label": "Organization Name",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "no_of_employees",
+        "label": "No of Employees",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "column_break_28",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "annual_revenue",
+        "label": "Annual Revenue",
+        "fieldtype": "Currency"
+      },
+      {
+        "fieldname": "industry",
+        "label": "Industry",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "market_segment",
+        "label": "Market Segment",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "column_break_31",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "territory",
+        "label": "Territory",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "fax",
+        "label": "Fax",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "address_section",
+        "label": "",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "address_html",
+        "label": "Address HTML",
+        "fieldtype": "HTML"
+      },
+      {
+        "fieldname": "column_break_38",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "country",
+        "label": "Country",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "column_break2",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "contact_html",
+        "label": "Contact HTML",
+        "fieldtype": "HTML"
+      },
+      {
+        "fieldname": "qualification_tab",
+        "label": "Qualification",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "qualification_status",
+        "label": "Qualification Status",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "column_break_64",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "qualified_by",
+        "label": "Qualified By",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "qualified_on",
+        "label": "Qualified on",
+        "fieldtype": "Date"
+      },
+      {
+        "fieldname": "other_info_tab",
+        "label": "Additional Information",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "campaign_name",
+        "label": "Campaign Name",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "company",
+        "label": "Company",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "column_break_22",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "language",
+        "label": "Print Language",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "image",
+        "label": "Image",
+        "fieldtype": "Attach Image"
+      },
+      {
+        "fieldname": "title",
+        "label": "Title",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "column_break_50",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "disabled",
+        "label": "Disabled",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "unsubscribed",
+        "label": "Unsubscribed",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "blog_subscriber",
+        "label": "Blog Subscriber",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "activities_tab",
+        "label": "Activities",
+        "fieldtype": "Tab Break"
+      },
+      {
+        "fieldname": "open_activities_html",
+        "label": "Open Activities HTML",
+        "fieldtype": "HTML"
+      },
+      {
+        "fieldname": "all_activities_section",
+        "label": "All Activities",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "all_activities_html",
+        "label": "All Activities HTML",
+        "fieldtype": "HTML"
+      },
+      {
+        "fieldname": "notes_tab",
+        "label": "Notes",
+        "fieldtype": "Tab Break"
+      },
+      {
+        "fieldname": "notes_html",
+        "label": "Notes HTML",
+        "fieldtype": "HTML"
+      },
+      {
+        "fieldname": "notes",
+        "label": "Notes",
+        "fieldtype": "Table"
+      },
+      {
+        "fieldname": "dashboard_tab",
+        "label": "Connections",
+        "fieldtype": "Tab Break"
+      },
+      {
+        "fieldname": "custom_appointment",
+        "label": "Appointment",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "col_break123",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "followup",
+        "label": "Followup",
+        "fieldtype": "Table"
+      }
+    ],
+    "Patient Appointment": [
+      {
+        "fieldname": "custom_report_followup_owner",
+        "label": "Report follow-up owner",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_report_outcome_at",
+        "label": "Report outcome saved at",
+        "fieldtype": "Datetime"
+      },
+      {
+        "fieldname": "custom_report_consultant",
+        "label": "Report consultant",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "custom_life_move_history",
+        "label": "Reschedule History",
+        "fieldtype": "Table"
+      },
+      {
+        "fieldname": "custom_report_followup",
+        "label": "Report next follow-up",
+        "fieldtype": "Datetime"
+      },
+      {
+        "fieldname": "custom_report_source",
+        "label": "Report visit source",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "custom_report_reason",
+        "label": "Report not-booked reason",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "naming_series",
+        "label": "Series",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "title",
+        "label": "Title",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "status",
+        "label": "Status",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "call_back_status",
+        "label": "Confirmation Status",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "appointment_type",
+        "label": "Appointment Type",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "appointment_for",
+        "label": "Appointment For",
+        "fieldtype": "Select"
+      },
+      {
+        "fieldname": "column_break_1",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "company",
+        "label": "Company",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "practitioner",
+        "label": "Healthcare Practitioner",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "practitioner_name",
+        "label": "Practitioner Name",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "service_room",
+        "label": "Service Room",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "department",
+        "label": "Department",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "service_unit",
+        "label": "Service Unit",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "concern",
+        "label": "Concern",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "branch",
+        "label": "Branch",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "appointment_date",
+        "label": "Date",
+        "fieldtype": "Date"
+      },
+      {
+        "fieldname": "section_patient_details",
+        "label": "Patient Details",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "patient",
+        "label": "Patient",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "patient_name",
+        "label": "Client Name",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "inpatient_record",
+        "label": "Inpatient Record",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "therapy_plan_1",
+        "label": "Therapy Plan",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "therapy_type1",
+        "label": "Therapy Type",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "column_break_4pp7",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "patient_sex",
+        "label": "Gender",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "patient_age",
+        "label": "Client Age",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "custom_client_mobile_no",
+        "label": "Client Mobile No.",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "section_break_12",
+        "label": "Appointment Details",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "duration",
+        "label": "Duration (In Minutes)",
+        "fieldtype": "Int"
+      },
+      {
+        "fieldname": "reference_doctype",
+        "label": "Reference Doctype",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "reference_docname",
+        "label": "Reference Docname",
+        "fieldtype": "Dynamic Link"
+      },
+      {
+        "fieldname": "service_request",
+        "label": "Service Request",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "procedure_template",
+        "label": "Clinical Procedure Template",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "get_procedure_from_encounter",
+        "label": "Get Prescribed Clinical Procedures",
+        "fieldtype": "Button"
+      },
+      {
+        "fieldname": "procedure_prescription",
+        "label": "Procedure Prescription",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "therapy_plan",
+        "label": "Therapy Plan",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "therapy_type",
+        "label": "Therapy",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "get_prescribed_therapies",
+        "label": "Get Prescribed Therapies",
+        "fieldtype": "Button"
+      },
+      {
+        "fieldname": "column_break_17",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "appointment_time",
+        "label": "Time",
+        "fieldtype": "Time"
+      },
+      {
+        "fieldname": "custom_duration_time",
+        "label": "End Time",
+        "fieldtype": "Time"
+      },
+      {
+        "fieldname": "appointment_datetime",
+        "label": "Appointment Datetime",
+        "fieldtype": "Datetime"
+      },
+      {
+        "fieldname": "add_video_conferencing",
+        "label": "Add Video Conferencing",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "event",
+        "label": "Event",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "google_meet_link",
+        "label": "Google Meet Link",
+        "fieldtype": "Data"
+      },
+      {
+        "fieldname": "section_break_16",
+        "label": "Payments",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "mode_of_payment",
+        "label": "Mode of Payment",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "billing_item",
+        "label": "Billing Item",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "invoiced",
+        "label": "Invoiced",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "column_break_2",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "paid_amount",
+        "label": "Paid Amount",
+        "fieldtype": "Currency"
+      },
+      {
+        "fieldname": "ref_sales_invoice",
+        "label": "Reference Sales Invoice",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "section_break_3",
+        "label": "More Info",
+        "fieldtype": "Section Break"
+      },
+      {
+        "fieldname": "referring_practitioner",
+        "label": "Referring Practitioner",
+        "fieldtype": "Link"
+      },
+      {
+        "fieldname": "position_in_queue",
+        "label": "Position In Queue",
+        "fieldtype": "Int"
+      },
+      {
+        "fieldname": "appointment_based_on_check_in",
+        "label": "Appointment Based On Check In",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "reminded",
+        "label": "Reminded",
+        "fieldtype": "Check"
+      },
+      {
+        "fieldname": "column_break_36",
+        "label": null,
+        "fieldtype": "Column Break"
+      },
+      {
+        "fieldname": "notes",
+        "label": "Notes",
+        "fieldtype": "Small Text"
+      }
+    ],
+    "Unjoined Client Form": [
+      {
+        "fieldname": "client_full_name",
+        "label": "Client Full Name",
+        "fieldtype": "Data",
+        "options": null,
+        "reqd": 0,
+        "read_only": 0,
+        "hidden": 0,
+        "default": null,
+        "description": null
+      },
+      {
+        "fieldname": "client_name",
+        "label": "Client Name",
+        "fieldtype": "Data",
+        "options": null,
+        "reqd": 1,
+        "read_only": 0,
+        "hidden": 0,
+        "default": null,
+        "description": null
+      },
+      {
+        "fieldname": "treatment",
+        "label": "Treatment",
+        "fieldtype": "Data",
+        "options": "",
+        "reqd": 0,
+        "read_only": 0,
+        "hidden": 0,
+        "default": null,
+        "description": null
+      },
+      {
+        "fieldname": "branch",
+        "label": "Branch",
+        "fieldtype": "Link",
+        "options": "Branch",
+        "reqd": 1,
+        "read_only": 0,
+        "hidden": 0,
+        "default": null,
+        "description": null
+      },
+      {
+        "fieldname": "remarks",
+        "label": "Remarks",
+        "fieldtype": "Small Text",
+        "options": null,
+        "reqd": 0,
+        "read_only": 0,
+        "hidden": 0,
+        "default": null,
+        "description": null
+      },
+      {
+        "fieldname": "column_break_sayd",
+        "label": null,
+        "fieldtype": "Column Break",
+        "options": null,
+        "reqd": 0,
+        "read_only": 0,
+        "hidden": 0,
+        "default": null,
+        "description": null
+      },
+      {
+        "fieldname": "contact_number",
+        "label": "Contact Number",
+        "fieldtype": "Data",
+        "options": null,
+        "reqd": 1,
+        "read_only": 0,
+        "hidden": 0,
+        "default": null,
+        "description": null
+      },
+      {
+        "fieldname": "follow_up",
+        "label": "Follow Up",
+        "fieldtype": "Select",
+        "options": "\nNew Visit\nOld Visit",
+        "reqd": 0,
+        "read_only": 0,
+        "hidden": 0,
+        "default": null,
+        "description": null
+      },
+      {
+        "fieldname": "visited_date",
+        "label": "Visited Date",
+        "fieldtype": "Date",
+        "options": null,
+        "reqd": 0,
+        "read_only": 0,
+        "hidden": 0,
+        "default": null,
+        "description": null
+      },
+      {
+        "fieldname": "time",
+        "label": "Time",
+        "fieldtype": "Time",
+        "options": null,
+        "reqd": 0,
+        "read_only": 0,
+        "hidden": 0,
+        "default": null,
+        "description": null
+      },
+      {
+        "fieldname": "calling_date",
+        "label": "Calling Date",
+        "fieldtype": "Date",
+        "options": null,
+        "reqd": 0,
+        "read_only": 0,
+        "hidden": 0,
+        "default": null,
+        "description": null
+      },
+      {
+        "fieldname": "status",
+        "label": "Status",
+        "fieldtype": "Select",
+        "options": "\nCall Connected\nFollow Up Scheduled\nNo Response\nSwitch Off\nInvalid Number\nDropped / Discontinued",
+        "reqd": 0,
+        "read_only": 0,
+        "hidden": 0,
+        "default": null,
+        "description": null
+      },
+      {
+        "fieldname": "next_follow_up_scheduled_date",
+        "label": "Next Follow Up Scheduled Date",
+        "fieldtype": "Date",
+        "options": null,
+        "reqd": 0,
+        "read_only": 0,
+        "hidden": 0,
+        "default": null,
+        "description": null
+      },
+      {
+        "fieldname": "custom_client_photo_attach",
+        "label": "Client Photo",
+        "fieldtype": "Attach Image"
+      },
+      {
+        "fieldname": "custom_not_booked_reason",
+        "label": "Not Booked Reason",
+        "fieldtype": "Select",
+        "options": "\nPrice\nNeeds to consult family\nWants to think\nTreatment not suitable\nComparing other clinic\nOnly enquiry\nOther",
+        "reqd": 0
+      }
+    ]
+  },
+  "sections": [
+    {
+      "key": "forms",
+      "title": "Follow-up Register",
+      "dt": "Unjoined Client Form",
+      "date": "visited_date",
+      "dateLabel": "Visited date",
+      "branch": "branch",
+      "name": "client_name",
+      "mobile": "contact_number",
+      "category": "treatment",
+      "status": "status",
+      "base": [],
+      "fields": [
+        "name",
+        "creation",
+        "client_name",
+        "client_full_name",
+        "contact_number",
+        "branch",
+        "treatment",
+        "remarks",
+        "status",
+        "visited_date",
+        "calling_date",
+        "follow_up",
+        "next_follow_up_scheduled_date",
+        "custom_client_photo_attach",
+        "custom_not_booked_reason"
+      ]
+    },
+    {
+      "key": "clients",
+      "title": "1. Unjoined Clients",
+      "dt": "Patient",
+      "date": "custom_joining_date",
+      "dateLabel": "Joining date",
+      "branch": "custom_branch",
+      "name": "patient_name",
+      "mobile": "mobile",
+      "category": "custom_client_visited_for_",
+      "status": "custom_final_decision",
+      "base": [
+        [
+          "custom_final_decision",
+          "=",
+          "Not-Booked"
+        ]
+      ],
+      "fields": [
+        "name",
+        "creation",
+        "custom_joining_date",
+        "patient_name",
+        "mobile",
+        "phone",
+        "custom_branch",
+        "branch_name",
+        "custom_client_visited_for_",
+        "custom_final_decision",
+        "custom_pd_form_number",
+        "custom_remarks",
+        "custom_lead",
+        "custom_client_photo_attach",
+        "image"
+      ]
+    },
+    {
+      "key": "leads",
+      "title": "2. Visited but Not Booked Leads",
+      "dt": "Lead",
+      "date": "custom_status_updated_date",
+      "dateLabel": "Status updated date",
+      "branch": "branch",
+      "name": "lead_name",
+      "mobile": "mobile_no",
+      "category": "category",
+      "status": "custom_appointment_status",
+      "base": [
+        [
+          "custom_appointment_status",
+          "=",
+          "Visited Not Booked"
+        ]
+      ],
+      "fields": [
+        "name",
+        "creation",
+        "custom_status_updated_date",
+        "custom_appointment_date_and_time",
+        "lead_name",
+        "mobile_no",
+        "phone",
+        "branch",
+        "category",
+        "source",
+        "status",
+        "custom_appointment_status",
+        "custom_remarks",
+        "custom_next_followup_date",
+        "image"
+      ]
+    },
+    {
+      "key": "pending",
+      "title": "3. Appointment Booked but Not Visited — Leads",
+      "dt": "Lead",
+      "date": "custom_appointment_date_and_time",
+      "dateLabel": "Appointment date / time",
+      "branch": "branch",
+      "name": "lead_name",
+      "mobile": "mobile_no",
+      "category": "category",
+      "status": "custom_appointment_status",
+      "base": [
+        [
+          "custom_appointment_status",
+          "in",
+          [
+            "Booked",
+            "Not Visited"
+          ]
+        ],
+        [
+          "custom_visit_status",
+          "not in",
+          [
+            "Visited",
+            "Cancelled"
+          ]
+        ],
+        [
+          "status",
+          "not in",
+          [
+            "Joined",
+            "Converted",
+            "Existing client"
+          ]
+        ]
+      ],
+      "fields": [
+        "name",
+        "creation",
+        "lead_name",
+        "mobile_no",
+        "phone",
+        "branch",
+        "category",
+        "source",
+        "status",
+        "custom_appointment_status",
+        "custom_visit_status",
+        "custom_appointment_date_and_time",
+        "custom_remarks",
+        "image"
+      ]
+    },
+    {
+      "key": "appointments",
+      "title": "4. Booked but Not Visited — Client Appointments",
+      "dt": "Patient Appointment",
+      "date": "appointment_date",
+      "dateLabel": "Appointment date",
+      "branch": "branch",
+      "name": "patient_name",
+      "mobile": "custom_client_mobile_no",
+      "category": "appointment_type",
+      "status": "status",
+      "base": [
+        [
+          "status",
+          "in",
+          [
+            "Scheduled",
+            "Open",
+            "Confirmed",
+            "No Show"
+          ]
+        ]
+      ],
+      "fields": [
+        "name",
+        "creation",
+        "patient",
+        "patient_name",
+        "custom_client_mobile_no",
+        "branch",
+        "appointment_date",
+        "appointment_time",
+        "appointment_type",
+        "status",
+        "practitioner_name",
+        "notes"
+      ]
+    }
+  ],
+  "followFields": [
+    {
+      "fieldname": "client_name",
+      "label": "Client Name",
+      "fieldtype": "Data",
+      "options": null,
+      "reqd": 1,
+      "read_only": 0,
+      "hidden": 0,
+      "default": null,
+      "description": null
+    },
+    {
+      "fieldname": "treatment",
+      "label": "Treatment",
+      "fieldtype": "Data",
+      "options": "",
+      "reqd": 0,
+      "read_only": 0,
+      "hidden": 0,
+      "default": null,
+      "description": null
+    },
+    {
+      "fieldname": "branch",
+      "label": "Branch",
+      "fieldtype": "Link",
+      "options": "Branch",
+      "reqd": 1,
+      "read_only": 0,
+      "hidden": 0,
+      "default": null,
+      "description": null
+    },
+    {
+      "fieldname": "remarks",
+      "label": "Remarks",
+      "fieldtype": "Small Text",
+      "options": null,
+      "reqd": 0,
+      "read_only": 0,
+      "hidden": 0,
+      "default": null,
+      "description": null
+    },
+    {
+      "fieldname": "contact_number",
+      "label": "Contact Number",
+      "fieldtype": "Data",
+      "options": null,
+      "reqd": 1,
+      "read_only": 0,
+      "hidden": 0,
+      "default": null,
+      "description": null
+    },
+    {
+      "fieldname": "follow_up",
+      "label": "Follow Up",
+      "fieldtype": "Select",
+      "options": "\nNew Visit\nOld Visit",
+      "reqd": 0,
+      "read_only": 0,
+      "hidden": 0,
+      "default": null,
+      "description": null
+    },
+    {
+      "fieldname": "visited_date",
+      "label": "Visited Date",
+      "fieldtype": "Date",
+      "options": null,
+      "reqd": 0,
+      "read_only": 0,
+      "hidden": 0,
+      "default": null,
+      "description": null
+    },
+    {
+      "fieldname": "time",
+      "label": "Time",
+      "fieldtype": "Time",
+      "options": null,
+      "reqd": 0,
+      "read_only": 0,
+      "hidden": 0,
+      "default": null,
+      "description": null
+    },
+    {
+      "fieldname": "calling_date",
+      "label": "Calling Date",
+      "fieldtype": "Date",
+      "options": null,
+      "reqd": 0,
+      "read_only": 0,
+      "hidden": 0,
+      "default": null,
+      "description": null
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "\nCall Connected\nFollow Up Scheduled\nNo Response\nSwitch Off\nInvalid Number\nDropped / Discontinued",
+      "reqd": 0,
+      "read_only": 0,
+      "hidden": 0,
+      "default": null,
+      "description": null
+    },
+    {
+      "fieldname": "next_follow_up_scheduled_date",
+      "label": "Next Follow Up Scheduled Date",
+      "fieldtype": "Date",
+      "options": null,
+      "reqd": 0,
+      "read_only": 0,
+      "hidden": 0,
+      "default": null,
+      "description": null
+    },
+    {
+      "fieldname": "custom_not_booked_reason",
+      "label": "Not Booked Reason",
+      "fieldtype": "Select",
+      "options": "\nPrice\nNeeds to consult family\nWants to think\nTreatment not suitable\nComparing other clinic\nOnly enquiry\nOther",
+      "reqd": 0
+    }
+  ]
+}

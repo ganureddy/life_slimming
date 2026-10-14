@@ -31,7 +31,7 @@ def run(**kwargs):
     #   and the conversion rate were simply wrong with no warning. The response is
     #   now an object: {"rows": [...], "total": N, "truncated": 0/1} so the UI can
     #   warn when a range is still too large.
-    # All users with an allowed CC dashboard role can see the full lead list.
+    # Agents see their own date-based list; search can find any lead.
     # The role check below remains enforced server-side.
     # Replaces every frappe.client.get_list on Lead in the CC dashboard.
     # Runs with ignore_permissions (frappe.get_all), so it keeps working
@@ -56,7 +56,9 @@ def run(**kwargs):
     if not has_access:
         frappe.throw("Not permitted")
 
-    can_view_all_leads = True
+    can_view_all_leads = user == "Administrator" or any(
+        role in user_roles for role in ["System Manager", "Sales Manager", "Call Center Export"]
+    )
 
     # LEAD_FIELDS = [
     #     "name", "lead_name", "first_name", "mobile_no", "phone", "age", "gender", "city", "branch",
@@ -92,12 +94,11 @@ def run(**kwargs):
     if query:
         if len(query) < 2:
             frappe.throw("Enter at least two characters")
-        scoped = [] if can_view_all_leads else [["lead_owner", "=", user]]
         pattern = "%" + query.replace("%", "").replace("_", "") + "%"
-        rows = frappe.get_all("Lead", fields=LEAD_FIELDS, filters=scoped,
+        rows = frappe.get_all("Lead", fields=LEAD_FIELDS, filters=[],
             or_filters=[["lead_name", "like", pattern], ["name", "like", pattern], ["mobile_no", "like", pattern], ["phone", "like", pattern], ["custom_remarks", "like", pattern]],
             order_by="modified desc", limit_start=int(frappe.form_dict.get("start") or 0), limit_page_length=21)
-        frappe.response["message"] = {"rows": rows[:20], "more": len(rows) > 20, "contact_manager": contact_manager, "scoped_to_owner": 0 if can_view_all_leads else 1}
+        frappe.response["message"] = {"rows": rows[:20], "more": len(rows) > 20, "contact_manager": contact_manager, "scoped_to_owner": 0}
     elif phone:
         digits = ""
         for ch in phone:
@@ -107,8 +108,6 @@ def run(**kwargs):
         if len(digits) < 5:
             frappe.throw("Phone search needs at least 5 digits")
         phone_filters = []
-        if not can_view_all_leads:
-            phone_filters.append(["lead_owner", "=", user])
         rows = frappe.get_all(
             "Lead",
             fields=LEAD_FIELDS,
@@ -121,7 +120,7 @@ def run(**kwargs):
             limit_page_length=10
         )
         frappe.response["message"] = {"rows": rows, "total": len(rows), "truncated": 0,
-                                     "scoped_to_owner": 0 if can_view_all_leads else 1}
+                                     "scoped_to_owner": 0}
     else:
         from_date = frappe.form_dict.get("from_date")
         to_date = frappe.form_dict.get("to_date")
@@ -176,6 +175,15 @@ def run(**kwargs):
             "scoped_to_owner": 0 if can_view_all_leads else 1
         }
     frappe.response["message"]["contact_manager"] = contact_manager
+    result_rows = frappe.response["message"].get("rows") or []
+    owners = sorted({row.get("lead_owner") for row in result_rows if row.get("lead_owner")})
+    owner_names = {
+        row.name: row.full_name or row.name
+        for row in frappe.get_all("User", filters={"name": ["in", owners]},
+                                  fields=["name", "full_name"], limit_page_length=0)
+    } if owners else {}
+    for row in result_rows:
+        row["lead_owner_name"] = owner_names.get(row.get("lead_owner"), row.get("lead_owner") or "Unassigned")
 
     if query and frappe.form_dict.get("detail"):
         for item in frappe.response["message"].get("rows") or []:

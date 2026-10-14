@@ -22,10 +22,13 @@ def snapshot():
         raise frappe.PermissionError('CC access is required.')
     scoped = user != 'Administrator' and not roles.intersection(managers)
     now = now_datetime()
-    month = str(now.date().replace(day=1))
+    month_start = now.date().replace(day=6)
+    if now.day < 6:
+        month_start = (month_start.replace(day=1) - timedelta(days=1)).replace(day=6)
+    month_end = (month_start.replace(day=28) + timedelta(days=4)).replace(day=6)
     week_start = now.date() - timedelta(days=now.weekday())
     week_end = week_start + timedelta(days=7)
-    since = min(month, str(week_start))
+    since = str(min(month_start, week_start))
     fields = ['name', 'lead_name', 'lead_owner', 'creation', 'modified',
               'branch', 'lead_assign_to_branch', 'source', 'enquired_for',
               'custom_appointment_date_and_time', 'custom_appointment_status',
@@ -41,8 +44,12 @@ def snapshot():
                     ['custom_appointment_date_and_time', '>=', since]],
         order_by='creation asc, name asc', limit_page_length=0)
     owners = sorted({row.lead_owner for row in rows if row.get('lead_owner')})
-    agents = {owner: frappe.get_cached_value('User', owner, 'full_name') or owner for owner in owners}
-    agent_images = {owner: frappe.get_cached_value('User', owner, 'user_image') or '' for owner in owners}
+    # Read enabled state on every poll so disabling a user takes effect immediately.
+    users = frappe.get_all('User', filters={'name': ['in', owners], 'enabled': 1},
+        fields=['name', 'full_name', 'user_image'], limit_page_length=0) if owners else []
+    agents = {user.name: user.full_name or user.name for user in users}
+    agent_images = {user.name: user.user_image or '' for user in users}
     return dict(rows=rows, agents=agents, agent_images=agent_images, today=str(now.date()),
+                month_start=str(month_start), month_end=str(month_end),
                 week_start=str(week_start), week_end=str(week_end),
                 timestamp=str(now), timezone=get_system_timezone(), restricted_to_owner=bool(scoped))

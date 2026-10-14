@@ -11,15 +11,19 @@ export function leaderboard(data) {
   const agents = new Map();
   for (const row of data.rows) {
     const id = row.lead_owner || 'unassigned';
-    if (!agents.has(id)) agents.set(id, { id, name: data.agents[id] || 'Unassigned', branch: '', today: {leads:0,booked:0,walkins:0,visitedBooked:0}, month: {leads:0,booked:0,walkins:0,visitedBooked:0}, week: {walkins:0} });
+    if (!agents.has(id)) agents.set(id, { id, enabled: Object.hasOwn(data.agents, id), name: data.agents[id] || 'Unassigned', branch: '', today: {leads:0,booked:0,walkins:0,visitedBooked:0}, month: {leads:0,booked:0,walkins:0,visitedBooked:0}, week: {walkins:0} });
     const agent = agents.get(id);
     const branch = row.branch || row.lead_assign_to_branch;
     if (branch) agent.branch = agent.branch && agent.branch !== branch ? 'Multiple branches' : branch;
     const appointmentDay = String(row.custom_appointment_date_and_time || '').slice(0,10);
     if (data.week_start && appointmentDay >= data.week_start && appointmentDay < data.week_end && visited(row)) agent.week.walkins++;
-    for (const [period, prefix] of [['today', data.today], ['month', data.today.slice(0,7)]]) {
-      if (String(row.creation).startsWith(prefix)) agent[period].leads++;
-      if (String(row.custom_appointment_date_and_time || '').startsWith(prefix)) {
+    for (const period of ['today', 'month']) {
+      const inPeriod = value => {
+        const day = String(value || '').slice(0,10);
+        return period === 'today' ? day === data.today : day >= data.month_start && day < data.month_end;
+      };
+      if (inPeriod(row.creation)) agent[period].leads++;
+      if (inPeriod(row.custom_appointment_date_and_time)) {
         if (booked(row)) agent[period].booked++;
         if (visited(row)) agent[period].walkins++;
         if (visitStatus(row) === 'Visited-BKD') agent[period].visitedBooked++;
@@ -28,7 +32,7 @@ export function leaderboard(data) {
   }
   return [...agents.values()];
 }
-export const sortedAgents = (agents, period) => agents.filter(a => a.id !== 'unassigned').slice().sort((a,b) => b[period].walkins-a[period].walkins || (b[period].visitedBooked || 0)-(a[period].visitedBooked || 0) || (b[period].booked || 0)-(a[period].booked || 0) || (b[period].leads || 0)-(a[period].leads || 0) || a.id.localeCompare(b.id));
+export const sortedAgents = (agents, period) => agents.filter(a => a.id !== 'unassigned' && a.enabled !== false).slice().sort((a,b) => b[period].walkins-a[period].walkins || (b[period].visitedBooked || 0)-(a[period].visitedBooked || 0) || (b[period].booked || 0)-(a[period].booked || 0) || (b[period].leads || 0)-(a[period].leads || 0) || a.id.localeCompare(b.id));
 export const rank = (agents, period) => sortedAgents(agents, period).filter(a => Object.values(a[period]).some(Boolean)).slice(0,3);
 export const WEEKLY_TARGET = 35 / 4;
 export function highlights(agents) {
@@ -60,6 +64,7 @@ export function changes(previous, data) {
   const old = new Map(previous.rows.map(row => [row.name, row]));
   const events = [];
   for (const row of data.rows) {
+    if (row.lead_owner && !Object.hasOwn(data.agents, row.lead_owner)) continue;
     const before = old.get(row.name);
     const types = [];
     if (!before && row.creation > previous.timestamp) types.push('lead');
@@ -69,7 +74,7 @@ export function changes(previous, data) {
       if (booked(row)) types.push('booked');
       if (visited(row)) types.push('walkin');
     }
-    for (const type of types) events.push({id: `${row.name}:${type}:${row.modified}`, type, client: row.lead_name || row.name, agent: data.agents[row.lead_owner] || 'Unassigned', branch: row.branch || row.lead_assign_to_branch || '', source: row.source || '', treatment: row.enquired_for || '', time: row.modified});
+    for (const type of types) events.push({id: `${row.name}:${type}:${row.modified}`, type, client: row.lead_name || row.name, agentId: row.lead_owner, agent: data.agents[row.lead_owner] || 'Unassigned', branch: row.branch || row.lead_assign_to_branch || '', source: row.source || '', treatment: row.enquired_for || '', time: row.modified});
   }
   return events.sort((a,b) => a.time.localeCompare(b.time));
 }
