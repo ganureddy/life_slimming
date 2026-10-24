@@ -2,7 +2,9 @@
 const WebSocket = require('../node_modules/ws');
 const assert = require('node:assert/strict');
 (async()=>{
- const target=await(await fetch('http://127.0.0.1:9225/json/new?about:blank',{method:'PUT'})).json();
+ const endpoint=process.env.PORTAL_BROWSER_URL||'http://127.0.0.1:9230';
+ const previewBase=process.env.PORTAL_PREVIEW_URL||'http://127.0.0.1:5178';
+ const target=await(await fetch(endpoint+'/json/new?about:blank',{method:'PUT'})).json();
  const ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise(r=>ws.on('open',r));
  let olderPaid=false;
  let id=0,docstatus=0,outstanding=1050,registered=false,approved=false,rejected=false;const jobs=new Map(),errors=[],calls=[];
@@ -49,11 +51,11 @@ const assert = require('node:assert/strict');
  const screenshot=async name=>{const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});require('node:fs').writeFileSync('/tmp/billing-ui-'+name+'.png',Buffer.from(shot.data,'base64'));};
  const fill=(label,value)=>evaluate(`(()=>{const label=Array.from(document.querySelectorAll('.billing-native label')).find(l=>l.firstChild.textContent.trim()===${JSON.stringify(label)});if(!label)throw Error('Missing label '+${JSON.stringify(label)});const input=label.querySelector('input,select,textarea');input.value=${JSON.stringify(String(value))};input.dispatchEvent(new Event(input.tagName==='SELECT'?'change':'input',{bubbles:true}));})()`);
  try{
-  await send('Page.enable');await send('Runtime.enable');await send('Fetch.enable',{patterns:[{urlPattern:'http://127.0.0.1:5175/api/*'}]});
+  await send('Page.enable');await send('Runtime.enable');await send('Fetch.enable',{patterns:[{urlPattern:previewBase+'/api/*'}]});
   for(const width of [1440,390]){
    docstatus=0;outstanding=1050;approved=false;rejected=false;registered=false;calls.length=0;
    await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});
-   await send('Page.navigate',{url:'http://127.0.0.1:5175/life_portal/native/billing'});
+   await send('Page.navigate',{url:previewBase+'/life_portal/native/billing'});
    await wait("document.querySelector('nav[aria-label=\"Billing views\"]') && document.querySelector('.billing-native select option')");
    await wait("document.querySelectorAll('.billing-overview .billing-kpi').length===4");
    assert.ok(await evaluate("document.querySelector('.billing-hero') && document.querySelector('.billing-empty')"));
@@ -150,7 +152,7 @@ const assert = require('node:assert/strict');
   }
 
   olderPaid=true;
-  await send('Page.navigate',{url:'http://127.0.0.1:5175/life_portal/native/billing'});
+  await send('Page.navigate',{url:previewBase+'/life_portal/native/billing'});
   await wait("document.querySelector('.billing-hero')");await fill('Search clients','Test');await click('Search');
   await wait("document.querySelector('.billing-search-results button')");await evaluate("document.querySelector('.billing-search-results button').click()");
   await click('New bill');
@@ -158,7 +160,7 @@ const assert = require('node:assert/strict');
   assert.ok(await evaluate("Array.from(document.querySelectorAll('label')).find(l=>l.firstChild.textContent.trim()==='Source / Media').querySelector('select').disabled"));
   olderPaid=false;
   docstatus=1;outstanding=1050;
-  await send('Page.navigate',{url:'http://127.0.0.1:5175/life_portal/native/billing?invoice=INV-1'});
+  await send('Page.navigate',{url:previewBase+'/life_portal/native/billing?invoice=INV-1'});
   await wait("document.querySelector('.billing-invoice') && document.querySelector('.billing-invoice').textContent.includes('Submitted')");
   await click('Collect payment');await fill('Mode','Razorpay Software Pvt Ltd -Link');await fill('Amount','1050');
   await click('Payment link + QR');await wait(`document.querySelector('a[href="https://example.invalid/pay"]')?.parentElement.textContent.includes('paid ·')`);
@@ -166,7 +168,7 @@ const assert = require('node:assert/strict');
   await click('Record collection');await wait("document.querySelector('.billing-invoice').textContent.includes('PE-RZ')");
   assert.equal(calls.filter(c=>c.url.includes('collect_payment_v4.run')).length,manualBefore);
   docstatus=0;outstanding=1050;approved=false;rejected=false;
-  await send('Page.navigate',{url:'http://127.0.0.1:5175/life_portal/native/billing?invoice=INV-1'});
+  await send('Page.navigate',{url:previewBase+'/life_portal/native/billing?invoice=INV-1'});
   await wait("document.querySelector('.billing-invoice') && document.querySelector('.billing-invoice').textContent.includes('Pending')");
   await click('Reject discount');await fill('Rejection reason','Incorrect request');await click('Confirm rejection');
   await wait("document.querySelector('.billing-invoice').textContent.includes('Request rejected.')");
@@ -178,7 +180,7 @@ const assert = require('node:assert/strict');
   const l4=calls.find(c=>c.url.includes('create_discount_approval_request.run')).args;assert.equal(l4.requested_final_amount,900);assert.equal(l4.approval_level,'L4');
 
   docstatus=1;outstanding=30000;
-  await send('Page.navigate',{url:'http://127.0.0.1:5175/life_portal/native/billing?invoice=INV-1'});
+  await send('Page.navigate',{url:previewBase+'/life_portal/native/billing?invoice=INV-1'});
   await wait("document.querySelector('.billing-invoice') && document.querySelector('.billing-invoice').textContent.includes('Submitted')");
   await click('Collect payment');await fill('Mode','Carepay');await fill('Amount','30000');await fill('Reference / UTR','LOAN-REF');
   await click('Record collection');await wait("document.querySelector('.billing-invoice').textContent.includes('Loan Aadhaar')");

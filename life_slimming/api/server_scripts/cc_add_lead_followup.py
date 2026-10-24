@@ -38,8 +38,7 @@ def run(**kwargs):
     params = frappe.form_dict
     lead_name = params.get("lead")
 
-    # Match the CC lead APIs: only permitted CC/sales roles may write, and
-    # non-manager agents may only write follow-ups to their own leads.
+    # Authorized portal roles may follow up leads found through global search.
     user = frappe.session.user
     if user == "Guest":
         frappe.throw("Not permitted")
@@ -48,7 +47,7 @@ def run(**kwargs):
         filters={"parent": user, "parenttype": "User"},
         pluck="role"
     )
-    allowed_roles = ["System Manager", "Sales Manager", "Sales User", "Call Center Export"]
+    allowed_roles = ["System Manager", "Sales Manager", "Sales User", "Call Center Export", "Branch Sales Invoice"]
     if not any(role in user_roles for role in allowed_roles):
         frappe.throw("Not permitted")
     manager_roles = ["System Manager", "Sales Manager", "Call Center Export"]
@@ -60,8 +59,6 @@ def run(**kwargs):
         if not frappe.db.exists("Lead", lead_name):
             frappe.response["message"] = {"ok": 0, "error": "Lead not found: " + lead_name}
         else:
-            if not can_manage and frappe.db.get_value("Lead", lead_name, "lead_owner") != user:
-                frappe.throw("Not permitted: this lead is not assigned to you")
             doc = frappe.get_doc("Lead", lead_name)
 
             # ---- parent field updates -------------------------------

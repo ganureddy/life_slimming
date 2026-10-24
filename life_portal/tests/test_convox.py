@@ -267,6 +267,15 @@ class ConvoxTest(unittest.TestCase):
         self.assertEqual(db.sql.call_args.args[1]['agent'],'AGENT1')
         self.assertEqual(all_rows.call_args.kwargs['filters']['agent_id'],'AGENT1')
 
+    def test_saved_history_remains_readable_when_callbacks_disabled(self):
+        self.settings.custom_convox_callbacks_enabled=0
+        db=Mock();db.exists.return_value=True;db.sql.return_value=[]
+        with patch.object(convox,'_require_enabled',return_value=(self.user,self.settings)),patch.object(frappe,'db',db),patch('frappe.get_all',return_value=[]) as all_rows:
+            convox.poll('2026-09-21 10:00:00')
+            convox.history(call_reference='other-reference')
+        self.assertEqual(db.sql.call_args.args[1]['agent'],'AGENT1')
+        self.assertEqual(all_rows.call_args.kwargs['filters']['agent_id'],'AGENT1')
+
     def test_status_callback_preserves_vendor_fields_with_oauth_service_identity(self):
         self.settings.update(custom_convox_callbacks_enabled=1, custom_convox_callback_user='service@example.test')
         frappe.local.session.user = 'service@example.test'

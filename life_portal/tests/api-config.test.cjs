@@ -5,10 +5,11 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const runtime = fs.readFileSync(path.resolve(__dirname, '..', '../life_slimming/public/js/portal_config.js'),'utf8');
 const config = fs.readFileSync(path.resolve(__dirname, '..', 'src/api/config.js'),'utf8').replace(/export /g,'');
-const client = fs.readFileSync(path.resolve(__dirname, '..', 'src/api/http.js'),'utf8').replace(/^import .*;\n/,'').replace(/export /g,'');
+const client = fs.readFileSync(path.resolve(__dirname, '..', 'src/api/http.js'),'utf8').replace(/^import .*;\n/gm,'').replace(/export /g,'');
+const endpoints = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'src/api/endpoints.json'), 'utf8'));
 test('shared API client uses configured domain, credentials and request data', async () => {
  const calls=[];
- const context={window:{},fetch:async (...args)=>{calls.push(args);return {ok:true,json:async()=>({message:'ok'})};}};
+ const context={endpoints,AbortController,setTimeout,clearTimeout,window:{},fetch:async (...args)=>{calls.push(args);return {ok:true,json:async()=>({message:'ok'})};}};
  vm.createContext(context);
  vm.runInContext(runtime.replace('apiBase: ""','apiBase: "https://api.example.test/"')+config+client+';globalThis.request = request;',context);
  await context.request('login',{args:{usr:'fixture'},csrfToken:'test-token'});

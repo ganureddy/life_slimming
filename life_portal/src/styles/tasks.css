@@ -1,0 +1,6041 @@
+/* ============================================================
+   LIFE ERP — TASK MANAGER / TICKET SYSTEM
+   FULL CLEAN CSS REWRITE — LIFE GREEN THEME
+   Color reference: Life Sales Master Data
+   No CSS variable / var() usage
+   ============================================================ */
+
+#life-tt-app,
+.life-tt-app {
+  width: 100%;
+  min-height: 100vh;
+  background: #F3FAF4;
+  color: #152418;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  line-height: 1.45;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#life-tt-app *,
+.life-tt-app * {
+  box-sizing: border-box;
+}
+
+
+
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+
+#life-tt-app .header,
+.life-tt-app .header {
+  /*background: #0F3D1E;*/
+  /*color: #FFFFFF;*/
+  /*padding: 14px 22px;*/
+  /*display: flex;*/
+  /*align-items: center;*/
+  /*justify-content: space-between;*/
+  /*gap: 14px;*/
+  /*flex-wrap: wrap;*/
+  display:none;
+}
+
+#life-tt-app .header .h1,
+.life-tt-app .header .h1 {
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  line-height: 1.25;
+}
+
+#life-tt-app .header .sub,
+.life-tt-app .header .sub {
+  font-size: 10.5px;
+  color: rgba(255,255,255,0.72);
+  margin-top: 3px;
+  font-weight: 600;
+}
+
+#life-tt-app .logged-user-box,
+.life-tt-app .logged-user-box {
+  min-width: 210px;
+  background: #1B5E20;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+#life-tt-app .logged-user-box label,
+.life-tt-app .logged-user-box label {
+  display: block;
+  margin-bottom: 3px;
+  color: rgba(255,255,255,0.68);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+#life-tt-app #logged-in-user-name,
+.life-tt-app #logged-in-user-name {
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+#life-tt-app #logged-in-user-role,
+.life-tt-app #logged-in-user-role {
+  margin-top: 2px;
+  color: rgba(255,255,255,0.72);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+#life-tt-app .gold-bar,
+.life-tt-app .gold-bar {
+  height: 3px;
+  background: #43A047;
+}
+
+/* ============================================================
+   PAGE CONTENT
+   ============================================================ */
+
+#life-tt-app .content,
+.life-tt-app .content {
+  max-width: 1560px;
+  margin: 0 auto;
+  padding: 18px 20px 28px;
+}
+
+/* ============================================================
+   TASK / TICKET MAIN TOGGLE
+   ============================================================ */
+
+#life-tt-app .type-toggle,
+.life-tt-app .type-toggle {
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 8px 0 16px;
+}
+
+#life-tt-app .type-btn,
+.life-tt-app .type-btn {
+  width: 300px;
+  max-width: 100%;
+  min-height: 78px;
+  background: #FFFFFF;
+  border: 2px solid #DCE9DE;
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  text-align: center;
+  transition: 0.18s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+#life-tt-app .type-btn:hover,
+.life-tt-app .type-btn:hover {
+  border-color: #0F3D1E;
+  box-shadow: 0 5px 16px rgba(15,61,30,0.12);
+  transform: translateY(-1px);
+}
+
+#life-tt-app .type-btn.sel,
+.life-tt-app .type-btn.sel {
+  border-color: #43A047;
+  background: #E8F5E9;
+  box-shadow: 0 4px 14px rgba(67,160,71,0.14);
+}
+
+#life-tt-app .type-btn .tt,
+.life-tt-app .type-btn .tt {
+  color: #0F3D1E;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+#life-tt-app .type-btn .ts,
+.life-tt-app .type-btn .ts {
+  margin-top: 4px;
+  color: #5F6F63;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+#life-tt-app .type-btn .cnt,
+.life-tt-app .type-btn .cnt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  margin-left: 6px;
+  padding: 0 7px;
+  border-radius: 20px;
+  background: #C00000;
+  color: #FFFFFF;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+/* ============================================================
+   REFRESH ROW
+   ============================================================ */
+
+#life-tt-app .life-refresh-row,
+.life-tt-app .life-refresh-row {
+  margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+#life-tt-app .life-tab-note,
+.life-tt-app .life-tab-note {
+  flex: 1;
+  min-height: 38px;
+  background: #FFFFFF;
+  border-left: 4px solid #43A047;
+  border-radius: 8px;
+  padding: 9px 13px;
+  color: #0F3D1E;
+  font-size: 11.5px;
+  font-weight: 800;
+  line-height: 1.4;
+  box-shadow: 0 1px 5px rgba(15,61,30,0.08);
+}
+
+#life-tt-app .life-refresh-actions,
+.life-tt-app .life-refresh-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+#life-tt-app .life-refresh-note,
+.life-tt-app .life-refresh-note {
+  color: #5F6F63;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+#life-tt-app .life-refresh-btn,
+.life-tt-app .life-refresh-btn {
+  height: 34px;
+  border: none;
+  border-radius: 7px;
+  background: #0F3D1E;
+  color: #FFFFFF;
+  padding: 0 16px;
+  font-size: 11.5px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+#life-tt-app .life-refresh-btn:hover,
+.life-tt-app .life-refresh-btn:hover {
+  background: #14501F;
+}
+
+#life-tt-app .life-refresh-btn:disabled,
+.life-tt-app .life-refresh-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   SUB NAVIGATION
+   ============================================================ */
+
+#life-tt-app .sub-nav,
+.life-tt-app .sub-nav {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin-bottom: 16px;
+  border-bottom: 2px solid #43A047;
+  overflow-x: auto;
+  background: #FFFFFF;
+  border-radius: 9px 9px 0 0;
+}
+
+#life-tt-app .snav,
+.life-tt-app .snav {
+  min-width: 170px;
+  padding: 12px 16px;
+  text-align: center;
+  color: #52665A;
+  background: #F8FCF8;
+  border-right: 1px solid #DCE9DE;
+  border-bottom: 3px solid transparent;
+  font-size: 11.5px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+  margin-bottom: -2px;
+}
+
+#life-tt-app .snav:last-child,
+.life-tt-app .snav:last-child {
+  border-right: none;
+}
+
+#life-tt-app .snav:hover,
+.life-tt-app .snav:hover {
+  color: #0F3D1E;
+  background: #FFFFFF;
+}
+
+#life-tt-app .snav.on,
+.life-tt-app .snav.on {
+  color: #0F3D1E;
+  background: #FFFFFF;
+  border-bottom-color: #43A047;
+}
+
+/* ============================================================
+   MODULE / SUBPAGE VISIBILITY
+   ============================================================ */
+
+#life-tt-app .module,
+.life-tt-app .module,
+#life-tt-app .subpage,
+.life-tt-app .subpage {
+  display: none;
+}
+
+#life-tt-app .module.on,
+.life-tt-app .module.on,
+#life-tt-app .subpage.on,
+.life-tt-app .subpage.on {
+  display: block;
+}
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+
+#life-tt-app .card,
+.life-tt-app .card {
+  background: #FFFFFF;
+  border: 1px solid #DCE9DE;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(15,61,30,0.06);
+}
+
+#life-tt-app .card-hdr,
+.life-tt-app .card-hdr {
+  min-height: 42px;
+  background: #0F3D1E;
+  color: #FFFFFF;
+  padding: 11px 15px;
+  font-size: 12.5px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#life-tt-app .card-hdr .badge,
+.life-tt-app .card-hdr .badge {
+  background: #43A047;
+  color: #FFFFFF;
+  border-radius: 20px;
+  padding: 2px 9px;
+  font-size: 9.5px;
+  font-weight: 900;
+}
+
+#life-tt-app .card-body,
+.life-tt-app .card-body {
+  padding: 16px;
+}
+
+/* ============================================================
+   FORMS
+   ============================================================ */
+
+#life-tt-app .two-col,
+.life-tt-app .two-col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+#life-tt-app .three-col,
+.life-tt-app .three-col {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+#life-tt-app .field-block,
+.life-tt-app .field-block {
+  margin-bottom: 13px;
+}
+
+#life-tt-app label.lbl,
+.life-tt-app label.lbl {
+  display: block;
+  margin-bottom: 5px;
+  color: #0F3D1E;
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: 0.35px;
+  text-transform: uppercase;
+}
+
+#life-tt-app .required-mark,
+.life-tt-app .required-mark {
+  color: #C00000;
+}
+
+#life-tt-app input[type="text"],
+#life-tt-app input[type="date"],
+#life-tt-app input[type="datetime-local"],
+#life-tt-app input[type="number"],
+#life-tt-app input[type="email"],
+#life-tt-app input[type="tel"],
+#life-tt-app select,
+#life-tt-app textarea,
+.life-tt-app input[type="text"],
+.life-tt-app input[type="date"],
+.life-tt-app input[type="datetime-local"],
+.life-tt-app input[type="number"],
+.life-tt-app input[type="email"],
+.life-tt-app input[type="tel"],
+.life-tt-app select,
+.life-tt-app textarea {
+  width: 100%;
+  border: 1.5px solid #DCE9DE;
+  border-radius: 6px;
+  background: #FFFFFF;
+  color: #152418;
+  font-family: Arial, sans-serif;
+  font-size: 11.5px;
+  outline: none;
+  transition: 0.15s ease;
+}
+
+#life-tt-app input,
+#life-tt-app select,
+.life-tt-app input,
+.life-tt-app select {
+  height: 34px;
+  padding: 6px 9px;
+}
+
+#life-tt-app textarea,
+.life-tt-app textarea {
+  min-height: 76px;
+  padding: 8px 9px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+#life-tt-app input:focus,
+#life-tt-app select:focus,
+#life-tt-app textarea:focus,
+.life-tt-app input:focus,
+.life-tt-app select:focus,
+.life-tt-app textarea:focus {
+  border-color: #0F3D1E;
+  box-shadow: 0 0 0 3px rgba(15,61,30,0.08);
+}
+
+#life-tt-app input:disabled,
+.life-tt-app input:disabled {
+  background: #EEF4EF;
+  color: #52665A;
+  cursor: not-allowed;
+}
+
+#life-tt-app .wordcount,
+.life-tt-app .wordcount,
+#life-tt-app .life-delay-wordcount,
+.life-tt-app .life-delay-wordcount {
+  margin-top: 3px;
+  color: #5F6F63;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-align: right;
+}
+
+#life-tt-app .wordcount.over,
+.life-tt-app .wordcount.over,
+#life-tt-app .life-delay-wordcount.over,
+.life-tt-app .life-delay-wordcount.over {
+  color: #C00000;
+  font-weight: 900;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+#life-tt-app .btn,
+.life-tt-app .btn,
+#life-tt-app .apbtn,
+.life-tt-app .apbtn {
+  border: none;
+  border-radius: 6px;
+  padding: 9px 17px;
+  font-size: 11.5px;
+  font-weight: 900;
+  cursor: pointer;
+  line-height: 1.2;
+  transition: 0.15s ease;
+  text-align: center;
+}
+
+#life-tt-app .btn-sm,
+.life-tt-app .btn-sm {
+  padding: 6px 11px;
+  font-size: 10.5px;
+}
+
+#life-tt-app .btn-n,
+.life-tt-app .btn-n,
+#life-tt-app .apbtn,
+.life-tt-app .apbtn {
+  background: #0F3D1E;
+  color: #FFFFFF;
+}
+
+#life-tt-app .btn-n:hover,
+.life-tt-app .btn-n:hover,
+#life-tt-app .apbtn:hover,
+.life-tt-app .apbtn:hover {
+  background: #14501F;
+}
+
+#life-tt-app .btn-g,
+.life-tt-app .btn-g {
+  background: #2E7D32;
+  color: #FFFFFF;
+}
+
+#life-tt-app .btn-g:hover,
+.life-tt-app .btn-g:hover {
+  background: #14501F;
+}
+
+#life-tt-app .btn-gy,
+.life-tt-app .btn-gy {
+  background: #F0F2F5;
+  color: #52665A;
+  border: 1px solid #CFE1D2;
+}
+
+#life-tt-app .btn-gy:hover,
+.life-tt-app .btn-gy:hover {
+  background: #E8F5E9;
+}
+
+#life-tt-app .btn-info,
+.life-tt-app .btn-info {
+  background: #0F3D1E;
+  color: #FFFFFF;
+  border: 1px solid #0F3D1E;
+}
+
+#life-tt-app .btn-info:hover,
+.life-tt-app .btn-info:hover {
+  background: #14501F;
+}
+
+#life-tt-app .btn-review,
+.life-tt-app .btn-review,
+#life-tt-app .btn-deadline,
+.life-tt-app .btn-deadline {
+  background: #43A047;
+  color: #FFFFFF;
+}
+
+#life-tt-app .btn-review:hover,
+.life-tt-app .btn-review:hover,
+#life-tt-app .btn-deadline:hover,
+.life-tt-app .btn-deadline:hover {
+  background: #946B08;
+}
+
+#life-tt-app .btn-undo,
+.life-tt-app .btn-undo {
+  background: #FFFFFF;
+  color: #0F3D1E;
+  border: 1px solid #0F3D1E;
+}
+
+#life-tt-app .btn-undo:hover,
+.life-tt-app .btn-undo:hover {
+  background: #0F3D1E;
+  color: #FFFFFF;
+}
+
+#life-tt-app .btn:disabled,
+.life-tt-app .btn:disabled,
+#life-tt-app .apbtn:disabled,
+.life-tt-app .apbtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   PRIORITY CHIPS
+   ============================================================ */
+
+#life-tt-app .priority-grp,
+.life-tt-app .priority-grp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#life-tt-app .priority-chip,
+.life-tt-app .priority-chip {
+  min-width: 82px;
+  padding: 8px 14px;
+  border: 1.5px solid #CFE1D2;
+  border-radius: 7px;
+  background: #FFFFFF;
+  color: #35633D;
+  font-size: 11px;
+  font-weight: 900;
+  text-align: center;
+  cursor: pointer;
+}
+
+#life-tt-app .priority-chip[data-p="High"].sel,
+.life-tt-app .priority-chip[data-p="High"].sel {
+  border-color: #C00000;
+  background: #FBE9E7;
+  color: #C00000;
+}
+
+#life-tt-app .priority-chip[data-p="Medium"].sel,
+.life-tt-app .priority-chip[data-p="Medium"].sel {
+  border-color: #C96A00;
+  background: #FFF3E0;
+  color: #C96A00;
+}
+
+#life-tt-app .priority-chip[data-p="Low"].sel,
+.life-tt-app .priority-chip[data-p="Low"].sel {
+  border-color: #2E7D32;
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+/* ============================================================
+   PICKER / USER SEARCH
+   ============================================================ */
+
+#life-tt-app .picker-wrap,
+.life-tt-app .picker-wrap {
+  position: relative;
+}
+
+#life-tt-app .picker-results,
+.life-tt-app .picker-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  display: none;
+  max-height: 230px;
+  overflow-y: auto;
+  margin-top: 4px;
+  background: #FFFFFF;
+  border: 1.5px solid #0F3D1E;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(15,61,30,0.18);
+}
+
+#life-tt-app .picker-results.show,
+.life-tt-app .picker-results.show {
+  display: block;
+}
+
+#life-tt-app .picker-item,
+.life-tt-app .picker-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #EEF4EF;
+  cursor: pointer;
+}
+
+#life-tt-app .picker-item:last-child,
+.life-tt-app .picker-item:last-child {
+  border-bottom: none;
+}
+
+#life-tt-app .picker-item:hover,
+.life-tt-app .picker-item:hover {
+  background: #E8F5E9;
+}
+
+#life-tt-app .picker-avatar,
+.life-tt-app .picker-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #0F3D1E;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+#life-tt-app .picker-name,
+.life-tt-app .picker-name {
+  color: #0F3D1E;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+#life-tt-app .picker-role,
+.life-tt-app .picker-role {
+  margin-top: 1px;
+  color: #5F6F63;
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
+#life-tt-app .selected-chip-row,
+.life-tt-app .selected-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 7px;
+}
+
+#life-tt-app .selected-chip,
+.life-tt-app .selected-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #EEF4EF;
+  color: #0F3D1E;
+  border-radius: 20px;
+  padding: 5px 10px;
+  font-size: 10.5px;
+  font-weight: 900;
+}
+
+#life-tt-app .selected-chip.locked,
+.life-tt-app .selected-chip.locked {
+  background: #E8F5E9;
+  color: #43A047;
+}
+
+#life-tt-app .selected-chip .x,
+.life-tt-app .selected-chip .x {
+  color: #C00000;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+/* ============================================================
+   ATTACHMENTS
+   ============================================================ */
+
+#life-tt-app .attach-zone,
+.life-tt-app .attach-zone {
+  border: 2px dashed #CFE1D2;
+  border-radius: 8px;
+  background: #FAFCFA;
+  padding: 15px;
+  color: #5F6F63;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+#life-tt-app .attach-zone:hover,
+.life-tt-app .attach-zone:hover {
+  border-color: #0F3D1E;
+  background: #E8F5E9;
+  color: #0F3D1E;
+}
+
+#life-tt-app .attach-list,
+.life-tt-app .attach-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+#life-tt-app .attach-item,
+.life-tt-app .attach-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #EEF4EF;
+  border: 1px solid #DCE9DE;
+  border-radius: 7px;
+  padding: 8px 10px;
+}
+
+#life-tt-app .attach-item .an,
+.life-tt-app .attach-item .an {
+  color: #0F3D1E;
+  font-size: 11px;
+  font-weight: 900;
+  word-break: break-word;
+}
+
+#life-tt-app .attach-item .asize,
+.life-tt-app .attach-item .asize {
+  color: #5F6F63;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+#life-tt-app .attach-item .x,
+.life-tt-app .attach-item .x {
+  color: #C00000;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+/* ============================================================
+   FILTER BAR / TILES
+   ============================================================ */
+
+#life-tt-app .fbar,
+.life-tt-app .fbar {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: #FFFFFF;
+  border: 1px solid #DCE9DE;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 10px rgba(15,61,30,0.05);
+}
+
+#life-tt-app .fbar > div,
+.life-tt-app .fbar > div {
+  min-width: 180px;
+}
+
+#life-tt-app .fbar input,
+#life-tt-app .fbar select,
+.life-tt-app .fbar input,
+.life-tt-app .fbar select {
+  height: 33px;
+}
+
+#life-tt-app .tiles,
+.life-tt-app .tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+#life-tt-app .tile,
+.life-tt-app .tile {
+  background: #FFFFFF;
+  border: 1px solid #DCE9DE;
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 2px 10px rgba(15,61,30,0.05);
+}
+
+#life-tt-app .tile .tl,
+.life-tt-app .tile .tl {
+  color: #5F6F63;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+#life-tt-app .tile .tv,
+.life-tt-app .tile .tv {
+  margin-top: 5px;
+  color: #0F3D1E;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+#life-tt-app .t-pn,
+.life-tt-app .t-pn {
+  border-left: 5px solid #0F3D1E;
+}
+
+#life-tt-app .t-pg,
+.life-tt-app .t-pg {
+  border-left: 5px solid #2E7D32;
+}
+
+#life-tt-app .t-pr,
+.life-tt-app .t-pr {
+  border-left: 5px solid #C00000;
+}
+
+#life-tt-app .t-pgr,
+.life-tt-app .t-pgr {
+  border-left: 5px solid #52665A;
+}
+
+#life-tt-app .t-po,
+.life-tt-app .t-po {
+  border-left: 5px solid #C96A00;
+}
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+
+#life-tt-app .tbl-wrap,
+.life-tt-app .tbl-wrap {
+  width: 100%;
+  overflow-x: auto;
+  background: #FFFFFF;
+}
+
+#life-tt-app table,
+.life-tt-app table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 850px;
+  background: #FFFFFF;
+}
+
+#life-tt-app th,
+.life-tt-app th {
+  background: #EEF4EF;
+  color: #0F3D1E;
+  padding: 10px 12px;
+  border-bottom: 1px solid #CFE1D2;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+#life-tt-app td,
+.life-tt-app td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #EEF4EF;
+  color: #152418;
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: top;
+}
+
+#life-tt-app table tbody tr:nth-child(even) td,
+.life-tt-app table tbody tr:nth-child(even) td {
+  background: #F8FCF8;
+}
+
+#life-tt-app table tbody tr:hover td,
+.life-tt-app table tbody tr:hover td {
+  background: #F3FAF4;
+}
+
+#life-tt-app table tbody tr td[colspan],
+.life-tt-app table tbody tr td[colspan] {
+  background: #FFFFFF;
+  color: #8C8C8C;
+  text-align: center;
+  font-weight: 800;
+}
+
+#life-tt-app .life-clickable-row,
+.life-tt-app .life-clickable-row {
+  cursor: pointer;
+}
+
+#life-tt-app .life-clickable-row:hover,
+.life-tt-app .life-clickable-row:hover {
+  background: #F3FAF4;
+}
+
+#life-tt-app .life-row-main-text,
+.life-tt-app .life-row-main-text {
+  color: #152418;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+#life-tt-app .life-row-sub-text,
+.life-tt-app .life-row-sub-text {
+  margin-top: 3px;
+  color: #5F6F63;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* ============================================================
+   PILLS / STATUS
+   ============================================================ */
+
+#life-tt-app .pill,
+.life-tt-app .pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  border-radius: 20px;
+  padding: 3px 9px;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+#life-tt-app .p-r,
+.life-tt-app .p-r {
+  background: #FBE9E7;
+  color: #C00000;
+}
+
+#life-tt-app .p-g,
+.life-tt-app .p-g {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+#life-tt-app .p-n,
+.life-tt-app .p-n {
+  background: #EEF4EF;
+  color: #0F3D1E;
+}
+
+#life-tt-app .p-o,
+.life-tt-app .p-o {
+  background: #FFF3E0;
+  color: #C96A00;
+}
+
+#life-tt-app .p-gy,
+.life-tt-app .p-gy {
+  background: #F0F0F0;
+  color: #52665A;
+}
+
+#life-tt-app .attach-chip-table,
+.life-tt-app .attach-chip-table {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: #EEF4EF;
+  color: #0F3D1E;
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+#life-tt-app .attach-chip-table:hover,
+.life-tt-app .attach-chip-table:hover {
+  background: #0F3D1E;
+  color: #FFFFFF;
+}
+
+/* ============================================================
+   DESCRIPTION CELL
+   ============================================================ */
+
+#life-tt-app .life-desc-cell,
+.life-tt-app .life-desc-cell {
+  max-width: 300px;
+  min-width: 220px;
+  white-space: normal;
+}
+
+#life-tt-app .life-desc-preview,
+.life-tt-app .life-desc-preview {
+  color: #152418;
+  font-size: 10.8px;
+  line-height: 1.45;
+  max-height: 48px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+#life-tt-app .life-view-details-btn,
+.life-tt-app .life-view-details-btn {
+  margin-top: 6px;
+  background: #FFFFFF;
+  border: 1px solid #0F3D1E;
+  color: #0F3D1E;
+  border-radius: 5px;
+  padding: 4px 9px;
+  font-size: 9.5px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+#life-tt-app .life-view-details-btn:hover,
+.life-tt-app .life-view-details-btn:hover {
+  background: #0F3D1E;
+  color: #FFFFFF;
+}
+
+/* ============================================================
+   USER + DATE CELL
+   ============================================================ */
+
+#life-tt-app .life-user-date-cell,
+.life-tt-app .life-user-date-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  line-height: 1.25;
+}
+
+#life-tt-app .life-user-name,
+.life-tt-app .life-user-name {
+  color: #152418;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+#life-tt-app .life-user-date,
+.life-tt-app .life-user-date {
+  color: #5F6F63;
+  font-size: 9.5px;
+  font-weight: 800;
+}
+
+/* ============================================================
+   ACTION BUTTON STACK
+   ============================================================ */
+
+#life-tt-app .life-action-stack,
+.life-tt-app .life-action-stack {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ============================================================
+   TABLE PAGINATION
+   ============================================================ */
+
+#life-tt-app .life-table-pager,
+.life-tt-app .life-table-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 4px 4px;
+  color: #52665A;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+#life-tt-app .life-table-pager button,
+.life-tt-app .life-table-pager button {
+  background: #FFFFFF;
+  color: #0F3D1E;
+  border: 1px solid #0F3D1E;
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 10.5px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+#life-tt-app .life-table-pager button:hover:not(:disabled),
+.life-tt-app .life-table-pager button:hover:not(:disabled) {
+  background: #0F3D1E;
+  color: #FFFFFF;
+}
+
+#life-tt-app .life-table-pager button:disabled,
+.life-tt-app .life-table-pager button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   MAIN DETAILS MODAL
+   This fixes modal spacing/readability.
+   ============================================================ */
+
+#life-tt-app .modal-overlay,
+.life-tt-app .modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: rgba(15,61,30,0.58);
+  padding: 34px 18px;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+}
+
+#life-tt-app .modal-overlay.show,
+.life-tt-app .modal-overlay.show {
+  display: flex;
+}
+
+#life-tt-app .modal-box,
+.life-tt-app .modal-box {
+  width: 860px;
+  max-width: 94vw;
+  max-height: 86vh;
+  background: #FFFFFF;
+  border-radius: 14px;
+  padding: 24px 28px 22px;
+  box-shadow: 0 16px 46px rgba(0,0,0,0.28);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#life-tt-app .modal-box .mic,
+.life-tt-app .modal-box .mic {
+  width: 42px;
+  height: 42px;
+  min-height: 42px;
+  margin: 0 auto 8px;
+  border-radius: 50%;
+  background: #F3FAF4;
+  color: #0F3D1E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
+}
+
+#life-tt-app .modal-box .mtt,
+.life-tt-app .modal-box .mtt {
+  color: #0F3D1E;
+  font-size: 19px;
+  font-weight: 900;
+  text-align: center;
+  line-height: 1.3;
+  margin-bottom: 14px;
+}
+
+#life-tt-app .modal-box .mtx,
+.life-tt-app .modal-box .mtx {
+  flex: 1;
+  min-height: 0;
+  max-height: calc(86vh - 160px);
+  overflow-y: auto;
+  padding: 0 8px 2px 0;
+  color: #152418;
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: left;
+  white-space: normal;
+}
+
+#life-tt-app .modal-box .mtx::-webkit-scrollbar,
+.life-tt-app .modal-box .mtx::-webkit-scrollbar {
+  width: 8px;
+}
+
+#life-tt-app .modal-box .mtx::-webkit-scrollbar-track,
+.life-tt-app .modal-box .mtx::-webkit-scrollbar-track {
+  background: #F0F2F5;
+  border-radius: 10px;
+}
+
+#life-tt-app .modal-box .mtx::-webkit-scrollbar-thumb,
+.life-tt-app .modal-box .mtx::-webkit-scrollbar-thumb {
+  background: #CFE1D2;
+  border-radius: 10px;
+}
+
+#life-tt-app .modal-box .btn,
+.life-tt-app .modal-box .btn {
+  align-self: center;
+  margin-top: 16px;
+  min-width: 86px;
+  height: 38px;
+  padding: 0 22px;
+}
+
+/* ============================================================
+   RICH DETAIL MODAL CONTENT
+   ============================================================ */
+
+#life-tt-app .life-detail-modal-wrap,
+.life-tt-app .life-detail-modal-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+#life-tt-app .life-detail-top-tags,
+.life-tt-app .life-detail-top-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#life-tt-app .life-detail-tag,
+.life-tt-app .life-detail-tag {
+  background: #EEF4EF;
+  border: 1px solid #DCE9DE;
+  border-radius: 20px;
+  padding: 6px 11px;
+  color: #0F3D1E;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+#life-tt-app .life-detail-section,
+.life-tt-app .life-detail-section {
+  background: #FFFFFF;
+  border: 1px solid #DCE9DE;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+#life-tt-app .life-detail-section-title,
+.life-tt-app .life-detail-section-title {
+  color: #0F3D1E;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+#life-tt-app .life-detail-grid,
+.life-tt-app .life-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+#life-tt-app .life-detail-item,
+.life-tt-app .life-detail-item {
+  background: #F8FCF8;
+  border: 1px solid #DCE9DE;
+  border-radius: 8px;
+  padding: 10px;
+  min-width: 0;
+}
+
+#life-tt-app .life-detail-label,
+.life-tt-app .life-detail-label {
+  color: #5F6F63;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+#life-tt-app .life-detail-value,
+.life-tt-app .life-detail-value {
+  color: #152418;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+#life-tt-app .life-detail-box,
+.life-tt-app .life-detail-box {
+  background: #F8FCF8;
+  border: 1px solid #DCE9DE;
+  border-left: 4px solid #0F3D1E;
+  border-radius: 8px;
+  padding: 12px;
+  color: #152418;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ============================================================
+   MODAL ATTACHMENTS
+   ============================================================ */
+
+#life-tt-app .life-modal-attachments,
+.life-tt-app .life-modal-attachments {
+  margin-top: 2px;
+  padding-top: 14px;
+  border-top: 1px solid #DCE9DE;
+  text-align: left;
+}
+
+#life-tt-app .life-modal-section-title,
+.life-tt-app .life-modal-section-title {
+  margin-bottom: 9px;
+  color: #0F3D1E;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+#life-tt-app .life-modal-muted,
+.life-tt-app .life-modal-muted {
+  color: #5F6F63;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+#life-tt-app .life-modal-file-row,
+.life-tt-app .life-modal-file-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #EEF4EF;
+  border: 1px solid #DCE9DE;
+  border-radius: 8px;
+  padding: 9px 11px;
+  margin-bottom: 7px;
+  color: #0F3D1E;
+  font-size: 11.5px;
+  font-weight: 900;
+  word-break: break-word;
+}
+
+#life-tt-app .life-modal-file-link,
+.life-tt-app .life-modal-file-link {
+  flex-shrink: 0;
+  background: #0F3D1E;
+  color: #FFFFFF !important;
+  text-decoration: none;
+  border-radius: 5px;
+  padding: 5px 12px;
+  font-size: 10.5px;
+  font-weight: 900;
+}
+
+#life-tt-app .life-modal-file-link:hover,
+.life-tt-app .life-modal-file-link:hover {
+  background: #14501F;
+}
+
+/* ============================================================
+   DELAY REVIEW HISTORY
+   ============================================================ */
+
+#life-tt-app .life-history-list,
+.life-tt-app .life-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#life-tt-app .life-history-card,
+.life-tt-app .life-history-card {
+  background: #FAFCFA;
+  border: 1px solid #A5D6A7;
+  border-left: 5px solid #43A047;
+  border-radius: 10px;
+  padding: 13px 15px;
+}
+
+#life-tt-app .life-update-history-card,
+.life-tt-app .life-update-history-card {
+  background: #F8FCF8;
+  border-left-color: #0F3D1E;
+}
+
+#life-tt-app .life-history-head,
+.life-tt-app .life-history-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+#life-tt-app .life-history-title,
+.life-tt-app .life-history-title {
+  color: #0F3D1E;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+#life-tt-app .life-history-date,
+.life-tt-app .life-history-date {
+  color: #5F6F63;
+  font-size: 10.5px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+#life-tt-app .life-history-grid,
+.life-tt-app .life-history-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+#life-tt-app .life-history-remarks,
+.life-tt-app .life-history-remarks {
+  background: #FFFFFF;
+  border: 1px solid #A5D6A7;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #152418;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+#life-tt-app .life-empty-history,
+.life-tt-app .life-empty-history {
+  background: #F8FCF8;
+  border: 1px dashed #DCE9DE;
+  border-radius: 8px;
+  padding: 12px;
+  color: #5F6F63;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* ============================================================
+   UPDATE FILES IN DETAILS
+   ============================================================ */
+
+#life-tt-app .life-update-files-block,
+.life-tt-app .life-update-files-block {
+  margin-top: 12px;
+}
+
+#life-tt-app .life-update-file-list,
+.life-tt-app .life-update-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 7px;
+}
+
+#life-tt-app .life-update-file-row,
+.life-tt-app .life-update-file-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #EEF4EF;
+  border: 1px solid #DCE9DE;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+#life-tt-app .life-update-file-name,
+.life-tt-app .life-update-file-name {
+  color: #0F3D1E;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+#life-tt-app .life-update-file-open,
+.life-tt-app .life-update-file-open {
+  flex-shrink: 0;
+  background: #0F3D1E;
+  color: #FFFFFF !important;
+  text-decoration: none;
+  border-radius: 5px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+#life-tt-app .life-update-file-open:hover,
+.life-tt-app .life-update-file-open:hover {
+  background: #14501F;
+}
+
+#life-tt-app .life-update-no-files,
+.life-tt-app .life-update-no-files {
+  margin-top: 7px;
+  background: #F8FCF8;
+  border: 1px dashed #DCE9DE;
+  border-radius: 8px;
+  padding: 9px 11px;
+  color: #5F6F63;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* ============================================================
+   ADD UPDATE / CHANGE DEADLINE MODALS
+   Compact modal spacing fix.
+   ============================================================ */
+
+#life-tt-app .life-delay-modal,
+.life-tt-app .life-delay-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: rgba(15,61,30,0.60);
+  padding: 42px 18px;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+}
+
+#life-tt-app .life-delay-modal.show,
+.life-tt-app .life-delay-modal.show {
+  display: flex;
+}
+
+#life-tt-app .life-delay-box,
+.life-tt-app .life-delay-box {
+  width: 620px;
+  max-width: 94vw;
+  max-height: 78vh;
+  background: #FFFFFF;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 16px 46px rgba(0,0,0,0.28);
+  display: flex;
+  flex-direction: column;
+}
+
+#life-tt-app .life-delay-head,
+.life-tt-app .life-delay-head {
+  flex-shrink: 0;
+  background: #0F3D1E;
+  color: #FFFFFF;
+  padding: 13px 17px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+#life-tt-app .life-delay-title,
+.life-tt-app .life-delay-title {
+  color: #FFFFFF;
+  font-size: 15.5px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+#life-tt-app .life-delay-sub,
+.life-tt-app .life-delay-sub {
+  margin-top: 3px;
+  color: rgba(255,255,255,0.72);
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+#life-tt-app .life-delay-close,
+.life-tt-app .life-delay-close {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.35);
+  background: transparent;
+  color: #FFFFFF;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+#life-tt-app .life-delay-close:hover,
+.life-tt-app .life-delay-close:hover {
+  background: rgba(255,255,255,0.12);
+}
+
+#life-tt-app .life-delay-body,
+.life-tt-app .life-delay-body {
+  flex: 1;
+  min-height: 0;
+  max-height: calc(78vh - 112px);
+  overflow-y: auto;
+  padding: 15px 17px;
+}
+
+#life-tt-app .life-delay-body::-webkit-scrollbar,
+.life-tt-app .life-delay-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+#life-tt-app .life-delay-body::-webkit-scrollbar-track,
+.life-tt-app .life-delay-body::-webkit-scrollbar-track {
+  background: #F0F2F5;
+}
+
+#life-tt-app .life-delay-body::-webkit-scrollbar-thumb,
+.life-tt-app .life-delay-body::-webkit-scrollbar-thumb {
+  background: #CFE1D2;
+  border-radius: 10px;
+}
+
+#life-tt-app .life-delay-body .field-block,
+.life-tt-app .life-delay-body .field-block {
+  margin-bottom: 11px;
+}
+
+#life-tt-app .life-delay-old,
+.life-tt-app .life-delay-old {
+  background: #E8F5E9;
+  border-left: 4px solid #43A047;
+  border-radius: 8px;
+  padding: 9px 11px;
+  margin-bottom: 13px;
+  color: #0F3D1E;
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+#life-tt-app .life-delay-grid,
+.life-tt-app .life-delay-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr;
+  gap: 12px;
+}
+
+#life-tt-app .life-delay-time-row,
+.life-tt-app .life-delay-time-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 7px;
+}
+
+#life-tt-app .life-delay-body input,
+#life-tt-app .life-delay-body select,
+.life-tt-app .life-delay-body input,
+.life-tt-app .life-delay-body select {
+  height: 32px;
+  font-size: 11px;
+}
+
+#life-tt-app .life-delay-body textarea,
+.life-tt-app .life-delay-body textarea {
+  min-height: 68px;
+  max-height: 110px;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+#life-tt-app .life-delay-error,
+.life-tt-app .life-delay-error {
+  display: none;
+  margin-top: 8px;
+  background: #FBE9E7;
+  border: 1px solid #F2B8B5;
+  border-radius: 8px;
+  padding: 9px 11px;
+  color: #C00000;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+#life-tt-app .life-delay-error.show,
+.life-tt-app .life-delay-error.show {
+  display: block;
+}
+
+#life-tt-app .life-delay-footer,
+.life-tt-app .life-delay-footer {
+  flex-shrink: 0;
+  background: #F8FCF8;
+  border-top: 1px solid #DCE9DE;
+  padding: 11px 17px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ============================================================
+   DURATION LABEL
+   ============================================================ */
+
+#life-tt-app .life-duration-label,
+.life-tt-app .life-duration-label {
+  display: inline-block;
+  margin-left: 6px;
+  color: #43A047;
+  font-size: 9.5px;
+  font-weight: 900;
+  text-transform: none;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 1100px) {
+  #life-tt-app .tiles,
+  .life-tt-app .tiles {
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+  }
+
+  #life-tt-app .life-detail-grid,
+  .life-tt-app .life-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  #life-tt-app .content,
+  .life-tt-app .content {
+    padding: 14px;
+  }
+
+  #life-tt-app .header,
+  .life-tt-app .header {
+    padding: 13px 15px;
+  }
+
+  #life-tt-app .logged-user-box,
+  .life-tt-app .logged-user-box {
+    width: 100%;
+  }
+
+  #life-tt-app .type-toggle,
+  .life-tt-app .type-toggle {
+    gap: 10px;
+  }
+
+  #life-tt-app .type-btn,
+  .life-tt-app .type-btn {
+    width: 100%;
+  }
+
+  #life-tt-app .life-refresh-row,
+  .life-tt-app .life-refresh-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #life-tt-app .life-refresh-actions,
+  .life-tt-app .life-refresh-actions {
+    justify-content: space-between;
+  }
+
+  #life-tt-app .two-col,
+  .life-tt-app .two-col,
+  #life-tt-app .three-col,
+  .life-tt-app .three-col,
+  #life-tt-app .life-delay-grid,
+  .life-tt-app .life-delay-grid,
+  #life-tt-app .life-detail-grid,
+  .life-tt-app .life-detail-grid,
+  #life-tt-app .life-history-grid,
+  .life-tt-app .life-history-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #life-tt-app .tiles,
+  .life-tt-app .tiles {
+    grid-template-columns: 1fr;
+  }
+
+  #life-tt-app .fbar,
+  .life-tt-app .fbar {
+    align-items: stretch;
+  }
+
+  #life-tt-app .fbar > div,
+  .life-tt-app .fbar > div {
+    width: 100%;
+    min-width: 0;
+  }
+
+  #life-tt-app .modal-overlay,
+  .life-tt-app .modal-overlay {
+    padding: 18px 10px;
+  }
+
+  #life-tt-app .modal-box,
+  .life-tt-app .modal-box {
+    width: 100%;
+    max-width: 100%;
+    max-height: 90vh;
+    padding: 20px 16px 18px;
+  }
+
+  #life-tt-app .modal-box .mtx,
+  .life-tt-app .modal-box .mtx {
+    max-height: calc(90vh - 150px);
+  }
+
+  #life-tt-app .life-delay-modal,
+  .life-tt-app .life-delay-modal {
+    padding: 18px 10px;
+  }
+
+  #life-tt-app .life-delay-box,
+  .life-tt-app .life-delay-box {
+    width: 100%;
+    max-width: 100%;
+    max-height: 90vh;
+  }
+
+  #life-tt-app .life-delay-body,
+  .life-tt-app .life-delay-body {
+    max-height: calc(90vh - 112px);
+  }
+
+  #life-tt-app .life-delay-footer,
+  .life-tt-app .life-delay-footer {
+    justify-content: stretch;
+  }
+
+  #life-tt-app .life-delay-footer .btn,
+  .life-tt-app .life-delay-footer .btn {
+    flex: 1;
+  }
+}
+
+/* ============================================================
+   FINAL MODAL HEIGHT FIX FOR ERPNext WORKSPACE BLOCK
+   Paste at VERY BOTTOM of CSS
+   No var() used
+   ============================================================ */
+
+/* Main details modal overlay */
+#life-tt-app #modal,
+.life-tt-app #modal,
+#life-tt-app .modal-overlay,
+.life-tt-app .modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 999999 !important;
+  display: none !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  background: rgba(15,61,30, 0.58) !important;
+
+  /* Important for ERPNext workspace */
+  padding: 18px 16px !important;
+  overflow: hidden !important;
+}
+
+#life-tt-app #modal.show,
+.life-tt-app #modal.show,
+#life-tt-app .modal-overlay.show,
+.life-tt-app .modal-overlay.show {
+  display: flex !important;
+}
+
+/* Main modal box - fixed screen-friendly height */
+#life-tt-app #modal .modal-box,
+.life-tt-app #modal .modal-box,
+#life-tt-app .modal-overlay .modal-box,
+.life-tt-app .modal-overlay .modal-box {
+  width: 860px !important;
+  max-width: 78vw !important;
+
+  /* This is the main fix */
+  height: auto !important;
+  max-height: calc(100vh - 155px) !important;
+
+  background: #ffffff !important;
+  border-radius: 13px !important;
+  padding: 16px 22px 14px !important;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.28) !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  text-align: left !important;
+}
+
+/* Reduce icon empty space */
+#life-tt-app #modal-icon,
+.life-tt-app #modal-icon,
+#life-tt-app .modal-box .mic,
+.life-tt-app .modal-box .mic {
+  height: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Title compact */
+#life-tt-app #modal-title,
+.life-tt-app #modal-title,
+#life-tt-app .modal-box .mtt,
+.life-tt-app .modal-box .mtt {
+  flex-shrink: 0 !important;
+  color: #0F3D1E !important;
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  line-height: 1.25 !important;
+  text-align: center !important;
+  margin: 0 0 12px 0 !important;
+  padding: 0 !important;
+}
+
+/* Modal content scrolls inside, not whole screen */
+#life-tt-app #modal-text,
+.life-tt-app #modal-text,
+#life-tt-app .modal-box .mtx,
+.life-tt-app .modal-box .mtx {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+
+  /* Keep content inside screen */
+  max-height: calc(100vh - 235px) !important;
+
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+
+  padding: 0 10px 0 0 !important;
+  margin: 0 !important;
+
+  color: #152418 !important;
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+  text-align: left !important;
+  white-space: normal !important;
+}
+
+/* Better inner scrollbar */
+#life-tt-app #modal-text::-webkit-scrollbar,
+.life-tt-app #modal-text::-webkit-scrollbar,
+#life-tt-app .modal-box .mtx::-webkit-scrollbar,
+.life-tt-app .modal-box .mtx::-webkit-scrollbar {
+  width: 8px !important;
+}
+
+#life-tt-app #modal-text::-webkit-scrollbar-track,
+.life-tt-app #modal-text::-webkit-scrollbar-track,
+#life-tt-app .modal-box .mtx::-webkit-scrollbar-track,
+.life-tt-app .modal-box .mtx::-webkit-scrollbar-track {
+  background: #EEF4EF !important;
+  border-radius: 10px !important;
+}
+
+#life-tt-app #modal-text::-webkit-scrollbar-thumb,
+.life-tt-app #modal-text::-webkit-scrollbar-thumb,
+#life-tt-app .modal-box .mtx::-webkit-scrollbar-thumb,
+.life-tt-app .modal-box .mtx::-webkit-scrollbar-thumb {
+  background: #b8c3d3 !important;
+  border-radius: 10px !important;
+}
+
+/* OK button - bigger and readable */
+#life-tt-app #modal-ok-btn,
+.life-tt-app #modal-ok-btn,
+#life-tt-app .modal-box .btn,
+.life-tt-app .modal-box .btn {
+  flex-shrink: 0 !important;
+  align-self: center !important;
+
+  width: 112px !important;
+  min-width: 112px !important;
+  height: 38px !important;
+
+  margin: 13px auto 0 auto !important;
+  padding: 0 22px !important;
+
+  border: none !important;
+  border-radius: 8px !important;
+  background: #0F3D1E !important;
+  color: #ffffff !important;
+
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  line-height: 38px !important;
+  text-align: center !important;
+  cursor: pointer !important;
+}
+
+#life-tt-app #modal-ok-btn:hover,
+.life-tt-app #modal-ok-btn:hover,
+#life-tt-app .modal-box .btn:hover,
+.life-tt-app .modal-box .btn:hover {
+  background: #14501F !important;
+}
+
+/* Compact details sections inside modal */
+#life-tt-app .life-detail-modal-wrap,
+.life-tt-app .life-detail-modal-wrap {
+  gap: 10px !important;
+}
+
+#life-tt-app .life-detail-section,
+.life-tt-app .life-detail-section {
+  padding: 12px 14px !important;
+  margin: 0 0 10px 0 !important;
+  border-radius: 9px !important;
+}
+
+#life-tt-app .life-detail-section-title,
+.life-tt-app .life-detail-section-title {
+  font-size: 11.5px !important;
+  margin-bottom: 8px !important;
+}
+
+#life-tt-app .life-detail-grid,
+.life-tt-app .life-detail-grid {
+  gap: 8px !important;
+}
+
+#life-tt-app .life-detail-item,
+.life-tt-app .life-detail-item {
+  padding: 8px 10px !important;
+}
+
+#life-tt-app .life-detail-label,
+.life-tt-app .life-detail-label {
+  font-size: 9.5px !important;
+  margin-bottom: 3px !important;
+}
+
+#life-tt-app .life-detail-value,
+.life-tt-app .life-detail-value {
+  font-size: 11.5px !important;
+  line-height: 1.35 !important;
+}
+
+#life-tt-app .life-detail-box,
+.life-tt-app .life-detail-box {
+  padding: 10px 11px !important;
+  font-size: 11.5px !important;
+  line-height: 1.45 !important;
+}
+
+/* Attachments inside modal */
+#life-tt-app .life-modal-attachments,
+.life-tt-app .life-modal-attachments {
+  margin-top: 8px !important;
+  padding-top: 10px !important;
+}
+
+#life-tt-app .life-modal-file-row,
+.life-tt-app .life-modal-file-row {
+  padding: 8px 10px !important;
+  margin-bottom: 6px !important;
+  font-size: 11px !important;
+}
+
+#life-tt-app .life-modal-file-link,
+.life-tt-app .life-modal-file-link {
+  min-width: 66px !important;
+  padding: 6px 12px !important;
+  font-size: 11px !important;
+  text-align: center !important;
+}
+
+/* Delay review history compact */
+#life-tt-app .life-history-card,
+.life-tt-app .life-history-card {
+  padding: 11px 13px !important;
+  margin-bottom: 8px !important;
+}
+
+#life-tt-app .life-history-title,
+.life-tt-app .life-history-title {
+  font-size: 12.5px !important;
+}
+
+#life-tt-app .life-history-date,
+.life-tt-app .life-history-date {
+  font-size: 10px !important;
+}
+
+#life-tt-app .life-history-grid,
+.life-tt-app .life-history-grid {
+  gap: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+#life-tt-app .life-history-remarks,
+.life-tt-app .life-history-remarks {
+  padding: 8px 10px !important;
+  font-size: 11.5px !important;
+  line-height: 1.4 !important;
+}
+
+/* ============================================================
+   ADD UPDATE / CHANGE DEADLINE MODALS HEIGHT FIX
+   ============================================================ */
+
+#life-tt-app .life-delay-modal,
+.life-tt-app .life-delay-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 999999 !important;
+  display: none !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  background: rgba(15,61,30, 0.60) !important;
+  padding: 28px 16px !important;
+  overflow: hidden !important;
+}
+
+#life-tt-app .life-delay-modal.show,
+.life-tt-app .life-delay-modal.show {
+  display: flex !important;
+}
+
+#life-tt-app .life-delay-box,
+.life-tt-app .life-delay-box {
+  width: 620px !important;
+  max-width: 76vw !important;
+  max-height: calc(100vh - 165px) !important;
+  background: #ffffff !important;
+  border-radius: 13px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+#life-tt-app .life-delay-head,
+.life-tt-app .life-delay-head {
+  flex-shrink: 0 !important;
+  padding: 12px 16px !important;
+}
+
+#life-tt-app .life-delay-title,
+.life-tt-app .life-delay-title {
+  font-size: 14.5px !important;
+}
+
+#life-tt-app .life-delay-sub,
+.life-tt-app .life-delay-sub {
+  font-size: 10px !important;
+}
+
+#life-tt-app .life-delay-body,
+.life-tt-app .life-delay-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: calc(100vh - 260px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 13px 16px !important;
+}
+
+#life-tt-app .life-delay-footer,
+.life-tt-app .life-delay-footer {
+  flex-shrink: 0 !important;
+  padding: 10px 16px !important;
+}
+
+#life-tt-app .life-delay-footer .btn,
+.life-tt-app .life-delay-footer .btn {
+  min-width: 100px !important;
+  height: 36px !important;
+  padding: 0 18px !important;
+  font-size: 12px !important;
+  border-radius: 7px !important;
+}
+
+/* ============================================================
+   SMALL SCREEN
+   ============================================================ */
+
+@media (max-width: 900px) {
+  #life-tt-app #modal .modal-box,
+  .life-tt-app #modal .modal-box,
+  #life-tt-app .modal-overlay .modal-box,
+  .life-tt-app .modal-overlay .modal-box {
+    max-width: 92vw !important;
+    max-height: calc(100vh - 115px) !important;
+  }
+
+  #life-tt-app #modal-text,
+  .life-tt-app #modal-text,
+  #life-tt-app .modal-box .mtx,
+  .life-tt-app .modal-box .mtx {
+    max-height: calc(100vh - 200px) !important;
+  }
+
+  #life-tt-app .life-detail-grid,
+  .life-tt-app .life-detail-grid,
+  #life-tt-app .life-history-grid,
+  .life-tt-app .life-history-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  #life-tt-app .life-delay-box,
+  .life-tt-app .life-delay-box {
+    max-width: 92vw !important;
+    max-height: calc(100vh - 115px) !important;
+  }
+
+  #life-tt-app .life-delay-body,
+  .life-tt-app .life-delay-body {
+    max-height: calc(100vh - 215px) !important;
+  }
+}
+
+/* ============================================================
+   EXTRA COMPACT MODAL HEIGHT FIX
+   Paste at the VERY BOTTOM of CSS
+   ============================================================ */
+
+/* Make modal start higher and use less screen height */
+#life-tt-app #modal,
+.life-tt-app #modal,
+#life-tt-app .modal-overlay,
+.life-tt-app .modal-overlay {
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  align-items: flex-start !important;
+  overflow: hidden !important;
+}
+
+/* Reduce modal total height */
+#life-tt-app #modal .modal-box,
+.life-tt-app #modal .modal-box,
+#life-tt-app .modal-overlay .modal-box,
+.life-tt-app .modal-overlay .modal-box {
+  width: 840px !important;
+  max-width: 74vw !important;
+  max-height: calc(100vh - 125px) !important;
+  padding: 14px 20px 14px !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+/* Keep title compact */
+#life-tt-app #modal-title,
+.life-tt-app #modal-title,
+#life-tt-app .modal-box .mtt,
+.life-tt-app .modal-box .mtt {
+  font-size: 17px !important;
+  line-height: 1.2 !important;
+  margin-bottom: 9px !important;
+}
+
+/* Main scrollable content height */
+#life-tt-app #modal-text,
+.life-tt-app #modal-text,
+#life-tt-app .modal-box .mtx,
+.life-tt-app .modal-box .mtx {
+  max-height: calc(100vh - 245px) !important;
+  padding-right: 8px !important;
+  font-size: 11.8px !important;
+  line-height: 1.4 !important;
+}
+
+/* Reduce white space between sections */
+#life-tt-app .life-detail-modal-wrap,
+.life-tt-app .life-detail-modal-wrap {
+  gap: 8px !important;
+}
+
+#life-tt-app .life-detail-section,
+.life-tt-app .life-detail-section {
+  padding: 10px 12px !important;
+  margin-bottom: 8px !important;
+  border-radius: 8px !important;
+}
+
+#life-tt-app .life-detail-section-title,
+.life-tt-app .life-detail-section-title {
+  font-size: 11px !important;
+  margin-bottom: 7px !important;
+}
+
+#life-tt-app .life-detail-grid,
+.life-tt-app .life-detail-grid {
+  gap: 7px !important;
+}
+
+#life-tt-app .life-detail-item,
+.life-tt-app .life-detail-item {
+  padding: 7px 9px !important;
+  border-radius: 7px !important;
+}
+
+#life-tt-app .life-detail-label,
+.life-tt-app .life-detail-label {
+  font-size: 9px !important;
+  margin-bottom: 2px !important;
+}
+
+#life-tt-app .life-detail-value,
+.life-tt-app .life-detail-value {
+  font-size: 11.2px !important;
+  line-height: 1.3 !important;
+}
+
+#life-tt-app .life-detail-box,
+.life-tt-app .life-detail-box {
+  padding: 9px 10px !important;
+  font-size: 11.3px !important;
+  line-height: 1.35 !important;
+}
+
+/* OK button bigger but not too tall */
+#life-tt-app #modal-ok-btn,
+.life-tt-app #modal-ok-btn,
+#life-tt-app .modal-box .btn,
+.life-tt-app .modal-box .btn {
+  width: 120px !important;
+  min-width: 120px !important;
+  height: 42px !important;
+  margin-top: 12px !important;
+  border-radius: 9px !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  line-height: 42px !important;
+}
+
+/* Attachments compact */
+#life-tt-app .life-modal-attachments,
+.life-tt-app .life-modal-attachments {
+  margin-top: 7px !important;
+  padding-top: 8px !important;
+}
+
+#life-tt-app .life-modal-file-row,
+.life-tt-app .life-modal-file-row {
+  padding: 7px 9px !important;
+  margin-bottom: 5px !important;
+}
+
+/* Delay history compact */
+#life-tt-app .life-history-card,
+.life-tt-app .life-history-card {
+  padding: 9px 11px !important;
+  margin-bottom: 7px !important;
+}
+
+#life-tt-app .life-history-head,
+.life-tt-app .life-history-head {
+  margin-bottom: 7px !important;
+}
+
+#life-tt-app .life-history-grid,
+.life-tt-app .life-history-grid {
+  gap: 7px !important;
+  margin-bottom: 7px !important;
+}
+
+#life-tt-app .life-history-remarks,
+.life-tt-app .life-history-remarks {
+  padding: 7px 9px !important;
+}
+
+/* For smaller screens */
+@media (max-width: 900px) {
+  #life-tt-app #modal .modal-box,
+  .life-tt-app #modal .modal-box,
+  #life-tt-app .modal-overlay .modal-box,
+  .life-tt-app .modal-overlay .modal-box {
+    max-width: 92vw !important;
+    max-height: calc(100vh - 95px) !important;
+  }
+
+  #life-tt-app #modal-text,
+  .life-tt-app #modal-text,
+  #life-tt-app .modal-box .mtx,
+  .life-tt-app .modal-box .mtx {
+    max-height: calc(100vh - 215px) !important;
+  }
+}
+
+/* ============================================================
+   FINAL HARD FIX — TASK DETAILS MODAL HEIGHT
+   Paste at the VERY BOTTOM of CSS
+   ============================================================ */
+
+/* allow modal to escape workspace clipping */
+#life-tt-app,
+.life-tt-app,
+#life-tt-app .content,
+.life-tt-app .content {
+  overflow: visible !important;
+}
+
+/* overlay */
+#life-tt-app #modal,
+.life-tt-app #modal,
+#life-tt-app .modal-overlay,
+.life-tt-app .modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 999999 !important;
+  display: none !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  background: rgba(15,61,30, 0.58) !important;
+  padding: 130px 16px 0 16px !important;
+  overflow: hidden !important;
+}
+
+#life-tt-app #modal.show,
+.life-tt-app #modal.show,
+#life-tt-app .modal-overlay.show,
+.life-tt-app .modal-overlay.show {
+  display: flex !important;
+}
+
+/* force modal to a real fixed height */
+#life-tt-app #modal .modal-box,
+.life-tt-app #modal .modal-box,
+#life-tt-app .modal-overlay .modal-box,
+.life-tt-app .modal-overlay .modal-box {
+  width: 860px !important;
+  max-width: 74vw !important;
+
+  height: 390px !important;
+  max-height: 390px !important;
+  min-height: 390px !important;
+
+  background: #ffffff !important;
+  border-radius: 13px !important;
+  padding: 12px 20px 14px 20px !important;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.28) !important;
+
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) auto !important;
+  gap: 8px !important;
+
+  overflow: hidden !important;
+  text-align: left !important;
+}
+
+/* remove icon space */
+#life-tt-app #modal-icon,
+.life-tt-app #modal-icon,
+#life-tt-app .modal-box .mic,
+.life-tt-app .modal-box .mic {
+  display: none !important;
+}
+
+/* title */
+#life-tt-app #modal-title,
+.life-tt-app #modal-title,
+#life-tt-app .modal-box .mtt,
+.life-tt-app .modal-box .mtt {
+  display: block !important;
+  color: #0F3D1E !important;
+  font-size: 17px !important;
+  font-weight: 900 !important;
+  line-height: 1.2 !important;
+  text-align: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* content area scrolls */
+#life-tt-app #modal-text,
+.life-tt-app #modal-text,
+#life-tt-app .modal-box .mtx,
+.life-tt-app .modal-box .mtx {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+
+  padding: 0 10px 0 0 !important;
+  margin: 0 !important;
+
+  color: #152418 !important;
+  font-size: 11.8px !important;
+  line-height: 1.4 !important;
+  text-align: left !important;
+  white-space: normal !important;
+}
+
+/* scrollbar */
+#life-tt-app #modal-text::-webkit-scrollbar,
+.life-tt-app #modal-text::-webkit-scrollbar,
+#life-tt-app .modal-box .mtx::-webkit-scrollbar,
+.life-tt-app .modal-box .mtx::-webkit-scrollbar {
+  width: 8px !important;
+}
+
+#life-tt-app #modal-text::-webkit-scrollbar-thumb,
+.life-tt-app #modal-text::-webkit-scrollbar-thumb,
+#life-tt-app .modal-box .mtx::-webkit-scrollbar-thumb,
+.life-tt-app .modal-box .mtx::-webkit-scrollbar-thumb {
+  background: #b8c3d3 !important;
+  border-radius: 10px !important;
+}
+
+/* OK button */
+#life-tt-app #modal-ok-btn,
+.life-tt-app #modal-ok-btn {
+  width: 130px !important;
+  min-width: 130px !important;
+  height: 44px !important;
+
+  justify-self: center !important;
+  align-self: center !important;
+
+  margin: 0 auto !important;
+  padding: 0 22px !important;
+
+  border: none !important;
+  border-radius: 10px !important;
+  background: #0F3D1E !important;
+  color: #ffffff !important;
+
+  font-size: 15px !important;
+  font-weight: 900 !important;
+  line-height: 44px !important;
+  text-align: center !important;
+  cursor: pointer !important;
+}
+
+#life-tt-app #modal-ok-btn:hover,
+.life-tt-app #modal-ok-btn:hover {
+  background: #14501F !important;
+}
+
+/* compact inner cards */
+#life-tt-app .life-detail-section,
+.life-tt-app .life-detail-section {
+  padding: 9px 11px !important;
+  margin: 0 0 8px 0 !important;
+  border-radius: 8px !important;
+}
+
+#life-tt-app .life-detail-section-title,
+.life-tt-app .life-detail-section-title {
+  font-size: 11px !important;
+  margin-bottom: 7px !important;
+}
+
+#life-tt-app .life-detail-grid,
+.life-tt-app .life-detail-grid {
+  gap: 7px !important;
+}
+
+#life-tt-app .life-detail-item,
+.life-tt-app .life-detail-item {
+  padding: 7px 9px !important;
+  border-radius: 7px !important;
+}
+
+#life-tt-app .life-detail-label,
+.life-tt-app .life-detail-label {
+  font-size: 9px !important;
+  margin-bottom: 2px !important;
+}
+
+#life-tt-app .life-detail-value,
+.life-tt-app .life-detail-value {
+  font-size: 11.2px !important;
+  line-height: 1.3 !important;
+}
+
+#life-tt-app .life-detail-box,
+.life-tt-app .life-detail-box {
+  padding: 9px 10px !important;
+  font-size: 11.3px !important;
+  line-height: 1.35 !important;
+}
+
+/* attachments compact */
+#life-tt-app .life-modal-attachments,
+.life-tt-app .life-modal-attachments {
+  margin-top: 7px !important;
+  padding-top: 8px !important;
+}
+
+#life-tt-app .life-modal-file-row,
+.life-tt-app .life-modal-file-row {
+  padding: 7px 9px !important;
+  margin-bottom: 5px !important;
+}
+
+/* delay history compact */
+#life-tt-app .life-history-card,
+.life-tt-app .life-history-card {
+  padding: 9px 11px !important;
+  margin-bottom: 7px !important;
+}
+
+/* smaller laptop screens */
+@media (max-height: 760px) {
+  #life-tt-app #modal,
+  .life-tt-app #modal,
+  #life-tt-app .modal-overlay,
+  .life-tt-app .modal-overlay {
+    padding-top: 105px !important;
+  }
+
+  #life-tt-app #modal .modal-box,
+  .life-tt-app #modal .modal-box,
+  #life-tt-app .modal-overlay .modal-box,
+  .life-tt-app .modal-overlay .modal-box {
+    height: 350px !important;
+    max-height: 350px !important;
+    min-height: 350px !important;
+  }
+
+  #life-tt-app #modal-ok-btn,
+  .life-tt-app #modal-ok-btn {
+    height: 40px !important;
+    line-height: 40px !important;
+  }
+}
+
+/* ============================================================
+   FINAL FIX — ADD UPDATE + CHANGE DEADLINE MODALS
+   Paste at VERY BOTTOM of CSS
+   ============================================================ */
+
+#life-tt-app,
+.life-tt-app,
+#life-tt-app .content,
+.life-tt-app .content {
+  overflow: visible !important;
+}
+
+/* Only these two popup modals */
+#life-tt-app #life-task-update-modal.life-delay-modal,
+.life-tt-app #life-task-update-modal.life-delay-modal,
+#life-tt-app #life-task-delay-modal.life-delay-modal,
+.life-tt-app #life-task-delay-modal.life-delay-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 999999 !important;
+  display: none !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  background: rgba(15,61,30, 0.60) !important;
+  padding: 82px 16px 0 16px !important;
+  overflow: hidden !important;
+}
+
+#life-tt-app #life-task-update-modal.life-delay-modal.show,
+.life-tt-app #life-task-update-modal.life-delay-modal.show,
+#life-tt-app #life-task-delay-modal.life-delay-modal.show,
+.life-tt-app #life-task-delay-modal.life-delay-modal.show {
+  display: flex !important;
+}
+
+/* Update modal height */
+#life-tt-app #life-task-update-modal .life-delay-box,
+.life-tt-app #life-task-update-modal .life-delay-box {
+  width: 650px !important;
+  max-width: 76vw !important;
+  height: 420px !important;
+  max-height: 420px !important;
+  min-height: 420px !important;
+  background: #ffffff !important;
+  border-radius: 13px !important;
+  overflow: hidden !important;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.28) !important;
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) auto !important;
+}
+
+/* Change deadline modal height */
+#life-tt-app #life-task-delay-modal .life-delay-box,
+.life-tt-app #life-task-delay-modal .life-delay-box {
+  width: 650px !important;
+  max-width: 76vw !important;
+  height: 390px !important;
+  max-height: 390px !important;
+  min-height: 390px !important;
+  background: #ffffff !important;
+  border-radius: 13px !important;
+  overflow: hidden !important;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.28) !important;
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) auto !important;
+}
+
+/* Header */
+#life-tt-app #life-task-update-modal .life-delay-head,
+.life-tt-app #life-task-update-modal .life-delay-head,
+#life-tt-app #life-task-delay-modal .life-delay-head,
+.life-tt-app #life-task-delay-modal .life-delay-head {
+  padding: 11px 16px !important;
+  background: #0F3D1E !important;
+  color: #ffffff !important;
+  flex-shrink: 0 !important;
+}
+
+#life-tt-app .life-delay-title,
+.life-tt-app .life-delay-title {
+  font-size: 15px !important;
+  line-height: 1.2 !important;
+  font-weight: 900 !important;
+}
+
+#life-tt-app .life-delay-sub,
+.life-tt-app .life-delay-sub {
+  font-size: 10px !important;
+  line-height: 1.25 !important;
+  margin-top: 2px !important;
+}
+
+#life-tt-app .life-delay-close,
+.life-tt-app .life-delay-close {
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 19px !important;
+}
+
+/* Body must scroll inside */
+#life-tt-app #life-task-update-modal .life-delay-body,
+.life-tt-app #life-task-update-modal .life-delay-body,
+#life-tt-app #life-task-delay-modal .life-delay-body,
+.life-tt-app #life-task-delay-modal .life-delay-body {
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 13px 16px !important;
+}
+
+/* Footer fixed at bottom */
+#life-tt-app #life-task-update-modal .life-delay-footer,
+.life-tt-app #life-task-update-modal .life-delay-footer,
+#life-tt-app #life-task-delay-modal .life-delay-footer,
+.life-tt-app #life-task-delay-modal .life-delay-footer {
+  padding: 10px 16px !important;
+  background: #F8FCF8 !important;
+  border-top: 1px solid #DCE9DE !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Bigger footer buttons */
+#life-tt-app #life-task-update-modal .life-delay-footer .btn,
+.life-tt-app #life-task-update-modal .life-delay-footer .btn,
+#life-tt-app #life-task-delay-modal .life-delay-footer .btn,
+.life-tt-app #life-task-delay-modal .life-delay-footer .btn {
+  min-width: 132px !important;
+  height: 42px !important;
+  padding: 0 22px !important;
+  border-radius: 9px !important;
+  font-size: 13.5px !important;
+  font-weight: 900 !important;
+  line-height: 42px !important;
+}
+
+/* Compact fields */
+#life-tt-app .life-delay-body .field-block,
+.life-tt-app .life-delay-body .field-block {
+  margin-bottom: 10px !important;
+}
+
+#life-tt-app .life-delay-body label.lbl,
+.life-tt-app .life-delay-body label.lbl {
+  font-size: 10px !important;
+  margin-bottom: 5px !important;
+}
+
+#life-tt-app .life-delay-body input,
+#life-tt-app .life-delay-body select,
+.life-tt-app .life-delay-body input,
+.life-tt-app .life-delay-body select {
+  height: 34px !important;
+  font-size: 11.5px !important;
+}
+
+#life-tt-app .life-delay-body textarea,
+.life-tt-app .life-delay-body textarea {
+  min-height: 76px !important;
+  max-height: 96px !important;
+  font-size: 11.8px !important;
+  line-height: 1.4 !important;
+}
+
+#life-tt-app .life-delay-old,
+.life-tt-app .life-delay-old {
+  padding: 8px 11px !important;
+  margin-bottom: 10px !important;
+  font-size: 11px !important;
+}
+
+/* Attachment area compact */
+#life-tt-app #life-task-update-attach-zone,
+.life-tt-app #life-task-update-attach-zone {
+  padding: 14px !important;
+  min-height: 58px !important;
+}
+
+/* Scrollbar */
+#life-tt-app .life-delay-body::-webkit-scrollbar,
+.life-tt-app .life-delay-body::-webkit-scrollbar {
+  width: 8px !important;
+}
+
+#life-tt-app .life-delay-body::-webkit-scrollbar-thumb,
+.life-tt-app .life-delay-body::-webkit-scrollbar-thumb {
+  background: #b8c3d3 !important;
+  border-radius: 10px !important;
+}
+
+/* Smaller screens */
+@media (max-height: 760px) {
+  #life-tt-app #life-task-update-modal.life-delay-modal,
+  .life-tt-app #life-task-update-modal.life-delay-modal,
+  #life-tt-app #life-task-delay-modal.life-delay-modal,
+  .life-tt-app #life-task-delay-modal.life-delay-modal {
+    padding-top: 62px !important;
+  }
+
+  #life-tt-app #life-task-update-modal .life-delay-box,
+  .life-tt-app #life-task-update-modal .life-delay-box {
+    height: 390px !important;
+    max-height: 390px !important;
+    min-height: 390px !important;
+  }
+
+  #life-tt-app #life-task-delay-modal .life-delay-box,
+  .life-tt-app #life-task-delay-modal .life-delay-box {
+    height: 360px !important;
+    max-height: 360px !important;
+    min-height: 360px !important;
+  }
+}
+
+/* ============================================================
+   FINAL FIX — RESTORE TAB SECTION SEPARATION
+   Paste at VERY BOTTOM of CSS
+   ============================================================ */
+
+/* Main Task / Ticket section tabs */
+#life-tt-app .type-toggle,
+.life-tt-app .type-toggle {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 18px !important;
+  width: 100% !important;
+  margin: 26px 0 22px 0 !important;
+  padding: 0 !important;
+  align-items: stretch !important;
+}
+
+/* Main tab cards */
+#life-tt-app .type-btn,
+.life-tt-app .type-btn {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 82px !important;
+
+  background: #FFFFFF !important;
+  border: 2px solid #DCE9DE !important;
+  border-radius: 12px !important;
+
+  padding: 15px 18px !important;
+  text-align: center !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+
+  box-shadow: 0 2px 10px rgba(15,61,30,0.06) !important;
+}
+
+/* Selected main tab */
+#life-tt-app .type-btn.sel,
+.life-tt-app .type-btn.sel {
+  border-color: #43A047 !important;
+  background: #E8F5E9 !important;
+  box-shadow: 0 3px 14px rgba(67,160,71,0.18) !important;
+}
+
+/* Remove old vertical pseudo separators if any */
+#life-tt-app .type-toggle::before,
+.life-tt-app .type-toggle::before,
+#life-tt-app #toggle-ticket::before,
+.life-tt-app #toggle-ticket::before {
+  display: none !important;
+  content: none !important;
+}
+
+/* Inner tab section container */
+#life-tt-app .sub-nav,
+.life-tt-app .sub-nav {
+  display: flex !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+
+  width: 100% !important;
+  gap: 0 !important;
+
+  margin: 0 0 18px 0 !important;
+  padding: 0 !important;
+
+  background: #FFFFFF !important;
+  border: 1px solid #DCE9DE !important;
+  border-bottom: 3px solid #43A047 !important;
+  border-radius: 10px 10px 0 0 !important;
+
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+
+  box-shadow: 0 2px 10px rgba(15,61,30,0.05) !important;
+}
+
+/* Inner tabs */
+#life-tt-app .snav,
+.life-tt-app .snav {
+  flex: 0 0 auto !important;
+  min-width: 190px !important;
+  width: auto !important;
+
+  padding: 14px 22px !important;
+
+  background: #F8FCF8 !important;
+  color: #52665A !important;
+
+  border-right: 1px solid #DCE9DE !important;
+  border-left: none !important;
+  border-top: none !important;
+  border-bottom: 3px solid transparent !important;
+
+  margin: 0 0 -3px 0 !important;
+
+  text-align: center !important;
+  white-space: nowrap !important;
+
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  cursor: pointer !important;
+}
+
+/* Last tab no right border */
+#life-tt-app .snav:last-child,
+.life-tt-app .snav:last-child {
+  border-right: none !important;
+}
+
+/* Hover tab */
+#life-tt-app .snav:hover,
+.life-tt-app .snav:hover {
+  background: #FFFFFF !important;
+  color: #0F3D1E !important;
+}
+
+/* Active inner tab */
+#life-tt-app .snav.on,
+.life-tt-app .snav.on {
+  background: #FFFFFF !important;
+  color: #0F3D1E !important;
+  border-bottom: 3px solid #43A047 !important;
+  box-shadow: inset 0 3px 0 #0F3D1E !important;
+}
+
+/* Active tab text should stand out */
+#life-tt-app .snav.on,
+.life-tt-app .snav.on {
+  font-weight: 900 !important;
+}
+
+/* Keep tab note visually separate from sub tabs */
+#life-tt-app .life-refresh-row,
+.life-tt-app .life-refresh-row {
+  margin: 0 0 16px 0 !important;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  #life-tt-app .type-toggle,
+  .life-tt-app .type-toggle {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  #life-tt-app .snav,
+  .life-tt-app .snav {
+    min-width: 165px !important;
+    padding: 12px 16px !important;
+    font-size: 11px !important;
+  }
+}
+
+/* ============================================================
+   FINAL MAIN SECTION BUTTON FIX
+   50% + 50% container, compact buttons centered in each half
+   Vertical separator in between
+   Paste at VERY BOTTOM of CSS
+   ============================================================ */
+
+/* Main Task / Ticket wrapper */
+#life-tt-app .type-toggle,
+.life-tt-app .type-toggle {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 0 !important;
+
+  position: relative !important;
+
+  margin: 26px 0 22px 0 !important;
+  padding: 0 !important;
+
+  align-items: center !important;
+  justify-items: center !important;
+
+  background: transparent !important;
+  overflow: visible !important;
+}
+
+/* Center vertical separator between the two 50% sections */
+#life-tt-app .type-toggle::before,
+.life-tt-app .type-toggle::before {
+  content: "" !important;
+  display: block !important;
+
+  position: absolute !important;
+  top: 10px !important;
+  bottom: 10px !important;
+  left: 50% !important;
+
+  width: 1px !important;
+  background: #DCE9DE !important;
+
+  transform: translateX(-0.5px) !important;
+  z-index: 1 !important;
+}
+
+/* Keep both buttons compact, not stretched */
+#life-tt-app .type-btn,
+.life-tt-app .type-btn {
+  width: 300px !important;
+  max-width: calc(100% - 36px) !important;
+  min-height: 78px !important;
+
+  flex: none !important;
+  justify-self: center !important;
+
+  background: #FFFFFF !important;
+  border: 2px solid #DCE9DE !important;
+  border-radius: 12px !important;
+
+  padding: 14px 16px !important;
+  text-align: center !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+
+  box-shadow: 0 2px 10px rgba(15,61,30, 0.06) !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* Remove older ticket margin separator */
+#life-tt-app #toggle-ticket,
+.life-tt-app #toggle-ticket {
+  margin-left: 0 !important;
+}
+
+/* Remove older separator attached to ticket button */
+#life-tt-app #toggle-ticket::before,
+.life-tt-app #toggle-ticket::before {
+  display: none !important;
+  content: none !important;
+}
+
+/* Selected section button */
+#life-tt-app .type-btn.sel,
+.life-tt-app .type-btn.sel {
+  border-color: #43A047 !important;
+  background: #E8F5E9 !important;
+  box-shadow: 0 4px 14px rgba(67,160,71, 0.16) !important;
+}
+
+/* Button text */
+#life-tt-app .type-btn .tt,
+.life-tt-app .type-btn .tt {
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  color: #0F3D1E !important;
+  line-height: 1.25 !important;
+}
+
+#life-tt-app .type-btn .ts,
+.life-tt-app .type-btn .ts {
+  margin-top: 5px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: #5F6F63 !important;
+  line-height: 1.3 !important;
+}
+
+/* Count badge */
+#life-tt-app .type-btn .cnt,
+.life-tt-app .type-btn .cnt {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  min-width: 20px !important;
+  height: 18px !important;
+
+  margin-left: 7px !important;
+  padding: 0 7px !important;
+
+  border-radius: 20px !important;
+  background: #C00000 !important;
+  color: #FFFFFF !important;
+
+  font-size: 9px !important;
+  font-weight: 900 !important;
+}
+
+/* Mobile: stack buttons and remove center line */
+@media (max-width: 768px) {
+  #life-tt-app .type-toggle,
+  .life-tt-app .type-toggle {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  #life-tt-app .type-toggle::before,
+  .life-tt-app .type-toggle::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  #life-tt-app .type-btn,
+  .life-tt-app .type-btn {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* ============================================================
+   FINAL FIX — DETAILS MODAL AUTO HEIGHT
+   For Task Details + Ticket Details popup
+   Paste at VERY BOTTOM of CSS
+   ============================================================ */
+
+/* Main details modal overlay */
+#life-tt-app #modal,
+.life-tt-app #modal,
+#life-tt-app .modal-overlay,
+.life-tt-app .modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 999999 !important;
+
+  display: none !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+
+  background: rgba(15,61,30, 0.58) !important;
+
+  /* controls modal position on screen */
+  padding: 95px 16px 20px 16px !important;
+
+  overflow: hidden !important;
+}
+
+#life-tt-app #modal.show,
+.life-tt-app #modal.show,
+#life-tt-app .modal-overlay.show,
+.life-tt-app .modal-overlay.show {
+  display: flex !important;
+}
+
+/* Remove forced fixed height */
+#life-tt-app #modal .modal-box,
+.life-tt-app #modal .modal-box,
+#life-tt-app .modal-overlay .modal-box,
+.life-tt-app .modal-overlay .modal-box {
+  width: 860px !important;
+  max-width: 74vw !important;
+
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: calc(100vh - 150px) !important;
+
+  background: #ffffff !important;
+  border-radius: 13px !important;
+  padding: 14px 20px 16px 20px !important;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.28) !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  overflow: hidden !important;
+  text-align: left !important;
+}
+
+/* Remove icon space */
+#life-tt-app #modal-icon,
+.life-tt-app #modal-icon,
+#life-tt-app .modal-box .mic,
+.life-tt-app .modal-box .mic {
+  display: none !important;
+}
+
+/* Modal title */
+#life-tt-app #modal-title,
+.life-tt-app #modal-title,
+#life-tt-app .modal-box .mtt,
+.life-tt-app .modal-box .mtt {
+  flex: 0 0 auto !important;
+
+  color: #0F3D1E !important;
+  font-size: 17px !important;
+  font-weight: 900 !important;
+  line-height: 1.2 !important;
+  text-align: center !important;
+
+  margin: 0 0 10px 0 !important;
+  padding: 0 !important;
+}
+
+/* Content should decide modal height, but scroll if long */
+#life-tt-app #modal-text,
+.life-tt-app #modal-text,
+#life-tt-app .modal-box .mtx,
+.life-tt-app .modal-box .mtx {
+  flex: 0 1 auto !important;
+
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: calc(100vh - 255px) !important;
+
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+
+  padding: 0 10px 0 0 !important;
+  margin: 0 !important;
+
+  color: #152418 !important;
+  font-size: 11.8px !important;
+  line-height: 1.4 !important;
+  text-align: left !important;
+  white-space: normal !important;
+}
+
+/* OK button */
+#life-tt-app #modal-ok-btn,
+.life-tt-app #modal-ok-btn {
+  flex: 0 0 auto !important;
+
+  width: 130px !important;
+  min-width: 130px !important;
+  height: 44px !important;
+
+  margin: 12px auto 0 auto !important;
+  padding: 0 22px !important;
+
+  border: none !important;
+  border-radius: 10px !important;
+  background: #0F3D1E !important;
+  color: #ffffff !important;
+
+  font-size: 15px !important;
+  font-weight: 900 !important;
+  line-height: 44px !important;
+  text-align: center !important;
+  cursor: pointer !important;
+}
+
+#life-tt-app #modal-ok-btn:hover,
+.life-tt-app #modal-ok-btn:hover {
+  background: #14501F !important;
+}
+
+/* Compact rich modal content */
+#life-tt-app .life-detail-modal-wrap,
+.life-tt-app .life-detail-modal-wrap {
+  gap: 8px !important;
+}
+
+#life-tt-app .life-detail-top-tags,
+.life-tt-app .life-detail-top-tags {
+  gap: 7px !important;
+  margin-bottom: 6px !important;
+}
+
+#life-tt-app .life-detail-tag,
+.life-tt-app .life-detail-tag {
+  padding: 5px 11px !important;
+  font-size: 10.8px !important;
+}
+
+#life-tt-app .life-detail-section,
+.life-tt-app .life-detail-section {
+  padding: 10px 12px !important;
+  margin: 0 0 8px 0 !important;
+  border-radius: 8px !important;
+}
+
+#life-tt-app .life-detail-section-title,
+.life-tt-app .life-detail-section-title {
+  font-size: 11px !important;
+  margin-bottom: 7px !important;
+}
+
+#life-tt-app .life-detail-grid,
+.life-tt-app .life-detail-grid {
+  gap: 7px !important;
+}
+
+#life-tt-app .life-detail-item,
+.life-tt-app .life-detail-item {
+  padding: 7px 9px !important;
+  border-radius: 7px !important;
+}
+
+#life-tt-app .life-detail-label,
+.life-tt-app .life-detail-label {
+  font-size: 9px !important;
+  margin-bottom: 2px !important;
+}
+
+#life-tt-app .life-detail-value,
+.life-tt-app .life-detail-value {
+  font-size: 11.2px !important;
+  line-height: 1.3 !important;
+}
+
+#life-tt-app .life-detail-box,
+.life-tt-app .life-detail-box {
+  padding: 9px 10px !important;
+  font-size: 11.3px !important;
+  line-height: 1.35 !important;
+}
+
+/* Attachments compact */
+#life-tt-app .life-modal-attachments,
+.life-tt-app .life-modal-attachments {
+  margin-top: 7px !important;
+  padding-top: 8px !important;
+}
+
+#life-tt-app .life-modal-file-row,
+.life-tt-app .life-modal-file-row {
+  padding: 7px 9px !important;
+  margin-bottom: 5px !important;
+}
+
+/* Scrollbar */
+#life-tt-app #modal-text::-webkit-scrollbar,
+.life-tt-app #modal-text::-webkit-scrollbar,
+#life-tt-app .modal-box .mtx::-webkit-scrollbar,
+.life-tt-app .modal-box .mtx::-webkit-scrollbar {
+  width: 8px !important;
+}
+
+#life-tt-app #modal-text::-webkit-scrollbar-thumb,
+.life-tt-app #modal-text::-webkit-scrollbar-thumb,
+#life-tt-app .modal-box .mtx::-webkit-scrollbar-thumb,
+.life-tt-app .modal-box .mtx::-webkit-scrollbar-thumb {
+  background: #B8C3D3 !important;
+  border-radius: 10px !important;
+}
+
+/* ============================================================
+   HEADER TITLE WHITE FIX
+   ============================================================ */
+
+#life-tt-app .header .h1,
+.life-tt-app .header .h1 {
+  color: #FFFFFF !important;
+}
+
+#life-tt-app .header .sub,
+.life-tt-app .header .sub {
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+/* ============================================================
+   TASK QUEUE NUMBER PATCH
+   ============================================================ */
+
+#life-tt-app .life-queue-help,
+.life-tt-app .life-queue-help {
+  margin-top: 4px;
+  color: #5F6F63;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+#life-tt-app .life-queue-pill,
+.life-tt-app .life-queue-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 24px;
+  border-radius: 20px;
+  background: #0F3D1E;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+#life-tt-app .life-queue-empty,
+.life-tt-app .life-queue-empty {
+  color: #8C8C8C;
+  font-weight: 800;
+}
+
+#life-tt-app .life-manage-queue-btn,
+.life-tt-app .life-manage-queue-btn {
+  background: #43A047;
+  color: #FFFFFF;
+}
+
+#life-tt-app .life-queue-modal-table,
+.life-tt-app .life-queue-modal-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 650px;
+}
+
+#life-tt-app .life-queue-modal-table th,
+#life-tt-app .life-queue-modal-table td,
+.life-tt-app .life-queue-modal-table th,
+.life-tt-app .life-queue-modal-table td {
+  padding: 8px;
+  border-bottom: 1px solid #EEF4EF;
+  font-size: 11px;
+}
+
+#life-tt-app .life-queue-modal-table input,
+.life-tt-app .life-queue-modal-table input {
+  width: 70px;
+  height: 30px;
+  text-align: center;
+  font-weight: 900;
+}
+
+/* ============================================================
+   TASK QUEUE MODAL UI FIX
+   ============================================================ */
+
+#life-tt-app .life-queue-modal-wrap,
+.life-tt-app .life-queue-modal-wrap {
+  max-height: 430px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+}
+
+#life-tt-app .life-queue-modal-note,
+.life-tt-app .life-queue-modal-note {
+  background: #F8FCF8;
+  border-left: 4px solid #43A047;
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: #0F3D1E;
+  font-size: 11px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+#life-tt-app .life-queue-modal-table,
+.life-tt-app .life-queue-modal-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+  min-width: 0;
+}
+
+#life-tt-app .life-queue-modal-table th,
+.life-tt-app .life-queue-modal-table td,
+.life-tt-app .life-queue-modal-table th,
+.life-tt-app .life-queue-modal-table td {
+  border: none;
+  padding: 8px 9px;
+  vertical-align: middle;
+  font-size: 11.5px;
+}
+
+#life-tt-app .life-queue-modal-table th,
+.life-tt-app .life-queue-modal-table th {
+  color: #0F3D1E;
+  background: #F3FAF4;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+#life-tt-app .life-queue-modal-table tbody tr,
+.life-tt-app .life-queue-modal-table tbody tr {
+  background: #FFFFFF;
+  box-shadow: 0 1px 6px rgba(15,61,30,0.08);
+  border-radius: 8px;
+}
+
+#life-tt-app .life-queue-modal-table tbody td:first-child,
+.life-tt-app .life-queue-modal-table tbody td:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+#life-tt-app .life-queue-modal-table tbody td:last-child,
+.life-tt-app .life-queue-modal-table tbody td:last-child {
+  border-radius: 0 8px 8px 0;
+}
+
+#life-tt-app .life-queue-no-input,
+.life-tt-app .life-queue-no-input {
+  width: 58px !important;
+  height: 32px !important;
+  text-align: center;
+  border: 1.5px solid #43A047 !important;
+  border-radius: 7px !important;
+  color: #0F3D1E !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  background: #FAFCFA !important;
+}
+
+#life-tt-app .life-queue-task-title,
+.life-tt-app .life-queue-task-title {
+  color: #152418;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.35;
+  max-width: 280px;
+  white-space: normal;
+}
+
+#life-tt-app .life-queue-date,
+.life-tt-app .life-queue-date {
+  color: #0F3D1E;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+#life-tt-app .life-q-badge,
+.life-tt-app .life-q-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+#life-tt-app .life-q-high,
+.life-tt-app .life-q-high {
+  background: #FDECEC;
+  color: #C00000;
+}
+
+#life-tt-app .life-q-medium,
+.life-tt-app .life-q-medium {
+  background: #E8F5E9;
+  color: #946B08;
+}
+
+#life-tt-app .life-q-low,
+.life-tt-app .life-q-low {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+#life-tt-app .life-q-open,
+.life-tt-app .life-q-open {
+  background: #E8F5E9;
+  color: #0F3D1E;
+}
+
+#life-tt-app .life-q-overdue,
+.life-tt-app .life-q-overdue {
+  background: #FDECEC;
+  color: #C00000;
+}
+
+#life-tt-app .life-q-completed,
+.life-tt-app .life-q-completed {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+#life-tt-app .life-q-cancelled,
+.life-tt-app .life-q-cancelled {
+  background: #F0F2F5;
+  color: #52665A;
+}
+
+/* ============================================================
+   TASK QUEUE HISTORY UI
+   ============================================================ */
+
+#life-tt-app .life-queue-history-list,
+.life-tt-app .life-queue-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+#life-tt-app .life-queue-history-card,
+.life-tt-app .life-queue-history-card {
+  background: #F8FCF8;
+  border: 1px solid #EEF4EF;
+  border-left: 4px solid #43A047;
+  border-radius: 9px;
+  padding: 10px 12px;
+}
+
+#life-tt-app .life-queue-history-top,
+.life-tt-app .life-queue-history-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 7px;
+}
+
+#life-tt-app .life-queue-history-title,
+.life-tt-app .life-queue-history-title {
+  color: #0F3D1E;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+#life-tt-app .life-queue-history-date,
+.life-tt-app .life-queue-history-date {
+  color: #5F6F63;
+  font-size: 10.5px;
+  font-weight: 800;
+}
+
+#life-tt-app .life-queue-history-change,
+.life-tt-app .life-queue-history-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #E8F5E9;
+  border: 1px solid #A5D6A7;
+  border-radius: 20px;
+  padding: 5px 10px;
+  color: #0F3D1E;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+#life-tt-app .life-queue-history-meta,
+.life-tt-app .life-queue-history-meta {
+  margin-top: 6px;
+  color: #52665A;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+#life-tt-app .life-queue-history-reason,
+.life-tt-app .life-queue-history-reason {
+  margin-top: 6px;
+  background: #FFFFFF;
+  border-radius: 7px;
+  padding: 7px 9px;
+  color: #152418;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ============================================================
+   ALL TASKS — GROUP BY ASSIGNEE VIEW
+   ============================================================ */
+
+#life-tt-app .life-view-mode-control,
+.life-tt-app .life-view-mode-control {
+  min-width: 190px;
+}
+
+#life-tt-app .life-assignee-group-row td,
+.life-tt-app .life-assignee-group-row td {
+  background: #0F3D1E !important;
+  color: #FFFFFF !important;
+  border-bottom: none !important;
+  padding: 0 !important;
+}
+
+#life-tt-app .life-assignee-group-head,
+.life-tt-app .life-assignee-group-head {
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+#life-tt-app .life-assignee-group-left,
+.life-tt-app .life-assignee-group-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+#life-tt-app .life-assignee-group-name,
+.life-tt-app .life-assignee-group-name {
+  font-size: 13px;
+  font-weight: 900;
+  color: #FFFFFF;
+}
+
+#life-tt-app .life-assignee-group-sub,
+.life-tt-app .life-assignee-group-sub {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.72);
+}
+
+#life-tt-app .life-assignee-group-stats,
+.life-tt-app .life-assignee-group-stats {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+#life-tt-app .life-assignee-stat,
+.life-tt-app .life-assignee-stat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+#life-tt-app .life-assignee-stat.gold,
+.life-tt-app .life-assignee-stat.gold {
+  background: #E8F5E9;
+  color: #14501F;
+  border-color: #A5D6A7;
+}
+
+#life-tt-app .life-assignee-stat.red,
+.life-tt-app .life-assignee-stat.red {
+  background: #FDECEC;
+  color: #C00000;
+  border-color: #F2B8B5;
+}
+
+#life-tt-app .life-group-manage-btn,
+.life-tt-app .life-group-manage-btn {
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: #43A047;
+  color: #FFFFFF;
+  padding: 0 11px;
+  font-size: 10.5px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+#life-tt-app .life-group-manage-btn:hover,
+.life-tt-app .life-group-manage-btn:hover {
+  background: #946B08;
+}
+
+/* ============================================================
+   ALL TASKS ROW HEIGHT LIMIT
+   Paste at VERY BOTTOM of CSS
+   ============================================================ */
+
+#life-tt-app #task-report-body tr.life-clickable-row,
+.life-tt-app #task-report-body tr.life-clickable-row {
+  height: 76px !important;
+  max-height: 76px !important;
+}
+
+#life-tt-app #task-report-body tr.life-clickable-row td,
+.life-tt-app #task-report-body tr.life-clickable-row td {
+  height: 76px !important;
+  max-height: 76px !important;
+  padding: 7px 10px !important;
+  vertical-align: middle !important;
+  overflow: hidden !important;
+}
+
+/* Details column: Task No, Assigned By, Assigned To, Category, Details */
+#life-tt-app #task-report-body tr.life-clickable-row td:nth-child(5) .life-row-main-text,
+.life-tt-app #task-report-body tr.life-clickable-row td:nth-child(5) .life-row-main-text {
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+
+  max-height: 48px !important;
+  line-height: 16px !important;
+  white-space: normal !important;
+}
+
+/* Assigned by / assigned to blocks should not increase row height */
+#life-tt-app #task-report-body .life-user-date-cell,
+.life-tt-app #task-report-body .life-user-date-cell {
+  max-height: 58px !important;
+  overflow: hidden !important;
+}
+
+/* Update To column should also stay compact */
+#life-tt-app #task-report-body tr.life-clickable-row td:nth-child(7),
+.life-tt-app #task-report-body tr.life-clickable-row td:nth-child(7) {
+  max-width: 160px !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+  overflow: hidden !important;
+}
+
+/* Action column should not wrap and increase height */
+#life-tt-app #task-report-body tr.life-clickable-row td:nth-child(10),
+.life-tt-app #task-report-body tr.life-clickable-row td:nth-child(10) {
+  white-space: nowrap !important;
+}
+
+/* Group header rows should remain normal height */
+#life-tt-app #task-report-body tr.life-assignee-group-row,
+.life-tt-app #task-report-body tr.life-assignee-group-row,
+#life-tt-app #task-report-body tr.life-assignee-group-row td,
+.life-tt-app #task-report-body tr.life-assignee-group-row td {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* ============================================================
+   ASSIGNEE GROUP ACCORDION VIEW
+   ============================================================ */
+
+#life-tt-app .life-assignee-group-row td,
+.life-tt-app .life-assignee-group-row td {
+  background: #0F3D1E !important;
+  color: #FFFFFF !important;
+  padding: 0 !important;
+  border-bottom: 2px solid #43A047 !important;
+}
+
+#life-tt-app .life-assignee-accordion-head,
+.life-tt-app .life-assignee-accordion-head {
+  padding: 11px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#life-tt-app .life-assignee-toggle-zone,
+.life-tt-app .life-assignee-toggle-zone {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+#life-tt-app .life-assignee-arrow,
+.life-tt-app .life-assignee-arrow {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  color: #0F3D1E;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+#life-tt-app .life-assignee-title-box,
+.life-tt-app .life-assignee-title-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+#life-tt-app .life-assignee-group-name,
+.life-tt-app .life-assignee-group-name {
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+#life-tt-app .life-assignee-group-next,
+.life-tt-app .life-assignee-group-next {
+  color: rgba(255,255,255,0.72);
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+#life-tt-app .life-assignee-group-info-row,
+.life-tt-app .life-assignee-group-info-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  padding-left: 34px;
+}
+
+#life-tt-app .life-assignee-stat,
+.life-tt-app .life-assignee-stat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 23px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+#life-tt-app .life-assignee-stat.gold,
+.life-tt-app .life-assignee-stat.gold {
+  background: #E8F5E9;
+  color: #14501F;
+  border-color: #A5D6A7;
+}
+
+#life-tt-app .life-assignee-stat.red,
+.life-tt-app .life-assignee-stat.red {
+  background: #FDECEC;
+  color: #C00000;
+  border-color: #F2B8B5;
+}
+
+#life-tt-app .life-assignee-stat.green,
+.life-tt-app .life-assignee-stat.green {
+  background: #E8F5E9;
+  color: #2E7D32;
+  border-color: #B9DFBE;
+}
+
+#life-tt-app .life-group-manage-btn,
+.life-tt-app .life-group-manage-btn {
+  height: 25px;
+  border: none;
+  border-radius: 20px;
+  background: #43A047;
+  color: #FFFFFF;
+  padding: 0 11px;
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+#life-tt-app .life-group-manage-btn:hover,
+.life-tt-app .life-group-manage-btn:hover {
+  background: #946B08;
+}
+
+#life-tt-app .life-assignee-collapsed-note,
+.life-tt-app .life-assignee-collapsed-note {
+  color: rgba(255,255,255,0.72);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+/* ============================================================
+   ALL TASKS HEADER EMPLOYEE SEARCH
+   ============================================================ */
+
+#life-tt-app .life-alltasks-head-left,
+.life-tt-app .life-alltasks-head-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#life-tt-app .life-alltasks-head-actions,
+.life-tt-app .life-alltasks-head-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#life-tt-app .life-task-assignee-search,
+.life-tt-app .life-task-assignee-search {
+  width: 230px;
+  height: 30px;
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 20px;
+  background: #FFFFFF;
+  color: #0F3D1E;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 0 12px;
+  outline: none;
+}
+
+#life-tt-app .life-task-assignee-search::placeholder,
+.life-tt-app .life-task-assignee-search::placeholder {
+  color: #5F6F63;
+  font-weight: 700;
+}
+
+#life-tt-app .life-task-assignee-search:focus,
+.life-tt-app .life-task-assignee-search:focus {
+  border-color: #43A047;
+  box-shadow: 0 0 0 2px rgba(67,160,71,0.18);
+}
+
+#life-tt-app .life-task-assignee-clear,
+.life-tt-app .life-task-assignee-clear {
+  height: 28px;
+  border: none;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.14);
+  color: #FFFFFF;
+  padding: 0 10px;
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+#life-tt-app .life-task-assignee-clear:hover,
+.life-tt-app .life-task-assignee-clear:hover {
+  background: #43A047;
+}
+
+
+/* ============================================================
+   ALL TASKS HEADER SEARCH SINGLE LINE FIX
+   ============================================================ */
+
+#life-tt-app #task-sub-1 .card .card-hdr,
+.life-tt-app #task-sub-1 .card .card-hdr {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  flex-wrap: nowrap !important;
+}
+
+/* ============================================================
+   MANAGE QUEUE MODAL - CLEAN COLUMN SPACING
+   Works for frappe.ui.Dialog outside #life-tt-app
+   ============================================================ */
+
+.life-queue-dialog-wrap .modal-dialog {
+  max-width: 920px !important;
+  width: 920px !important;
+}
+
+.life-queue-dialog-wrap .modal-content {
+  border-radius: 14px !important;
+  overflow: hidden !important;
+}
+
+.life-queue-dialog-wrap .modal-body {
+  padding: 22px 28px 14px !important;
+}
+
+.life-queue-dialog-wrap .modal-footer {
+  padding: 14px 28px 20px !important;
+}
+
+.life-queue-dialog-wrap .life-queue-modal-wrap {
+  max-height: 430px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.life-queue-dialog-wrap .life-queue-modal-note {
+  background: #F8FCF8;
+  border-left: 4px solid #43A047;
+  border-radius: 8px;
+  padding: 10px 13px;
+  color: #0F3D1E;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+  margin-bottom: 16px;
+}
+
+.life-queue-dialog-wrap .life-queue-modal-table {
+  width: 100%;
+  border-collapse: separate !important;
+  border-spacing: 0 9px !important;
+  table-layout: fixed !important;
+}
+
+.life-queue-dialog-wrap .life-queue-modal-table th {
+  color: #0F3D1E;
+  background: #F3FAF4;
+  padding: 9px 12px !important;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.35px;
+  border: none !important;
+}
+
+.life-queue-dialog-wrap .life-queue-modal-table td {
+  background: #FFFFFF;
+  padding: 9px 12px !important;
+  vertical-align: middle !important;
+  border-top: 1px solid #E1E7F0 !important;
+  border-bottom: 1px solid #E1E7F0 !important;
+  font-size: 12px;
+}
+
+.life-queue-dialog-wrap .life-queue-modal-table td:first-child {
+  border-left: 1px solid #E1E7F0 !important;
+  border-radius: 8px 0 0 8px;
+}
+
+.life-queue-dialog-wrap .life-queue-modal-table td:last-child {
+  border-right: 1px solid #E1E7F0 !important;
+  border-radius: 0 8px 8px 0;
+}
+
+.life-queue-dialog-wrap .life-queue-col-no {
+  width: 90px;
+}
+
+.life-queue-dialog-wrap .life-queue-col-task {
+  width: 310px;
+}
+
+.life-queue-dialog-wrap .life-queue-col-priority {
+  width: 110px;
+}
+
+.life-queue-dialog-wrap .life-queue-col-deadline {
+  width: 140px;
+}
+
+.life-queue-dialog-wrap .life-queue-col-status {
+  width: 110px;
+}
+
+.life-queue-dialog-wrap .life-queue-no-input {
+  width: 58px !important;
+  height: 32px !important;
+  text-align: center;
+  border: 1.5px solid #43A047 !important;
+  border-radius: 7px !important;
+  color: #0F3D1E !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  background: #FAFCFA !important;
+}
+
+.life-queue-dialog-wrap .life-queue-task-title {
+  color: #152418;
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1.35;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.life-queue-dialog-wrap .life-queue-date {
+  color: #0F3D1E;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.life-queue-dialog-wrap .life-q-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 78px;
+  height: 25px;
+  padding: 0 10px;
+  border-radius: 20px;
+  font-size: 10.5px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.life-queue-dialog-wrap .life-q-high {
+  background: #FDECEC;
+  color: #C00000;
+}
+
+.life-queue-dialog-wrap .life-q-medium {
+  background: #E8F5E9;
+  color: #946B08;
+}
+
+.life-queue-dialog-wrap .life-q-low {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.life-queue-dialog-wrap .life-q-open {
+  background: #E8F5E9;
+  color: #0F3D1E;
+}
+
+.life-queue-dialog-wrap .life-q-overdue {
+  background: #FDECEC;
+  color: #C00000;
+}
+
+.life-queue-dialog-wrap .life-q-completed {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.life-queue-dialog-wrap .life-q-cancelled {
+  background: #F0F2F5;
+  color: #52665A;
+}
+#life-tt-app .life-alltasks-head-left,
+.life-tt-app .life-alltasks-head-left {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+
+#life-tt-app .life-alltasks-head-actions,
+.life-tt-app .life-alltasks-head-actions {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  flex-wrap: nowrap !important;
+}
+
+#life-tt-app .life-task-assignee-search,
+.life-tt-app .life-task-assignee-search {
+  flex: 0 1 280px !important;
+  width: 280px !important;
+  min-width: 160px !important;
+  max-width: 320px !important;
+}
+
+#life-tt-app .life-task-assignee-clear,
+.life-tt-app .life-task-assignee-clear {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+
+#life-tt-app #task-report-count,
+.life-tt-app #task-report-count {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+
+/* Normal assignee user icon */
+#life-tt-app .life-assignee-group-name,
+.life-tt-app .life-assignee-group-name {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+#life-tt-app .life-assignee-user-icon,
+.life-tt-app .life-assignee-user-icon {
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 50% !important;
+  background: #E8F5E9 !important;
+  color: #43A047 !important;
+  border: 1px solid #A5D6A7 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+  top: -1px !important;
+}
+
+#life-tt-app .life-assignee-user-icon svg,
+.life-tt-app .life-assignee-user-icon svg {
+  display: block !important;
+}
+
+/* Cancel / Reopen task buttons */
+#life-tt-app .life-task-cancel-btn,
+.life-tt-app .life-task-cancel-btn {
+  background: #C00000 !important;
+  color: #FFFFFF !important;
+}
+
+#life-tt-app .life-task-cancel-btn:hover,
+.life-tt-app .life-task-cancel-btn:hover {
+  background: #9B0000 !important;
+}
+
+#life-tt-app .life-task-reopen-btn,
+.life-tt-app .life-task-reopen-btn {
+  background: #2E7D32 !important;
+  color: #FFFFFF !important;
+}
+
+#life-tt-app .life-task-reopen-btn:hover,
+.life-tt-app .life-task-reopen-btn:hover {
+  background: #14501F !important;
+}
+
+/* ============================================================
+   MY TASKS FULL WIDTH STACKED LAYOUT
+   Assigned By Me on top, Assigned To Me below
+   ============================================================ */
+
+#life-tt-app #task-sub-2 > .two-col,
+.life-tt-app #task-sub-2 > .two-col {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 16px !important;
+  grid-template-columns: none !important;
+}
+
+#life-tt-app #task-sub-2 > .two-col > .card,
+.life-tt-app #task-sub-2 > .two-col > .card {
+  width: 100% !important;
+  margin-bottom: 0 !important;
+}
+
+/* First card is Assigned To Me, move it below */
+#life-tt-app #task-sub-2 > .two-col > .card:nth-child(1),
+.life-tt-app #task-sub-2 > .two-col > .card:nth-child(1) {
+  order: 2 !important;
+}
+
+/* Second card is Assigned By Me, move it on top */
+#life-tt-app #task-sub-2 > .two-col > .card:nth-child(2),
+.life-tt-app #task-sub-2 > .two-col > .card:nth-child(2) {
+  order: 1 !important;
+}
+
+/* Use available width properly */
+#life-tt-app #task-sub-2 .tbl-wrap,
+.life-tt-app #task-sub-2 .tbl-wrap {
+  width: 100% !important;
+  overflow-x: auto !important;
+}
+
+#life-tt-app #task-sub-2 table,
+.life-tt-app #task-sub-2 table {
+  width: 100% !important;
+  min-width: 1050px !important;
+}
+
+/* Reassign task button - outline style */
+#life-tt-app .life-task-reassign-btn,
+.life-tt-app .life-task-reassign-btn {
+  background: #FFFFFF !important;
+  color: #0F3D1E !important;
+  border: 1.5px solid #0F3D1E !important;
+  box-shadow: none !important;
+}
+
+#life-tt-app .life-task-reassign-btn:hover,
+.life-tt-app .life-task-reassign-btn:hover {
+  background: #0F3D1E !important;
+  color: #FFFFFF !important;
+  border-color: #0F3D1E !important;
+}
+
+/* ============================================================
+   LIFE GREEN THEME — SALES MASTER REFERENCE
+   Added for ERPNext Task Manager / Ticket System Web Page
+   ============================================================ */
+
+#life-tt-app,
+.life-tt-app {
+  background: #F3FAF4;
+  color: #152418;
+  font-family: "Inter", "Segoe UI", Arial, system-ui, sans-serif;
+  border: 1px solid #DCE9DE;
+  box-shadow: 0 1px 2px rgba(15,61,30,0.06), 0 8px 24px rgba(15,61,30,0.08);
+}
+
+/* Main application header */
+#life-tt-app .header,
+.life-tt-app .header {
+  background: linear-gradient(135deg, #0F3D1E 0%, #1B5E20 70%, #2E7D32 100%) !important;
+  box-shadow: 0 2px 12px rgba(15,61,30,0.25);
+}
+
+#life-tt-app .gold-bar,
+.life-tt-app .gold-bar {
+  background: #43A047 !important;
+}
+
+#life-tt-app .logged-user-box,
+.life-tt-app .logged-user-box {
+  background: rgba(255,255,255,0.10) !important;
+  border-color: rgba(255,255,255,0.22) !important;
+}
+
+/* Back button added beside the main header title */
+#life-tt-app .life-header-left,
+.life-tt-app .life-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+#life-tt-app .life-back-btn,
+.life-tt-app .life-back-btn {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+  text-decoration: none;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, transform .15s;
+}
+
+#life-tt-app .life-back-btn:hover,
+.life-tt-app .life-back-btn:hover {
+  color: #FFFFFF;
+  text-decoration: none;
+  background: #43A047;
+  border-color: #66BB6A;
+  transform: translateX(-1px);
+}
+
+/* Main Task / Ticket module cards */
+#life-tt-app .type-btn,
+.life-tt-app .type-btn {
+  border-color: #DCE9DE !important;
+  box-shadow: 0 1px 2px rgba(15,61,30,0.05);
+}
+
+#life-tt-app .type-btn:hover,
+.life-tt-app .type-btn:hover {
+  border-color: #66BB6A !important;
+  box-shadow: 0 5px 16px rgba(15,61,30,0.12) !important;
+}
+
+#life-tt-app .type-btn.sel,
+.life-tt-app .type-btn.sel {
+  border-color: #43A047 !important;
+  background: linear-gradient(135deg, #F2FBF3, #E8F5E9) !important;
+  box-shadow: 0 4px 14px rgba(27,94,32,0.14) !important;
+}
+
+#life-tt-app .type-btn .tt,
+.life-tt-app .type-btn .tt {
+  color: #0F3D1E !important;
+}
+
+/* Page note / navigation */
+#life-tt-app .life-tab-note,
+.life-tt-app .life-tab-note {
+  color: #0F3D1E !important;
+  border-left-color: #43A047 !important;
+  box-shadow: 0 1px 5px rgba(15,61,30,0.08) !important;
+}
+
+#life-tt-app .sub-nav,
+.life-tt-app .sub-nav {
+  border-bottom-color: #43A047 !important;
+}
+
+#life-tt-app .snav.on,
+.life-tt-app .snav.on {
+  color: #0F3D1E !important;
+  border-bottom-color: #43A047 !important;
+}
+
+/* Card headers */
+#life-tt-app .card-hdr,
+.life-tt-app .card-hdr {
+  background: linear-gradient(135deg, #0F3D1E, #1B5E20) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(15,61,30,0.14);
+}
+
+#life-tt-app .card-hdr .badge,
+.life-tt-app .card-hdr .badge {
+  background: #43A047 !important;
+  color: #FFFFFF !important;
+}
+
+/* Inputs / selects / textareas */
+#life-tt-app input:focus,
+#life-tt-app select:focus,
+#life-tt-app textarea:focus,
+.life-tt-app input:focus,
+.life-tt-app select:focus,
+.life-tt-app textarea:focus {
+  border-color: #43A047 !important;
+  box-shadow: 0 0 0 3px rgba(67,160,71,0.12) !important;
+}
+
+/* Search pickers */
+#life-tt-app .picker-results,
+.life-tt-app .picker-results {
+  border-color: #43A047 !important;
+  box-shadow: 0 10px 28px rgba(15,61,30,0.18) !important;
+}
+
+#life-tt-app .picker-item:hover,
+.life-tt-app .picker-item:hover {
+  background: #E8F5E9 !important;
+}
+
+#life-tt-app .picker-avatar,
+.life-tt-app .picker-avatar {
+  background: linear-gradient(135deg, #2E7D32, #1B5E20) !important;
+}
+
+/* Primary green actions */
+#life-tt-app .life-refresh-btn,
+.life-tt-app .life-refresh-btn,
+#life-tt-app .btn-n,
+.life-tt-app .btn-n,
+#life-tt-app .apbtn,
+.life-tt-app .apbtn,
+#life-tt-app .btn-info,
+.life-tt-app .btn-info {
+  color: #FFFFFF !important;
+  background: linear-gradient(135deg, #2E7D32, #1B5E20) !important;
+  border-color: #1B5E20 !important;
+  box-shadow: 0 3px 10px rgba(27,94,32,0.22);
+}
+
+#life-tt-app .life-refresh-btn:hover,
+.life-tt-app .life-refresh-btn:hover,
+#life-tt-app .btn-n:hover,
+.life-tt-app .btn-n:hover,
+#life-tt-app .apbtn:hover,
+.life-tt-app .apbtn:hover,
+#life-tt-app .btn-info:hover,
+.life-tt-app .btn-info:hover {
+  background: linear-gradient(135deg, #388E3C, #14501F) !important;
+  box-shadow: 0 5px 14px rgba(27,94,32,0.30);
+}
+
+/* Neutral outlined actions */
+#life-tt-app .btn-undo,
+.life-tt-app .btn-undo,
+#life-tt-app .life-view-details-btn,
+.life-tt-app .life-view-details-btn {
+  color: #14501F !important;
+  border-color: #2E7D32 !important;
+}
+
+#life-tt-app .btn-undo:hover,
+.life-tt-app .btn-undo:hover,
+#life-tt-app .life-view-details-btn:hover,
+.life-tt-app .life-view-details-btn:hover {
+  color: #FFFFFF !important;
+  background: #2E7D32 !important;
+}
+
+/* Filters, KPI tiles and cards */
+#life-tt-app .fbar,
+.life-tt-app .fbar,
+#life-tt-app .tile,
+.life-tt-app .tile,
+#life-tt-app .card,
+.life-tt-app .card {
+  border-color: #DCE9DE !important;
+  box-shadow: 0 2px 10px rgba(15,61,30,0.06) !important;
+}
+
+/* Tables — styled like Sales Master */
+#life-tt-app th,
+.life-tt-app th {
+  color: #FFFFFF !important;
+  background: linear-gradient(135deg, #0F3D1E, #1B5E20) !important;
+  border-bottom: 2px solid #43A047 !important;
+}
+
+#life-tt-app td,
+.life-tt-app td {
+  color: #152418 !important;
+  border-bottom-color: #EEF4EF !important;
+}
+
+#life-tt-app table tbody tr:nth-child(even) td,
+.life-tt-app table tbody tr:nth-child(even) td {
+  background: #F8FCF8 !important;
+}
+
+#life-tt-app table tbody tr:hover td,
+.life-tt-app table tbody tr:hover td,
+#life-tt-app .life-clickable-row:hover,
+.life-tt-app .life-clickable-row:hover {
+  background: #F3FAF4 !important;
+}
+
+/* Attachment drop zones */
+#life-tt-app .attach-zone,
+.life-tt-app .attach-zone {
+  border-color: #CFE1D2 !important;
+  background: #FAFCFA !important;
+}
+
+#life-tt-app .attach-zone:hover,
+.life-tt-app .attach-zone:hover {
+  color: #14501F !important;
+  border-color: #66BB6A !important;
+  background: #E8F5E9 !important;
+}
+
+/* Scrollbars */
+#life-tt-app ::-webkit-scrollbar-track,
+.life-tt-app ::-webkit-scrollbar-track {
+  background: #EEF4EF;
+}
+
+#life-tt-app ::-webkit-scrollbar-thumb,
+.life-tt-app ::-webkit-scrollbar-thumb {
+  background: #A5D6A7;
+  border-radius: 999px;
+}
+
+#life-tt-app ::-webkit-scrollbar-thumb:hover,
+.life-tt-app ::-webkit-scrollbar-thumb:hover {
+  background: #66BB6A;
+}
+
+/* ============================================================
+   LIFE TASK / TICKET — INTER TYPOGRAPHY OVERRIDE
+   Reference: Package-to-Package Conversion page
+   Typography only. No colour, spacing, border, or layout changes.
+   ============================================================ */
+
+/* Use the same typeface consistently throughout the application */
+#life-tt-app,
+.life-tt-app,
+#life-tt-app *,
+.life-tt-app * {
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+
+/* Native controls sometimes keep the browser/ERPNext font unless forced */
+#life-tt-app input,
+#life-tt-app select,
+#life-tt-app textarea,
+#life-tt-app button,
+#life-tt-app table,
+.life-tt-app input,
+.life-tt-app select,
+.life-tt-app textarea,
+.life-tt-app button,
+.life-tt-app table {
+  font-family: inherit;
+}
+
+/* HEADER */
+#life-tt-app .header .h1,
+.life-tt-app .header .h1 {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+#life-tt-app .header .sub,
+.life-tt-app .header .sub {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+#life-tt-app .logged-user-box label,
+.life-tt-app .logged-user-box label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+#life-tt-app #logged-in-user-name,
+.life-tt-app #logged-in-user-name {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+#life-tt-app #logged-in-user-role,
+.life-tt-app #logged-in-user-role {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* MAIN TASK / TICKET SELECTORS */
+#life-tt-app .type-btn .tt,
+.life-tt-app .type-btn .tt {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+#life-tt-app .type-btn .ts,
+.life-tt-app .type-btn .ts {
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+#life-tt-app .type-btn .cnt,
+.life-tt-app .type-btn .cnt {
+  font-size: 9px;
+  font-weight: 700;
+}
+
+/* TAB PURPOSE / REFRESH ROW */
+#life-tt-app .life-tab-note,
+.life-tt-app .life-tab-note {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+#life-tt-app .life-refresh-note,
+.life-tt-app .life-refresh-note {
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+#life-tt-app .life-refresh-btn,
+.life-tt-app .life-refresh-btn {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* SUB NAVIGATION — mirrors reference page tabs */
+#life-tt-app .snav,
+.life-tt-app .snav {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+/* CARD HEADINGS — reference card headings are 14px / 700 */
+#life-tt-app .card-hdr,
+.life-tt-app .card-hdr {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+#life-tt-app .card-hdr .badge,
+.life-tt-app .card-hdr .badge {
+  font-size: 9px;
+  font-weight: 700;
+}
+
+/* FORM LABELS */
+#life-tt-app label.lbl,
+.life-tt-app label.lbl {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+/* FORM VALUES — closer to the 12–14px reference form typography */
+#life-tt-app input[type="text"],
+#life-tt-app input[type="date"],
+#life-tt-app input[type="datetime-local"],
+#life-tt-app input[type="number"],
+#life-tt-app input[type="email"],
+#life-tt-app input[type="tel"],
+#life-tt-app select,
+#life-tt-app textarea,
+.life-tt-app input[type="text"],
+.life-tt-app input[type="date"],
+.life-tt-app input[type="datetime-local"],
+.life-tt-app input[type="number"],
+.life-tt-app input[type="email"],
+.life-tt-app input[type="tel"],
+.life-tt-app select,
+.life-tt-app textarea {
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+#life-tt-app textarea,
+.life-tt-app textarea {
+  line-height: 1.5;
+}
+
+#life-tt-app .wordcount,
+.life-tt-app .wordcount,
+#life-tt-app .life-delay-wordcount,
+.life-tt-app .life-delay-wordcount {
+  font-size: 9.5px;
+  font-weight: 500;
+}
+
+/* BUTTON TYPOGRAPHY */
+#life-tt-app .btn,
+.life-tt-app .btn,
+#life-tt-app .apbtn,
+.life-tt-app .apbtn {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+#life-tt-app .btn-sm,
+.life-tt-app .btn-sm {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* PRIORITY */
+#life-tt-app .priority-chip,
+.life-tt-app .priority-chip {
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+/* PERSON PICKERS */
+#life-tt-app .picker-name,
+.life-tt-app .picker-name {
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+#life-tt-app .picker-role,
+.life-tt-app .picker-role {
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+#life-tt-app .selected-chip,
+.life-tt-app .selected-chip {
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+/* ATTACHMENTS */
+#life-tt-app .attach-zone,
+.life-tt-app .attach-zone {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+#life-tt-app .attach-item .an,
+.life-tt-app .attach-item .an {
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+#life-tt-app .attach-item .asize,
+.life-tt-app .attach-item .asize {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* SUMMARY TILES */
+#life-tt-app .tile .tl,
+.life-tt-app .tile .tl {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+#life-tt-app .tile .tv,
+.life-tt-app .tile .tv {
+  font-size: 24px;
+  font-weight: 900;
+}
+
+/* TABLES — reference uses 12px table body and 700 header */
+#life-tt-app table,
+.life-tt-app table {
+  font-size: 12px;
+}
+
+#life-tt-app th,
+.life-tt-app th {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+#life-tt-app td,
+.life-tt-app td {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+#life-tt-app .life-row-main-text,
+.life-tt-app .life-row-main-text,
+#life-tt-app .life-user-name,
+.life-tt-app .life-user-name {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+#life-tt-app .life-row-sub-text,
+.life-tt-app .life-row-sub-text,
+#life-tt-app .life-user-date,
+.life-tt-app .life-user-date {
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+/* STATUS PILLS */
+#life-tt-app .pill,
+.life-tt-app .pill,
+#life-tt-app .attach-chip-table,
+.life-tt-app .attach-chip-table {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* DESCRIPTION / ACTION TEXT */
+#life-tt-app .life-desc-preview,
+.life-tt-app .life-desc-preview {
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+#life-tt-app .life-view-details-btn,
+.life-tt-app .life-view-details-btn {
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+/* PAGINATION */
+#life-tt-app .life-table-pager,
+.life-tt-app .life-table-pager {
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+#life-tt-app .life-table-pager button,
+.life-tt-app .life-table-pager button {
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+/* MAIN DETAILS MODAL */
+#life-tt-app .modal-box .mtt,
+.life-tt-app .modal-box .mtt {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+#life-tt-app .modal-box .mtx,
+.life-tt-app .modal-box .mtx {
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+/* DETAIL MODAL */
+#life-tt-app .life-detail-tag,
+.life-tt-app .life-detail-tag {
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+#life-tt-app .life-detail-section-title,
+.life-tt-app .life-detail-section-title,
+#life-tt-app .life-modal-section-title,
+.life-tt-app .life-modal-section-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+#life-tt-app .life-detail-label,
+.life-tt-app .life-detail-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+#life-tt-app .life-detail-value,
+.life-tt-app .life-detail-value {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+#life-tt-app .life-detail-box,
+.life-tt-app .life-detail-box {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+#life-tt-app .life-modal-muted,
+.life-tt-app .life-modal-muted {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+#life-tt-app .life-modal-file-row,
+.life-tt-app .life-modal-file-row {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+#life-tt-app .life-modal-file-link,
+.life-tt-app .life-modal-file-link {
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+/* HISTORY */
+#life-tt-app .life-history-title,
+.life-tt-app .life-history-title {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+#life-tt-app .life-history-date,
+.life-tt-app .life-history-date {
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+#life-tt-app .life-history-remarks,
+.life-tt-app .life-history-remarks {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+#life-tt-app .life-empty-history,
+.life-tt-app .life-empty-history,
+#life-tt-app .life-update-no-files,
+.life-tt-app .life-update-no-files {
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+/* ADD UPDATE / CHANGE DEADLINE MODALS */
+#life-tt-app .life-delay-title,
+.life-tt-app .life-delay-title {
+  font-size: 15.5px;
+  font-weight: 800;
+}
+
+#life-tt-app .life-delay-sub,
+.life-tt-app .life-delay-sub {
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+/* Reassignment and other dynamically generated action controls */
+#life-tt-app .life-task-reassign-btn,
+.life-tt-app .life-task-reassign-btn {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+
+
+/* ============================================================
+   MAIN TASK / TICKET TAB SEPARATOR
+   ============================================================ */
+
+#life-tt-app .type-toggle,
+.life-tt-app .type-toggle {
+  position: relative;
+}
+
+#life-tt-app .type-toggle::after,
+.life-tt-app .type-toggle::after {
+  content: "";
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 2px;
+  height: 70px;
+
+  background: #81C784;
+  border-radius: 20px;
+
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 1px rgba(46, 125, 50, 0.08);
+}
+
+/* Hide separator on smaller screens when cards may wrap */
+@media (max-width: 760px) {
+  #life-tt-app .type-toggle::after,
+  .life-tt-app .type-toggle::after {
+    display: none;
+  }
+}
+
+/* ============================================================
+   TABLE VISUAL HIERARCHY + CLEAR COLUMN SEPARATION
+   ============================================================ */
+
+/* Outer table frame */
+#life-tt-app .card .tbl-wrap,
+.life-tt-app .card .tbl-wrap {
+  border: 1px solid #CFE1D2;
+  border-top: 0;
+  background: #FFFFFF;
+}
+
+/* ------------------------------------------------------------
+   COLUMN HEADER ROW
+   Different visual level from the dark-green card title
+   ------------------------------------------------------------ */
+
+#life-tt-app .card .tbl-wrap table thead th,
+.life-tt-app .card .tbl-wrap table thead th {
+  background: linear-gradient(
+    135deg,
+    #1B5E20 0%,
+    #237428 55%,
+    #2E7D32 100%
+  );
+
+  color: #FFFFFF;
+
+  padding: 11px 15px;
+
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+
+  border-bottom: 3px solid #66BB6A;
+
+  /* Clear vertical distinction */
+  border-right: 1px solid rgba(255,255,255,0.28);
+
+  white-space: nowrap;
+}
+
+/* Remove separator after final column */
+#life-tt-app .card .tbl-wrap table thead th:last-child,
+.life-tt-app .card .tbl-wrap table thead th:last-child {
+  border-right: 0;
+}
+
+/* Slight alternating header tone makes columns easier to scan */
+#life-tt-app .card .tbl-wrap table thead th:nth-child(even),
+.life-tt-app .card .tbl-wrap table thead th:nth-child(even) {
+  background: linear-gradient(
+    135deg,
+    #246B2A 0%,
+    #2E7D32 100%
+  );
+}
+
+
+/* ------------------------------------------------------------
+   BODY CELLS
+   ------------------------------------------------------------ */
+
+#life-tt-app .card .tbl-wrap table tbody td,
+.life-tt-app .card .tbl-wrap table tbody td {
+  background: #FFFFFF;
+
+  padding: 11px 15px;
+
+  color: #26382A;
+
+  border-bottom: 1px solid #E5EFE6;
+  border-right: 1px solid #E1ECE3;
+
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* Last column doesn't need a right border */
+#life-tt-app .card .tbl-wrap table tbody td:last-child,
+.life-tt-app .card .tbl-wrap table tbody td:last-child {
+  border-right: 0;
+}
+
+
+/* ------------------------------------------------------------
+   ALTERNATING COLUMN SHADE
+   Gives visible column distinction without looking like Excel
+   ------------------------------------------------------------ */
+
+#life-tt-app .card .tbl-wrap table tbody td:nth-child(even),
+.life-tt-app .card .tbl-wrap table tbody td:nth-child(even) {
+  background: #F7FBF7;
+}
+
+
+/* ------------------------------------------------------------
+   ROW HOVER
+   ------------------------------------------------------------ */
+
+#life-tt-app .card .tbl-wrap table tbody tr:hover td,
+.life-tt-app .card .tbl-wrap table tbody tr:hover td {
+  background: #EAF6EB;
+}
+
+
+/* ------------------------------------------------------------
+   EMPTY TABLE MESSAGE
+   ------------------------------------------------------------ */
+
+#life-tt-app .card .tbl-wrap table tbody td[colspan],
+.life-tt-app .card .tbl-wrap table tbody td[colspan] {
+  background: #FAFCFA;
+  color: #5F6F63;
+
+  padding: 20px 14px;
+
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+
+  border-right: 0;
+}
+
+
+/* ------------------------------------------------------------
+   SECTION HEADER
+   Keep darker than table-column header
+   ------------------------------------------------------------ */
+
+#life-tt-app .card > .card-hdr,
+.life-tt-app .card > .card-hdr {
+  background: linear-gradient(
+    135deg,
+    #0F3D1E 0%,
+    #155524 100%
+  );
+
+  border-bottom: 1px solid #0C3418;
+}
+
+
+/* Count badge becomes easier to identify */
+#life-tt-app .card > .card-hdr .badge,
+.life-tt-app .card > .card-hdr .badge {
+  background: #43A047;
+  border: 1px solid rgba(255,255,255,0.35);
+  min-width: 30px;
+  text-align: center;
+}
+
+
+/* ------------------------------------------------------------
+   MOBILE / SMALL TABLES
+   ------------------------------------------------------------ */
+
+@media (max-width: 760px) {
+
+  #life-tt-app .card .tbl-wrap table thead th,
+  .life-tt-app .card .tbl-wrap table thead th,
+
+  #life-tt-app .card .tbl-wrap table tbody td,
+  .life-tt-app .card .tbl-wrap table tbody td {
+    padding-left: 11px;
+    padding-right: 11px;
+  }
+}
+
+/* ============================================================
+   FINAL TABLE DESIGN
+   Clear distinction between:
+   1. Section header
+   2. Column header
+   3. Table data
+   ============================================================ */
+
+
+/* ------------------------------------------------------------
+   1. SECTION HEADER
+   Example: Assigned By Me / Assigned To Me / Raised By Me
+   Keep this as the darkest level
+   ------------------------------------------------------------ */
+
+#life-tt-app .card > .card-hdr,
+.life-tt-app .card > .card-hdr {
+  background: linear-gradient(
+    135deg,
+    #0F3D1E 0%,
+    #155724 100%
+  );
+
+  color: #FFFFFF;
+
+  min-height: 46px;
+  padding: 12px 18px;
+
+  font-size: 14px;
+  font-weight: 800;
+
+  border-bottom: 0;
+}
+
+
+/* Count badge */
+
+#life-tt-app .card > .card-hdr .badge,
+.life-tt-app .card > .card-hdr .badge {
+  min-width: 32px;
+
+  background: #43A047;
+  color: #FFFFFF;
+
+  border: 1px solid rgba(255,255,255,0.45);
+
+  font-size: 10px;
+  font-weight: 700;
+
+  text-align: center;
+}
+
+
+/* ------------------------------------------------------------
+   2. TABLE HEADER
+   Light background makes it clearly different from card title
+   ------------------------------------------------------------ */
+
+#life-tt-app .card .tbl-wrap table thead,
+.life-tt-app .card .tbl-wrap table thead {
+  background: #E8F5E9;
+}
+
+
+#life-tt-app .card .tbl-wrap table thead th,
+.life-tt-app .card .tbl-wrap table thead th {
+  background: #E8F5E9;
+
+  color: #14501F;
+
+  padding: 12px 16px;
+
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.055em;
+
+  text-transform: uppercase;
+
+  border-top: 1px solid #B9DDBE;
+  border-bottom: 2px solid #43A047;
+
+  /* IMPORTANT — visible column separator */
+  border-right: 1px solid #B7D8BC;
+
+  white-space: nowrap;
+}
+
+
+/* Slightly different alternating header columns */
+
+#life-tt-app .card .tbl-wrap table thead th:nth-child(even),
+.life-tt-app .card .tbl-wrap table thead th:nth-child(even) {
+  background: #DDF0DF;
+}
+
+
+/* Last header column */
+
+#life-tt-app .card .tbl-wrap table thead th:last-child,
+.life-tt-app .card .tbl-wrap table thead th:last-child {
+  border-right: 0;
+}
+
+
+/* ------------------------------------------------------------
+   3. TABLE BODY
+   ------------------------------------------------------------ */
+
+#life-tt-app .card .tbl-wrap table tbody td,
+.life-tt-app .card .tbl-wrap table tbody td {
+  background: #FFFFFF;
+
+  color: #26372A;
+
+  padding: 12px 16px;
+
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+
+  border-bottom: 1px solid #DDEADF;
+
+  /* Stronger vertical separation */
+  border-right: 1px solid #D2E4D5;
+}
+
+
+/* Alternate columns */
+
+#life-tt-app .card .tbl-wrap table tbody td:nth-child(even),
+.life-tt-app .card .tbl-wrap table tbody td:nth-child(even) {
+  background: #F6FAF6;
+}
+
+
+/* Last cell */
+
+#life-tt-app .card .tbl-wrap table tbody td:last-child,
+.life-tt-app .card .tbl-wrap table tbody td:last-child {
+  border-right: 0;
+}
+
+
+/* ------------------------------------------------------------
+   ALTERNATING ROWS
+   Very subtle — column distinction remains visible
+   ------------------------------------------------------------ */
+
+#life-tt-app .card .tbl-wrap table tbody tr:nth-child(even) td,
+.life-tt-app .card .tbl-wrap table tbody tr:nth-child(even) td {
+  background: #FAFCFA;
+}
+
+
+#life-tt-app .card .tbl-wrap table tbody tr:nth-child(even) td:nth-child(even),
+.life-tt-app .card .tbl-wrap table tbody tr:nth-child(even) td:nth-child(even) {
+  background: #F1F7F2;
+}
+
+
+/* ------------------------------------------------------------
+   ROW HOVER
+   Highlight complete row
+   ------------------------------------------------------------ */
+
+#life-tt-app .card .tbl-wrap table tbody tr:hover td,
+.life-tt-app .card .tbl-wrap table tbody tr:hover td {
+  background: #EAF6EB;
+}
+
+
+/* ------------------------------------------------------------
+   TABLE OUTER FRAME
+   ------------------------------------------------------------ */
+
+#life-tt-app .card .tbl-wrap,
+.life-tt-app .card .tbl-wrap {
+  border-left: 1px solid #CFE1D2;
+  border-right: 1px solid #CFE1D2;
+  border-bottom: 1px solid #CFE1D2;
+
+  background: #FFFFFF;
+}
+
+
+/* ------------------------------------------------------------
+   EMPTY MESSAGE
+   Example: You have not assigned any tasks.
+   ------------------------------------------------------------ */
+
+#life-tt-app .card .tbl-wrap table tbody td[colspan],
+.life-tt-app .card .tbl-wrap table tbody td[colspan] {
+  background: #FAFCFA;
+
+  color: #52665A;
+
+  padding: 22px 16px;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  text-align: center;
+
+  border-right: 0;
+  border-bottom: 0;
+}
+
+
+/* ------------------------------------------------------------
+   FIRST COLUMN
+   Slightly stronger edge for easier scanning
+   ------------------------------------------------------------ */
+
+#life-tt-app .card .tbl-wrap table thead th:first-child,
+.life-tt-app .card .tbl-wrap table thead th:first-child {
+  border-left: 3px solid #43A047;
+}
+
+
+/* ------------------------------------------------------------
+   SCROLLBAR
+   ------------------------------------------------------------ */
+
+#life-tt-app .tbl-wrap::-webkit-scrollbar,
+.life-tt-app .tbl-wrap::-webkit-scrollbar {
+  height: 8px;
+}
+
+
+#life-tt-app .tbl-wrap::-webkit-scrollbar-track,
+.life-tt-app .tbl-wrap::-webkit-scrollbar-track {
+  background: #EEF4EF;
+}
+
+
+#life-tt-app .tbl-wrap::-webkit-scrollbar-thumb,
+.life-tt-app .tbl-wrap::-webkit-scrollbar-thumb {
+  background: #A5D6A7;
+  border-radius: 20px;
+}
+
+
+#life-tt-app .tbl-wrap::-webkit-scrollbar-thumb:hover,
+.life-tt-app .tbl-wrap::-webkit-scrollbar-thumb:hover {
+  background: #66BB6A;
+}
+
+/* ============================================================
+   LIFE — ALL TASKS + ALL TICKETS REPORT
+   FINAL CLEAN REPORT UI
+   Paste at VERY BOTTOM of CSS
+   ============================================================ */
+
+
+/* ============================================================
+   1. REPORT CARD TITLE
+   Darkest visual level
+   ============================================================ */
+
+#life-tt-app #task-sub-1 .card > .card-hdr,
+#life-tt-app #ticket-sub-1 .card > .card-hdr,
+.life-tt-app #task-sub-1 .card > .card-hdr,
+.life-tt-app #ticket-sub-1 .card > .card-hdr {
+  background: linear-gradient(
+    135deg,
+    #0F3D1E 0%,
+    #155724 100%
+  );
+
+  color: #FFFFFF;
+  min-height: 46px;
+  padding: 11px 17px;
+
+  border-bottom: 0;
+
+  font-size: 14px;
+  font-weight: 800;
+}
+
+
+/* ============================================================
+   2. REPORT TABLE COLUMN HEADERS
+   Light green — clearly separate from report title
+   ============================================================ */
+
+#life-tt-app #task-sub-1 table thead th,
+#life-tt-app #ticket-sub-1 table thead th,
+.life-tt-app #task-sub-1 table thead th,
+.life-tt-app #ticket-sub-1 table thead th {
+  background: #E8F5E9 !important;
+  color: #14501F !important;
+
+  padding: 11px 13px !important;
+
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.055em;
+
+  border-top: 1px solid #C1DFC5 !important;
+  border-bottom: 2px solid #43A047 !important;
+  border-right: 1px solid #C7DFC9 !important;
+
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+
+/* Alternate header cells give a subtle column guide */
+#life-tt-app #task-sub-1 table thead th:nth-child(even),
+#life-tt-app #ticket-sub-1 table thead th:nth-child(even),
+.life-tt-app #task-sub-1 table thead th:nth-child(even),
+.life-tt-app #ticket-sub-1 table thead th:nth-child(even) {
+  background: #DDF0DF !important;
+}
+
+
+#life-tt-app #task-sub-1 table thead th:last-child,
+#life-tt-app #ticket-sub-1 table thead th:last-child,
+.life-tt-app #task-sub-1 table thead th:last-child,
+.life-tt-app #ticket-sub-1 table thead th:last-child {
+  border-right: 0 !important;
+}
+
+
+/* ============================================================
+   3. NORMAL REPORT DATA ROWS
+   ============================================================ */
+
+#life-tt-app #task-sub-1 tbody tr.life-clickable-row td,
+#life-tt-app #ticket-sub-1 tbody tr.life-clickable-row td,
+.life-tt-app #task-sub-1 tbody tr.life-clickable-row td,
+.life-tt-app #ticket-sub-1 tbody tr.life-clickable-row td {
+  background: #FFFFFF !important;
+  color: #26372A !important;
+
+  border-right: 1px solid #DCE9DE !important;
+  border-bottom: 1px solid #E4EFE5 !important;
+
+  font-size: 11.5px;
+  font-weight: 400;
+}
+
+
+/* Alternate NORMAL rows only */
+#life-tt-app #task-sub-1 tbody tr.life-clickable-row:nth-child(even) td,
+#life-tt-app #ticket-sub-1 tbody tr.life-clickable-row:nth-child(even) td,
+.life-tt-app #task-sub-1 tbody tr.life-clickable-row:nth-child(even) td,
+.life-tt-app #ticket-sub-1 tbody tr.life-clickable-row:nth-child(even) td {
+  background: #F7FBF7 !important;
+}
+
+
+/* Hover */
+#life-tt-app #task-sub-1 tbody tr.life-clickable-row:hover td,
+#life-tt-app #ticket-sub-1 tbody tr.life-clickable-row:hover td,
+.life-tt-app #task-sub-1 tbody tr.life-clickable-row:hover td,
+.life-tt-app #ticket-sub-1 tbody tr.life-clickable-row:hover td {
+  background: #EBF7EC !important;
+}
+
+
+/* ============================================================
+   4. ALL TASKS — ASSIGNEE ACCORDION
+   IMPORTANT:
+   Do NOT make every employee row dark green.
+   ============================================================ */
+
+#life-tt-app #task-report-body tr.life-assignee-group-row td,
+.life-tt-app #task-report-body tr.life-assignee-group-row td {
+  background: #FFFFFF !important;
+  color: #152418 !important;
+
+  padding: 0 !important;
+
+  border-top: 0 !important;
+  border-right: 0 !important;
+  border-bottom: 1px solid #CFE1D2 !important;
+
+  box-shadow:
+    inset 4px 0 0 #43A047 !important;
+}
+
+
+/* Alternate assignee groups */
+#life-tt-app #task-report-body tr.life-assignee-group-row:nth-child(even) td,
+.life-tt-app #task-report-body tr.life-assignee-group-row:nth-child(even) td {
+  background: #F5FAF5 !important;
+}
+
+
+/* Hover employee group */
+#life-tt-app #task-report-body tr.life-assignee-group-row:hover td,
+.life-tt-app #task-report-body tr.life-assignee-group-row:hover td {
+  background: #EDF8EE !important;
+}
+
+
+/* Main employee group box */
+#life-tt-app .life-assignee-accordion-head,
+.life-tt-app .life-assignee-accordion-head {
+  padding: 13px 16px !important;
+  gap: 8px;
+}
+
+
+/* Employee name */
+#life-tt-app .life-assignee-group-name,
+.life-tt-app .life-assignee-group-name {
+  color: #0F3D1E !important;
+
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+
+
+/* Next task text */
+#life-tt-app .life-assignee-group-next,
+.life-tt-app .life-assignee-group-next {
+  color: #52665A !important;
+
+  font-size: 10.5px !important;
+  font-weight: 500 !important;
+
+  max-width: 720px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+/* Expand arrow */
+#life-tt-app .life-assignee-arrow,
+.life-tt-app .life-assignee-arrow {
+  width: 28px;
+  height: 28px;
+
+  background: #E8F5E9 !important;
+  color: #1B5E20 !important;
+
+  border: 1px solid #A5D6A7;
+
+  font-size: 11px;
+}
+
+
+/* User icon if present */
+#life-tt-app .life-assignee-user-icon,
+.life-tt-app .life-assignee-user-icon {
+  background: #E8F5E9 !important;
+  color: #2E7D32 !important;
+  border-color: #A5D6A7 !important;
+}
+
+
+/* Bottom row containing badges */
+#life-tt-app .life-assignee-group-info-row,
+.life-tt-app .life-assignee-group-info-row {
+  padding-left: 38px !important;
+
+  gap: 7px;
+}
+
+
+/* Default assignee stats */
+#life-tt-app .life-assignee-stat,
+.life-tt-app .life-assignee-stat {
+  min-height: 24px;
+
+  background: #F4F8F4 !important;
+  color: #35633D !important;
+
+  border: 1px solid #CFE1D2 !important;
+
+  font-size: 10px;
+  font-weight: 700 !important;
+}
+
+
+/* Running/Open */
+#life-tt-app .life-assignee-stat.gold,
+#life-tt-app .life-assignee-stat.green,
+.life-tt-app .life-assignee-stat.gold,
+.life-tt-app .life-assignee-stat.green {
+  background: #E8F5E9 !important;
+  color: #1E7A34 !important;
+  border-color: #A5D6A7 !important;
+}
+
+
+/* Overdue */
+#life-tt-app .life-assignee-stat.red,
+.life-tt-app .life-assignee-stat.red {
+  background: #FDECEC !important;
+  color: #C00000 !important;
+  border-color: #F2B8B5 !important;
+}
+
+
+/* Manage Queue */
+#life-tt-app .life-group-manage-btn,
+.life-tt-app .life-group-manage-btn {
+  height: 26px;
+
+  background: #2E7D32 !important;
+  color: #FFFFFF !important;
+
+  border: 0;
+
+  border-radius: 7px;
+
+  padding: 0 11px;
+
+  font-size: 10px;
+  font-weight: 700 !important;
+}
+
+
+#life-tt-app .life-group-manage-btn:hover,
+.life-tt-app .life-group-manage-btn:hover {
+  background: #1B5E20 !important;
+}
+
+
+/* "Click employee..." help text */
+#life-tt-app .life-assignee-collapsed-note,
+.life-tt-app .life-assignee-collapsed-note {
+  color: #708274 !important;
+
+  font-size: 10px;
+  font-weight: 500 !important;
+}
+
+
+/* ============================================================
+   5. ALL TASKS — COLUMN WIDTHS
+   ============================================================ */
+
+#life-tt-app #task-sub-1 table,
+.life-tt-app #task-sub-1 table {
+  min-width: 1500px !important;
+}
+
+
+#life-tt-app #task-sub-1 th:nth-child(1) { min-width: 120px; }
+#life-tt-app #task-sub-1 th:nth-child(2) { min-width: 165px; }
+#life-tt-app #task-sub-1 th:nth-child(3) { min-width: 165px; }
+#life-tt-app #task-sub-1 th:nth-child(4) { min-width: 145px; }
+#life-tt-app #task-sub-1 th:nth-child(5) { min-width: 280px; }
+#life-tt-app #task-sub-1 th:nth-child(6) { min-width: 100px; }
+#life-tt-app #task-sub-1 th:nth-child(7) { min-width: 150px; }
+#life-tt-app #task-sub-1 th:nth-child(8) { min-width: 110px; }
+#life-tt-app #task-sub-1 th:nth-child(9) { min-width: 110px; }
+#life-tt-app #task-sub-1 th:nth-child(10) { min-width: 130px; }
+
+
+/* ============================================================
+   6. ALL TICKETS — CONTROLLED COLUMN WIDTHS
+   ============================================================ */
+
+#life-tt-app #ticket-sub-1 table,
+.life-tt-app #ticket-sub-1 table {
+  min-width: 1450px !important;
+}
+
+
+#life-tt-app #ticket-sub-1 th:nth-child(1) { min-width: 160px; }
+#life-tt-app #ticket-sub-1 th:nth-child(2) { min-width: 135px; }
+#life-tt-app #ticket-sub-1 th:nth-child(3) { min-width: 165px; }
+#life-tt-app #ticket-sub-1 th:nth-child(4) { min-width: 240px; }
+#life-tt-app #ticket-sub-1 th:nth-child(5) { min-width: 145px; }
+#life-tt-app #ticket-sub-1 th:nth-child(6) { min-width: 135px; }
+#life-tt-app #ticket-sub-1 th:nth-child(7) { min-width: 105px; }
+#life-tt-app #ticket-sub-1 th:nth-child(8) { min-width: 115px; }
+#life-tt-app #ticket-sub-1 th:nth-child(9) { min-width: 105px; }
+#life-tt-app #ticket-sub-1 th:nth-child(10) { min-width: 120px; }
+
+
+/* Ticket Issue should be readable but controlled */
+#life-tt-app #ticket-report-body td:nth-child(4),
+.life-tt-app #ticket-report-body td:nth-child(4) {
+  white-space: normal !important;
+  line-height: 1.35;
+
+  font-weight: 600;
+
+  max-width: 260px;
+}
+
+
+/* Raised By */
+#life-tt-app #ticket-report-body td:nth-child(1),
+.life-tt-app #ticket-report-body td:nth-child(1) {
+  font-weight: 600;
+}
+
+
+/* ============================================================
+   7. REPORT TABLE FRAME
+   ============================================================ */
+
+#life-tt-app #task-sub-1 .tbl-wrap,
+#life-tt-app #ticket-sub-1 .tbl-wrap,
+.life-tt-app #task-sub-1 .tbl-wrap,
+.life-tt-app #ticket-sub-1 .tbl-wrap {
+  border: 1px solid #CFE1D2;
+
+  border-radius: 0 0 9px 9px;
+
+  background: #FFFFFF;
+}
+
+
+/* Better horizontal scrollbar */
+#life-tt-app #task-sub-1 .tbl-wrap::-webkit-scrollbar,
+#life-tt-app #ticket-sub-1 .tbl-wrap::-webkit-scrollbar,
+.life-tt-app #task-sub-1 .tbl-wrap::-webkit-scrollbar,
+.life-tt-app #ticket-sub-1 .tbl-wrap::-webkit-scrollbar {
+  height: 8px;
+}
+
+
+#life-tt-app #task-sub-1 .tbl-wrap::-webkit-scrollbar-track,
+#life-tt-app #ticket-sub-1 .tbl-wrap::-webkit-scrollbar-track,
+.life-tt-app #task-sub-1 .tbl-wrap::-webkit-scrollbar-track,
+.life-tt-app #ticket-sub-1 .tbl-wrap::-webkit-scrollbar-track {
+  background: #EEF4EF;
+}
+
+
+#life-tt-app #task-sub-1 .tbl-wrap::-webkit-scrollbar-thumb,
+#life-tt-app #ticket-sub-1 .tbl-wrap::-webkit-scrollbar-thumb,
+.life-tt-app #task-sub-1 .tbl-wrap::-webkit-scrollbar-thumb,
+.life-tt-app #ticket-sub-1 .tbl-wrap::-webkit-scrollbar-thumb {
+  background: #A5D6A7;
+  border-radius: 20px;
+}

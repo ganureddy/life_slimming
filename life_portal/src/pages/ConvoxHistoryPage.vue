@@ -10,10 +10,21 @@ const data = ref(null), busy = ref(false), error = ref('');
 let controller;
 async function load(start = 0) {
   controller?.abort();
-  if (!selectedLead.value) { data.value = null; busy.value = false; return; }
   const request = new AbortController(); controller = request;
   busy.value = true; error.value = '';
-  try { const result = await convoxApi.leadHistory(selectedLead.value, start, request.signal); if (!request.signal.aborted) data.value = result; }
+  try {
+    let result;
+    if (selectedLead.value) result = await convoxApi.leadHistory(selectedLead.value, start, request.signal);
+    else {
+      const recent = await convoxApi.recent(request.signal);
+      const events = recent.events || [];
+      result = { events, total_events: events.length,
+        total_calls: new Set(events.map(event => event.call_reference || event.name)).size,
+        scope: 'own_agent', start: 0, has_more: false,
+        fields: ['agent_id','mobile_number','call_reference','disposition','call_status','call_datetime'].map(key => ({key,label:key.replaceAll('_',' ')})) };
+    }
+    if (!request.signal.aborted) data.value = result;
+  }
   catch (e) { if (!request.signal.aborted) error.value = e.message || 'Unable to load call history.'; }
   finally { if (controller === request) busy.value = false; }
 }
@@ -36,7 +47,7 @@ onUnmounted(() => controller?.abort());
 <template>
   <section class="call-history" :aria-busy="busy">
     <div class="history-heading">
-      <div><RouterLink v-if="!modal" :to="{ name: 'leads' }">← CC dashboard</RouterLink><h1>ConVox call details</h1><p v-if="data">{{ data.lead_name }} · {{ data.lead_id }} · {{ data.mobile_number }}</p></div>
+      <div><RouterLink v-if="!modal" :to="{ name: 'leads' }">← CC dashboard</RouterLink><h1>{{ selectedLead ? 'ConVox call details' : 'Recent ConVox calls' }}</h1><p v-if="data && selectedLead">{{ data.lead_name }} · {{ data.lead_id }} · {{ data.mobile_number }}</p></div>
       <button class="history-button" :disabled="busy" @click="load(data?.start || 0)">Refresh</button>
     </div>
     <form v-if="!leadId && !route.params.leadId" class="history-lookup" @submit.prevent="load()">
@@ -48,16 +59,16 @@ onUnmounted(() => controller?.abort());
     <p v-if="error" role="alert">{{ error }} <button :disabled="busy" @click="load(data?.start || 0)">Retry</button></p>
     <p v-if="busy" role="status">Loading call events…</p>
     <template v-if="data">
-      <div class="history-summary"><div><strong>{{ data.total_calls }}</strong><span>Calls</span></div><div><strong>{{ data.total_events }}</strong><span>Call events</span></div><div><strong>{{ data.mobile_number }}</strong><span>Matched mobile</span></div></div>
+      <div class="history-summary"><div><strong>{{ data.total_calls }}</strong><span>Calls</span></div><div><strong>{{ data.total_events }}</strong><span>Call events</span></div><div><strong>{{ data.mobile_number || 'Your agent' }}</strong><span>{{ selectedLead ? 'Matched mobile' : 'Latest 50 saved events' }}</span></div></div>
       <p>Popup and status events with the same call reference count as one call. {{ data.scope === 'own_agent' ? 'Showing your agent’s events.' : 'Showing events across all agents.' }}</p>
-      <p v-if="!data.total_events && !busy">No saved ConVox call events match this lead’s mobile number.</p>
+      <p v-if="!data.total_events && !busy">{{ selectedLead ? 'No saved ConVox call events match this lead’s mobile number.' : 'No saved ConVox call events found for your agent.' }}</p>
       <article v-for="event in data.events" :key="event.name" class="call-event">
-        <header><div><h2>{{ event.call_status || event.event_type || 'Call event' }}</h2><p>{{ event.call_datetime || event.received_on || 'Time unavailable' }} · {{ event.call_reference || event.name }}</p></div><span>{{ event.call_duration || '—' }} <small>duration (as recorded)</small></span></header>
+        <header><div><h2>{{ event.call_status || event.event_type || 'Call event' }}</h2><p>{{ event.call_datetime || event.received_on || 'Time unavailable' }} · {{ event.mobile_number || '' }} · {{ event.call_reference || event.name }}</p></div><span>{{ event.call_duration || '—' }} <small>duration (as recorded)</small></span></header>
         <div v-if="recordingUrl(event.recording_file_name)" class="recording"><audio controls preload="none" @play="playRecording" :src="recordingUrl(event.recording_file_name)"></audio><a :href="recordingUrl(event.recording_file_name)" target="_blank" rel="noopener noreferrer">Open recording ↗</a></div>
         <p v-else>{{ event.recording_file_name ? 'Recording filename saved; a playable URL is not available.' : 'No recording received for this event.' }}</p>
         <details><summary>View all event details</summary><dl><div v-for="field in data.fields" :key="field.key"><dt>{{ field.label }}</dt><dd>{{ event[field.key] === 0 ? '0' : (event[field.key] || '—') }}</dd></div></dl></details>
       </article>
-      <nav v-if="data.total_events" class="history-pagination" aria-label="Call history pages"><button :disabled="busy || data.start === 0" @click="load(Math.max(0, data.start - 50))">Previous</button><span>{{ data.start + 1 }}–{{ data.start + data.events.length }} of {{ data.total_events }} events</span><button :disabled="busy || !data.has_more" @click="load(data.start + 50)">Next</button></nav>
+      <nav v-if="selectedLead && data.total_events" class="history-pagination" aria-label="Call history pages"><button :disabled="busy || data.start === 0" @click="load(Math.max(0, data.start - 50))">Previous</button><span>{{ data.start + 1 }}–{{ data.start + data.events.length }} of {{ data.total_events }} events</span><button :disabled="busy || !data.has_more" @click="load(data.start + 50)">Next</button></nav>
     </template>
   </section>
 </template>

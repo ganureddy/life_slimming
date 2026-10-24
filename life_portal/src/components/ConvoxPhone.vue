@@ -116,26 +116,26 @@ async function loadConfig() {
     settings.value = result;
     if (!cursor) {
       cursor = settings.value.server_time;
-      if (settings.value.callbacks_ready) {
+      if ((settings.value.history_ready ?? settings.value.callbacks_ready)) {
         try {
           const recent = await convoxApi.recent(controller.signal);
           if (stopped || loggedOut.value || generation !== sessionGeneration) return;
           events.value = (recent.events || []).slice(0, 20);
-        } catch { /* Polling below will retry retrieving updates. */ }
+        } catch (e) { pollError.value = e.message || 'Saved call history could not be loaded.'; }
       }
     }
-    if (!settings.value.callbacks_ready) { clearTimeout(timer); timer = undefined; }
-    if (settings.value.callbacks_ready && !timer && pollingGeneration !== generation) timer = setTimeout(pollEvents, 5000);
+    if (!(settings.value.history_ready ?? settings.value.callbacks_ready)) { clearTimeout(timer); timer = undefined; }
+    if ((settings.value.history_ready ?? settings.value.callbacks_ready) && !timer && pollingGeneration !== generation) timer = setTimeout(pollEvents, 5000);
   } catch (e) { if (e.name !== 'AbortError' && generation === sessionGeneration) error.value = e.message; }
 }
 async function pollEvents() {
   const generation = sessionGeneration;
   timer = undefined;
-  if (stopped || !settings.value?.callbacks_ready || pollingGeneration === generation) return;
+  if (stopped || !(settings.value?.history_ready ?? settings.value?.callbacks_ready) || pollingGeneration === generation) return;
   pollingGeneration = generation;
   try {
     const result = await convoxApi.poll(cursor, controller.signal);
-    if (stopped || generation !== sessionGeneration || !settings.value?.callbacks_ready) return;
+    if (stopped || generation !== sessionGeneration || !(settings.value?.history_ready ?? settings.value?.callbacks_ready)) return;
     cursor = result.cursor;
     for (const event of result.events || []) {
       const key = `${event.name}:${event.received_on}`;
@@ -160,7 +160,7 @@ async function pollEvents() {
     if ([401, 403].includes(e.status)) return;
   }
   finally { if (pollingGeneration === generation) pollingGeneration = null; }
-  if (!stopped && generation === sessionGeneration && settings.value?.callbacks_ready && !timer) timer = setTimeout(pollEvents, pollError.value ? 15000 : 5000);
+  if (!stopped && generation === sessionGeneration && (settings.value?.history_ready ?? settings.value?.callbacks_ready) && !timer) timer = setTimeout(pollEvents, pollError.value ? 15000 : 5000);
 }
 async function showPhone() {
   open.value = true;
@@ -281,7 +281,7 @@ async function findCaller(event) {
   if (!event.mobile_number) return;
   if (!isCcDashboard.value) {
     await router.push({ name: 'leads', query: { caller: event.mobile_number } });
-  } else if (route.name === 'leads-native') {
+  } else if (route.name === 'leads-native' || !document.querySelector('.portal-source-page iframe')) {
     window.dispatchEvent(new CustomEvent('life-convox-find-native', {
       detail: { mobile_number: event.mobile_number },
     }));
@@ -426,6 +426,7 @@ onBeforeUnmount(() => {
             <small v-if="!settings.click_to_call_ready">Calling setup incomplete.</small>
           </div>
         </template>
+        <p v-if="settings?.enabled && !events.length && !pollError" class="convox-hint">No recent saved call events found for your agent.</p>
         <div v-if="events.length" class="convox-events"><h3>Recent call updates</h3><article v-for="event in events" :key="event.name"><strong>{{ event.call_status || event.call_type || event.event_type }}</strong><small>{{ event.call_datetime || event.received_on }} · {{ event.call_reference }}</small><span>{{ event.mobile_number }} <span v-if="event.disposition">· {{ event.disposition }}</span></span><button v-if="event.mobile_number" @click="findCaller(event)">Find caller in CRM</button><RouterLink v-if="event.crm_lead" :to="{name: 'convox-history', params: {leadId: event.crm_lead}}" @click="minimize">Lead call details</RouterLink></article></div>
       </div>
       <button class="convox-resize" aria-label="Resize phone panel" title="Drag to resize, or use arrow keys"

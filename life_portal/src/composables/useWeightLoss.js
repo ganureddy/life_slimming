@@ -64,13 +64,18 @@ export function useWeightLoss() {
       const currentRange = monthRange(selectedMonth), previousRange = monthRange(previousMonth(selectedMonth)), base = [['Therapy Session', 'service_unit', '=', SLIMMING], ['Therapy Session', 'docstatus', '=', 1]];
       const current = submitted(await readAll('Therapy Session', sessionFields, [...base, ['Therapy Session', 'start_date', '>=', currentRange.start], ['Therapy Session', 'start_date', '<=', currentRange.end], ...(selected ? [['Therapy Session', 'patient', '=', selected]] : [])], signal, 'start_date asc, name asc'));
       const patients = [...new Set(current.map(row => String(row.patient || '').trim()).filter(Boolean))];
-      const [previous, history, plans, patientRows] = patients.length ? await Promise.all([
-        patientChunks('Therapy Session', sessionFields, patients, [...base, ['Therapy Session', 'start_date', '>=', previousRange.start], ['Therapy Session', 'start_date', '<=', previousRange.end]], signal, 'start_date asc, name asc'),
+      const [history, plans, patientRows] = patients.length ? await Promise.all([
         patientChunks('Therapy Session', sessionFields, patients, [...base, ['Therapy Session', 'start_date', '<=', currentRange.end]], signal, 'start_date asc, name asc'),
         patientChunks('Therapy Plan', ['name', 'patient', 'branch', 'category', 'status', 'start_date', 'total_sessions', 'total_sessions_completed', 'modified'], patients, [['Therapy Plan', 'branch', '!=', '']], signal, 'modified desc, name desc'),
         patientChunks('Patient', ['name', 'mobile', 'phone'], patients, [], signal, 'name asc'),
-      ]) : [[], [], [], []];
+      ]) : [[], [], []];
       if (disposed || token !== generation) return;
+      // Lifetime history already contains the previous month. Reuse it rather
+      // than reading the same sessions again for every patient chunk.
+      const previous = history.filter(row => {
+        const date = String(row.start_date || '').slice(0, 10);
+        return date >= previousRange.start && date <= previousRange.end;
+      });
       rows.value = monthRows({ month: selectedMonth, current, previous, history, plans, patients: patientRows });
       notice.value = rows.value.length ? 'Loaded ' + rows.value.length.toLocaleString('en-IN') + ' clients for ' + monthLabel(selectedMonth) + '.' : 'No submitted slimming sessions found for selected month';
     } catch (failure) { if (!disposed && token === generation && failure.name !== 'AbortError') error.value = failure.message; }

@@ -10,7 +10,7 @@ const assert=require('node:assert/strict'),WebSocket=require('ws');
   const m=JSON.parse(value);if(m.id){jobs.get(m.id)?.(m);jobs.delete(m.id);return;}
   if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails.exception?.description||m.params.exceptionDetails.text);
   if(m.method!=='Fetch.requestPaused')return;
-  const{requestId,request}=m.params,url=new URL(request.url),method=url.pathname.split('/api/method/')[1];let args=JSON.parse(request.postData||'{}');if(method==='frappe.desk.query_report.run')args=Object.fromEntries(url.searchParams);
+  const{requestId,request}=m.params,url=new URL(request.url),method=url.pathname.split('/api/method/')[1];let args=JSON.parse(request.postData||'{}');if(method==='frappe.desk.query_report.run'&&!request.postData)args=Object.fromEntries(url.searchParams);
   calls.push({method,args,headers:request.headers});let message={},headers=[{name:'Content-Type',value:'application/json'}],body;
   if(method==='life_slimming.api.portal.bootstrap')message={user:'sales-master-fixture',session_id:'sales-master-fixture-'+target.id+(manager?'manager':permitted.length),full_name:'Sales Fixture',roles:manager?['System Manager']:['Sales User'],portal_role:'IT',csrf_token:'sales-fixture'};
   if(method==='life_slimming.api.convox.config')message={enabled:false};

@@ -30,7 +30,8 @@ def update(lead, status, expected_modified):
     doc = frappe.get_doc('Lead', lead)
     if not expected_modified or str(doc.modified) != str(expected_modified):
         raise frappe.ValidationError('This lead changed. Reload it before updating appointment status.')
-    if doc.custom_appointment_status == 'Visited Booked' and status != 'Visited Booked':
+    if (doc.custom_appointment_status == 'Visited Booked' and status != 'Visited Booked'
+            and 'Call Center Export' not in frappe.get_roles()):
         raise frappe.ValidationError('Visited Booked is locked and cannot be changed.')
     doc.custom_appointment_status = status
     doc.save(ignore_permissions=True)

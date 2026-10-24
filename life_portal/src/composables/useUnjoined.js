@@ -1,7 +1,6 @@
 import { computed, onBeforeUnmount, reactive, ref, watch, toRaw } from 'vue';
 import data from '../data/unjoined.json';
 import { request } from '../api/http';
-import { apiUrl, apiCredentials } from '../api/config';
 import { session as portalSession } from '../lib/session';
 import { FORM_DOCTYPE, sectionFilters, sectionSearch, indiaDate, displayValue, phoneField, followDocument } from '../lib/unjoined';
 
@@ -78,12 +77,15 @@ export function useUnjoined() {
   async function initialize() {
     // Roles originate from the authenticated bootstrap; failures keep numbers masked.
     manager.value = Array.isArray(portalSession.roles) && portalSession.roles.includes('System Manager');
+    // The branch selector is independent of the record filters. Start records
+    // immediately so a slow master list cannot delay the primary table.
+    const initialLoad = load();
     try {
       const rows = await api('frappe.client.get_list', { doctype: 'Branch', fields: ['name'], limit_page_length: 1000, order_by: 'name asc' });
       if (disposed) return;
       branches.value = (rows || []).filter(branch => branch.name !== 'Testing Branch').map(branch => branch.name);
     } catch (error) { if (disposed) return; notice.value = 'Branch list unavailable: ' + error.message; }
-    if (!disposed) await load();
+    await initialLoad;
   }
 
   function resetDraft(context) {
@@ -183,9 +185,8 @@ export function useUnjoined() {
         if (!portalSession.csrf_token) throw new Error('Photo upload requires a refreshed signed-in session.');
         const form = new FormData();
         form.append('file', file); form.append('is_private', '1'); form.append('doctype', FORM_DOCTYPE); form.append('docname', context.form.name); form.append('fieldname', 'custom_client_photo_attach');
-        const response = await fetch(apiUrl('/api/method/upload_file'), { method: 'POST', credentials: apiCredentials(), headers: { 'X-Frappe-CSRF-Token': portalSession.csrf_token }, body: form });
-        const result = await response.json();
-        if (!response.ok || !result.message?.file_url) throw new Error('Photo upload failed.');
+        const result = await request('upload_file', {formData:form,csrfToken:portalSession.csrf_token});
+        if (!result.message?.file_url) throw new Error('Photo upload failed.');
         const latest = await api('frappe.client.get', { doctype: FORM_DOCTYPE, name: context.form.name });
         latest.custom_client_photo_attach = result.message.file_url;
         context.form = await api('frappe.client.save', { doc: latest });

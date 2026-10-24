@@ -72,10 +72,58 @@ class LeadSyncTest(unittest.TestCase):
             sync.sync_event(Mock())
         self.db.set_value.assert_not_called()
 
-    def test_crm_search_is_scoped_for_agents_and_allows_manager_scope(self):
+    def disposition_meta(self):
+        options = {
+            'status': 'Not Response\nCall Disconnected\nNot interested\nInterested\nCall Back\nAppointment Booked',
+            'custom_cc_stage': 'FOLLOW-UP\nLOST\nSUCCESS',
+            'custom_cc_sub_status': 'No Response\nCall Disconnected\nNot interested\nVery Positive\nCallback: Scheduled\nAppointment Booked',
+        }
+        meta = Mock()
+        meta.get_field.side_effect = lambda name: frappe._dict(options=options[name])
+        return meta
+
+    def test_disposition_mapping_prioritizes_specific_vendor_disposition(self):
+        meta = self.disposition_meta()
+        values = sync.disposition_values(frappe._dict(disposition='CallDisconnected', disposition_2='Very Positive'), meta)
+        self.assertEqual(values, {'status': 'Interested', 'custom_cc_stage': 'FOLLOW-UP', 'custom_cc_sub_status': 'Very Positive'})
+        self.assertEqual(sync.disposition_values(frappe._dict(disposition='NR'), meta)['status'], 'Not Response')
+        self.assertEqual(sync.disposition_values(frappe._dict(disposition='CNA--Ringing/No Answer'), meta)['custom_cc_sub_status'], 'No Response')
+        for value in ['CONGESTION', 'ANSWERED', 'ANA--Normal Call Clearing', 'Hungup']:
+            self.assertEqual(sync.disposition_values(frappe._dict(disposition=value), meta), {})
+
+    def test_saved_disposition_updates_actual_lead_status(self):
+        event = frappe._dict(name='EVENT-1', agent_id='AGENT1', disposition='Not Interested')
+        self.db.get_value.return_value = frappe._dict(custom_cc_sub_status='Very Positive')
+        sync.sync_disposition(event, 'LEAD-1', self.disposition_meta())
+        self.db.set_value.assert_called_once_with('Lead', 'LEAD-1', {
+            'status': 'Not interested', 'custom_cc_stage': 'LOST', 'custom_cc_sub_status': 'Not interested'})
+
+    def test_recording_retry_does_not_undo_manual_edit(self):
+        event = frappe._dict(name='EVENT-1', disposition='NR')
+        self.db.get_value.return_value = frappe._dict(custom_convox_last_event='EVENT-1', custom_convox_disposition='NR', custom_cc_sub_status='Very Positive')
+        sync.sync_disposition(event, 'LEAD-1', self.disposition_meta())
+        self.db.set_value.assert_not_called()
+
+    def test_locked_status_requires_call_center_export_agent(self):
+        event = frappe._dict(name='EVENT-1', agent_id='AGENT1', disposition='Very Positive')
+        self.db.get_value.return_value = frappe._dict(custom_cc_sub_status='Do Not Contact')
+        with patch.object(frappe, 'get_roles', return_value=['Sales User']):
+            sync.sync_disposition(event, 'LEAD-1', self.disposition_meta())
+        self.db.set_value.assert_not_called()
+        with patch.object(frappe, 'get_roles', return_value=['Call Center Export']):
+            sync.sync_disposition(event, 'LEAD-1', self.disposition_meta())
+        self.assertEqual(self.db.set_value.call_args.args[2]['status'], 'Interested')
+
+    def test_global_phone_fallback_requires_unique_lead(self):
+        self.db.sql.side_effect = [[], [frappe._dict(name='OTHER-OWNER')]]
+        self.assertEqual(sync.resolve_lead(self.event), 'OTHER-OWNER')
+        self.db.sql.side_effect = [[], [frappe._dict(name='ONE'), frappe._dict(name='TWO')]]
+        self.assertIsNone(sync.resolve_lead(self.event))
+
+    def test_crm_search_is_global_for_authorized_agents_and_managers(self):
         with patch.object(convox, '_identity'), patch.object(frappe, 'get_roles', return_value=['Sales User']):
             self.assertEqual(convox.find_leads('9876543210')['rows'][0].name, 'LEAD-1')
-            self.assertEqual(self.db.sql.call_args.args[1]['owner'], 'agent@example.test')
+            self.assertNotIn('owner', self.db.sql.call_args.args[1])
             with self.assertRaises(frappe.ValidationError):
                 convox.find_leads('+449876543210')
         with patch.object(convox, '_identity'), patch.object(frappe, 'get_roles', return_value=['System Manager']):

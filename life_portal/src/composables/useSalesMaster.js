@@ -92,24 +92,10 @@ export function useSalesMaster() {
   }
   async function runOneBranch(state, requestedBranch, signal) {
     const filters = { from_date: state.fromDate, to_date: state.toDate, branch: requestedBranch || "" };
-    const params = new URLSearchParams({ report_name: reportName, filters: JSON.stringify(filters), ignore_prepared_report: "1", are_default_filters: "false" });
-    let response;
-    try {
-      response = await fetch(apiUrl("/api/method/frappe.desk.query_report.run?" + params.toString()), { method: "GET", credentials: apiCredentials(), signal, headers: { Accept: "application/json" } });
-    } catch (e) {
-      if (e.name === "AbortError") throw e;
-      throw new Error("Could not reach the report server. Check your connection and retry.");
-    }
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok || body.exc_type) {
-      let message = body.message || body.exception || "Sales Master Data report failed.";
-      try {
-        const messages = JSON.parse(body._server_messages || "[]");
-        if (messages[0]) message = JSON.parse(messages[0]).message || message;
-      } catch {
-      }
-      throw new Error(String(message).replace(/<[^>]*>/g, "").split("\n").pop());
-    }
+    const body = await request('frappe.desk.query_report.run', {
+      args: { report_name: reportName, filters: JSON.stringify(filters), ignore_prepared_report: 1, are_default_filters: false },
+      signal, csrfToken: session.csrf_token,
+    });
     const result = Array.isArray(body.message?.result) ? body.message.result : [];
     totalSourceIndex.value = result.findIndex(row => row && typeof row === 'object' && !Array.isArray(row) && (row.is_total_row === true || row.is_total_row === 1 || row.invoice === 'Total'));
     return result.map((row, index) => {
@@ -281,6 +267,7 @@ export function useSalesMaster() {
   async function downloadReport() {
     if (loading.value || downloading.value || !branchReady.value || !validate()) return;
     downloading.value = true; error.value = '';
+    let downloadTimeout, timedOut = false;
     try {
       if (!reportLoaded.value || JSON.stringify(stateSnapshot()) !== JSON.stringify(appliedState.value)) await applyFilters();
       if (!reportLoaded.value || !filteredRows.value.length) throw new Error(error.value || 'There are no filtered rows to download.');
@@ -289,7 +276,8 @@ export function useSalesMaster() {
       const indices = filteredRows.value.map(row => row.__sourceIndex).filter(Number.isInteger);
       if (filteredRows.value.length === rows.value.length && totalSourceIndex.value >= 0) indices.push(totalSourceIndex.value);
       const args = { report_name: reportName, custom_columns: [], file_format_type: format.value === 'csv' ? 'CSV' : 'Excel', filters: { from_date: state.fromDate, to_date: state.toDate, branch: state.branch || '' }, applied_filters: appliedLabels(state), visible_idx: indices, include_filters: 1, include_indentation: 0, include_hidden_columns: 0, export_in_background: 0, csv_delimiter: ',', csv_quoting: 0 };
-      controller?.abort(); controller = new AbortController();
+      controller?.abort(); const downloadController = new AbortController(); controller = downloadController;
+      downloadTimeout = setTimeout(() => { timedOut = true; downloadController.abort(); }, 45000);
       const response = await fetch(apiUrl('/api/method/frappe.desk.query_report.export_query'), { method: 'POST', credentials: apiCredentials(), signal: controller.signal, headers: { 'Content-Type': 'application/json', 'X-Frappe-CSRF-Token': session.csrf_token }, body: JSON.stringify(args) });
       if (!response.ok || /json|text\/html/.test(response.headers.get('Content-Type') || '')) throw new Error('Unable to download the report. Please retry.');
       const header = response.headers.get('Content-Disposition') || '';
@@ -298,8 +286,8 @@ export function useSalesMaster() {
       try { if (encoded) filename = decodeURIComponent(encoded[1]); else if (plain) filename = plain[1]; } catch { /* Use the local fallback filename. */ }
       const blob = await response.blob(); if (!alive) return;
       downloadBlob(filename, blob); notice.value = (format.value === 'csv' ? 'CSV' : 'Excel') + ' download started for ' + filteredRows.value.length + ' filtered records.';
-    } catch (failure) { if (alive && failure.name !== 'AbortError') error.value = failure.message; }
-    finally { if (alive) downloading.value = false; }
+    } catch (failure) { if (alive && (timedOut || failure.name !== 'AbortError')) error.value = timedOut ? 'The download took too long. Please try again.' : failure.message; }
+    finally { clearTimeout(downloadTimeout); if (alive) downloading.value = false; }
   }
   function downloadBlob(filename, blob) {
     const url = URL.createObjectURL(blob), a = document.createElement("a");

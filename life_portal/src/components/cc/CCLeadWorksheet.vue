@@ -61,7 +61,8 @@ const phase = computed(() => {
   return 'new';
 });
 const phaseLabels = { new: 'Untouched / not yet connected', active: 'Follow-up · active discussion', booked: 'Appointment booked · awaiting visit', walkin: 'Walked in · not booked (post-visit loop)', won: 'Success - Client Booked ✓', existing: 'Existing client · protected', lost: 'Lost · locked', invalid: 'Invalid · locked', dnc: 'Do Not Contact · permanent lock' };
-const locked = computed(() => ['won','existing','lost','invalid','dnc'].includes(phase.value));
+const exportOverride = computed(() => session.roles.includes('Call Center Export'));
+const locked = computed(() => !exportOverride.value && ['won','existing','lost','invalid','dnc'].includes(phase.value));
 const canReopen = computed(() => locked.value && props.manager && !['won','dnc'].includes(phase.value));
 const groups = computed(() => {
   if (locked.value) return canReopen.value && result.value === 'Connected' ? [['Manager reopen · follow-up','fu',wf.ACTIVE],['Manager reopen · book appointment','ok',['Appointment Booked']]] : [];
@@ -120,6 +121,12 @@ function chooseOutcome(value) {
     followup.value.stage = [...wf.BADNUM,...wf.INVALID].includes(value) ? 'INVALID' : wf.LOST.includes(value) ? 'LOST' : ['Appointment Booked','Existing Client','Walked In & Booked'].includes(value) ? 'SUCCESS' : 'FOLLOW-UP';
   }
 }
+function applyConvoxDisposition(value) {
+  if (locked.value && !canReopen.value) { validation.value = 'This lead is locked.'; return; }
+  chooseConnection('Connected');
+  if (!groups.value.some(([, , options]) => options.includes(value))) { validation.value = 'This disposition is unavailable for the current lead status.'; return; }
+  chooseOutcome(value);
+}
 function addIssue(row) { issues.value.push(row); issueSearch.value = ''; syncIssues(); }
 function removeIssue(index) { issues.value.splice(index,1); syncIssues(); }
 function syncIssues() {
@@ -167,7 +174,7 @@ watch(()=>props.error,value=>{if(value)showToast(value,'error')});
     </div>
     <div class="cc-bar-actions"><button class="btn btn-g btn-sm" @click="emit('start-call')">Start Call</button><button class="btn btn-gy btn-sm" @click="emit('stop-call')">Open phone / hang up</button></div>
   </div>
-  <CCCallSummary :lead="lead" />
+  <CCCallSummary @apply-disposition="applyConvoxDisposition" :lead="lead" />
   <div id="wf-shell">
     <div id="followup-form-body"><div class="ff-form">
       <div id="ff-prog-wrap" class="ff-progress-wrap"><div id="ff-prog-steps" class="ff-prog-steps"><button v-for="(step,index) in progressSteps" :key="step" type="button" class="ff-prog-step" :class="{done:stepComplete[index]}" @click="jumpToStep(index)"><span class="ff-prog-dot" :class="{done:stepComplete[index]}">{{stepComplete[index]?'✓':index+1}}</span><span class="ff-prog-label">{{step}}</span></button></div><div class="ff-prog-bar-wrap"><div id="ff-prog-bar" class="ff-prog-bar" :style="{width:progress+'%'}"></div></div><div class="ff-progress-meta"><span class="ff-progress-identity">Lead ID: <strong>{{lead.name}}</strong> <span aria-hidden="true">·</span> Assigned to: <strong>{{lead.lead_owner_name||lead.lead_owner||'—'}}</strong></span><span class="ff-progress-actions"><button type="button" class="btn btn-gy btn-sm" @click="showHistory">🕘 Lead History</button><button type="button" class="btn btn-gy btn-sm" :disabled="!primary" :title="`ConVox call history matched by mobile ${maskPhone(primary)}`" @click="openConvoxHistory">🎧 ConVox History <span v-if="primary">· {{maskPhone(primary)}}</span></button></span><span id="ff-prog-pct" class="ff-prog-pct">{{progress}}% complete</span></div></div>

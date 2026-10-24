@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { request } from '../api/http';
 import { session } from '../lib/session';
+import { indexRecords, groupRecords } from '../lib/record-index';
 
 const today = new Date();
 const to = ref(localDate(today));
@@ -26,11 +27,20 @@ function dateText(value) { return value ? new Date(`${String(value).slice(0,10)}
 const branches = computed(() => data.value?.branches || []);
 const categories = computed(() => data.value?.meta?.categories || data.value?.meta?.cats || []);
 const stockTypes = computed(() => [...new Set((data.value?.items || []).map(row=>row.type).filter(Boolean))].sort());
-const itemByCode = code => (data.value?.items || []).find(item => item.code === code) || { code, name: code, cat: '', type: '', unit: '' };
-const branchName = code => code==='HO'?'HO Central Warehouse':branches.value.find(row => row.code === code)?.name || code || '—';
-const clientById = id => [...(data.value?.clients || []),...clientMatches.value].find(client => client.id === id) || { id, name: id };
+const itemIndex = computed(() => indexRecords(data.value?.items, 'code'));
+const branchIndex = computed(() => indexRecords(branches.value, 'code'));
+const clientIndex = computed(() => indexRecords([...(data.value?.clients || []), ...clientMatches.value], 'id'));
+const vendorIndex = computed(() => indexRecords(vendors.value, 'code'));
+const movementIndexes = computed(() => Object.fromEntries(
+  ['purchases', 'stock_requests', 'lifetime_purchases', 'dispatch', 'returns', 'adjust']
+    .map(key => [key, groupRecords(data.value?.[key], 'item')]),
+));
+const movementsForItem = (key, code) => movementIndexes.value[key].get(code) || [];
+const itemByCode = code => itemIndex.value.get(code) || { code, name: code, cat: '', type: '', unit: '' };
+const branchName = code => code==='HO'?'HO Central Warehouse':branchIndex.value.get(code)?.name || code || '—';
+const clientById = id => clientIndex.value.get(id) || { id, name: id };
 const qmatch = values => { const q = query.value.trim().toLocaleLowerCase(); return !q || values.some(value => String(value || '').toLocaleLowerCase().includes(q)); };
-const vendorByCode = code => vendors.value.find(row=>row.code===code) || {code,name:code||''};
+const vendorByCode = code => vendorIndex.value.get(code) || {code,name:code||''};
 const requests = computed(() => {
   return (data.value?.stock_requests || []).filter(row =>
     (!branch.value || (branch.value==='HO'?String(row.src||row.source||'').includes('Stores'):row.br === branch.value)) &&
@@ -45,11 +55,11 @@ const stockRows = computed(() => {
   const payload = data.value;
   if (!payload) return [];
   return payload.items.filter(item => {
-    const itemSupplierCodes=[...(payload.item_vendors?.[item.code]||[]),...(payload.purchases||[]).filter(row=>row.item===item.code).map(row=>row.vendor)];
+    const itemSupplierCodes=[...(payload.item_vendors?.[item.code]||[]),...movementsForItem('purchases',item.code).map(row=>row.vendor)];
     return (!category.value || item.cat === category.value) && (!stockType.value || item.type === stockType.value) && (!vendorFilter.value||itemSupplierCodes.includes(vendorFilter.value)) && qmatch([item.code, item.name, item.cat, item.type,...itemSupplierCodes.flatMap(code=>[code,vendorByCode(code).name,vendorByCode(code).phone])]);
   }).map(item => {
     const onHand = branch.value==='HO' ? number(payload.ho_stock?.[item.code]) : branch.value ? number(payload.branch_stock?.[item.code]?.[branch.value]) : number(payload.ho_stock?.[item.code]) + Object.values(payload.branch_stock?.[item.code] || {}).reduce((sum, value) => sum + number(value), 0);
-    const itemRequests = (payload.stock_requests || []).filter(row=>row.item===item.code);
+    const itemRequests = movementsForItem('stock_requests',item.code);
     const monthly = new Map(); itemRequests.forEach(row=>{const month=String(row.reqDate||row.date||'').slice(0,7);if(month)monthly.set(month,(monthly.get(month)||0)+number(row.reqQty??row.qty));});
     const demand = [...monthly.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
     const recent = demand.slice(-3), average = recent.length ? Math.round(recent.reduce((sum,row)=>sum+row[1],0)/recent.length) : 0;
@@ -59,7 +69,7 @@ const stockRows = computed(() => {
     const required = Math.round(Math.max(monthDemand,average)*3+open+number(item.rl));
     const suggested = Math.max(0,required-onHand);
     const booked=number(payload.po_ordered_month?.[item.code]||payload.po_pending_month?.[item.code]);
-    const lifetime=payload.lifetime_purchases||[],itemPurchases=lifetime.filter(row=>row.item===item.code),itemDispatch=(payload.dispatch||[]).filter(row=>row.item===item.code),itemReturns=(payload.returns||[]).filter(row=>row.item===item.code),itemAdjust=(payload.adjust||[]).filter(row=>row.item===item.code);
+    const itemPurchases=movementsForItem('lifetime_purchases',item.code),itemDispatch=movementsForItem('dispatch',item.code),itemReturns=movementsForItem('returns',item.code),itemAdjust=movementsForItem('adjust',item.code);
     return {...item,onHand,bookedQty:booked,lifetimePurchaseQty:itemPurchases.reduce((sum,row)=>sum+number(row.qty),0),lifetimePurchaseWorth:itemPurchases.reduce((sum,row)=>sum+number(row.val),0),sentQty:itemDispatch.reduce((sum,row)=>sum+number(row.qty),0),sentWorth:itemDispatch.reduce((sum,row)=>sum+number(row.val),0),returnedQty:itemReturns.reduce((sum,row)=>sum+number(row.qty),0),adjustedQty:itemAdjust.reduce((sum,row)=>sum+number(row.qty),0),openDemand:open,lastMonthDemand,currentMonthDemand:monthDemand,avgMonthlyDemand:average,quarterNeed:required,suggestedQty:suggested,reorderPriority:suggested>0?(number(payload.ho_stock?.[item.code])<=number(item.rl)?'Urgent':'Review'):'Covered'};
   });
 });
@@ -212,7 +222,7 @@ async function searchFullHistory() {
   finally{historyLoading.value=false;}
 }
 function openVendor(code) { selectedVendor.value = code; tab.value = 'vendor'; }
-function suppliersForItem(code) { return [...new Set([...(data.value?.item_vendors?.[code]||[]),...(data.value?.purchases||[]).filter(row=>row.item===code).map(row=>row.vendor).filter(Boolean)])]; }
+function suppliersForItem(code) { return [...new Set([...(data.value?.item_vendors?.[code]||[]),...movementsForItem('purchases',code).map(row=>row.vendor).filter(Boolean)])]; }
 async function searchClients() {
   const term = query.value.trim();
   if (term.length < 2) { clientMatches.value = []; clientLookupError.value = 'Enter a client name, ID, or mobile digits.'; return; }
@@ -240,8 +250,7 @@ async function refreshDraftOrders(created) {
     try {
       const result = await request('frappe.client.get', { args:{doctype:'Purchase Order',name:entry.name}, csrfToken:session.csrf_token });
       const doc = result.message || {};
-      const transitionResult = await fetch('/api/method/frappe.model.workflow.get_transitions',{method:'POST',credentials:'same-origin',headers:{Accept:'application/json','Content-Type':'application/x-www-form-urlencoded; charset=UTF-8','X-Frappe-CSRF-Token':session.csrf_token||''},body:new URLSearchParams({doc:JSON.stringify(doc)}).toString()});
-      const transitionBody = await transitionResult.json().catch(()=>({}));
+      const transitionBody = await request('frappe.model.workflow.get_transitions', {args:{doc:JSON.stringify(doc)},csrfToken:session.csrf_token});
       rows.push({...entry,workflow_state:doc.workflow_state||doc.status||'Draft',grand_total:number(doc.grand_total||entry.grand_total),doc,transitions:transitionBody.message||[]});
     } catch (cause) { rows.push({...entry,load_error:cause.message||'Could not load workflow state.',transitions:[]}); }
   }
@@ -253,9 +262,7 @@ async function sendDraftForApproval(order) {
   if (!window.confirm(`Run “${action}” for Purchase Order ${order.name}?`)) return;
   actionBusy.value=true; actionError.value='';
   try {
-    const response=await fetch('/api/method/frappe.model.workflow.apply_workflow',{method:'POST',credentials:'same-origin',headers:{Accept:'application/json','Content-Type':'application/x-www-form-urlencoded; charset=UTF-8','X-Frappe-CSRF-Token':session.csrf_token||''},body:new URLSearchParams({doc:JSON.stringify(order.doc),action}).toString()});
-    const body=await response.json().catch(()=>({}));
-    if(!response.ok)throw new Error(body.exception||body.exc_type||'Could not send Purchase Order for approval.');
+    const body=await request('frappe.model.workflow.apply_workflow',{args:{doc:JSON.stringify(order.doc),action},csrfToken:session.csrf_token});
     await refreshDraftOrders([{...order,...(body.message||{})}]);
   } catch(cause){actionError.value=cause.message||'Workflow action failed.';}
   finally{actionBusy.value=false;}
@@ -268,9 +275,8 @@ async function createDraftOrders() {
   try {
     const args = new URLSearchParams({action:'create_purchase_orders',cart_count:String(cart.value.length)});
     cart.value.forEach((row,index)=>{ for (const [key,value] of Object.entries({item:row.item,item_name:row.name,qty:row.qty,rate:row.rate,supplier:row.supplier,priority:row.priority})) args.set(`cart_${index}_${key}`,String(value)); });
-    const response = await fetch('/api/method/life_stores_360_live_api',{method:'POST',credentials:'same-origin',headers:{Accept:'application/json','Content-Type':'application/x-www-form-urlencoded; charset=UTF-8','X-Frappe-CSRF-Token':session.csrf_token||''},body:args.toString()});
-    const body = await response.json();
-    if (!response.ok || !body.message?.ok) throw new Error(body.message?.message || body.exception || 'Draft Purchase Order creation failed.');
+    const body = await request('life_stores_360_live_api',{args:Object.fromEntries(args),csrfToken:session.csrf_token});
+    if (!body.message?.ok) throw new Error(body.message?.message || 'Draft Purchase Order creation failed.');
     const created=body.message.created || [];
     actionMessage.value = (body.message.message || 'Draft Purchase Orders created.')+' '+created.map(row=>row.name).filter(Boolean).join(', ');
     cart.value = []; await refreshDraftOrders(created);

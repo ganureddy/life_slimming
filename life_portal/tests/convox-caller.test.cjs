@@ -8,18 +8,18 @@ const phone = fs.readFileSync(path.join(__dirname, '../src/components/ConvoxPhon
 
 test('caller lookup reaches the legacy iframe and native preview through their own transports', async () => {
   const code = phone.slice(phone.indexOf('async function findCaller('), phone.indexOf('watch(() => route.name'));
-  for (const name of ['leads', 'leads-native', 'unjoined']) {
+  for (const name of ['leads', 'leads-native', 'unjoined', 'leads-current']) {
     const messages = [], events = [], navigations = [];
-    const context = { route: { name }, isCcDashboard: { value: name.startsWith('leads') },
+    const context = { route: { name: name === 'leads-current' ? 'leads' : name }, isCcDashboard: { value: name.startsWith('leads') },
       router: { push: async value => navigations.push(value) }, minimize() {},
-      document: { querySelector: () => ({ contentWindow: { postMessage: (...args) => messages.push(args) } }) },
+      document: { querySelector: () => name === 'leads-current' ? null : ({ contentWindow: { postMessage: (...args) => messages.push(args) } }) },
       window: { location: { origin: 'https://portal.test' }, dispatchEvent: event => events.push(event) },
       CustomEvent: function(type, options) { this.type = type; this.detail = options.detail; } };
     vm.createContext(context);
     vm.runInContext(code, context);
     await context.findCaller({ mobile_number: '+91 9876543210' });
     assert.equal(messages.length, name === 'leads' ? 1 : 0);
-    assert.equal(events.length, name === 'leads-native' ? 1 : 0);
+    assert.equal(events.length, ['leads-native','leads-current'].includes(name) ? 1 : 0);
     assert.equal(navigations.length, name === 'unjoined' ? 1 : 0);
     if (messages.length) {
       assert.equal(messages[0][0].type, 'life-convox-find');
