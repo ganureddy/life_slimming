@@ -6,12 +6,13 @@ const path = require('node:path');
 const postcss = require('../node_modules/postcss');
 const root = path.join(__dirname, '..');
 const pages = [
+  ['task-management', 'src/styles/tasks.css'],
   ['appointment-shedular', 'src/styles/appointment-scheduler.css'],
   ['employee-sale-master-data', 'src/styles/employee-sale-master.css'],
   ['life-audit-report', 'src/styles/discount-audit.css'],
   ['new-client-registration', 'src/pages/ClientRegistrationPage.vue'],
   ['unjoined-data', 'src/styles/unjoined.css'],
-  ['cluster-head-dashboard', 'src/pages/ClusterDashboardPage.vue'],
+  ['cluster-head-dashboard', 'src/styles/cluster-dashboard.css'],
   ['branch-home-target', 'src/pages/BranchTargetPage.vue'],
   ['price-list', 'src/pages/PriceListNativePage.vue'],
   ['v', 'src/pages/FormsDocumentsPage.vue'],
@@ -33,7 +34,7 @@ const excluded = new Set([...websiteSelectors].map(normalize));
 function rules(css) {
   const result = new Set();
   postcss.parse(css).walkRules(rule => {
-    const selector = normalize(rule.selector);
+    const selector = normalize(rule.selectors.map(selector => selector.startsWith(':deep(') && selector.endsWith(')') ? selector.slice(6,-1) : selector).join(','));
     if (excluded.has(selector)) return;
     const parents = [];
     for (let parent = rule.parent; parent; parent = parent.parent) if (parent.type === 'atrule') parents.unshift(parent.name + ':' + normalize(parent.params));

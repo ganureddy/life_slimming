@@ -1,3 +1,7 @@
+# Latest source alignment — 24 October 2026
+
+Six active Vue pages now carry the refreshed ERP behavior: Appointments, Employee Sale Master, Sales Master, Price List, My Tasks and Cluster Dashboard. See [source alignment details](../docs/vue-source-sync-2026-10-24.md). The notes below describe earlier migration stages; Tasks, Cluster and Employee Sale currently use component-owned DOM controllers rather than fully reactive business controllers. Main-route counts remain twelve Vue-owned modules.
+
 # Legacy to Vue migration progress
 
 Updated: 16 October 2026. Counts refer to the 44 mapped routes; shared source pages are counted once per route. Billing and new portal-only features are tracked separately.

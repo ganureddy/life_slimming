@@ -146,6 +146,17 @@ const WebSocket = require('../node_modules/ws');
     await send('Input.dispatchKeyEvent', {type:'keyDown',key:'Escape',code:'Escape'});
     await wait("!document.querySelector('.appt-detail-modal')");
     assert.equal(await evaluate('document.body.style.overflow'), '');
+    // Links from Client Info now carry the validated branch and patient.
+    reset();
+    await send('Page.navigate', {url:base+'/life_portal/appt?branch=Clinic%20A&patient=PAT-1'});
+    await wait("document.querySelector('.room-count')?.textContent==='3'");
+    await input('.date-filter',date); await boardReady();
+    await click(`.add-appt-btn[data-room="${room1}"][data-slot="07:30 AM"]`);
+    await wait("document.querySelector('.modal-client-details')?.value.includes('Priya Client')");
+    assert.equal(await evaluate("document.querySelector('.modal-client').value"),'Priya Client');
+    assert.equal(await evaluate("document.querySelector('.branch-filter').value"),'Clinic A');
+    await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape'});
+    await wait("!document.querySelector('.pa-modal')");
     // Vue navigation removes the page and its modal lifecycle without reloading the document.
     await click('a[href="/life_portal/"]'); await wait("!document.querySelector('#client-appointment-page')");
     assert.equal(await evaluate('document.body.style.overflow'), '');

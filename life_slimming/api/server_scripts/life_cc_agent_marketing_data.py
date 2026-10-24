@@ -86,7 +86,13 @@ def run(**kwargs):
     if frappe.utils.getdate(from_date) > frappe.utils.getdate(to_date):
         frappe.throw("From Date must be before or equal to To Date.")
 
-    def life_cc_read_all(doctype, fields=None, filters=None, order_by=None, limit_page_length=None):
+    # Reuse exact reads within this request only; never cache across users or refreshes.
+    life_cc_read_cache = {}
+
+    def life_cc_read_all(doctype, fields=None, filters=None, order_by=None, limit_page_length=None, or_filters=None):
+        cache_key = json.dumps([doctype, fields, filters, order_by, or_filters], sort_keys=True)
+        if cache_key in life_cc_read_cache:
+            return [dict(row) for row in life_cc_read_cache[cache_key]]
         result = []
         start = 0
         size = 500
@@ -98,6 +104,7 @@ def run(**kwargs):
                     doctype,
                     fields=fields,
                     filters=filters,
+                    or_filters=or_filters,
                     order_by=stable_order,
                     limit_start=start,
                     limit_page_length=size
@@ -107,6 +114,7 @@ def run(**kwargs):
                     doctype,
                     fields=fields,
                     filters=filters,
+                    or_filters=or_filters,
                     order_by=stable_order,
                     limit_start=start,
                     limit_page_length=size
@@ -119,6 +127,7 @@ def run(**kwargs):
 
             start = start + size
 
+        life_cc_read_cache[cache_key] = [dict(row) for row in result]
         return result
 
 
@@ -216,60 +225,21 @@ def run(**kwargs):
     if frappe.get_meta("Lead").has_field("custom_visit_status"):
         fields.append("custom_visit_status")
 
-    def get_leads(
-        date_field,
-        start_value,
-        end_value
-    ):
-        filters = {
-            date_field: [
-                "between",
-                [
-                    start_value,
-                    end_value
-                ]
-            ]
-        }
-
-        if owner_filter:
-            filters["lead_owner"] = owner_filter
-
-        return life_cc_read_all(
-            "Lead",
-            fields=fields,
-            filters=filters,
-            order_by=date_field + " desc",
-            limit_page_length=10000
-        )
-
-
     date_time_from = from_date + " 00:00:00"
     date_time_to = to_date + " 23:59:59"
 
-    rows = []
-
-    rows.extend(
-        get_leads(
-            "custom_appointment_date_and_time",
-            date_time_from,
-            date_time_to
-        )
-    )
-
-    rows.extend(
-        get_leads(
-            "custom_posting_date",
-            from_date,
-            to_date
-        )
-    )
-
-    rows.extend(
-        get_leads(
-            "creation",
-            date_time_from,
-            date_time_to
-        )
+    # One union query preserves the three date cohorts without scanning and
+    # returning overlapping leads three times. AND owner scope applies to every
+    # OR date condition through Frappe's permission-aware query builder.
+    rows = life_cc_read_all(
+        "Lead", fields=fields,
+        filters={"lead_owner": owner_filter} if owner_filter else {},
+        or_filters=[
+            ["custom_appointment_date_and_time", "between", [date_time_from, date_time_to]],
+            ["custom_posting_date", "between", [from_date, to_date]],
+            ["creation", "between", [date_time_from, date_time_to]],
+        ],
+        order_by="custom_appointment_date_and_time desc",
     )
 
     unique_rows = {}

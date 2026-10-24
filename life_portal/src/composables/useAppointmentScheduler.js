@@ -1,5 +1,5 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { onBeforeRouteLeave } from 'vue-router';
+import { useRoute, onBeforeRouteLeave } from 'vue-router';
 import { request } from '../api/http';
 import { session } from '../lib/session';
 import { appointmentSlots, appointmentStatuses, appointmentToday, appointmentTime, appointmentERPTime,
@@ -8,6 +8,7 @@ import { appointmentSlots, appointmentStatuses, appointmentToday, appointmentTim
   pendingAppointmentTherapies, rescheduledAppointment } from '../lib/appointment-scheduler';
 
 export function useAppointmentScheduler() {
+  const route = useRoute();
   const root = ref(null), branch = ref(''), date = ref(appointmentToday()), branches = ref([]), rooms = ref([]), appointments = ref([]);
   const loading = ref(false), branchLoading = ref(false), error = ref(''), historyError = ref(''), notice = ref(''), saving = ref(false);
   const createOpen = ref(false), createError = ref(''), activeSlot = ref(null);
@@ -44,6 +45,8 @@ export function useAppointmentScheduler() {
       const rows = await report('Branch', ['name', 'branch'], [], 'modified desc', controller.signal, 100);
       if (!current('branches', controller)) return;
       branches.value = [...new Set(rows.map(row => row.branch || row.name).filter(name => name && !isExcluded(name)))];
+      const requested = String(route.query.branch || '');
+      if (branches.value.includes(requested)) branch.value = requested;
       if (!branches.value.includes(branch.value)) branch.value = branches.value[0] || '';
       if (!branch.value) throw new Error('No branches found.');
       await loadBoard();
@@ -91,6 +94,8 @@ export function useAppointmentScheduler() {
     therapyPlans.value = []; plansLoading.value = false; plansError.value = ''; createError.value = '';
     patientOpen.value = categoryOpen.value = concernOpen.value = false; clientSearchLoading.value = categorySearchLoading.value = false;
     createOpen.value = true;
+    const patient = String(route.query.patient || '');
+    if (patient) selectPatient({ value: patient });
   }
   function closeCreate() {
     if (saving.value) return;

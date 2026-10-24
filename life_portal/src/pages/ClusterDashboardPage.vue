@@ -1,220 +1,56 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue';
-import { request } from '../api/http';
-import endpoints from '../api/endpoints.json';
+import { onMounted, onBeforeUnmount, reactive, ref } from 'vue';
+import { onBeforeRouteLeave } from 'vue-router';
 import { session } from '../lib/session';
-import { indiaDate } from '../lib/unjoined';
-const today = indiaDate();
-const from = ref(today.slice(0, 8) + '01'), to = ref(today), cluster = ref(''), data = ref(null), loading = ref(false), error = ref('');
-let controller, alive = true;
-const money = value => '₹' + Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
-async function load() {
-  if (!from.value) from.value = today.slice(0, 8) + '01';
-  if (!to.value) to.value = today;
-  if (from.value > to.value) { error.value = 'Choose a valid date range.'; return; }
-  controller?.abort(); const current = new AbortController(); controller = current;
-  loading.value = true; error.value = '';
-  try {
-    const result = await request(endpoints.cluster_dashboard_api, { args: { from_date: from.value, to_date: to.value, ...(cluster.value ? { cluster: cluster.value } : {}) }, csrfToken: session.csrf_token, signal: current.signal });
-    if (!alive || controller !== current) return;
-    if (!result.message || !Array.isArray(result.message.rows)) throw new Error('The dashboard returned an invalid response.');
-    data.value = result.message;
-  } catch (failure) { if (alive && controller === current && failure.name !== 'AbortError') error.value = 'Failed to load data.'; }
-  finally { if (alive && controller === current) loading.value = false; }
-}
-onMounted(load);
-onBeforeUnmount(() => { alive = false; controller?.abort(); });
+import { createDomPageRuntime } from '../lib/dom-page-runtime';
+import { mountClusterDashboard } from '../controllers/cluster-dashboard';
+const root = ref(null), status = reactive({ reads:0, writes:0, error:'', notice:'' });
+let runtime;
+onMounted(() => { runtime=createDomPageRuntime({root:root.value,session,status}); mountClusterDashboard(runtime); });
+onBeforeRouteLeave(() => !status.writes);
+onBeforeUnmount(() => runtime?.dispose());
 </script>
-
 <template>
-  <div class="cd">
-    <div class="cd-top">
-      <div><div id="cdTitle" class="cd-title">{{ data?.cluster || 'Cluster Dashboard' }}</div><div id="cdSub" class="cd-sub" role="status">{{ loading ? 'Loading…' : error || (data ? (data.from_date || '') + ' → ' + (data.to_date || '') + ' · ' + (data.branches?.length || 0) + ' branches' : 'Loading…') }}</div></div>
-      <form class="cd-controls" @submit.prevent="load">
-        <select v-if="data?.available_clusters?.length > 1" id="cdClusterSel" v-model="cluster" class="cd-select" aria-label="Cluster"><option value="">My Cluster</option><option value="ALL">All Branches</option><option v-for="name in data.available_clusters" :key="name">{{ name }}</option></select>
-        <input id="cdFrom" v-model="from" class="cd-date" type="date" aria-label="From date"><input id="cdTo" v-model="to" class="cd-date" type="date" aria-label="To date"><button class="cd-btn" :disabled="loading">Apply</button>
-      </form>
+<section class="cluster-dashboard-page" :aria-busy="status.reads > 0 || status.writes > 0">
+<p v-if="status.error" role="alert" class="native-source-error">{{status.error}}</p>
+<div ref="root" class="native-page-body"><div v-pre>
+<div id="clusterApp"><header class="cl-header"><div class="cl-brand"><a aria-label="LIFE home" href="/life-home">L</a><div><small>LIFE · CLUSTER OPERATIONS</small><h1>Cluster Command Center</h1><span class="cl-grand" id="cl-grand">All clusters · cycle net —</span></div></div><div class="cl-controls"><label>CLUSTER<select aria-label="Cluster" disabled="" id="cl-select"><option>Checking access…</option></select></label><span class="cl-profile" id="cl-profile"></span><button id="cl-refresh">↻ Refresh</button></div></header><nav aria-label="Cluster dashboard views" class="cl-tabs"><button data-jump="cl-overview">Overview</button><button data-jump="cl-conversions">Conversions</button><button data-jump="cl-comparison">Branch comparison</button><button data-jump="bcc-race">Sales Race</button><button data-jump="cl-att-panel">Absent Staff</button><button data-jump="cl-dues-panel">Dues &amp; Recovery</button><button data-jump="cl-ap-panel">HO-CC Appointments</button><button data-jump="cl-exec-panel">Appointments &amp; Executions</button><button data-jump="cl-stock-panel">Approvals</button><button data-jump="cl-media-panel">Media / Source Mix</button><span id="cl-period"></span></nav><div class="cl-score"><div>Today <b id="cl-today">—</b></div><div>Invoices <b id="cl-bills">—</b></div><div>Cycle net <b id="cl-month">—</b></div><div>Staff <b id="cl-att">—</b></div><div class="cl-score-ticker"><span id="cl-ticker">Loading cluster performance…</span></div></div><main><div id="cl-status" role="status">Checking your available branches…</div><section id="cl-overview"><div class="cl-intro"><div><small>YOUR CLUSTER AT A GLANCE</small><h2 id="cl-heading">Branch performance</h2><p id="cl-subtitle">Collections after GST · completed paid bills · today’s attendance</p></div><div class="cl-legend"><i></i> Live records <span>·</span> Auto-refresh 5 min</div></div><div class="cl-cards" id="cl-cards"></div><section class="cl-panel" id="cl-conversions"><div class="cl-panel-title"><div><h2>Branch walk-in conversions</h2><p>Current sales cycle · booked ÷ visited clients</p></div></div><div class="cl-conversions" id="cl-conversion-cards"></div></section><section aria-labelledby="bcc-title-race" class="bcc-panel bcc-gold" data-bcc-panel="race" id="bcc-race" tabindex="-1">
+  <header class="bcc-panel-head"><div><h2 id="bcc-title-race">Sales Race Board</h2><p id="lsrbSub">Live cluster &amp; branch ranking · cluster rank: target achieved % · branch rank: net collections · part-payments included</p></div>
+    <div class="bcc-race-actions">
+      <div class="lsrb-ctl" id="lsrbCtl"><span class="lc-live" id="lsrbLive"><i></i>LIVE</span>
+        <div class="lc-seg" id="lsrbSeg"><button data-p="today" type="button">Today</button><button class="on" data-p="mtd" type="button">This Month</button></div>
+        <button class="lc-btn" id="lsrbRefresh" title="Refresh now" type="button">↻</button></div>
+      <div class="bcc-panel-actions" data-bcc-controls=""></div>
+    </div></header>
+  <div class="bcc-panel-body" id="bcc-body-race">
+<section aria-label="Sales Race Board" class="lsrb" id="lsrb">
+
+
+
+  <div class="lsrb-body">
+    <div class="lsrb-card race-card">
+      <div class="lsrb-card-h">🏎️ Cluster Race <span>who leads the network</span></div>
+      <div class="lanes" id="lsrbLanes"></div>
+      <div class="champs"><div class="ch-h">Race Leaders</div>
+        <div class="ch-grid"><div class="champ" id="lsrbChC"></div><div class="champ" id="lsrbChB"></div></div></div>
     </div>
-    <div v-if="data" id="cdCards" class="cd-cards"><div class="cd-card"><div class="k">Sales</div><div class="v">{{ money(data.totals?.sales_amt) }}</div></div><div class="cd-card"><div class="k">Invoices</div><div class="v">{{ data.totals?.sales_count || 0 }}</div></div><div class="cd-card"><div class="k">Collections</div><div class="v">{{ money(data.totals?.collections) }}</div></div><div class="cd-card"><div class="k">Outstanding</div><div class="v">{{ money(data.totals?.outstanding) }}</div></div></div>
-    <div class="cd-table-wrap"><table id="cdTable" class="cd-table"><thead><tr><th>Branch</th><th>Sales</th><th>Invoices</th><th>Collections</th><th>Outstanding</th></tr></thead><tbody id="cdTbody"><tr v-for="row in data?.rows || []" :key="row.branch"><td>{{ row.branch }}</td><td>{{ money(row.sales_amt) }}</td><td>{{ row.sales_count }}</td><td>{{ money(row.collections) }}</td><td>{{ money(row.outstanding) }}</td></tr><tr v-if="!data?.rows.length"><td colspan="5" class="cd-empty">{{ loading ? 'Loading…' : error || 'No branches configured for this cluster yet.' }}</td></tr></tbody></table></div>
+    <div class="lsrb-card">
+      <div class="lsrb-card-h">🏆 Branch Leaderboard <span>(top sales employee) · live positions</span></div>
+      <div class="board-hd"><span>#</span><span>Br</span><span>Branch (Top Employee)</span><span>Collected net</span><span>Bills</span><span>New</span><span>In-H</span><span>Move</span></div>
+      <div class="board" id="lsrbBoard"></div>
+    </div>
   </div>
+
+  <div class="lsrb-status" id="lsrbStatus">Loading live bills…</div>
+
+  <svg aria-hidden="true" height="0" style="position:absolute" width="0"><defs><linearGradient id="lsrbGold" x1="0" x2="1" y1="0" y2="1">
+    <stop offset="0" stop-color="#FFF1B8"></stop><stop offset=".45" stop-color="#F5B400"></stop><stop offset=".7" stop-color="#FFE38A"></stop><stop offset="1" stop-color="#B37A00"></stop></linearGradient></defs></svg>
+
+
+</section>
+  </div>
+</section>
+<section class="cl-panel" id="cl-comparison"><div class="cl-panel-title"><div><h2>Branch comparison</h2><p>Live comparison across assigned cluster branches</p></div><div class="cl-compare-controls"><select aria-label="Branch comparison period" id="cl-compare-mode"><option value="today">Today</option><option value="yesterday">Yesterday</option><option value="range">Date range</option></select><input aria-label="Comparison start" id="cl-compare-from" type="date"/><input aria-label="Comparison end" id="cl-compare-to" type="date"/><button id="cl-compare-apply">Apply</button></div></div><div class="cl-table-wrap"><table><thead><tr><th>Branch</th><th>Cluster</th><th>Package net</th><th>Collected net</th><th>Pending dues</th><th># Inv</th><th>Fresh net | Recovery net</th><th>Target</th><th>Cycle net</th><th>Last month net</th><th>Rank</th></tr></thead><tbody id="cl-branches"><tr><td colspan="9">Loading…</td></tr></tbody></table></div></section><section class="cl-panel" id="cl-att-panel"><div class="cl-panel-title"><div><h2>Branch-wise Absent Staff</h2><p>Today’s absent names · calendar-month present / absent counts</p></div></div><div id="cl-absence"></div></section><section class="cl-panel" id="cl-dues-panel"><div class="cl-panel-title"><div><h2>Pending Dues &amp; Recovery</h2><p>Cluster totals · branch and employee recovery status</p></div></div><div class="cl-filters" id="cl-dues-tabs"><button class="on" data-dues="today">Today</button><button data-dues="month">This Month</button><button data-dues="all">Overall</button><div class="cl-due-range"><label>Start <input aria-label="Pending dues start date" id="cl-dues-from" type="date"/></label><label>End <input aria-label="Pending dues end date" id="cl-dues-to" type="date"/></label><span>Invoice dates</span></div></div><div id="cl-billing-dues"></div><details><summary>Recovery commitments &amp; employee follow-ups</summary><div id="cl-recovery"></div></details></section><section class="cl-panel" id="cl-ap-panel"><div class="cl-panel-title"><div><h2>Walk In Appointments By HO-CC</h2><p>Cluster appointments · client details · lead journey · current 6th–5th cycle</p></div></div><div class="cl-filters cl-ap-toolbar"><input aria-label="Search appointments" id="cl-ap-search" placeholder="Search client, owner or status"/><select aria-label="Appointment branch" id="cl-ap-branch"><option value="">All branches</option></select><select aria-label="Consultant" id="cl-ap-consultant"><option value="">All consultants</option></select><select aria-label="Visit or journey" id="cl-ap-journey"><option value="">All visits / journeys</option><option value="first">First visit</option><option value="repeat">Repeat visit</option><option value="visited">Visited</option><option value="pending">Not yet visited</option></select></div><div id="cl-ap-content"></div></section><section class="cl-panel" id="cl-exec-panel"><div class="cl-panel-title"><div><h2>Appointments &amp; Executions</h2><p>Today · service appointments, visits and session entries</p></div><a href="/operations-&amp;-service-module" target="_blank">Open Operations ↗</a></div><div class="cl-filters cl-ex-toolbar"><select aria-label="Execution branch" id="cl-ex-branch"><option value="">All branches</option></select><select aria-label="Execution employee" id="cl-ex-employee"><option value="">All employees</option></select><select aria-label="Execution service" id="cl-ex-service"><option value="">All services</option><option>Slimming</option><option>Skin</option><option>Hair</option><option>Life Rise</option><option>Unmapped service</option></select><span id="cl-ex-periods"></span></div><div id="cl-execution">Loading…</div></section><section class="cl-panel" id="cl-media-panel"><div class="cl-panel-title"><div><h2>Media / Source Mix</h2><p>Selected cluster · current sales cycle to today · collections</p></div></div><div id="cl-media"></div></section><section class="cl-panel" id="cl-stock-panel"><div class="cl-panel-title"><div><h2>Approvals</h2><p>Branch-wise pending approvals &amp; stock request progress</p></div></div><div id="cl-approvals"></div></section><p class="cl-footnote">Business uses submitted non-return invoice final payable, including partly paid bills, converted to net sales. Collections use the Billing collections report. Sales and collections are ex-GST (inclusive amount ÷ 1.05). Dues remain actual payable balances. Collectable balances follow invoice due dates; undated balances remain in Overall. Race ranks Billing report collections in the selected period. Employee attribution uses submitted Payment Entry allocations, split 50/50 where shared; Hi Ticket uses collected money on one invoice, with joint owners shown together. Attendance P uses punch records or recorded attendance; A is provisional until the day closes. Leave and weekly off are excluded. Unavailable sources show —.</p></section></main></div>
+</div></div></section>
 </template>
-
-<style scoped>
-.cd{
-  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
-  padding: 16px;
-  max-width: 1200px;
-  margin: 0 auto;
-  color: #14311d;
-}
-.navbar{display:none;}
-.web-footer{display:none;}
-.cd-top{
-  display:flex;
-  flex-wrap:wrap;
-  gap:14px;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:18px;
-}
-
-.cd-title{
-  font-size:20px;
-  font-weight:700;
-}
-
-.cd-sub{
-  font-size:13px;
-  color:#5c7a68;
-  margin-top:2px;
-}
-
-.cd-controls{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  align-items:center;
-}
-
-.cd-select,
-.cd-date{
-  border:1px solid #d3e3d8;
-  border-radius:10px;
-  padding:7px 10px;
-  font-size:13px;
-  background:#fff;
-}
-
-.cd-btn{
-  background:linear-gradient(135deg,#1b5e20,#2e7d32);
-  color:#fff;
-  border:none;
-  border-radius:10px;
-  padding:8px 16px;
-  font-size:13px;
-  font-weight:600;
-  cursor:pointer;
-}
-
-.cd-btn:hover{
-  filter:brightness(1.08);
-}
-
-.cd-cards{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:12px;
-  margin-bottom:20px;
-}
-
-.cd-card{
-  background:linear-gradient(165deg,rgba(255,255,255,.95),rgba(236,248,238,.85));
-  border:1px solid rgba(27,94,32,.12);
-  border-radius:14px;
-  padding:14px 16px;
-  box-shadow:0 6px 18px rgba(15,61,30,.08);
-}
-
-.cd-card .k{
-  font-size:12px;
-  color:#5c7a68;
-  margin-bottom:6px;
-}
-
-.cd-card .v{
-  font-size:20px;
-  font-weight:700;
-  color:#14311d;
-}
-
-.cd-table-wrap{
-  overflow-x:auto;
-  border-radius:14px;
-  border:1px solid rgba(27,94,32,.12);
-  background:#fff;
-}
-
-.cd-table{
-  width:100%;
-  border-collapse:collapse;
-  font-size:13px;
-  min-width:520px;
-}
-
-.cd-table th{
-  text-align:left;
-  padding:11px 14px;
-  background:#eef6f0;
-  color:#1b5e20;
-  font-weight:700;
-  position:sticky;
-  top:0;
-}
-
-.cd-table td{
-  padding:10px 14px;
-  border-top:1px solid #eef2ee;
-}
-
-.cd-table tr:hover td{
-  background:#f7fbf8;
-}
-
-.cd-empty{
-  text-align:center;
-  color:#8aa596;
-  padding:26px !important;
-}
-
-/* ================= RESPONSIVE ================= */
-
-@media(max-width:900px){
-  .cd-cards{
-    grid-template-columns:repeat(2,1fr);
-  }
-}
-
-@media(max-width:640px){
-  .cd{
-    padding:10px;
-  }
-
-  .cd-top{
-    flex-direction:column;
-    align-items:stretch;
-  }
-
-  .cd-controls{
-    flex-direction:column;
-    align-items:stretch;
-  }
-
-  .cd-controls > *{
-    width:100%;
-  }
-
-  .cd-cards{
-    grid-template-columns:1fr 1fr;
-    gap:8px;
-  }
-
-  .cd-card{
-    padding:11px 12px;
-  }
-
-  .cd-card .v{
-    font-size:17px;
-  }
-
-  .cd-table{
-    min-width:0;
-    font-size:12px;
-  }
-
-  .cd-table th,
-  .cd-table td{
-    padding:8px 8px;
-  }
-}
-</style>
+<style scoped src="../styles/cluster-dashboard.css"></style>

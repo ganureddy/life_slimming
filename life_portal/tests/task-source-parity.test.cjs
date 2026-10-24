@@ -18,10 +18,7 @@ test('Tasks owns its page sources without a legacy Web Page or JSON generator', 
 
 test('Task controller retains task, ticket, review and queue actions', () => {
   const controller = fs.readFileSync(path.join(root, 'src/controllers/task-manager.js'), 'utf8');
-  for (const name of ['submitTask', 'submitTicket', 'markTaskDone', 'closeTaskAfterReview',
-    'reopenTaskAfterReview', 'cancelTaskWithRemark', 'reopenCancelledTaskWithRemark',
-    'reassignTaskWithRemark', 'saveTaskAssignerUpdate', 'markTicketResolved',
-    'closeTicketAfterReview', 'reopenTicketAfterReview', 'applyBulkQueue']) {
+  for (const name of ['submitTicket', 'openTask', 'postUpdate', 'manageQueue', 'openTicket', 'tkAction', 'cpSave', 'exportTasks', 'loadAll']) {
     assert(controller.includes('function ' + name + '('), name);
   }
 });

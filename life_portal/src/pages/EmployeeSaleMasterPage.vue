@@ -1,286 +1,234 @@
 <script setup>
-import ReportSearchSelect from '../components/employee-sale/ReportSearchSelect.vue';
-import { useEmployeeSaleMaster } from '../composables/useEmployeeSaleMaster';
-import '../styles/employee-sale-master.css';
-const {from,to,branch,booking,employee,employeeId,mode,paidFrom,paidTo,outFrom,outTo,branchRestricted,permittedBranches,branchOptions,bookingOptions,modeOptions,employees,employeeLoading,employeeError,modeError,loadModes,searchEmployees,activeTab,quick,loading,error,notice,generatedAt,amountErrors,validateAmounts,money,compact,dateText,preset,generate,reset,employeeSearch,employeeModeSearch,employeeRows,branchRows,topEmployees,bookings,transactions,overviewTiles,branchTiles,topBooking,exportAll,exportEmployees}=useEmployeeSaleMaster();
+import { onMounted, onBeforeUnmount, reactive, ref } from 'vue';
+import { onBeforeRouteLeave } from 'vue-router';
+import { session } from '../lib/session';
+import { createDomPageRuntime } from '../lib/dom-page-runtime';
+import { mountEmployeeSaleMaster } from '../controllers/employee-sale-master';
+const root = ref(null), status = reactive({ reads:0, writes:0, error:'', notice:'' });
+let runtime;
+onMounted(() => { runtime=createDomPageRuntime({root:root.value,session,status}); mountEmployeeSaleMaster(runtime); });
+onBeforeRouteLeave(() => !status.writes);
+onBeforeUnmount(() => runtime?.dispose());
 </script>
-
 <template>
+<section class="employee-sale-master-page" :aria-busy="status.reads > 0 || status.writes > 0">
+<p v-if="status.error" role="alert" class="native-source-error">{{status.error}}</p>
+<div ref="root" class="native-page-body"><div v-pre>
+<div class="esr" id="esr-root">
 
-<div class="ref-wrap">
-
-  <div class="ref-header">
-    <div class="ref-header-main">
-      <div class="ref-header-kicker">Sales &amp; Collection Analytics</div>
-      <div class="h1">
-        Employee-wise <span class="ref-title-dot">•</span>
-        Branch-wise <span class="ref-title-dot">•</span>
-        Mode of Payment-wise Report Dashboard
+  <!-- ═════════ PAGE HEADER ═════════ -->
+  <header class="esr-head">
+    <div class="esr-head-main">
+      <div class="esr-kicker">Sales &amp; Collection Analytics</div>
+      <h1 class="esr-title">Sales Master Report</h1>
+      <div class="esr-sub">Collections credited to referring &amp; incentive employees — by employee, branch, treatment category and payment mode</div>
+    </div>
+    <div class="esr-head-side">
+      <div class="esr-meta">
+        <span class="esr-meta-chip"><em>Source</em> REFERRAL REPORT – FIXED</span>
+        <span class="esr-meta-chip"><em>Period</em> <b id="esr-meta-period">—</b></span>
+        <span class="esr-meta-chip"><em>Loaded</em> <b id="esr-meta-loaded">—</b></span>
       </div>
-      <div class="sub">
-        LIFE SLIMMING AND COSMETIC PVT. LTD.
-        <span class="ref-sub-sep">|</span>
-        All Branches
-        <span class="ref-sub-sep">|</span>
-        <span id="ref-ts">{{ generatedAt }}</span>
+      <div class="esr-head-actions">
+        <button class="esr-btn esr-btn-ghost" id="esr-btn-export" type="button">⬇ Export Excel</button>
+        <button class="esr-btn esr-btn-ghost" id="esr-btn-print" type="button">🖨 Print</button>
       </div>
     </div>
+  </header>
 
-    <div class="right">
-      <span class="ref-source-label">Source</span>
-      REFERRAL REPORT – FIXED
-    </div>
-  </div>
-
-  <div class="ref-gold-bar"></div>
-
-  <div class="ref-nav">
-    <button type="button" class="ref-mnav" data-tab="0" :class="{on:activeTab===0}" @click="activeTab=0">📊 Overview</button>
-    <button type="button" class="ref-mnav" data-tab="1" :class="{on:activeTab===1}" @click="activeTab=1">👤 Employee Wise</button>
-    <button type="button" class="ref-mnav" data-tab="2" :class="{on:activeTab===2}" @click="activeTab=2">🏢 Branch Wise</button>
-    <button type="button" class="ref-mnav" data-tab="3" :class="{on:activeTab===3}" @click="activeTab=3">📋 Transaction Detail</button>
-  </div>
-
-  <div class="ref-content">
-
-
-    <div class="ref-fbar">
-
-      <div class="ref-fbar-title-row">
+  <!-- ═════════ FILTER PANEL ═════════ -->
+  <section class="esr-filters" id="esr-filters">
+    <div class="esr-fhead">
+      <div class="esr-fhead-l">
+        <button class="esr-collapse" id="esr-fcollapse" title="Show / hide filters" type="button">▾</button>
         <div>
-          <div class="ref-filter-title">Report Filters</div>
-          <div class="ref-filter-help">
-            Select the required filters, then generate the dashboard.
+          <div class="esr-ftitle">Report Filters</div>
+          <div class="esr-fhint">Period loads data from the server. Every other filter applies instantly.</div>
+        </div>
+      </div>
+      <div class="esr-fhead-r">
+        <button class="esr-btn esr-btn-outline" id="esr-btn-reset" type="button">↺ Reset</button>
+        <button class="esr-btn esr-btn-primary" id="esr-btn-load" type="button">▶ Load Data</button>
+      </div>
+    </div>
+
+    <div class="esr-fbody" id="esr-fbody">
+      <div class="esr-fgrid">
+
+        <!-- 1. PERIOD -->
+        <div class="esr-fgroup esr-g-period">
+          <div class="esr-fg-hdr"><span class="esr-fg-ico">📅</span>Period <small>Payment date</small></div>
+          <div class="esr-fg-body">
+            <div class="esr-frow2">
+              <label class="esr-field"><span class="esr-lbl">From</span><input class="esr-input" id="esr-f-from" type="date"/></label>
+              <label class="esr-field"><span class="esr-lbl">To</span><input class="esr-input" id="esr-f-to" type="date"/></label>
+            </div>
+            <div class="esr-quick" id="esr-quick">
+              <button class="esr-q" data-range="today" type="button">Today</button>
+              <button class="esr-q" data-range="yesterday" type="button">Yesterday</button>
+              <button class="esr-q on" data-range="cycle" type="button">This Cycle</button>
+              <button class="esr-q" data-range="lastcycle" type="button">Last Cycle</button>
+              <button class="esr-q" data-range="calmonth" type="button">Calendar Month</button>
+              <button class="esr-q" data-range="fy" type="button">This FY</button>
+            </div>
+            <div class="esr-fnote">Cycle = 6th to 5th of next month</div>
           </div>
         </div>
-      </div>
 
-      <div class="ref-fbar-row ref-primary-filters">
-
-        <div class="ref-field">
-          <label class="ref-lbl">From Date</label>
-          <input type="date" class="ref-input" id="ref-f-from" v-model="from" @change="quick=''">
-        </div>
-
-        <div class="ref-field">
-          <label class="ref-lbl">To Date</label>
-          <input type="date" class="ref-input" id="ref-f-to" v-model="to" @change="quick=''">
-        </div>
-
-        <div class="ref-field">
-          <label class="ref-lbl">Branch</label>
-          <ReportSearchSelect id="ref-f-branch" v-model="branch" :options="branchOptions" placeholder="All Branches" :disabled="branchRestricted &amp;&amp; permittedBranches.length===1" />
-        </div>
-
-        <div class="ref-field">
-          <label class="ref-lbl">Booking Type</label>
-          <ReportSearchSelect id="ref-f-booking" v-model="booking" :options="bookingOptions" placeholder="All Booking Types" />
-        </div>
-
-        <div class="ref-field">
-          <label class="ref-lbl">Employee Name</label>
-          <ReportSearchSelect id="ref-f-emp" v-model="employee" :options="employees" placeholder="Search employee name..." remote :busy="employeeLoading" :error="employeeError" @query="searchEmployees" @choose="employeeId=$event?.value || ''" />
-        </div>
-
-        <div class="ref-field">
-          <label class="ref-lbl">Mode of Payment</label>
-          <ReportSearchSelect id="ref-f-mop" v-model="mode" :options="modeOptions" placeholder="All Modes of Payment" />
-        </div>
-      </div>
-
-      <div class="ref-fbar-row ref-secondary-filters">
-
-        <div class="ref-field ref-amount-field">
-          <label class="ref-lbl">Paid From (₹)</label>
-          <input type="text" class="ref-input" id="ref-f-paid-from" v-model="paidFrom" inputmode="numeric" @input="paidFrom=String(paidFrom).replace(/\D/g,'').replace(/^0+(?=\d)/,'');validateAmounts()" :class="{'ref-invalid':amountErrors.paid}" placeholder="Min">
-        </div>
-
-        <div class="ref-field ref-amount-field">
-          <label class="ref-lbl">Paid To (₹)</label>
-          <input type="text" class="ref-input" id="ref-f-paid-to" v-model="paidTo" inputmode="numeric" @input="paidTo=String(paidTo).replace(/\D/g,'').replace(/^0+(?=\d)/,'');validateAmounts()" :class="{'ref-invalid':amountErrors.paid}" placeholder="Max">
-        </div>
-
-        <div class="ref-field ref-amount-field">
-          <label class="ref-lbl">Outstanding From (₹)</label>
-          <input type="text" class="ref-input" id="ref-f-out-from" v-model="outFrom" inputmode="numeric" @input="outFrom=String(outFrom).replace(/\D/g,'').replace(/^0+(?=\d)/,'');validateAmounts()" :class="{'ref-invalid':amountErrors.out}" placeholder="Min">
-        </div>
-
-        <div class="ref-field ref-amount-field">
-          <label class="ref-lbl">Outstanding To (₹)</label>
-          <input type="text" class="ref-input" id="ref-f-out-to" v-model="outTo" inputmode="numeric" @input="outTo=String(outTo).replace(/\D/g,'').replace(/^0+(?=\d)/,'');validateAmounts()" :class="{'ref-invalid':amountErrors.out}" placeholder="Max">
-        </div>
-
-        <div class="ref-reset-slot"><button type="button" id="ref-reset-filters-btn" class="ref-reset-btn" @click="reset">↺ Reset Filters</button></div>
-        <div class="ref-date-shortcuts">
-          <button type="button" class="ref-qbtn" data-range="today" :class="{on:quick==='today'}" @click="preset('today')">Today</button>
-          <button type="button" class="ref-qbtn" data-range="yesterday" :class="{on:quick==='yesterday'}" @click="preset('yesterday')">Yesterday</button>
-          <button type="button" class="ref-qbtn" data-range="month" :class="{on:quick==='month'}" @click="preset('month')">This Month</button>
-          <button type="button" class="ref-qbtn" data-range="lastmonth" :class="{on:quick==='lastmonth'}" @click="preset('lastmonth')">Last Month</button>
-          <button type="button" class="ref-qbtn" data-range="year" :class="{on:quick==='year'}" @click="preset('year')">This Financial Year</button>
-        </div>
-
-        <div class="ref-action-group">
-          <button type="button" class="ref-apbtn" id="ref-generate-btn" :disabled="loading" @click="generate">
-            {{ loading ? 'Loading…' : '▶ Generate Report' }}
-          </button><button type="button" class="ref-export-btn" id="ref-global-excel-btn" :disabled="loading" @click="exportAll">⬇ Export All (Excel)</button>
-        </div>
-      </div>
-      <div v-if="amountErrors.paid || amountErrors.out" class="ref-num-error">{{ amountErrors.paid || amountErrors.out }}</div>
-    </div>
-
-    <div id="ref-status"><p v-if="error" role="alert" class="ref-err">{{ error }} <button @click="generate">Retry</button></p><p v-else-if="loading" role="status" class="ref-status">⏳ Fetching report…</p><p v-else role="status" class="ref-status">{{ notice }}</p><p v-if="modeError" role="alert">{{ modeError }} <button @click="loadModes">Retry payment modes</button></p></div>
-
-
-    <div class="ref-mode" id="ref-mode-0" :class="{on:activeTab===0}" v-if="activeTab===0">
-      <div class="ref-tiles" id="ref-ov-tiles"><div v-for="tile in overviewTiles" :key="tile[0]" class="ref-tile" :class="tile[2]"><div class="tl">{{ tile[0] }}</div><div class="tv" :class="{'ref-amount-with-compact':tile[3]}">{{ tile[3]?money(tile[1]):Number(tile[1]).toLocaleString() }}<span v-if="tile[3] &amp;&amp; compact(tile[1])" class="ref-compact-amount">({{ compact(tile[1]) }})</span></div></div></div>
-
-      <div class="ref-two-col">
-        <div class="ref-card">
-          <div class="ref-card-hdr">
-            <span>Top Employees — Paid (ex-GST)</span>
-            <span class="badge">Ranked</span>
+        <!-- 2. PEOPLE & PLACE -->
+        <div class="esr-fgroup">
+          <div class="esr-fg-hdr"><span class="esr-fg-ico">👥</span>People &amp; Place</div>
+          <div class="esr-fg-body">
+            <label class="esr-field"><span class="esr-lbl">Branch</span>
+              <select class="esr-input" id="esr-f-branch"><option value="">All Branches</option></select>
+            </label>
+            <div class="esr-field"><span class="esr-lbl">Employee</span><div class="esr-ms" data-all="All Employees" data-key="emp"></div></div>
+            <div class="esr-frow2">
+              <div class="esr-field"><span class="esr-lbl">Credit Role</span><div class="esr-ms" data-all="Both Roles" data-key="role"></div></div>
+              <div class="esr-field"><span class="esr-lbl">Sharing Type</span><div class="esr-ms" data-all="All Types" data-key="sharing"></div></div>
+            </div>
           </div>
-          <div class="ref-card-body" id="ref-ov-emp-bars"><div v-for="row in topEmployees" :key="row.name" class="ref-bar-row"><div class="ref-bar-lbl" :title="row.name">{{ row.name }}</div><div class="ref-bar-track"><div class="ref-bar-fill" :style="{width:Math.round(row.exTax/(topEmployees[0]?.exTax || 1)*100)+'%',background:'linear-gradient(90deg,#43A047,#1B5E20)'}"></div></div><div class="ref-bar-val">{{ money(row.exTax) }}</div></div><div v-if="!topEmployees.length" class="ref-loading">No data</div></div>
         </div>
 
-        <div class="ref-card">
-          <div class="ref-card-hdr">
-            <span>Top Branches — Paid (ex-GST)</span>
-            <span class="badge">Ranked</span>
+        <!-- 3. TREATMENT -->
+        <div class="esr-fgroup esr-g-treat">
+          <div class="esr-fg-hdr"><span class="esr-fg-ico">✦</span>Treatment</div>
+          <div class="esr-fg-body">
+            <div class="esr-field"><span class="esr-lbl">Main Category</span><div class="esr-ms" data-all="All Main Categories" data-key="category"></div></div>
+            <div class="esr-field"><span class="esr-lbl">Therapy Group</span><div class="esr-ms" data-all="All Therapy Groups" data-key="group"></div></div>
+            <div class="esr-field"><span class="esr-lbl">Therapy Type</span><div class="esr-ms" data-all="All Therapy Types" data-key="type"></div></div>
+            <div class="esr-field">
+              <span class="esr-lbl">Amount Basis <i class="esr-tip" title="Full Invoice: the whole collected amount of every invoice whose plan contains the selected treatment. Treatment Share: only the part of the collection that belongs to the selected treatment lines (split across the plan's therapy lines).">?</i></span>
+              <div class="esr-seg" id="esr-basis">
+                <button class="on" data-basis="full" type="button">Full Invoice</button>
+                <button data-basis="share" type="button">Treatment Share</button>
+              </div>
+            </div>
           </div>
-          <div class="ref-card-body" id="ref-ov-branch-bars"><div v-for="row in branchRows" :key="row.name" class="ref-bar-row"><div class="ref-bar-lbl" :title="row.name">{{ row.name }}</div><div class="ref-bar-track"><div class="ref-bar-fill" :style="{width:Math.round(row.exTax/(branchRows[0]?.exTax || 1)*100)+'%',background:'linear-gradient(90deg,#81C784,#2E7D32)'}"></div></div><div class="ref-bar-val">{{ money(row.exTax) }}</div></div><div v-if="!branchRows.length" class="ref-loading">No data</div></div>
-        </div>
-      </div>
-
-      <div class="ref-card">
-        <div class="ref-card-hdr">
-          <span>Booking Type Breakdown</span>
-          <span class="sub">Invoices &amp; Paid Amount by Type</span>
         </div>
 
-        <div class="ref-tbl-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Booking Type</th>
-                <th>Invoice Count</th>
-                <th class="rnum">Paid (ex-GST)</th>
-                <th class="rnum">GST Amount</th>
-                <th class="rnum">Paid (w/GST)</th>
-                <th class="rnum">Outstanding</th>
-              </tr>
-            </thead>
-            <tbody id="ref-ov-booking-body"><tr v-for="row in bookings" :key="row.name"><td><span class="rpill rp-go">{{ row.name }}</span></td><td class="rnum">{{ row.invoices.size }}</td><td class="rnum" style="color:#1B5E20;font-weight:800">{{ money(row.ex) }}</td><td class="rnum">{{ money(row.tax) }}</td><td class="rnum" style="color:#5F6F63">{{ money(row.paid) }}</td><td class="rnum" :style="{color:row.out>0?'#C62828':'#5F6F63'}">{{ money(row.out) }}</td></tr><tr v-if="!bookings.length"><td colspan="6" class="ref-loading">No data</td></tr></tbody>
-          </table>
+        <!-- 4. PAYMENT & AMOUNT -->
+        <div class="esr-fgroup">
+          <div class="esr-fg-hdr"><span class="esr-fg-ico">₹</span>Payment &amp; Amount</div>
+          <div class="esr-fg-body">
+            <div class="esr-frow2">
+              <div class="esr-field"><span class="esr-lbl">Booking Type</span><div class="esr-ms" data-all="All Booking Types" data-key="booking"></div></div>
+              <div class="esr-field"><span class="esr-lbl">Mode of Payment</span><div class="esr-ms" data-all="All Modes" data-key="mop"></div></div>
+            </div>
+            <div class="esr-frow2">
+              <label class="esr-field"><span class="esr-lbl">Paid ex-GST from</span><input class="esr-input esr-amt" id="esr-f-paid-min" inputmode="decimal" placeholder="Min ₹" type="text"/></label>
+              <label class="esr-field"><span class="esr-lbl">to</span><input class="esr-input esr-amt" id="esr-f-paid-max" inputmode="decimal" placeholder="Max ₹" type="text"/></label>
+            </div>
+            <div class="esr-frow2">
+              <label class="esr-field"><span class="esr-lbl">Outstanding from</span><input class="esr-input esr-amt" id="esr-f-out-min" inputmode="decimal" placeholder="Min ₹" type="text"/></label>
+              <label class="esr-field"><span class="esr-lbl">to</span><input class="esr-input esr-amt" id="esr-f-out-max" inputmode="decimal" placeholder="Max ₹" type="text"/></label>
+            </div>
+            <label class="esr-check"><input id="esr-f-onlyout" type="checkbox"/> Only invoices with outstanding</label>
+          </div>
         </div>
+
       </div>
     </div>
 
+    <div class="esr-chips" id="esr-chips"></div>
+  </section>
 
-    <div class="ref-mode" id="ref-mode-1" :class="{on:activeTab===1}" v-if="activeTab===1">
-      <div class="ref-card">
-        <div class="ref-card-hdr">
-          <span>Employee Wise Summary</span>
-          <span class="sub">Ranked by Paid (ex-GST)</span>
-        </div>
+  <div class="esr-status-wrap" id="esr-status"></div>
 
-        <div class="ref-tbl-wrap">
-          <div id="ref-emp-ctrl-row" class="ref-emp-controls"><input id="ref-emp-srch" v-model="employeeSearch" placeholder="🔍 Search employee name..."><input id="ref-emp-mop-srch" v-model="employeeModeSearch" placeholder="🔍 Search mode of payment..."><button id="ref-emp-xlsx" class="ref-export-btn" @click="exportEmployees">⬇ Export Employee Excel</button></div><table>
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Employee</th>
-                <th>Branch</th>
-                <th>Emp ID</th>
-                <th class="rnum">Invoices</th>
-                <th class="rnum">Paid (ex-GST)</th>
-                <th class="rnum">GST Amt</th>
-                <th class="rnum">Paid (w/GST)</th>
-                <th class="rnum">Grand Total</th>
-                <th class="rnum">Outstanding</th>
-                <th>Top Booking</th>
-                <th>Modes</th>
-              </tr>
-            </thead>
-            <tbody id="ref-emp-body"><tr v-for="(row,index) in employeeRows" :key="row.empId+'|'+row.name"><td><span class="rrank" :class="index<3?'rrank-'+(index+1):'rrank-n'">{{ index+1 }}</span></td><td><strong>{{ row.name }}</strong></td><td><span class="rpill rp-n">{{ row.branch }}</span></td><td style="font-size:9px;color:#6B7C70">{{ row.empId }}</td><td class="rnum">{{ row.cnt }}</td><td class="rnum" style="color:#1B5E20;font-weight:800">{{ money(row.exTax) }}</td><td class="rnum" style="color:#5F6F63">{{ money(row.tax) }}</td><td class="rnum" style="color:#5F6F63">{{ money(row.paid) }}</td><td class="rnum">{{ money(row.gt) }}</td><td class="rnum" :style="{color:row.out>10000?'#C62828':row.out>0?'#E65100':'#5F6F63'}">{{ money(row.out) }}</td><td><span class="rpill rp-go">{{ topBooking(row) }}</span></td><td style="font-size:9px;max-width:140px;overflow:hidden;text-overflow:ellipsis">{{ row.modes.join(', ') }}</td></tr><tr v-if="!employeeRows.length"><td colspan="12" class="ref-loading">No data</td></tr></tbody>
-          </table>
-        </div>
+  <!-- ═════════ TABS ═════════ -->
+  <nav class="esr-tabs" id="esr-tabs">
+    <button class="esr-tab on" data-tab="overview" type="button">📊 Overview</button>
+    <button class="esr-tab" data-tab="employee" type="button">👤 Employee Wise <b class="esr-tc" id="esr-tc-employee">0</b></button>
+    <button class="esr-tab" data-tab="branch" type="button">🏢 Branch Wise <b class="esr-tc" id="esr-tc-branch">0</b></button>
+    <button class="esr-tab" data-tab="treatment" type="button">✦ Treatment Category <b class="esr-tc" id="esr-tc-treatment">0</b></button>
+    <button class="esr-tab" data-tab="txn" type="button">📋 Transaction Detail <b class="esr-tc" id="esr-tc-txn">0</b></button>
+  </nav>
+
+  <main class="esr-main">
+
+    <!-- OVERVIEW -->
+    <section class="esr-pane on" data-pane="overview">
+      <div class="esr-basis-note" id="esr-basis-note"></div>
+      <div class="esr-kpis" id="esr-kpis"></div>
+      <div class="esr-grid2">
+        <div class="esr-card"><div class="esr-card-hdr"><span>Top Employees</span><span class="esr-badge">Paid ex-GST</span></div><div class="esr-card-body" id="esr-ov-emp"></div></div>
+        <div class="esr-card"><div class="esr-card-hdr"><span>Branches</span><span class="esr-badge">Paid ex-GST</span></div><div class="esr-card-body" id="esr-ov-branch"></div></div>
       </div>
-    </div>
-
-
-    <div class="ref-mode" id="ref-mode-2" :class="{on:activeTab===2}" v-if="activeTab===2">
-      <div class="ref-tiles" id="ref-br-tiles"><div v-for="tile in branchTiles" :key="tile[0]" class="ref-tile" :class="tile[2]"><div class="tl">{{ tile[0] }}</div><div class="tv" :class="{'ref-amount-with-compact':tile[3]}">{{ tile[3]?money(tile[1]):Number(tile[1]).toLocaleString() }}<span v-if="tile[3] &amp;&amp; compact(tile[1])" class="ref-compact-amount">({{ compact(tile[1]) }})</span></div></div></div>
-
-      <div class="ref-card">
-        <div class="ref-card-hdr">
-          <span>Branch Wise Summary</span>
-          <span class="sub">Ranked by Paid (ex-GST)</span>
-        </div>
-
-        <div class="ref-tbl-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Branch</th>
-                <th class="rnum">Invoices</th>
-                <th class="rnum">Paid (ex-GST)</th>
-                <th class="rnum">GST Amt</th>
-                <th class="rnum">Paid (w/GST)</th>
-                <th class="rnum">Grand Total</th>
-                <th class="rnum">Outstanding</th>
-                <th class="rnum">Employees</th>
-                <th>Top Booking</th>
-              </tr>
-            </thead>
-            <tbody id="ref-br-body"><tr v-for="(row,index) in branchRows" :key="row.name"><td><span class="rrank" :class="index<3?'rrank-'+(index+1):'rrank-n'">{{ index+1 }}</span></td><td><strong>{{ row.name }}</strong></td><td class="rnum">{{ row.cnt }}</td><td class="rnum" style="color:#1B5E20;font-weight:800">{{ money(row.exTax) }}</td><td class="rnum" style="color:#5F6F63">{{ money(row.tax) }}</td><td class="rnum" style="color:#5F6F63">{{ money(row.paid) }}</td><td class="rnum">{{ money(row.gt) }}</td><td class="rnum" :style="{color:row.out>50000?'#C62828':row.out>0?'#E65100':'#5F6F63'}">{{ money(row.out) }}</td><td class="rnum">{{ row.emps.length }}</td><td><span class="rpill rp-go">{{ topBooking(row) }}</span></td></tr><tr v-if="!branchRows.length"><td colspan="10" class="ref-loading">No data</td></tr></tbody>
-          </table>
-        </div>
+      <div class="esr-grid2">
+        <div class="esr-card"><div class="esr-card-hdr"><span>Main Category Mix</span><span class="esr-badge esr-badge-alt">Treatment share</span></div><div class="esr-card-body" id="esr-ov-cat"></div></div>
+        <div class="esr-card"><div class="esr-card-hdr"><span>Mode of Payment Mix</span><span class="esr-badge">Invoices · Paid ex-GST</span></div><div class="esr-card-body" id="esr-ov-mop"></div></div>
       </div>
-    </div>
+      <div class="esr-card">
+        <div class="esr-card-hdr"><span>Booking Type Breakdown</span><span class="esr-hsub">Invoices &amp; amounts by booking type</span></div>
+        <div class="esr-tblbox" data-tbl="booking"></div>
+      </div>
+    </section>
 
+    <!-- EMPLOYEE -->
+    <section class="esr-pane" data-pane="employee">
+      <div class="esr-card">
+        <div class="esr-card-hdr"><span>Employee Wise Summary</span><span class="esr-hsub">Click a row for invoice-level drill-down</span></div>
+        <div class="esr-tblbox" data-tbl="employee"></div>
+      </div>
+    </section>
 
-    <div class="ref-mode" id="ref-mode-3" :class="{on:activeTab===3}" v-if="activeTab===3">
-      <div class="ref-card">
-        <div class="ref-card-hdr">
-          <span>
-            Transaction Detail
-            <span class="badge">Full Detail</span>
+    <!-- BRANCH -->
+    <section class="esr-pane" data-pane="branch">
+      <div class="esr-kpis" id="esr-br-kpis"></div>
+      <div class="esr-card">
+        <div class="esr-card-hdr"><span>Branch Wise Summary</span><span class="esr-hsub">Click a row to see that branch's employees</span></div>
+        <div class="esr-tblbox" data-tbl="branch"></div>
+      </div>
+      <div class="esr-card">
+        <div class="esr-card-hdr"><span>Branch × Main Category</span><span class="esr-badge esr-badge-alt">Treatment share · ex-GST</span></div>
+        <div class="esr-tblbox" data-tbl="matrix"></div>
+      </div>
+    </section>
+
+    <!-- TREATMENT -->
+    <section class="esr-pane" data-pane="treatment">
+      <div class="esr-kpis" id="esr-tr-kpis"></div>
+      <div class="esr-card">
+        <div class="esr-card-hdr">
+          <span>Main Category › Therapy Group › Therapy Type</span>
+          <span class="esr-hdr-actions">
+            <button class="esr-btn esr-btn-xs" id="esr-tr-expand" type="button">Expand all</button>
+            <button class="esr-btn esr-btn-xs" id="esr-tr-collapse" type="button">Collapse all</button>
           </span>
-          <span class="sub" id="ref-txn-count">{{ transactions.length.toLocaleString() }} invoices</span>
         </div>
-
-        <div class="ref-tbl-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Invoice</th>
-                <th>Date</th>
-                <th>Branch</th>
-                <th>Customer</th>
-                <th>Booking Type</th>
-                <th>Referring Employee</th>
-                <th>Ref Emp ID</th>
-                <th class="rnum">Ref Share (ex-GST)</th>
-                <th>Incentive Employee</th>
-                <th>Inc Emp ID</th>
-                <th class="rnum">Inc Share (ex-GST)</th>
-                <th>Mode of Payment</th>
-                <th class="rnum">Paid (ex-GST)</th>
-                <th class="rnum">GST</th>
-                <th class="rnum">Paid (w/GST)</th>
-                <th class="rnum">Grand Total</th>
-                <th class="rnum">Outstanding</th>
-              </tr>
-            </thead>
-            <tbody id="ref-txn-body"><tr v-for="row in transactions" :key="row.branch+'|'+row.invoice"><td style="font-size:9.5px;color:#14501F;font-weight:700">{{ row.invoice }}</td><td style="font-size:9.5px">{{ dateText(row.invoice_date) }}</td><td><span class="rpill rp-n">{{ row.branch }}</span></td><td>{{ row.customer }}</td><td><span class="rpill rp-go">{{ row.booking_type }}</span></td><td><strong>{{ row.referring_employee || '—' }}</strong></td><td style="font-size:9px;color:#6B7C70">{{ row.referring_employee_id || row.referring_practitioner_id }}</td><td class="rnum" style="color:#1565C0;font-weight:800">{{ money(row.referring_employee_share) }}</td><td><strong>{{ row.incentive_employee || '—' }}</strong></td><td style="font-size:9px;color:#6B7C70">{{ row.incentive_employee_id }}</td><td class="rnum" style="color:#E65100;font-weight:800">{{ money(row.incentive_employee_share) }}</td><td style="font-size:9.5px">{{ row.mode_of_payment }}</td><td class="rnum" style="color:#1B5E20;font-weight:800">{{ money(row.paid_amount_without_gst) }}</td><td class="rnum" style="color:#5F6F63">{{ money(row.gst_amount) }}</td><td class="rnum" style="color:#5F6F63">{{ money(row.paid_amount) }}</td><td class="rnum">{{ money(row.grand_total) }}</td><td class="rnum" :style="{color:row.outstanding_amount>0?'#C62828':'#5F6F63'}">{{ money(row.outstanding_amount) }}</td></tr><tr v-if="!transactions.length"><td colspan="17" class="ref-loading">No data</td></tr></tbody>
-          </table>
-        </div>
+        <div class="esr-tree-note">Amounts are the collected ex-GST value split across the therapy lines of each plan. Invoice count = invoices whose plan contains that treatment.</div>
+        <div class="esr-tblwrap"><table class="esr-table esr-tree"><thead><tr>
+          <th>Treatment</th><th class="n">Invoices</th><th class="n">Clients</th><th class="n">Employees</th><th class="n">Treatment Share ex-GST</th><th class="n">Share %</th><th class="n">Full-Invoice ex-GST</th>
+        </tr></thead><tbody id="esr-tree-body"></tbody></table></div>
       </div>
+      <div class="esr-card esr-card-warn" id="esr-unmapped-card">
+        <div class="esr-card-hdr"><span>Unmapped Therapy Types</span><span class="esr-hsub">No Main Category / Therapy Group in the Therapy Type master — fix these to complete category reporting</span></div>
+        <div class="esr-tblbox" data-tbl="unmapped"></div>
+      </div>
+    </section>
+
+    <!-- TRANSACTIONS -->
+    <section class="esr-pane" data-pane="txn">
+      <div class="esr-card">
+        <div class="esr-card-hdr"><span>Transaction Detail</span><span class="esr-hsub">One row per invoice · click invoice no. to open in ERP</span></div>
+        <div class="esr-tblbox" data-tbl="txn"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═════════ MODAL ═════════ -->
+  <div aria-hidden="true" class="esr-modal" id="esr-modal">
+    <div class="esr-modal-box">
+      <div class="esr-modal-hdr">
+        <div><div class="esr-modal-title" id="esr-modal-title"></div><div class="esr-modal-sub" id="esr-modal-sub"></div></div>
+        <button class="esr-modal-x" id="esr-modal-x" type="button">×</button>
+      </div>
+      <div class="esr-modal-body" id="esr-modal-body"></div>
     </div>
-
   </div>
-</div>
 
+</div>
+</div></div></section>
 </template>
+<style scoped src="../styles/employee-sale-master.css"></style>

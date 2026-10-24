@@ -7,21 +7,30 @@ function setup({manager=false,branches=['Branch A','Branch B'],denied=false}={})
   if(url.includes('export_query')){calls.push({method:'export',args:JSON.parse(options.body),headers:options.headers});return {ok:true,headers:{get:name=>name==='Content-Type'?'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':'attachment; filename="report.xlsx"'},blob:async()=>new Blob(['fixture-xlsx'])};}
   const args=JSON.parse(new URLSearchParams(url.split('?')[1]).get('filters'));calls.push({method:'run',args});return {ok:true,json:async()=>({message:{result:raw}})};
  }};
- vm.runInNewContext(source+'\nglobalThis.model=useSalesMaster();',context);context.model.from.value='2026-10-01';context.model.to.value='2026-10-14';return {...context,calls,downloads,blobs};
+ vm.runInNewContext(source+'\nglobalThis.model=useSalesMaster();',context);context.model.from.value='2026-10-01';context.model.to.value='2026-10-14';return {...context,calls,downloads,blobs,raw};
 }
 test('restricted all-branch reads request each permitted branch and discard outside/duplicate report rows',async()=>{
  const c=setup();await c.model.getBranches();await c.model.applyFilters();assert.deepEqual(c.calls.filter(call=>call.method==='run').map(call=>call.args.branch),['Branch A','Branch B']);assert.deepEqual(Array.from(c.model.filteredRows.value,row=>row.invoice),['INV-1','INV-2']);assert.equal(c.model.totals.value.paid_amount,1575);assert.equal(c.model.totals.value.tax_amount,75);assert.equal(c.model.filteredRows.value[0].paid_amount_without_tax,1000);assert.equal(c.model.filteredRows.value[0].posting_date,'2026-10-14');assert.equal(c.model.filteredRows.value[0].__sourceIndex,2);
 });
 test('employee and amount filters apply to the normalized rows and restricted export stays client-side',async()=>{
- const c=setup();await c.model.getBranches();c.model.salesPerson.value='Bob';c.model.outstandingOperator.value='>';c.model.outstandingValue.value='0';await c.model.applyFilters();assert.equal(c.model.filteredRows.value.length,1);assert.equal(c.model.filteredRows.value[0].invoice,'INV-1');c.model.format.value='csv';await c.model.downloadReport();assert.equal(c.calls.some(call=>call.method==='export'),false);assert.match(c.downloads[0].name,/All_Permitted_Branches.*\.csv$/);const csv=await c.blobs[0].text();assert(csv.includes('Alice / Bob'));assert(csv.includes('14-Oct-26'));assert(!csv.includes('OUTSIDE'));assert(!csv.includes('Bob Client'));
+ const c=setup();await c.model.getBranches();c.model.salesPerson.value='Bob';c.model.outstandingOperator.value='>';c.model.outstandingValue.value='0';await c.model.applyFilters();assert.equal(c.model.filteredRows.value.length,1);assert.equal(c.model.filteredRows.value[0].invoice,'INV-1');c.model.format.value='csv';await c.model.downloadReport();assert.equal(c.calls.some(call=>call.method==='export'),false);assert.match(c.downloads[0].name,/All-Branches.*\.csv$/);const csv=await c.blobs[0].text();assert(csv.includes('Alice / Bob'));assert(csv.includes('14-Oct-26'));assert(!csv.includes('OUTSIDE'));assert(!csv.includes('Bob Client'));
 });
-test('privileged export uses the server XLSX route, CSRF and original source indexes',async()=>{
- const c=setup({manager:true});await c.model.getBranches();c.model.customer.value='Alice';await c.model.applyFilters();await c.model.downloadReport();const call=c.calls.find(call=>call.method==='export');assert.equal(call.headers['X-Frappe-CSRF-Token'],'fixture');assert.deepEqual(Array.from(call.args.visible_idx),[2]);assert.equal(call.args.file_format_type,'Excel');assert.equal(call.args.applied_filters.Customer,'alice');assert.equal(c.downloads[0].name,'report.xlsx');
+test('privileged export includes only visible filtered columns and rows',async()=>{
+ const c=setup({manager:true});await c.model.getBranches();c.model.customer.value='Alice';await c.model.applyFilters();await c.model.downloadReport();
+ assert.equal(c.calls.some(call=>call.method==='export'),false);assert.equal(c.downloads.length,1);
+ const content=await c.blobs[0].text();assert(content.includes('Therapy Type'));assert(content.includes('INV-1'));assert(!content.includes('INV-2'));
 });
 test('changing dates before download refreshes the report before exporting',async()=>{
- const c=setup({manager:true});await c.model.getBranches();await c.model.applyFilters();c.model.from.value='2026-10-06';await c.model.downloadReport();assert.equal(c.calls.filter(call=>call.method==='run').at(-1).args.from_date,'2026-10-06');assert.equal(c.calls.find(call=>call.method==='export').args.filters.from_date,'2026-10-06');
+ const c=setup({manager:true});await c.model.getBranches();await c.model.applyFilters();c.model.from.value='2026-10-06';await c.model.downloadReport();assert.equal(c.calls.filter(call=>call.method==='run').at(-1).args.from_date,'2026-10-06');assert.equal(c.model.appliedState.value.fromDate,'2026-10-06');assert.equal(c.downloads.length,1);
 });
 test('branch denial and invalid filters prevent report reads',async()=>{
  const c=setup({denied:true});await c.model.getBranches();await c.model.applyFilters();assert.equal(c.model.branchReady.value,false);assert.equal(c.calls.some(call=>call.method==='run'),false);
  const other=setup();await other.model.getBranches();other.model.paidFrom.value='200';other.model.paidTo.value='100';await other.model.applyFilters();assert.match(other.model.error.value,/cannot exceed/);assert.equal(other.calls.some(call=>call.method==='run'),false);
+});
+
+test('therapy filters match the same detail line and amounts use ex-GST',async()=>{
+ const c=setup();c.raw.find(r=>r.invoice==='INV-1').therapy_details=[{category:'Slimming',group:'Body',type:'Cryo'},{category:'Skin',group:'Face',type:'Facial'}];
+ await c.model.getBranches();c.model.mainCategory.value='Slimming';c.model.therapyGroup.value='Face';await c.model.applyFilters();assert.equal(c.model.filteredRows.value.length,0);
+ c.model.therapyGroup.value='Body';await c.model.applyFilters();assert.deepEqual(Array.from(c.model.filteredRows.value,r=>r.invoice),['INV-1']);
+ c.model.paidFrom.value='1001';await c.model.applyFilters();assert.equal(c.model.filteredRows.value.length,0);
 });

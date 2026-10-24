@@ -1,1133 +1,33 @@
-// Business rules and dynamic report markup are preserved, with page-owned lifecycle.
+// Dashboard behavior maintained as a page-owned ES module.
 export function mountTaskManager(page) {
-  const { frappe, document, window, setTimeout, clearTimeout } = page;
+const { document, window, frappe, fetch, MutationObserver, setTimeout, clearTimeout, setInterval, clearInterval } = page;
+(function () {
+  'use strict';
 
-  var root = page.root;
-
-  if (!root) {
-    void 0;
-    return;
-  }
-
-  // Web Page version: Custom HTML Block Awesome Bar interception removed.
-
-  // ============================================================
-  // BASIC HELPERS
-  // ============================================================
-
-  function $(selector) {
-    return root.querySelector(selector);
-  }
-
-  function $all(selector) {
-    return Array.prototype.slice.call(root.querySelectorAll(selector));
-  }
-
-  function esc(value) {
-    return String(value || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-
-  function stripHtml(value) {
-    return String(value || "")
-      .replace(/<!--[\s\S]*?-->/g, "")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
-  
-function htmlToReadableText(value) {
-  value = String(value || "");
-
-  // Remove hidden LIFE metadata
-  value = value.replace(/<!--[\s\S]*?-->/g, "");
-
-  // Convert rich text breaks into real line breaks
-  value = value
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n")
-    .replace(/<\/div>/gi, "\n")
-    .replace(/<\/li>/gi, "\n")
-    .replace(/<li[^>]*>/gi, "• ");
-
-  // Remove remaining HTML tags
-  value = value.replace(/<[^>]+>/g, "");
-
-  // Decode common HTML entities
-  value = value
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#039;/g, "'");
-
-  // Clean spaces but preserve line breaks
-  value = value
-    .replace(/\r/g, "")
-    .replace(/[ \t]+\n/g, "\n")
-    .replace(/\n[ \t]+/g, "\n")
-    .replace(/[ \t]{2,}/g, " ")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-
-  // Put numbered points on new lines if older text was saved as one paragraph
-  value = value.replace(/\s+(\d+\s+[A-Z])/g, "\n\n$1");
-
-  return value;
-}
-
-  function wordCount(value) {
-    value = String(value || "").trim();
-    return value ? value.split(/\s+/).length : 0;
-  }
-
-  function todayDate() {
-    return new Date().toISOString().split("T")[0];
-  }
-
-  function formatDate(value) {
-    if (!value) return "—";
-    value = String(value).split(" ")[0];
-    var p = value.split("-");
-    if (p.length !== 3) return value;
-    return p[2] + "/" + p[1] + "/" + p[0];
-  }
-  
-  function formatLifeDate(value) {
-  if (!value) return "—";
-
-  value = String(value).split(" ")[0];
-
-  var p = value.split("-");
-  if (p.length !== 3) return value;
-
-  var months = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  /* ================================================================
+     FIXED ADMINS (always full rights) — more can be added in Control Panel
+  ================================================================ */
+  var CORE_ADMINS = ['administrator', 'bhuvan@lifescc.com', 'narendhar@lifescc.com'];
+  var CFG_TITLE = 'LIFE_TASK_CPANEL_CONFIG';
+  var BRANCHES = ['Head Office', 'Madhapur', 'Chandanagar', 'Gachibowli', 'Kukatpally', 'Banjara Hills', 'SR Nagar', 'Dilsukhnagar', 'Himayathnagar', 'Vijayawada', 'Vizag', 'Nellore'];
+  var PRI_KEYS = ['VVIMP', 'IMP', 'HI', 'MED', 'LOW'];
+  var PRI_TODO = { VVIMP: 'High', IMP: 'High', HI: 'High', MED: 'Medium', LOW: 'Low' };
+  var LEGACY_PRI = { High: 'HI', Medium: 'MED', Low: 'LOW' };
+  var STATUSES = ['Open', 'In Progress', 'Review Pending', 'On Hold', 'Reopened', 'Completed', 'Cancelled'];
+  var ST_CLS = { 'Open': 's-open', 'In Progress': 's-prog', 'Review Pending': 's-rev', 'On Hold': 's-hold', 'Reopened': 's-reo', 'Completed': 's-done', 'Cancelled': 's-cxl', 'Resolved': 's-rev', 'Closed': 's-done' };
+  var REPORT_DEF = [
+    { k: 'EOD', label: 'EOD (Daily)', d: 'Report every day by the set time' },
+    { k: 'WEEKLY', label: 'Weekly', d: 'Report on the chosen weekday' },
+    { k: 'MONTHLY', label: 'Monthly', d: 'Report on the chosen date every month' },
+    { k: 'SPECIFIC', label: 'Specific Date & Time', d: 'One report at an exact date-time' },
+    { k: 'COMPLETION', label: 'Only on Completion', d: 'No interim reports' }
   ];
-
-  var year = p[0].slice(-2);
-  var monthIndex = Number(p[1]) - 1;
-  var day = p[2];
-
-  return day + "-" + months[monthIndex] + "-" + year;
-}
-
-function normalizeDateTimeValue(value) {
-  value = String(value || "").trim();
-
-  if (!value) return "";
-
-  value = value.replace(" ", "T");
-
-  if (value.length >= 16) {
-    return value.substring(0, 16);
-  }
-
-  return value;
-}
-
-function getNowReadableDateTime() {
-  var d = new Date();
-
-  var yyyy = d.getFullYear();
-  var mm = String(d.getMonth() + 1).padStart(2, "0");
-  var dd = String(d.getDate()).padStart(2, "0");
-  var hh = String(d.getHours()).padStart(2, "0");
-  var mi = String(d.getMinutes()).padStart(2, "0");
-
-  return yyyy + "-" + mm + "-" + dd + " " + hh + ":" + mi;
-}
-
-function getTaskStartDate(task, meta) {
-  meta = meta || {};
-
-  return (
-    meta.start_date ||
-    getDatePartFromDateTime(task.creation || "") ||
-    ""
-  );
-}
-
-function getTaskCompletedDateTime(task, meta) {
-  meta = meta || {};
-
-  if (meta.completed_on) {
-    return meta.completed_on;
-  }
-
-  // Fallback for old completed tasks before completed_on was added
-  if (getTaskStatus(task) === "Completed") {
-    return task.modified || task.date || "";
-  }
-
-  return getNowLocalDateTime();
-}
-
-function calculateWorkedDaysLabel(task, meta) {
-  meta = meta || {};
-
-  var startDate = getTaskStartDate(task, meta);
-  var endDateTime = getTaskCompletedDateTime(task, meta);
-  var endDate = getDatePartFromDateTime(endDateTime);
-
-  if (!startDate || !endDate) return "—";
-
-  var start = new Date(startDate + "T00:00:00");
-  var end = new Date(endDate + "T00:00:00");
-
-  var diff = Math.round((end - start) / (1000 * 60 * 60 * 24));
-
-  if (diff < 0) return "Invalid";
-
-  if (diff === 0) return "Same day";
-
-  return diff + " day" + (diff > 1 ? "s" : "");
-}
-
-  function formatFileSize(bytes) {
-    bytes = Number(bytes || 0);
-    if (bytes < 1024) return bytes + " B";
-    if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + " KB";
-    return Math.round((bytes / (1024 * 1024)) * 10) / 10 + " MB";
-  }
-  
-  function getTodayLocalDate() {
-  var d = new Date();
-  var yyyy = d.getFullYear();
-  var mm = String(d.getMonth() + 1).padStart(2, "0");
-  var dd = String(d.getDate()).padStart(2, "0");
-
-  return yyyy + "-" + mm + "-" + dd;
-}
-
-function getNowLocalDateTime() {
-  var d = new Date();
-  var yyyy = d.getFullYear();
-  var mm = String(d.getMonth() + 1).padStart(2, "0");
-  var dd = String(d.getDate()).padStart(2, "0");
-  var hh = String(d.getHours()).padStart(2, "0");
-  var mi = String(d.getMinutes()).padStart(2, "0");
-
-  return yyyy + "-" + mm + "-" + dd + "T" + hh + ":" + mi;
-}
-
-function getDatePartFromDateTime(value) {
-  value = String(value || "");
-  return value ? value.split("T")[0].split(" ")[0] : "";
-}
-
-function formatLifeDateTime(value) {
-  if (!value) return "—";
-
-  value = String(value);
-  var datePart = value.split("T")[0].split(" ")[0];
-  var timePart = "";
-
-  if (value.indexOf("T") !== -1) {
-    timePart = value.split("T")[1] || "";
-  } else if (value.indexOf(" ") !== -1) {
-    timePart = value.split(" ")[1] || "";
-  }
-
-  timePart = timePart ? timePart.substring(0, 5) : "";
-
-  return formatLifeDate(datePart) + (timePart ? " " + timePart : "");
-}
-
-function calculateTaskDurationDays(startDate, deadlineDateTime) {
-  var endDate = getDatePartFromDateTime(deadlineDateTime);
-
-  if (!startDate || !endDate) return "";
-
-  var start = new Date(startDate + "T00:00:00");
-  var end = new Date(endDate + "T00:00:00");
-
-  var diff = Math.round((end - start) / (1000 * 60 * 60 * 24));
-
-  if (diff < 0) return "Invalid";
-
-  if (diff === 0) return "Same day";
-
-  return diff + " day" + (diff > 1 ? "s" : "");
-}
-
-function updateTaskDateRules() {
-  var startEl = $("#task-startdate");
-  var deadlineEl = $("#task-deadline");
-  var durationEl = $("#task-duration-label");
-
-  var today = getTodayLocalDate();
-  var nowDateTime = getNowLocalDateTime();
-
-  if (startEl) {
-    startEl.setAttribute("min", today);
-  }
-
-  if (deadlineEl) {
-    deadlineEl.setAttribute("min", nowDateTime);
-  }
-
-  var startDate = startEl ? startEl.value : "";
-  var deadlineDateTime = deadlineEl ? deadlineEl.value : "";
-
-  if (startDate && startDate < today) {
-    startEl.value = today;
-    startDate = today;
-    showModal("⚠️", "Past Date Not Allowed", "Task Start Date cannot be a past date.");
-  }
-
-  if (deadlineDateTime && deadlineDateTime < nowDateTime) {
-    deadlineEl.value = "";
-    deadlineDateTime = "";
-    showModal("⚠️", "Past Deadline Not Allowed", "Task Deadline cannot be a past date/time.");
-  }
-
-  if (startDate && deadlineDateTime) {
-    var deadlineDate = getDatePartFromDateTime(deadlineDateTime);
-
-    if (deadlineDate < startDate) {
-      deadlineEl.value = "";
-      if (durationEl) durationEl.textContent = "";
-      showModal("⚠️", "Invalid Deadline", "Task Deadline cannot be before Task Start Date.");
-      return;
-    }
-
-    if (durationEl) {
-      durationEl.textContent = calculateTaskDurationDays(startDate, deadlineDateTime);
-    }
-  } else {
-    if (durationEl) durationEl.textContent = "";
-  }
-}
-
-function validateTaskDatesBeforeSubmit(startDate, deadlineDateTime) {
-  var today = getTodayLocalDate();
-  var nowDateTime = getNowLocalDateTime();
-
-  if (!startDate || !deadlineDateTime) {
-    return {
-      ok: false,
-      message: "Please select both Task Start Date and Task Deadline Date & Time."
-    };
-  }
-
-  if (startDate < today) {
-    return {
-      ok: false,
-      message: "Task Start Date cannot be a past date."
-    };
-  }
-
-  if (deadlineDateTime < nowDateTime) {
-    return {
-      ok: false,
-      message: "Task Deadline Date & Time cannot be in the past."
-    };
-  }
-
-  if (getDatePartFromDateTime(deadlineDateTime) < startDate) {
-    return {
-      ok: false,
-      message: "Task Deadline cannot be before Task Start Date."
-    };
-  }
-
-  return {
-    ok: true,
-    message: ""
-  };
-}
-
-  function setText(id, value) {
-    var el = $("#" + id);
-    if (el) el.textContent = value || "";
-  }
-
-  function setValue(id, value) {
-    var el = $("#" + id);
-    if (el) el.value = value || "";
-  }
-
-  function getValue(id) {
-    var el = $("#" + id);
-    return el ? String(el.value || "").trim() : "";
-  }
-
-  function showModal(icon, title, text) {
-    setText("modal-icon", icon || "ℹ️");
-    setText("modal-title", title || "");
-    setText("modal-text", text || "");
-
-    var modal = $("#modal");
-    if (modal) modal.classList.add("show");
-  }
-
-  function closeModal() {
-    var modal = $("#modal");
-    if (modal) modal.classList.remove("show");
-  }
-  
-
-function buildTicketDetailsHtml(t, meta) {
-  meta = meta || {};
-
-  var details = getTicketDetails(t);
-  var status = getTicketStatus(t);
-  var ccText = (meta.cc_to || []).map(userDisplayName).join(", ") || "—";
-
-  return '' +
-    '<div class="life-detail-modal-wrap">' +
-
-      '<div class="life-detail-top-tags">' +
-        '<div class="life-detail-tag">🎫 Status: ' + esc(status || "—") + '</div>' +
-        '<div class="life-detail-tag">📌 Priority: ' + esc(t.priority || "—") + '</div>' +
-        '<div class="life-detail-tag">🏢 Branch: ' + esc(meta.branch || "—") + '</div>' +
-      '</div>' +
-
-      '<div class="life-detail-section">' +
-        '<div class="life-detail-section-title">Ticket Information</div>' +
-
-        '<div class="life-detail-grid">' +
-
-          '<div class="life-detail-item">' +
-            '<div class="life-detail-label">Ticket ID</div>' +
-            '<div class="life-detail-value">' + esc(t.name || "—") + '</div>' +
-          '</div>' +
-
-          '<div class="life-detail-item">' +
-            '<div class="life-detail-label">Raised By</div>' +
-            '<div class="life-detail-value">' + esc(userDisplayName(t.raised_by || t.owner)) + '</div>' +
-          '</div>' +
-
-          '<div class="life-detail-item">' +
-            '<div class="life-detail-label">Raised On</div>' +
-            '<div class="life-detail-value">' + esc(formatLifeDate(t.opening_date || t.creation)) + '</div>' +
-          '</div>' +
-
-          '<div class="life-detail-item">' +
-            '<div class="life-detail-label">Category</div>' +
-            '<div class="life-detail-value">' + esc(meta.category || "—") + '</div>' +
-          '</div>' +
-
-          '<div class="life-detail-item">' +
-            '<div class="life-detail-label">Issue</div>' +
-            '<div class="life-detail-value">' + esc(meta.issue || t.subject || "—") + '</div>' +
-          '</div>' +
-
-          '<div class="life-detail-item">' +
-            '<div class="life-detail-label">Tagged To</div>' +
-            '<div class="life-detail-value">' + esc(userDisplayName(meta.tag_to || "")) + '</div>' +
-          '</div>' +
-
-          '<div class="life-detail-item">' +
-            '<div class="life-detail-label">CC To</div>' +
-            '<div class="life-detail-value">' + esc(ccText) + '</div>' +
-          '</div>' +
-
-          '<div class="life-detail-item">' +
-            '<div class="life-detail-label">Created By</div>' +
-            '<div class="life-detail-value">' + esc(userDisplayName(t.owner || "")) + '</div>' +
-          '</div>' +
-
-        '</div>' +
-      '</div>' +
-
-      '<div class="life-detail-section">' +
-        '<div class="life-detail-section-title">Issue Details</div>' +
-        '<div class="life-detail-box">' + esc(details || "—") + '</div>' +
-      '</div>' +
-
-    '</div>';
-}
-  
-  function showRichModal(icon, title, html) {
-  setText("modal-icon", icon || "ℹ️");
-  setText("modal-title", title || "");
-
-  var textEl = $("#modal-text");
-  if (textEl) {
-    textEl.innerHTML = html || "";
-  }
-
-  var modal = $("#modal");
-  if (modal) modal.classList.add("show");
-}
-
-
-function modalAttachmentHtml(doctype, docname) {
-  var rows = (attachmentCache[doctype] && attachmentCache[doctype][docname]) || [];
-
-  if (!rows.length) {
-    return '' +
-      '<div class="life-modal-attachments">' +
-        '<div class="life-modal-section-title">Attachments</div>' +
-        '<div class="life-modal-muted">No attachments uploaded.</div>' +
-      '</div>';
-  }
-
-  return '' +
-    '<div class="life-modal-attachments">' +
-      '<div class="life-modal-section-title">Attachments</div>' +
-      rows.map(function (f) {
-        var fileName = f.file_name || f.file_url || "Open File";
-        var fileUrl = f.file_url || "";
-
-        return '' +
-          '<div class="life-modal-file-row">' +
-            '<div>📎 ' + esc(fileName) + '</div>' +
-            (
-              fileUrl
-                ? '<a href="' + esc(fileUrl) + '" target="_blank" class="life-modal-file-link">Open</a>'
-                : ''
-            ) +
-          '</div>';
-      }).join("") +
-    '</div>';
-}
-
-  function toast(message, ok) {
-    if (window.frappe && frappe.show_alert) {
-      frappe.show_alert({
-        message: message,
-        indicator: ok ? "green" : "red"
-      });
-    } else {
-      showModal(ok ? "✅" : "⚠️", ok ? "Success" : "Error", message);
-    }
-  }
-
-  function getErrorMessage(err) {
-    if (!err) return "Something went wrong.";
-
-    if (err._server_messages) {
-      try {
-        var msgs = JSON.parse(err._server_messages);
-        return msgs.map(function (m) {
-          try {
-            return JSON.parse(m).message || m;
-          } catch (e) {
-            return m;
-          }
-        }).join("<br>");
-      } catch (e2) {}
-    }
-
-    return err.message || err.exception || String(err);
-  }
-  
-
-
-
-function shortPreviewText(text, limit) {
-  text = String(text || "").replace(/\s+/g, " ").trim();
-  limit = limit || 120;
-
-  if (text.length <= limit) return text;
-
-  return text.substring(0, limit).trim() + "...";
-}
-
-var detailHtmlRegistry = {};
-
-function registerDetailHtml(title, html, afterHtml) {
-  var id = "DETAIL-" + Date.now() + "-" + Math.floor(Math.random() * 100000);
-
-  detailHtmlRegistry[id] = {
-    title: title || "Details",
-    html: html || "",
-    afterHtml: afterHtml || ""
-  };
-
-  return id;
-}
-
-function renderDescriptionCell(previewText, title, doctype, docname, modalHtml, afterHtml) {
-  previewText = String(previewText || "").trim();
-
-  if (!previewText) {
-    return '<span style="color:#8C8C8C">—</span>';
-  }
-
-  var id = registerDetailHtml(
-    title || "Details",
-    modalHtml || "",
-    afterHtml || ""
-  );
-
-  return '' +
-    '<div class="life-desc-cell">' +
-      '<div class="life-desc-preview" title="' + esc(previewText) + '">' +
-        esc(shortPreviewText(previewText, 130)) +
-      '</div>' +
-      '<button type="button" class="life-view-details-btn" ' +
-        'data-detail-html-id="' + esc(id) + '" ' +
-        'data-doctype="' + esc(doctype || "") + '" ' +
-        'data-docname="' + esc(docname || "") + '">' +
-        'View Details' +
-      '</button>' +
-    '</div>';
-}
-
-
-function bindDescriptionButtons(scope) {
-  (scope || root).querySelectorAll(".life-view-details-btn").forEach(function (btn) {
-    if (btn.dataset.boundDesc === "1") return;
-
-    btn.dataset.boundDesc = "1";
-
-    btn.addEventListener("click", function () {
-      var id = btn.dataset.detailHtmlId || "";
-      var row = detailHtmlRegistry[id] || {};
-
-      var doctype = btn.dataset.doctype || "";
-      var docname = btn.dataset.docname || "";
-
-      var attachmentsHtml = modalAttachmentHtml(doctype, docname);
-
-      var html =
-        (row.html || "") +
-        attachmentsHtml +
-        (row.afterHtml || "");
-
-      showRichModal("📄", row.title || "Details", html);
-    });
-  });
-}
-
-
-function buildTaskDelayHistoryHtml(history) {
-  history = history || [];
-
-  if (!history.length) {
-    return '<div class="life-empty-history">No delay review history available.</div>';
-  }
-
-  return '' +
-    '<div class="life-history-list">' +
-      history.map(function (h, idx) {
-        return '' +
-          '<div class="life-history-card">' +
-            '<div class="life-history-head">' +
-              '<div class="life-history-title">Review #' + (idx + 1) + ' - ' + esc(h.reviewed_by_name || h.reviewed_by || "—") + '</div>' +
-              '<div class="life-history-date">' + esc(h.reviewed_on || "—") + '</div>' +
-            '</div>' +
-
-            '<div class="life-history-grid">' +
-              '<div>' +
-                '<div class="life-detail-label">Old Deadline</div>' +
-                '<div class="life-detail-value">' + esc(formatLifeDateTime(h.old_deadline || "")) + '</div>' +
-              '</div>' +
-              '<div>' +
-                '<div class="life-detail-label">New Deadline</div>' +
-                '<div class="life-detail-value">' + esc(formatLifeDateTime(h.new_deadline || "")) + '</div>' +
-              '</div>' +
-            '</div>' +
-
-            '<div class="life-detail-label">Remarks</div>' +
-            '<div class="life-history-remarks">' + esc(h.remarks || "—") + '</div>' +
-          '</div>';
-      }).join("") +
-    '</div>';
-}
-
-function buildTaskDelayHistorySection(meta) {
-  meta = meta || {};
-
-  return '' +
-    '<div class="life-detail-section">' +
-      '<div class="life-detail-section-title">Delay Review History</div>' +
-      buildTaskDelayHistoryHtml(meta.delay_reviews || []) +
-    '</div>';
-}
-
-
-function buildTaskDetailsHtml(t, meta, details, updateTo) {
-  meta = meta || {};
-  details = details || "—";
-  updateTo = updateTo || "—";
-
-  var status = getTaskStatus(t);
-  var durationText =
-    meta.duration_label ||
-    calculateTaskDurationDays(meta.start_date, meta.deadline_datetime || t.date) ||
-    "—";
-    var workedDays = meta.worked_days || calculateWorkedDaysLabel(t, meta);
-
-  return '' +
-    '<div class="life-detail-modal-wrap">' +
-
-      '<div class="life-detail-top-tags">' +
-        '<div class="life-detail-tag">📌 Priority: ' + esc(t.priority || "—") + '</div>' +
-        '<div class="life-detail-tag">📍 Status: ' + esc(status || "—") + '</div>' +
-        '<div class="life-detail-tag">⏱ Duration: ' + esc(durationText) + '</div>' +
-        '<div class="life-detail-tag">🧮 Worked: ' + esc(workedDays) + '</div>' +
-        '<div class="life-detail-tag">🗂 Category: ' + esc(meta.category || "—") + '</div>' +
-      '</div>' +
-
-      '<div class="life-detail-section">' +
-        '<div class="life-detail-section-title">Task Information</div>' +
-        '<div class="life-detail-grid">' +
-
-          '<div class="life-detail-item">' +
-            '<div class="life-detail-label">Assigned By</div>' +
-            '<div class="life-detail-value">' + esc(userDisplayName(t.assigned_by || t.owner)) + '</div>' +
-          '</div>' +
-
-          '<div class="life-detail-item">' +
-            '<div class="life-detail-label">Assigned To</div>' +
-            '<div class="life-detail-value">' + esc(userDisplayName(t.allocated_to)) + '</div>' +
-          '</div>' +
-
-          '<div class="life-detail-item">' +
-            '<div class="life-detail-label">Start Date</div>' +
-            '<div class="life-detail-value">' + esc(formatLifeDate(meta.start_date || "")) + '</div>' +
-          '</div>' +
-
-          '<div class="life-detail-item">' +
-            '<div class="life-detail-label">Deadline</div>' +
-            '<div class="life-detail-value">' + esc(formatLifeDateTime(meta.deadline_datetime || t.date)) + '</div>' +
-          '</div>' +
-
-          '<div class="life-detail-item">' +
-            '<div class="life-detail-label">Update To</div>' +
-            '<div class="life-detail-value">' + esc(updateTo || "—") + '</div>' +
-          '</div>' +
-
-          '<div class="life-detail-item">' +
-            '<div class="life-detail-label">Created By</div>' +
-            '<div class="life-detail-value">' + esc(userDisplayName(t.owner || "")) + '</div>' +
-          '</div>' +
-
-        '</div>' +
-      '</div>' +
-
-      '<div class="life-detail-section">' +
-        '<div class="life-detail-section-title">Task Details</div>' +
-        '<div class="life-detail-box">' + esc(details || "—") + '</div>' +
-      '</div>' +
-
-    '</div>';
-}
-
-
-  function initials(name) {
-    return String(name || "?")
-      .split(/\s+/)
-      .map(function (w) { return w.charAt(0); })
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
-  }
-
- function userLabel(email) {
-  var value = String(email || "").trim();
-
-  var u = users.find(function (x) {
-    return x.name === value || x.full_name === value;
-  });
-
-  return u ? (u.full_name || u.name) : (value || "—");
-}
-
-function userDisplayName(value) {
-  value = String(value || "").trim();
-
-  if (!value) return "—";
-
-  if (value === currentUser) {
-    return currentUserFullName || value;
-  }
-
-  var u = users.find(function (x) {
-    return (
-      x.name === value ||
-      x.full_name === value ||
-      String(x.name || "").toLowerCase() === value.toLowerCase() ||
-      String(x.full_name || "").toLowerCase() === value.toLowerCase()
-    );
-  });
-
-  if (u) {
-    return u.full_name || u.name;
-  }
-
-  // fallback for emails if User list did not return full_name
-  if (value.indexOf("@") !== -1) {
-    return value.split("@")[0];
-  }
-
-  return value;
-}
-
-function escapeRegex(value) {
-  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function extractLabelValue(text, label, nextLabels) {
-  text = String(text || "").replace(/\s+/g, " ").trim();
-  nextLabels = nextLabels || [];
-
-  var endPattern = "$";
-
-  if (nextLabels.length) {
-    endPattern = "\\s+(?:" + nextLabels.map(escapeRegex).join("|") + ")\\s*:";
-  }
-
-  var re = new RegExp(
-    escapeRegex(label) + "\\s*:\\s*([\\s\\S]*?)(?=" + endPattern + "|$)",
-    "i"
-  );
-
-  var m = text.match(re);
-
-  return m && m[1] ? String(m[1]).trim() : "";
-}
-
-function resolveUserValue(value) {
-  value = String(value || "").trim();
-
-  if (!value) return "";
-
-  var u = users.find(function (x) {
-    return (
-      String(x.name || "").toLowerCase() === value.toLowerCase() ||
-      String(x.full_name || "").toLowerCase() === value.toLowerCase()
-    );
-  });
-
-  return u ? u.name : value;
-}
-
-function isCurrentUserValue(value) {
-  value = String(value || "").trim();
-
-  return (
-    value === currentUser ||
-    value === currentUserFullName ||
-    userLabel(value) === currentUserFullName
-  );
-}
-
-  function findUserByNameOrEmail(value) {
-    value = String(value || "").toLowerCase();
-
-    return users.find(function (u) {
-      return (
-        String(u.name || "").toLowerCase() === value ||
-        String(u.full_name || "").toLowerCase() === value
-      );
-    });
-  }
-
-  function priorityPill(priority) {
-    var cls = priority === "High" ? "p-r" : priority === "Medium" ? "p-o" : "p-g";
-    return '<span class="pill ' + cls + '">' + esc(priority || "—") + "</span>";
-  }
-
-  function statusPill(status) {
-    var cls = "p-gy";
-
-    if (["Open", "Pending"].indexOf(status) !== -1) cls = "p-n";
-    if (["In Progress"].indexOf(status) !== -1) cls = "p-o";
-    if (["Closed", "Completed", "Resolved"].indexOf(status) !== -1) cls = "p-g";
-    if (["Overdue", "Cancelled"].indexOf(status) !== -1) cls = "p-r";
-
-    return '<span class="pill ' + cls + '">' + esc(status || "—") + "</span>";
-  }
-
-  // ============================================================
-  // STATE
-  // ============================================================
-
-  var currentUser = "";
-  var currentUserFullName = "";
-  var isManager = false;
-  var canViewAllReports = false;
-  var currentUserRoles = [];
-
-  var users = [];
-  var employeeGenderByUser = {};
-  var tasks = [];
-  var tickets = [];
-
-  var selectedTaskPriority = "";
-  var selectedTicketPriority = "";
-
-  var taskAssignTo = [];
-  var taskUpdateTo = [];
-  var ticketTagTo = [];
-  var ticketCcTo = [];
-
-  var taskFiles = [];
-  var ticketFiles = [];
-  var taskUpdateFiles = [];
-
-  var attachmentCache = {
-    ToDo: {},
-    Issue: {}
-  };
-  
-  var TABLE_PAGE_SIZE = 15;
-
-var tablePageState = {
-  taskReport: 1,
-  myTaskTo: 1,
-  myTaskBy: 1,
-  ticketReport: 1,
-  myTicketToMe: 1,
-  myTicketByMe: 1
-};
-
-function resetTablePage(key) {
-  tablePageState[key] = 1;
-}
-
-function getPaginatedRows(key, rows) {
-  rows = rows || [];
-
-  var total = rows.length;
-  var totalPages = Math.max(1, Math.ceil(total / TABLE_PAGE_SIZE));
-
-  var page = Number(tablePageState[key] || 1);
-
-  if (page < 1) page = 1;
-  if (page > totalPages) page = totalPages;
-
-  tablePageState[key] = page;
-
-  var start = (page - 1) * TABLE_PAGE_SIZE;
-  var end = Math.min(start + TABLE_PAGE_SIZE, total);
-
-  return {
-    rows: rows.slice(start, end),
-    total: total,
-    page: page,
-    totalPages: totalPages,
-    start: total ? start + 1 : 0,
-    end: end
-  };
-}
-
-function getModifiedTime(row) {
-  var value =
-    row.modified ||
-    row.creation ||
-    row.opening_date ||
-    row.date ||
-    "";
-
-  value = String(value || "").replace(" ", "T");
-
-  var time = new Date(value).getTime();
-
-  return isNaN(time) ? 0 : time;
-}
-
-function sortByModifiedLatest(rows) {
-  return (rows || []).slice().sort(function (a, b) {
-    return getModifiedTime(b) - getModifiedTime(a);
-  });
-}
-
-function renderTablePagination(body, key, pageData, renderFn) {
-  if (!body || !pageData) return;
-
-  var wrap = body.closest(".tbl-wrap") || body.closest("table");
-  if (!wrap || !wrap.parentNode) return;
-
-  var pagerId = "life-pager-" + key;
-  var pager = $("#" + pagerId);
-
-  if (!pager) {
-    pager = document.createElement("div");
-    pager.id = pagerId;
-    pager.className = "life-table-pager";
-    wrap.parentNode.insertBefore(pager, wrap.nextSibling);
-  }
-
-  if (!pageData.total) {
-    pager.innerHTML = "";
-    return;
-  }
-
-  pager.innerHTML =
-    '<span>Showing ' + pageData.start + ' - ' + pageData.end + ' of ' + pageData.total + '</span>' +
-    '<button type="button" data-act="prev" ' + (pageData.page <= 1 ? "disabled" : "") + '>Previous</button>' +
-    '<span>Page ' + pageData.page + ' / ' + pageData.totalPages + '</span>' +
-    '<button type="button" data-act="next" ' + (pageData.page >= pageData.totalPages ? "disabled" : "") + '>Next</button>';
-
-  pager.querySelectorAll("button[data-act]").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var act = btn.dataset.act || "";
-
-      if (act === "prev") {
-        tablePageState[key] = Math.max(1, Number(tablePageState[key] || 1) - 1);
-      }
-
-      if (act === "next") {
-        tablePageState[key] = Number(tablePageState[key] || 1) + 1;
-      }
-
-      renderFn();
-    });
-  });
-}
-  
-  // ============================================================
-// ATTACHMENT CACHE + TABLE ATTACHMENT CHIPS
-// Required for All Tasks / All Tickets table rendering
-// ============================================================
-
-function loadAttachmentCache(doctype, docnames, done) {
-  docnames = (docnames || []).filter(Boolean);
-
-  if (!attachmentCache[doctype]) {
-    attachmentCache[doctype] = {};
-  }
-
-  docnames.forEach(function (name) {
-    attachmentCache[doctype][name] = [];
-  });
-
-  if (!docnames.length) {
-    if (done) done();
-    return;
-  }
-
-  frappe.call({
-    method: "frappe.client.get_list",
-    args: {
-      doctype: "File",
-      fields: [
-        "name",
-        "file_name",
-        "file_url",
-        "attached_to_doctype",
-        "attached_to_name",
-        "is_private",
-        "file_size"
-      ],
-      filters: [
-        ["File", "attached_to_doctype", "=", doctype],
-        ["File", "attached_to_name", "in", docnames]
-      ],
-      limit_page_length: 1000
-    },
-    callback: function (r) {
-      var rows = r.message || [];
-
-      rows.forEach(function (f) {
-        var attachedName = f.attached_to_name || "";
-
-        if (!attachmentCache[doctype][attachedName]) {
-          attachmentCache[doctype][attachedName] = [];
-        }
-
-        attachmentCache[doctype][attachedName].push(f);
-      });
-
-      if (done) done();
-    },
-    error: function () {
-      if (done) done();
-    }
-  });
-}
-
-function attachmentChip(doctype, docname) {
-  var rows =
-    attachmentCache[doctype] &&
-    attachmentCache[doctype][docname]
-      ? attachmentCache[doctype][docname]
-      : [];
-
-  if (!rows.length) {
-    return '<span style="color:#8C8C8C;font-weight:700">—</span>';
-  }
-
-  return '' +
-    '<span class="attach-chip-table" ' +
-      'data-doctype="' + esc(doctype || "") + '" ' +
-      'data-docname="' + esc(docname || "") + '">' +
-      '📎 ' + rows.length +
-    '</span>';
-}
-
-function bindAttachmentChips(scope) {
-  (scope || root).querySelectorAll(".attach-chip-table").forEach(function (chip) {
-    if (chip.dataset.boundAttachmentChip === "1") return;
-
-    chip.dataset.boundAttachmentChip = "1";
-
-    chip.addEventListener("click", function () {
-      var doctype = chip.dataset.doctype || "";
-      var docname = chip.dataset.docname || "";
-
-      showRichModal(
-        "📎",
-        "Attachments",
-        modalAttachmentHtml(doctype, docname)
-      );
-    });
-  });
-}
-
-  var MANAGER_EMAILS = [
-    "Administrator",
-    "administrator",
-    "narendhar@lifescc.com"
-  ];
-
-  var TASK_CATEGORIES = [
-    "Sales",
-    "Services",
-    "Audit",
-    "Marketing",
-    "Machinery",
-    "Accounts",
-    "HR",
-    "IT",
-    "Operations",
-    "Inventory / Stock"
-  ];
-  
-  var TASK_STATUS_FILTERS = [
-  "Open",
-  "Reopened",
-  "Completed",
-  "Overdue",
-  "Closed",
-  "Cancelled"
-];
-
-var TICKET_STATUS_FILTERS = [
-  "Open",
-  "Reopened",
-  "Resolved",
-  "Closed"
-];
-
-  var BRANCHES = [
-    "Head Office",
-    "Chandanagar",
-    "S R Nagar",
-    "Madhapur",
-    "Banjara Hills",
-    "Himayathnagar",
-    "Dilsukhnagar",
-    "Gachibowli",
-    "Vijayawada",
-    "Vizag",
-    "Nellore",
-    "Kukatpally"
-  ];
-
+  var WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var UPD_TYPES = ['Update', 'Report', 'Delay Remark', 'Query'];
+  var MAX_FILE = 5 * 1024 * 1024;
+  var PAGE = 30;
+  var TK_PRI = ['High', 'Medium', 'Low'];
+  var TK_STATUSES = ['Open', 'Reopened', 'On Hold', 'Resolved', 'Closed'];
   var TICKET_CATEGORY_MAP = {
     "Electrical / Equipment": [
       "AC Not Working",
@@ -1273,8402 +173,1791 @@ var TICKET_STATUS_FILTERS = [
     "Clinical Machinery": "anand"
   };
 
-  // ============================================================
-  // META STORAGE IN DESCRIPTION
-  // ============================================================
-
-  function makeMetaBlock(type, meta) {
-    return "<!--LIFE_" + type + "_META:" + JSON.stringify(meta || {}) + "-->";
-  }
-
-  function parseMeta(description, type) {
-    var re = new RegExp("<!--LIFE_" + type + "_META:([\\s\\S]*?)-->");
-    var m = String(description || "").match(re);
-
-    if (!m || !m[1]) return {};
-
-    try {
-      return JSON.parse(m[1]);
-    } catch (e) {
-      return {};
-    }
-  }
-
-  function removeMeta(description) {
-    return String(description || "").replace(/<!--LIFE_[A-Z]+_META:[\s\S]*?-->/g, "").trim();
-  }
-
-  function buildTaskDescription(details, meta) {
-    return makeMetaBlock("TASK", meta) + "\n" + esc(details).replace(/\n/g, "<br>");
-  }
-
-  function buildTicketDescription(details, meta) {
-    var parts = [];
-
-    parts.push(makeMetaBlock("TICKET", meta));
-    parts.push("<b>Branch:</b> " + esc(meta.branch || ""));
-    parts.push("<b>Category:</b> " + esc(meta.category || ""));
-    parts.push("<b>Issue:</b> " + esc(meta.issue || ""));
-
-    if (meta.other_text) {
-      parts.push("<b>Other Issue:</b> " + esc(meta.other_text));
-    }
-
-    if (meta.employee_involved) {
-      parts.push("<b>Employee Involved:</b> " + esc(meta.employee_involved));
-    }
-
-    parts.push("<b>Tagged To:</b> " + esc(userLabel(meta.tag_to || "")));
-
-    if (meta.cc_to && meta.cc_to.length) {
-      parts.push("<b>CC To:</b> " + esc(meta.cc_to.map(userLabel).join(", ")));
-    }
-
-    parts.push("<br><b>Details:</b><br>" + esc(details).replace(/\n/g, "<br>"));
-
-    return parts.join("<br>");
-  }
-  
-  function bindRefreshButton() {
-  var btn = $("#life-refresh-btn");
-
-  if (!btn) return;
-
-  btn.addEventListener("click", function () {
-    refreshTaskTicketBlock();
-  });
-}
-
-function refreshTaskTicketBlock() {
-  var btn = $("#life-refresh-btn");
-  var note = $("#life-refresh-note");
-
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "Refreshing...";
-  }
-
-  if (note) {
-    note.textContent = "Please wait";
-  }
-
-  // Clear old table rows while refreshing
-  var taskBody = $("#task-report-body");
-  var ticketBody = $("#ticket-report-body");
-  var myTaskToBody = $("#mytask-to-body");
-  var myTaskByBody = $("#mytask-by-body");
-  var myTicketToMeBody = $("#myticket-tome-body");
-  var myTicketByMeBody = $("#myticket-byme-body");
-
-  if (taskBody) taskBody.innerHTML = "";
-  if (ticketBody) ticketBody.innerHTML = "";
-  if (myTaskToBody) myTaskToBody.innerHTML = "";
-  if (myTaskByBody) myTaskByBody.innerHTML = "";
-  if (myTicketToMeBody) myTicketToMeBody.innerHTML = "";
-  if (myTicketByMeBody) myTicketByMeBody.innerHTML = "";
-
-  attachmentCache = {
-    ToDo: {},
-    Issue: {}
-  };
-
-  loadCurrentUser();
-  loadTasks(); loadTickets();
-  loadUsers(function () {
-    page.setUsers(users);
-    renderTaskReport(); renderMyTasks(); renderTicketReport(); renderMyTickets(); renderCounts();
-  });
-  page.whenIdle().then(function (result) {
-    if (!page.isActive()) return;
-    if (btn) { btn.disabled = false; btn.textContent = '↻ Refresh'; }
-    if (!result.ok) {
-      if (note) note.textContent = 'Refresh failed. Please retry.';
-      return;
-    }
-    if (note) {
-      note.textContent = 'Updated just now';
-      setTimeout(function () { note.textContent = ''; }, 2500);
-    }
-    toast('Task Manager refreshed successfully.', true);
-  });
-}
-
-function updateActiveTabNote(type, idx) {
-  var note = $("#life-tab-note");
-
-  if (!note) return;
-
-  var notes = {
-    task: {
-      0: "Assign New Task: Create a new internal task, set priority, deadline, assignee, update recipients, and optional attachments.",
-      1: "All Tasks Report: View and filter all task records by category, priority, and status.",
-      2: "My Tasks: Track tasks assigned to you and tasks created by you."
-    },
-    ticket: {
-      0: "Raise New Ticket: Submit a new branch/helpdesk issue with category, resolver, CC users, priority, details, and attachments.",
-      1: "All Tickets Report: View and filter all tickets raised across permitted records.",
-      2: "My Tickets: Track tickets tagged to you, CC’d to you, and tickets raised by you."
-    }
-  };
-
-  note.textContent =
-    notes[type] && notes[type][idx]
-      ? notes[type][idx]
-      : "Select a tab to view its purpose.";
-}
-
-function normalizeEmployeeGender(value) {
-  value = String(value || "").trim().toLowerCase();
-
-  if (!value) return "neutral";
-
-  // Check female first because "female" contains "male"
-  if (value.indexOf("female") !== -1 || value === "f") return "female";
-  if (value.indexOf("male") !== -1 || value === "m") return "male";
-
-  return "neutral";
-}
-
-function getAssigneeGender(assignee) {
-  assignee = String(assignee || "").trim();
-
-  if (!assignee || assignee === "Unassigned") {
-    return "neutral";
-  }
-
-  var displayName = userDisplayName(assignee);
-  var userName = userLabel(assignee);
-
-  return normalizeEmployeeGender(
-    employeeGenderByUser[assignee] ||
-    employeeGenderByUser[assignee.toLowerCase()] ||
-    employeeGenderByUser[displayName] ||
-    employeeGenderByUser[String(displayName || "").toLowerCase()] ||
-    employeeGenderByUser[userName] ||
-    employeeGenderByUser[String(userName || "").toLowerCase()] ||
-    ""
-  );
-}
-
-
-function buildAssigneeGenderIconHtml(assignee) {
-  var gender = getAssigneeGender(assignee);
-
-  var symbol = "•";
-  if (gender === "male") symbol = "♂";
-  if (gender === "female") symbol = "♀";
-
-  return '' +
-    '<span class="life-assignee-person-icon life-gender-' + esc(gender) + '" ' +
-      'title="' + esc(gender === "neutral" ? "Gender not set" : gender) + '" ' +
-      'aria-hidden="true">' +
-      esc(symbol) +
-    '</span>';
-}
-
-function loadEmployeeGenderMap(done) {
-  employeeGenderByUser = {};
-
-  frappe.call({
-    method: "frappe.client.get_list",
-    args: {
-      doctype: "Employee",
-      fields: ["name", "employee_name", "user_id", "gender", "status"],
-      filters: {
-        status: "Active"
+  /* ================================================================
+     PERMISSIONS CATALOGUE (shown as matrix in Control Panel)
+  ================================================================ */
+  var PERMS = [
+    ['assign', 'Assign new tasks', 'Tasks'],
+    ['all_tab', 'See “All Tasks” tab', 'Tasks'],
+    ['manage', 'Manage others’ tasks (approve, extend, priority, reassign, cancel, queue)', 'Tasks'],
+    ['group', 'Create group tasks', 'Tasks'],
+    ['team', 'See “Team & Contacts” tab', 'People'],
+    ['phones', 'See mobile numbers unmasked', 'People'],
+    ['reports', 'See “Reports” tab', 'Reports'],
+    ['export', 'Export CSV / Print', 'Reports'],
+    ['viewas', 'Use “View as employee”', 'Admin'],
+    ['t_raise', 'Raise tickets', 'Tickets'],
+    ['t_all', 'See all tickets', 'Tickets'],
+    ['t_manage', 'Manage any ticket (resolve, resolver, hold, priority)', 'Tickets']
+  ];
+  var SCOPES = [['own', 'Own only (mine, by me, CC, my groups)'], ['dept', 'My department + own'], ['branch', 'My branch + own'], ['all', 'All branches']];
+  var MODULES = [
+    ['tasks', 'Task Management', 'Whole Tasks module'], ['tickets', 'Ticket / Helpdesk', 'Whole Tickets module'], ['team', 'Team & Contacts tab', 'Employee directory with mobiles'],
+    ['reports', 'Reports tab', 'Performance analytics'], ['viewas', 'View as employee', 'Preview any employee’s screen'], ['group', 'Group tasks', 'One task to many people with shared updates'],
+    ['recent', 'Recent tasks panel', 'Last 5 assigned on the Assign screen'], ['checklist', 'Checklist / sub-steps', 'Optional steps inside a task'],
+    ['email', 'Email notifications', 'Send ERP email on assign / remind'], ['wa', 'WhatsApp notifications', 'One-tap wa.me messages'],
+    ['repMandatory', 'Reporting rule mandatory', 'Must choose EOD / Weekly / … before assigning'], ['delayMandatory', 'Delay remark mandatory', 'Overdue tasks need a delay remark before any action']
+  ];
+  function allPerms(v) { var o = { scope: 'all' }; PERMS.forEach(function (p) { o[p[0]] = v; }); return o; }
+  function defaultCfg() {
+    var tc = {};
+    Object.keys(TICKET_CATEGORY_MAP).forEach(function (c) { tc[c] = { a: 1, issues: TICKET_CATEGORY_MAP[c].map(function (i) { return { n: i, a: 1 }; }) }; });
+    return {
+      v: 3,
+      modules: { tasks: 1, tickets: 1, team: 1, reports: 1, viewas: 1, group: 1, recent: 1, checklist: 1, email: 1, wa: 1, repMandatory: 1, delayMandatory: 1 },
+      roles: {
+        'Admin': allPerms(1),
+        'Manager': { scope: 'all', assign: 1, all_tab: 1, manage: 1, group: 1, team: 1, phones: 1, reports: 1, export: 1, viewas: 1, t_raise: 1, t_all: 1, t_manage: 1 },
+        'Cluster Head': { scope: 'branch', assign: 1, all_tab: 1, manage: 1, group: 1, team: 1, phones: 1, reports: 1, export: 1, viewas: 0, t_raise: 1, t_all: 1, t_manage: 0 },
+        'Team Lead': { scope: 'dept', assign: 1, all_tab: 1, manage: 0, group: 1, team: 0, phones: 0, reports: 1, export: 0, viewas: 0, t_raise: 1, t_all: 0, t_manage: 0 },
+        'Employee': { scope: 'own', assign: 1, all_tab: 0, manage: 0, group: 0, team: 0, phones: 0, reports: 0, export: 0, viewas: 0, t_raise: 1, t_all: 0, t_manage: 0 }
       },
-      limit_page_length: 1000
+      userRoles: { 'bhuvan@lifescc.com': 'Admin', 'narendhar@lifescc.com': 'Admin' },
+      desigRules: [['Cluster Head', 'Cluster Head'], ['Center Manager', 'Team Lead']],
+      defaultRole: 'Employee',
+      admins: [],
+      categories: ['Sales', 'Services', 'Operations', 'Audit', 'Accounts', 'HR', 'IT', 'Marketing', 'Call Centre', 'Clinical / Medical', 'Machinery', 'Inventory / Stock', 'Facility / Maintenance', 'Training', 'Compliance / Licenses', 'Management'].map(function (n) { return { n: n, a: 1 }; }),
+      pri: {
+        VVIMP: { label: 'VV IMP', hint: 'Drop everything – do first' }, IMP: { label: 'IMP', hint: 'Top of queue, today' }, HI: { label: 'HI-Priority', hint: 'Before routine work' },
+        MED: { label: 'Medium', hint: 'Normal working order' }, LOW: { label: 'Low', hint: 'When free' }
+      },
+      reports: { EOD: 1, WEEKLY: 1, MONTHLY: 1, SPECIFIC: 1, COMPLETION: 1 },
+      tCats: tc, sla: { High: 24, Medium: 72, Low: 168 }, resolvers: {},
+      phone: { mask: 1, codeHash: '', minutes: 15 },
+      savedBy: '', savedOn: ''
+    };
+  }
+  function mergeCfg(base, src) {
+    if (!src || typeof src !== 'object') return base;
+    Object.keys(src).forEach(function (k) {
+      if (src[k] && typeof src[k] === 'object' && !Array.isArray(src[k]) && base[k] && typeof base[k] === 'object' && !Array.isArray(base[k]) && ['roles', 'userRoles', 'tCats', 'resolvers'].indexOf(k) < 0) base[k] = mergeCfg(base[k], src[k]);
+      else base[k] = src[k];
+    });
+    return base;
+  }
+
+  /* ================================================================
+     HELP TEXTS  (hover a 💡 to read, click to pin)
+  ================================================================ */
+  var HELP = {
+    overview: ['How this screen works', ['Top switch: <b>Tasks</b> = work given to people. <b>Tickets</b> = problems raised by branches.', 'Tiles at top are live counts — click a tile to open that list.', 'Hover any 💡 for help on that part; click it to keep the help open.', 'Click a task / ticket title to open its full panel on the right.'], 'Mobile numbers are masked unless your role allows them — click 🔒 and enter the code to view.'],
+    viewas: ['View as employee', ['Pick a person in <b>View as…</b> (top right).', 'The page shows exactly their screen and their rights.', 'Buttons are blocked in preview.', 'Choose “my own view” to return.'], ''],
+    a_who: ['Who is this task for?', ['Choose <b>Employee(s)</b>, <b>Branch</b>, <b>Department</b> or <b>Designation</b>.', 'Employee(s): type a name and click to add — add as many as needed.', 'Branch / Dept / Designation: click chips; everyone with ERP login gets ticked — untick who you don’t want.', 'Greyed people have no ERP login and cannot receive tasks.', 'When more than one person is selected you choose <b>Group task</b> or <b>Individual tasks</b>.'], ''],
+    a_mode: ['Group or individual?', ['<b>Individual tasks</b>: each person gets a separate task with own number; they only see their own updates.', '<b>Group task</b>: ONE task shared by everyone; all members see every member’s updates.', 'Group response = <b>Group</b>: any member’s Done completes it for all.', 'Group response = <b>Individual</b>: each member must report and complete their own part; the task closes when all are done.', 'Leader receives the main ERP assignment; others get a linked entry.'], ''],
+    a_pri: ['Priority numbers', ['<b>P1 VV IMP</b> – drop everything, do first.', '<b>P2 IMP</b> – top of queue, today.', '<b>P3 HI-Priority</b> – before routine work.', '<b>P4 Medium</b> – normal working order.', '<b>P5 Low</b> – when free.', 'Queue # = working order per person; P1 always lands above P2, P2 above P3…', 'Tick “Force to #1” to override.'], 'Labels can be changed in Control Panel → Masters.'],
+    a_what: ['Task details', ['Category + short clear title (max 80 characters).', 'Start is auto (now). Due is mandatory — duration shows beside the label.', 'Details: what exactly must be done (max 150 words).', 'Checklist: one step per line; ticking steps updates progress.'], ''],
+    a_rep: ['Reporting rule', ['Choose EOD, Weekly (weekday), Monthly (date), Specific date-time, or Only on completion.', 'Late reports turn red in “Reports Due” and count in Reports.'], ''],
+    a_notify: ['CC, notifications & files', ['CC: people who must see updates and completion (you are always included).', 'Email: ERP sends a formatted mail.', 'WhatsApp: after assigning, tap the green button per person.', 'Attach photos / PDF / Excel up to 5 MB each.'], ''],
+    a_prev: ['Preview', ['Shows each person’s current load, new task number and queue #.', 'Red “Missing” items must be filled before Assign.'], ''],
+    a_recent: ['Recent tasks', ['Your last 5 assigned tasks. Click one to open its details directly.'], ''],
+    all: ['All Tasks', ['Filters narrow the list; search works on task no, title, person, branch.', 'Views: Table, Queue by Assignee (Manage Queue), Status Board.', 'Click a header to sort. Click a title to open.', 'What you can see depends on your role’s data scope (Control Panel).'], ''],
+    my: ['My Tasks', ['The top card is your #1 — work on it first.', '▶ Start → 💬 Update → 📝 Report → ✓ Done.', 'Overdue tasks need a Delay Remark first.', 'Group tasks show 👥 — you can see all members’ updates.'], ''],
+    team: ['Team & Contacts', ['All employees with designation, department, branch and mobile.', 'Mobiles are masked unless your role allows or you unlock with the code.', 'Assign opens the form with that person selected; Queue shows their working order.'], 'Visible only to roles allowed in Control Panel.'],
+    reports: ['Reports', ['Pick period and Group by.', 'On-time % = closed before due ÷ all closed. Score drops for overdue, late closures and missed reports.'], ''],
+    drawer: ['Task panel', ['Header: task no, queue #, priority, status.', 'Progress slider and checklist set % done.', 'Everyone involved can post Update / Report / Delay Remark / Query with files.', 'Buttons depend on your role.'], ''],
+    t_raise: ['Raise a ticket', ['Pick branch, category and issue. “Other” needs a description; staff issues need the employee.', 'Resolver is suggested from Control Panel → Ticket masters.', 'Priority sets SLA.', 'Write details, attach photos, Submit.'], ''],
+    t_all: ['All Tickets', ['Filter by status, priority, category, branch, resolver.', 'SLA turns red when breached.'], ''],
+    t_my: ['My Tickets', ['Tagged to me: resolve and Mark Resolved.', 'Raised by me: Close if satisfied or Reopen.'], ''],
+    t_drawer: ['Ticket panel', ['Resolver posts updates then Mark Resolved.', 'Raiser closes or reopens.'], ''],
+    cpanel: ['Control Panel', ['Only admins (Bhuvan, Narendhar + added admins) see this.', '<b>Modules</b>: switch features on / off for everyone.', '<b>Roles & Rights</b>: tick what each role can do and its data scope.', '<b>Users</b>: set a person’s role, or let designation rules / default decide.', '<b>Masters</b>: categories, priority labels, reporting types, ticket categories / issues, SLA, default resolvers.', '<b>Phone privacy</b>: masking on/off, unlock code, unlock minutes.', 'Click <b>Save Control Panel</b> — changes apply to everyone after their next refresh.'], 'Settings are stored in ERP Note “' + CFG_TITLE + '”.']
+  };
+
+  /* ================================================================
+     STATE
+  ================================================================ */
+  var S = {
+    live: false, cfg: defaultCfg(), cfgNote: null, draft: null, me: {}, realMe: null, people: [], byUser: {}, tasks: [], files: {}, tickets: [], tfiles: {},
+    mod: 'task', tab: { task: 'assign', ticket: 'traise' }, allView: 'table', myTab: 'tome', tmyTab: 'tagged', cpTab: 'mods', page: 1, sort: { k: 'q', d: 1 },
+    f: { q: '', branch: '', dept: '', desig: '', assignee: '', by: '', cat: '', pri: '', status: 'Active', rep: '', from: '', to: '', grp: '' },
+    tf: { q: '', status: 'Active', pri: '', cat: '', branch: '', tag: '' }, team: { q: '', branch: '', dept: '' }, cpq: '',
+    form: null, tform: null, pendingFiles: [], tFiles: [], openTask: null, openTicket: null, rptDim: 'assignee', phoneUntil: 0
+  };
+  var root, clockTimer;
+
+  /* ================================================================
+     HELPERS
+  ================================================================ */
+  function q(s, el) { return (el || root).querySelector(s); }
+  function qa(s, el) { return Array.prototype.slice.call((el || root).querySelectorAll(s)); }
+  function esc(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function localStr(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function nowLocal() { return localStr(new Date()); }
+  function todayStr() { return nowLocal().slice(0, 10); }
+  function toDate(s) { if (!s) return null; s = String(s).replace(' ', 'T'); if (s.length === 10) s += 'T00:00'; var d = new Date(s.slice(0, 19)); return isNaN(d) ? null : d; }
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function fD(s) { var d = toDate(s); return d ? pad(d.getDate()) + '-' + MON[d.getMonth()] + '-' + String(d.getFullYear()).slice(2) : '—'; }
+  function fDT(s) { var d = toDate(s); return d ? fD(s) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) : '—'; }
+  function dur(ms) { ms = Math.abs(ms); var m = Math.floor(ms / 60000), d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60), mi = m % 60; if (d) return d + 'd ' + h + 'h'; if (h) return h + 'h ' + mi + 'm'; return mi + 'm'; }
+  function initials(n) { return String(n || '?').trim().split(/\s+/).map(function (w) { return w.charAt(0); }).join('').slice(0, 2).toUpperCase(); }
+  function words(t) { t = String(t || '').trim(); return t ? t.split(/\s+/).length : 0; }
+  function uid(p) { return (p || 'U') + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function norm(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
+  function uniq(a) { var o = {}, r = []; a.forEach(function (x) { if (x && !o[x]) { o[x] = 1; r.push(x); } }); return r; }
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function fsize(b) { b = +b || 0; return b < 1024 ? b + ' B' : b < 1048576 ? Math.round(b / 1024) + ' KB' : (b / 1048576).toFixed(1) + ' MB'; }
+  function htmlToText(v) {
+    v = String(v || '').replace(/<!--[\s\S]*?-->/g, '').replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|li)>/gi, '\n').replace(/<li[^>]*>/gi, '• ').replace(/<[^>]+>/g, '');
+    var t = document.createElement('textarea'); t.innerHTML = v; v = t.value;
+    return v.replace(/\r/g, '').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  }
+  function person(u) { return S.byUser[String(u || '').toLowerCase()] || null; }
+  function personName(u) { if (!u) return '—'; var p = person(u); if (p) return p.name; return String(u).indexOf('@') > -1 ? String(u).split('@')[0] : u; }
+  function toast(msg, err) { var t = q('#toast'); t.textContent = msg; t.className = 'toast show' + (err ? ' err' : ''); clearTimeout(t._t); t._t = setTimeout(function () { t.className = 'toast'; }, 3400); }
+  function csv(name, rows) {
+    if (!can('export')) { toast('Your role cannot export', 1); return; }
+    var out = rows.map(function (r) { return r.map(function (c) { c = String(c == null ? '' : c).replace(/"/g, '""'); return /[",\n]/.test(c) ? '"' + c + '"' : c; }).join(','); }).join('\n');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + out], { type: 'text/csv' })); a.download = name + '_' + todayStr() + '.csv'; document.body.appendChild(a); a.click(); a.remove();
+  }
+  function optList(arr, sel, all) { return (all === null ? '' : '<option value="">' + (all || 'All') + '</option>') + arr.map(function (x) { var v = Array.isArray(x) ? x[0] : x, l = Array.isArray(x) ? x[1] : x; return '<option value="' + esc(v) + '" ' + (sel === v ? 'selected' : '') + '>' + esc(l) + '</option>'; }).join(''); }
+  function hb(k) { return '<button class="hb" data-help="' + k + '" title="">&#128161;</button>'; }
+  function TD(l, h, cls) { return '<td data-l="' + esc(l) + '"' + (cls ? ' class="' + cls + '"' : '') + '>' + h + '</td>'; }
+  function cols(arr) { return '<colgroup>' + arr.map(function (w) { return '<col style="width:' + w + '%">'; }).join('') + '</colgroup>'; }
+  function guard() { if (S.me.preview) { toast('Preview mode — switch “View as” back to your own view to make changes', 1); return true; } return false; }
+
+  /* ================================================================
+     ROLES & PERMISSIONS
+  ================================================================ */
+  function isAdmin(u) { u = String(u || '').toLowerCase(); return CORE_ADMINS.indexOf(u) > -1 || (S.cfg.admins || []).map(function (x) { return x.toLowerCase(); }).indexOf(u) > -1; }
+  function roleOf(u) {
+    if (isAdmin(u)) return 'Admin';
+    var c = S.cfg, r = c.userRoles[u] || c.userRoles[String(u || '').toLowerCase()];
+    if (r && c.roles[r]) return r;
+    var p = person(u);
+    if (p) for (var i = 0; i < (c.desigRules || []).length; i++) { var rule = c.desigRules[i]; if (rule[0] && rule[1] && c.roles[rule[1]] && String(p.desig || '').toLowerCase() === String(rule[0]).toLowerCase()) return rule[1]; }
+    return c.roles[c.defaultRole] ? c.defaultRole : 'Employee';
+  }
+  function roleSource(u) { if (isAdmin(u)) return 'Admin (core)'; if (S.cfg.userRoles[u]) return 'Set directly'; var p = person(u); if (p && (S.cfg.desigRules || []).some(function (r) { return String(p.desig || '').toLowerCase() === String(r[0]).toLowerCase(); })) return 'Designation rule'; return 'Default'; }
+  function permsOf(u) { var r = S.cfg.roles[roleOf(u)] || S.cfg.roles.Employee || {}; return r; }
+  function can(p) { if (S.me.admin && !S.me.preview) return true; var r = S.me.perms || {}; return !!r[p]; }
+  function mod(k) { return !!(S.cfg.modules || {})[k]; }
+  function scope() { return (S.me.admin && !S.me.preview) ? 'all' : ((S.me.perms || {}).scope || 'own'); }
+  function setMe(u, name, extra) {
+    var p = person(u) || {};
+    var me = { user: u, name: name || p.name || u, dept: p.dept, branch: p.branch, desig: p.desig, image: extra && extra.image, admin: isAdmin(u), role: roleOf(u), perms: permsOf(u) };
+    me.isMgr = me.admin || !!me.perms.manage;
+    return me;
+  }
+
+  /* ================================================================
+     PHONE MASKING
+  ================================================================ */
+  function digits(p) { return String(p || '').replace(/\D/g, '').replace(/^0+/, ''); }
+  function phone91(p) { p = digits(p); if (p.length === 10) p = '91' + p; return p.length === 12 && p.indexOf('91') === 0 ? p : ''; }
+  function mob(u) { var p = person(u); return p ? p.phone : ''; }
+  function phonesOpen() { return !S.cfg.phone.mask || can('phones') || Date.now() < S.phoneUntil; }
+  function maskNum(d) { d = d.slice(-10); return d.slice(0, 2) + 'XXXXXX' + d.slice(-2); }
+  function showNum(ph) { var d = digits(ph); if (!d) return ''; return phonesOpen() ? d.slice(-10) : maskNum(d); }
+  function phHtml(u, plain) {
+    var ph = typeof u === 'object' ? (u && u.phone) : mob(u), d = digits(ph);
+    if (!d) return '<span class="ph no">📞 —</span>';
+    if (!phonesOpen()) return S.cfg.phone.codeHash ? '<span class="ph" data-act="unlock" style="color:var(--muted);cursor:pointer" title="Click and enter code to view numbers">🔒 ' + maskNum(d) + '</span>' : '<span class="ph" style="color:var(--muted)">📞 ' + maskNum(d) + '</span>';
+    return plain ? '<span class="ph">📞 ' + esc(d.slice(-10)) + '</span>' : '<a class="ph" href="tel:+' + (phone91(ph) || d) + '" title="Call">📞 ' + esc(d.slice(-10)) + '</a>';
+  }
+  function sha256(s) {
+    if (window.crypto && crypto.subtle && window.TextEncoder) return crypto.subtle.digest('SHA-256', new TextEncoder().encode('LIFE-TM|' + s)).then(function (b) { return Array.prototype.map.call(new Uint8Array(b), function (x) { return ('0' + x.toString(16)).slice(-2); }).join(''); });
+    var h = 5381; s = 'LIFE-TM|' + s; for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return Promise.resolve('d' + (h >>> 0).toString(16));
+  }
+  function unlockPhones() {
+    if (!S.cfg.phone.codeHash) { toast('No unlock code set — ask admin', 1); return; }
+    modal('🔒 Enter code to view mobile numbers', '<div class="hint" style="margin-bottom:6px">Numbers stay visible for ' + (S.cfg.phone.minutes || 15) + ' minutes on this device.</div><input type="password" id="m-code" placeholder="Unlock code" autocomplete="off">', [['Cancel', '', closeModal], ['Unlock', 'pri', function () {
+      var c = q('#m-code').value.trim(); if (!c) return;
+      sha256(c).then(function (h) {
+        if (h !== S.cfg.phone.codeHash) { toast('Wrong code', 1); return; }
+        S.phoneUntil = Date.now() + (S.cfg.phone.minutes || 15) * 60000;
+        try { sessionStorage.setItem('life_tm_ph', String(S.phoneUntil)); } catch (e) { }
+        closeModal(); toast('Numbers visible for ' + (S.cfg.phone.minutes || 15) + ' min'); render(); refreshOpen();
+      });
+    }]]);
+    setTimeout(function () { var x = q('#m-code'); if (x) x.focus(); }, 50);
+  }
+
+  /* config-driven lists */
+  function PRI_L(k) { var p = (S.cfg.pri || {})[k] || {}; return p.label || k; }
+  function PRI_H(k) { return ((S.cfg.pri || {})[k] || {}).hint || ''; }
+  function PRI_W(k) { var i = PRI_KEYS.indexOf(k); return i < 0 ? 4 : i + 1; }
+  function PRI_N(k) { return 'P' + PRI_W(k); }
+  function categories() { return S.cfg.categories.filter(function (c) { return c.a; }).map(function (c) { return c.n; }); }
+  function reportTypes() { return REPORT_DEF.filter(function (r) { return S.cfg.reports[r.k]; }); }
+  function REP(k) { return REPORT_DEF.filter(function (r) { return r.k === k; })[0] || REPORT_DEF[4]; }
+  function tCats() { return Object.keys(S.cfg.tCats).filter(function (c) { return S.cfg.tCats[c].a; }); }
+  function tIssues(c) { var x = S.cfg.tCats[c]; return x ? x.issues.filter(function (i) { return i.a; }).map(function (i) { return i.n; }) : []; }
+  function SLA(p) { return +((S.cfg.sla || {})[p]) || 72; }
+
+  /* ================================================================
+     TASK STATUS HELPERS
+  ================================================================ */
+  function isClosed(t) { return t.status === 'Completed' || t.status === 'Cancelled'; }
+  function isOverdue(t, now) { if (isClosed(t)) return false; var d = toDate(t.due); return d && d < (now || new Date()); }
+  function dueToday(t) { return !isClosed(t) && t.due && t.due.slice(0, 10) === todayStr(); }
+  function priPill(k) { return '<span class="pill p-' + k + '" title="' + esc(PRI_H(k)) + '">' + PRI_N(k) + ' · ' + esc(PRI_L(k)) + '</span>'; }
+  function stPill(t) { return '<span class="pill ' + (ST_CLS[t.status] || 's-open') + '">' + esc(t.status) + '</span>' + (isOverdue(t) ? ' <span class="pill s-od">Overdue</span>' : ''); }
+  function grpTag(t) { return t.grp ? ' <span class="grp" title="Group task · ' + t.grp.members.length + ' members · ' + (t.grp.response === 'group' ? 'group response' : 'individual response') + '">👥 ' + t.grp.members.length + '</span>' : ''; }
+  function timeLeft(t) {
+    if (t.status === 'Completed') { var c = toDate(t.completedOn), d = toDate(t.due); if (c && d) return c <= d ? '<span class="grn">On time</span>' : '<span class="red">Late ' + dur(c - d) + '</span>'; return '<span class="grn">Done</span>'; }
+    if (t.status === 'Cancelled') return '<span class="mut">—</span>';
+    var dd = toDate(t.due); if (!dd) return '—'; var ms = dd - new Date();
+    return ms < 0 ? '<span class="red"><b>-' + dur(ms) + '</b></span>' : ms < 86400000 ? '<span class="amb"><b>' + dur(ms) + '</b></span>' : '<span class="mut">' + dur(ms) + '</span>';
+  }
+  function canManage(t) { return can('manage') || t.by === S.me.user || t.owner === S.me.user; }
+  function isAssignee(t) { return t.assignee === S.me.user; }
+  function fileKey(t) { return t.mid || t.id; }
+
+  /* ================================================================
+     TASK META  (compatible with old LIFE_TASK_META + custom_task_queue_no)
+     Group task = one MASTER ToDo (leader) shared with members + MIRROR ToDos.
+     In the UI a group task is shown as one row per member (virtual task).
+  ================================================================ */
+  function parseMeta(desc, type) { var m = String(desc || '').match(new RegExp('<!--LIFE_' + type + '_META:([\\s\\S]*?)-->')); if (!m) return {}; try { return JSON.parse(m[1]); } catch (e) { return {}; } }
+  function legacyUpdates(m) {
+    var out = [];
+    var add = function (arr, type, label) { (arr || []).forEach(function (h) { out.push({ id: uid(), at: String(h.on || h.reviewed_on || h.at || h.date || '').replace(' ', 'T').slice(0, 16), by: h.by || h.reviewed_by || h.user || '', type: type, text: (label ? label + ': ' : '') + (h.remarks || h.text || h.update || h.message || h.status || '') }); }); };
+    add(m.assigner_updates, 'Update'); add(m.status_history, 'System', 'Status'); add(m.completion_history, 'Completion', 'Completed'); add(m.close_history, 'System', 'Closed'); add(m.reopen_history, 'System', 'Reopened'); add(m.reassign_history, 'System', 'Reassigned'); add(m.queue_history, 'System', 'Queue');
+    return out.sort(function (a, b) { return a.at > b.at ? 1 : -1; });
+  }
+  function base(r) {
+    var m = parseMeta(r.description, 'TASK');
+    var txt = htmlToText(r.description), title = m.title || '', details = txt;
+    if (title) { var first = txt.split('\n')[0].trim(); if (first === title.trim()) details = txt.split('\n').slice(1).join('\n').trim(); }
+    else title = txt.split('\n')[0].slice(0, 90) || '(No title)';
+    if (m.grp) details = details.replace(/^👥 Group task[^\n]*\n?/, '').trim();
+    var wf = m.workflow_state;
+    var st = m.status || (r.status === 'Cancelled' ? 'Cancelled' : r.status === 'Closed' ? 'Completed' : wf === 'Completed' ? 'Review Pending' : wf === 'Reopened' ? 'Reopened' : 'Open');
+    if (r.status === 'Cancelled') st = 'Cancelled';
+    if (r.status === 'Closed' && st !== 'Cancelled' && !m.grp) st = 'Completed';
+    var cc = m.cc || m.update_to || []; if (typeof cc === 'string') cc = cc.split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+    var created = m.created || String(r.creation || '').replace(' ', 'T').slice(0, 16), cq = +r.custom_task_queue_no || 0, cd = toDate(created);
+    var t = {
+      id: r.name, raw: r, meta: m, no: m.no || '', title: title, details: details, cat: m.cat || m.category || 'General',
+      pri: PRI_KEYS.indexOf(m.pri) > -1 ? m.pri : (LEGACY_PRI[r.priority] || 'MED'), status: st,
+      assignee: r.allocated_to || '', by: r.assigned_by || r.owner || '', owner: r.owner || '',
+      created: created, start: m.start || (m.start_date ? m.start_date + 'T09:00' : created), due: m.due || m.deadline_datetime || (r.date ? r.date + 'T18:00' : ''),
+      cc: cc, report: m.report || { type: 'COMPLETION' }, notify: m.notify || {}, checklist: m.checklist || [],
+      progress: +m.progress || 0, updates: m.updates || legacyUpdates(m), delays: m.delays || m.delay_reviews || [],
+      completedOn: m.completed_on || String(r.custom_completed_on || '').replace(' ', 'T').slice(0, 16), target: m.target || { type: 'Employee' },
+      qk: cq > 0 ? cq : (m.qk != null ? +m.qk : 1000 + (cd ? cd.getTime() / 1e10 : 0)), cq: cq, legacy: !m.v, modified: r.modified || '', grp: m.grp || null
+    };
+    if (t.status === 'Completed' && !t.completedOn) t.completedOn = String(r.modified || '').replace(' ', 'T').slice(0, 16);
+    if (t.status === 'Completed' || t.status === 'Review Pending') t.progress = 100;
+    return t;
+  }
+  function enrich(t) { var p = person(t.assignee); t.branch = (p && p.branch) || t.meta.branch || ''; t.dept = (p && p.dept) || t.meta.dept || ''; t.desig = (p && p.desig) || t.meta.desig || ''; return t; }
+  function explode(b) {
+    var g = b.grp, out = [];
+    (g.members || []).forEach(function (u) {
+      var v = {}; Object.keys(b).forEach(function (k) { v[k] = b[k]; });
+      v.id = b.id + '::' + u; v.mid = b.id; v.assignee = u; v.cq = 0;
+      var ms = (b.meta.mstate || {})[u] || {};
+      if (g.response === 'individual') { v.status = ms.status || 'Open'; v.progress = +ms.progress || 0; v.completedOn = ms.completedOn || ''; v.checklist = ms.checklist || clone(b.checklist); }
+      else { v.checklist = b.checklist; }
+      if (b.status === 'Cancelled') v.status = 'Cancelled';
+      if (v.status === 'Completed' || v.status === 'Review Pending') v.progress = 100;
+      var mq = (b.meta.mq || {})[u]; v.qk = mq != null ? +mq : b.qk; v.mqs = mq != null ? +mq : null;
+      out.push(enrich(v));
+    });
+    return out;
+  }
+  function normalizeRows(rows) {
+    var tasks = [], mirrors = [], have = {};
+    rows.forEach(function (r) {
+      var m = parseMeta(r.description, 'TASK');
+      if (m.mirror_of) { mirrors.push({ id: r.name, master: m.mirror_of, user: r.allocated_to }); return; }
+      var b = base(r); have[b.id] = 1;
+      if (b.grp && b.grp.members && b.grp.members.length) tasks = tasks.concat(explode(b)); else tasks.push(enrich(b));
+    });
+    return { tasks: tasks, missing: uniq(mirrors.filter(function (x) { return !have[x.master]; }).map(function (x) { return x.master; })) };
+  }
+  function denormBase(b) {
+    var meta = {}; Object.keys(b.meta || {}).forEach(function (k) { meta[k] = b.meta[k]; });
+    var wf = b.status === 'Review Pending' ? 'Completed' : b.status === 'Completed' ? 'Closed' : b.status === 'Reopened' ? 'Reopened' : b.status === 'Cancelled' ? 'Cancelled' : 'Open';
+    var add = { v: 3, no: b.no, title: b.title, cat: b.cat, category: b.cat, pri: b.pri, status: b.status, workflow_state: wf, start: b.start, start_date: (b.start || '').slice(0, 10), due: b.due, deadline_datetime: b.due, cc: b.cc, update_to: b.cc, report: b.report, notify: b.notify, checklist: b.checklist, progress: b.progress, updates: b.updates, delays: b.delays, delay_reviews: b.delays, completed_on: b.completedOn, created: b.created, target: b.target, qk: b.qk, branch: b.branch, dept: b.dept, desig: b.desig };
+    Object.keys(add).forEach(function (k) { meta[k] = add[k]; });
+    if (b.grp) meta.grp = b.grp;
+    ['assigner_updates', 'status_history', 'completion_history', 'close_history', 'reopen_history', 'reassign_history', 'queue_history'].forEach(function (k) { delete meta[k]; });
+    var json = JSON.stringify(meta).replace(/-->/g, '--\\u003e');
+    return {
+      description: '<!--LIFE_TASK_META:' + json + '-->\n<b>' + esc(b.title) + '</b><br>' + (b.grp ? '👥 Group task (' + b.grp.members.length + ' members)<br>' : '') + esc(b.details).replace(/\n/g, '<br>'),
+      status: b.status === 'Completed' ? 'Closed' : b.status === 'Cancelled' ? 'Cancelled' : 'Open',
+      priority: PRI_TODO[b.pri] || 'Medium', date: (b.due || '').slice(0, 10) || null
+    };
+  }
+  function mirrorDoc(masterName, b, u) {
+    var meta = { v: 3, mirror_of: masterName, no: b.no, title: b.title, grp_id: b.grp.id };
+    return { doctype: 'ToDo', allocated_to: u, assigned_by: b.by, priority: PRI_TODO[b.pri], date: (b.due || '').slice(0, 10), status: 'Open', description: '<!--LIFE_TASK_META:' + JSON.stringify(meta) + '-->\n<b>' + esc(b.title) + '</b><br>👥 Group task ' + esc(b.no) + ' — open Task Management to see details and group updates.' };
+  }
+  function groupOverall(b) {
+    if (b.status === 'Cancelled') return 'Cancelled';
+    var g = b.grp; if (g.response !== 'individual') return b.status;
+    var sts = g.members.map(function (u) { return ((b.meta.mstate || {})[u] || {}).status || 'Open'; });
+    if (sts.every(function (s) { return s === 'Completed'; })) return 'Completed';
+    if (sts.every(function (s) { return s === 'Completed' || s === 'Review Pending'; })) return 'Review Pending';
+    if (sts.some(function (s) { return s === 'In Progress' || s === 'Completed' || s === 'Review Pending'; })) return 'In Progress';
+    return 'Open';
+  }
+
+  /* ================================================================
+     TICKETS (compatible with old LIFE_TICKET_META on Issue)
+  ================================================================ */
+  function ticketDetailsFrom(desc) { var txt = htmlToText(desc), i = txt.search(/Details:\s*/i); return i > -1 ? txt.slice(i).replace(/^Details:\s*/i, '').trim() : txt; }
+  function normTicket(r) {
+    var m = parseMeta(r.description, 'TICKET');
+    var st = r.status === 'Closed' ? 'Closed' : r.status === 'Resolved' ? 'Resolved' : r.status === 'On Hold' ? 'On Hold' : (m.workflow_state === 'Reopened' && r.status === 'Open') ? 'Reopened' : (r.status || 'Open');
+    if (st === 'Replied') st = 'Open';
+    var cc = m.cc_to || []; if (typeof cc === 'string') cc = cc.split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+    var upd = m.updates ? m.updates.slice() : [];
+    if (!m.updates) {
+      (m.resolution_history || []).forEach(function (h) { upd.push({ at: String(h.on || '').slice(0, 16), by: h.by, type: 'Resolved', text: h.remarks || '' }); });
+      (m.reopen_history || []).forEach(function (h) { upd.push({ at: String(h.on || '').slice(0, 16), by: h.by, type: 'Reopened', text: h.remarks || '' }); });
+      (m.close_history || []).forEach(function (h) { upd.push({ at: String(h.on || '').slice(0, 16), by: h.by, type: 'Closed', text: h.remarks || '' }); });
+      upd.sort(function (a, b) { return a.at > b.at ? 1 : -1; });
+    }
+    return {
+      id: r.name, raw: r, meta: m, subject: r.subject || ((m.category || '') + ' - ' + (m.issue || '')), cat: m.category || '', issue: m.issue || '', other: m.other_text || '', emp: m.employee_involved || '',
+      branch: m.branch || '', tag: m.tag_to || '', cc: cc, raiser: r.raised_by || r.owner || '', owner: r.owner || '', pri: TK_PRI.indexOf(r.priority) > -1 ? r.priority : 'Medium',
+      status: st, details: ticketDetailsFrom(r.description), created: String(r.creation || r.opening_date || '').replace(' ', 'T').slice(0, 16), updates: upd, resolvedOn: m.resolved_on || '', closedOn: m.closed_on || '', modified: r.modified || ''
+    };
+  }
+  function tkDesc(tk) {
+    var m = {}; Object.keys(tk.meta || {}).forEach(function (k) { m[k] = tk.meta[k]; });
+    m.branch = tk.branch; m.category = tk.cat; m.issue = tk.issue; m.other_text = tk.other; m.employee_involved = tk.emp; m.tag_to = tk.tag; m.cc_to = tk.cc;
+    m.updates = tk.updates; m.workflow_state = tk.status; m.resolved_on = tk.resolvedOn; m.closed_on = tk.closedOn; m.v = 3;
+    var parts = ['<!--LIFE_TICKET_META:' + JSON.stringify(m).replace(/-->/g, '--\\u003e') + '-->', '<b>Branch:</b> ' + esc(tk.branch), '<b>Category:</b> ' + esc(tk.cat), '<b>Issue:</b> ' + esc(tk.issue)];
+    if (tk.other) parts.push('<b>Other Issue:</b> ' + esc(tk.other));
+    if (tk.emp) parts.push('<b>Employee Involved:</b> ' + esc(tk.emp));
+    parts.push('<b>Tagged To:</b> ' + esc(personName(tk.tag)));
+    if (tk.cc.length) parts.push('<b>CC To:</b> ' + esc(tk.cc.map(personName).join(', ')));
+    parts.push('<br><b>Details:</b><br>' + esc(tk.details).replace(/\n/g, '<br>'));
+    return parts.join('<br>');
+  }
+  function tkStatusField(st) { return st === 'Reopened' ? 'Open' : st; }
+  function tkClosed(tk) { return tk.status === 'Closed'; }
+  function tkActive(tk) { return tk.status !== 'Closed' && tk.status !== 'Resolved'; }
+  function tkSla(tk) { var c = toDate(tk.created); return c ? new Date(c.getTime() + SLA(tk.pri) * 3600000) : null; }
+  function tkBreach(tk) { var s = tkSla(tk); return tkActive(tk) && s && s < new Date(); }
+  function tkSlaHtml(tk) {
+    if (!tkActive(tk)) { var r = toDate(tk.resolvedOn || tk.closedOn), s = tkSla(tk); return r && s ? (r <= s ? '<span class="grn">Within SLA</span>' : '<span class="red">Breached</span>') : '<span class="grn">Done</span>'; }
+    var sl = tkSla(tk); if (!sl) return '—'; var ms = sl - new Date();
+    return ms < 0 ? '<span class="red"><b>-' + dur(ms) + '</b></span>' : '<span class="' + (ms < 6 * 3600000 ? 'amb' : 'mut') + '">' + dur(ms) + '</span>';
+  }
+  function tkPill(tk) { return '<span class="pill ' + (ST_CLS[tk.status] || 's-open') + '">' + esc(tk.status === 'Resolved' ? 'Resolved – close?' : tk.status) + '</span>' + (tkBreach(tk) ? ' <span class="pill s-od">SLA</span>' : ''); }
+
+  /* ================================================================
+     API — LIVE (Frappe) / DEMO (localStorage)
+  ================================================================ */
+  function fcall(method, args) { return new Promise(function (res, rej) { frappe.call({ method: method, args: args || {}, callback: function (r) { res(r.message); }, error: function (e) { rej(e); } }); }); }
+  function errMsg(e) {
+    if (!e) return 'Something went wrong';
+    try { if (e._server_messages) return JSON.parse(e._server_messages).map(function (m) { try { return JSON.parse(m).message; } catch (x) { return m; } }).join(' ').replace(/<[^>]+>/g, ''); } catch (x) { }
+    if (e.responseJSON && e.responseJSON._server_messages) return errMsg(e.responseJSON);
+    return e.message || e.exc_type || String(e);
+  }
+  function cookieUser() { var m = document.cookie.match(/(?:^|;\s*)user_id=([^;]*)/); var u = m ? decodeURIComponent(m[1]) : ''; return u && u !== 'Guest' ? u : ''; }
+  function sessionUser() { var u = window.frappe && frappe.session && frappe.session.user; return (u && u !== 'Guest') ? u : cookieUser(); }
+  function getList(doctype, fields, filters, order, limit) {
+    var all = [], size = 500;
+    function page(start) { return fcall('frappe.client.get_list', { doctype: doctype, fields: fields, filters: filters, order_by: order, limit_start: start, limit_page_length: size }).then(function (r) { r = r || []; all = all.concat(r); return (r.length === size && all.length < (limit || 6000)) ? page(start + size) : all; }); }
+    return page(0);
+  }
+  function uploadXhr(doctype, name, file) {
+    const data = new FormData(); data.append('file', file, file.name);
+    data.append('is_private', '1'); data.append('doctype', doctype); data.append('docname', name);
+    return page.upload(data);
+  }
+  var LiveAPI = {
+    me: function () {
+      var u = sessionUser();
+      return fcall('frappe.client.get', { doctype: 'User', name: u }).then(function (d) { return { user: u, name: d.full_name || u, image: d.user_image || '' }; })
+        .catch(function () { return { user: u, name: (window.frappe && frappe.session && frappe.session.user_fullname) || u, image: decodeURIComponent((document.cookie.match(/user_image=([^;]*)/) || [])[1] || '') }; });
     },
-    callback: function (r) {
-      var rows = r.message || [];
-
-      rows.forEach(function (emp) {
-        var gender = emp.gender || "";
-
-        if (emp.user_id) {
-          employeeGenderByUser[String(emp.user_id).trim()] = gender;
-          employeeGenderByUser[String(emp.user_id).trim().toLowerCase()] = gender;
-        }
-
-        if (emp.employee_name) {
-          employeeGenderByUser[String(emp.employee_name).trim()] = gender;
-          employeeGenderByUser[String(emp.employee_name).trim().toLowerCase()] = gender;
-        }
-
-        if (emp.name) {
-          employeeGenderByUser[String(emp.name).trim()] = gender;
-          employeeGenderByUser[String(emp.name).trim().toLowerCase()] = gender;
-        }
-      });
-
-      if (done) done();
+    cfg: function () { return fcall('frappe.client.get_list', { doctype: 'Note', fields: ['name', 'content', 'modified'], filters: { title: CFG_TITLE }, order_by: 'modified desc', limit_page_length: 1 }).then(function (r) { return (r && r[0]) || null; }).catch(function () { return null; }); },
+    saveCfg: function (name, html) {
+      if (name) return fcall('frappe.client.set_value', { doctype: 'Note', name: name, fieldname: { content: html } }).then(function () { return name; });
+      return fcall('frappe.client.insert', { doc: { doctype: 'Note', title: CFG_TITLE, public: 0, content: html } }).then(function (d) { return d.name; });
     },
-    error: function () {
-      if (done) done();
-    }
-  });
-}
+    users: function () { return getList('User', ['name', 'full_name', 'mobile_no', 'phone', 'user_image'], { enabled: 1, user_type: 'System User' }, 'full_name asc').catch(function () { return []; }); },
+    emps: function () { return getList('Employee', ['name', 'employee_name', 'user_id', 'department', 'designation', 'branch', 'cell_number', 'company_email', 'personal_email', 'image'], { status: 'Active' }, 'employee_name asc').catch(function () { return []; }); },
+    tasks: function () {
+      var f = ['name', 'status', 'priority', 'allocated_to', 'assigned_by', 'owner', 'date', 'description', 'creation', 'modified', 'custom_task_queue_no', 'custom_completed_on'], flt = [['ToDo', 'reference_type', 'is', 'not set']];
+      return getList('ToDo', f, flt, 'modified desc').catch(function () { return getList('ToDo', f.slice(0, 10), flt, 'modified desc'); });
+    },
+    tickets: function () { return getList('Issue', ['name', 'subject', 'description', 'priority', 'status', 'owner', 'raised_by', 'opening_date', 'creation', 'modified'], {}, 'modified desc', 3000).catch(function () { return []; }); },
+    files: function (doctype, names) {
+      if (!names.length) return Promise.resolve([]);
+      var out = [], chunks = []; for (var i = 0; i < names.length; i += 150) chunks.push(names.slice(i, i + 150));
+      return chunks.reduce(function (p, ch) { return p.then(function () { return fcall('frappe.client.get_list', { doctype: 'File', fields: ['name', 'file_name', 'file_url', 'attached_to_name', 'file_size'], filters: [['File', 'attached_to_doctype', '=', doctype], ['File', 'attached_to_name', 'in', ch]], limit_page_length: 3000 }).then(function (r) { out = out.concat(r || []); }).catch(function () { }); }); }, Promise.resolve()).then(function () { return out; });
+    },
+    get: function (dt, name) { return fcall('frappe.client.get', { doctype: dt, name: name }); },
+    create: function (doc) { return fcall('frappe.client.insert', { doc: doc }); },
+    save: function (dt, name, fields) { return fcall('frappe.client.set_value', { doctype: dt, name: name, fieldname: fields }); },
+    share: function (dt, name, user, write) { return fcall('frappe.share.add', { doctype: dt, name: name, user: user, read: 1, write: write ? 1 : 0, share: 0, notify: 0 }); },
+    upload: function (dt, name, file) { return uploadXhr(dt, name, file); },
+    email: function (to, cc, subject, html, dt, name) { return fcall('frappe.core.doctype.communication.email.make', { recipients: to.join(','), cc: (cc || []).join(','), subject: subject, content: html, doctype: dt, name: name, send_email: 1 }); }
+  };
+  var DKEY = 'life_tm_demo_v4';
+  var DemoAPI = {
+    db: function () { try { var d = JSON.parse(localStorage.getItem(DKEY) || 'null'); if (d) return d; } catch (e) { } var s = demoSeed(); this.put(s); return s; },
+    put: function (d) { try { localStorage.setItem(DKEY, JSON.stringify(d)); } catch (e) { } },
+    me: function () { return Promise.resolve({ user: 'bhuvan@lifescc.com', name: 'K Bhuvan Prasad', image: '' }); },
+    cfg: function () { var c = this.db().cfg; return Promise.resolve(c ? { name: 'demo-note', content: c } : null); },
+    saveCfg: function (n, html) { var d = this.db(); d.cfg = html; this.put(d); return Promise.resolve('demo-note'); },
+    users: function () { return Promise.resolve(this.db().users); },
+    emps: function () { return Promise.resolve(this.db().emps); },
+    tasks: function () { return Promise.resolve(this.db().todos.slice()); },
+    tickets: function () { return Promise.resolve(this.db().issues.slice()); },
+    files: function (dt) { return Promise.resolve((this.db().files || []).filter(function (f) { return f.dt === dt; })); },
+    coll: function (dt) { return dt === 'Issue' ? 'issues' : 'todos'; },
+    get: function (dt, n) { var t = this.db()[this.coll(dt)].filter(function (x) { return x.name === n; })[0]; return t ? Promise.resolve(clone(t)) : Promise.reject({ message: 'Not found' }); },
+    create: function (doc) { var d = this.db(); doc.name = doc.doctype === 'Issue' ? 'ISS-2026-' + String(d.issues.length + 101).padStart(5, '0') : uid('td'); doc.owner = S.realMe.user; doc.creation = nowLocal().replace('T', ' ') + ':00'; doc.modified = doc.creation; d[this.coll(doc.doctype)].unshift(doc); this.put(d); return Promise.resolve(clone(doc)); },
+    save: function (dt, n, f) { var d = this.db(); d[this.coll(dt)].forEach(function (t) { if (t.name === n) { Object.keys(f).forEach(function (k) { t[k] = f[k]; }); t.modified = nowLocal().replace('T', ' ') + ':00'; } }); this.put(d); return Promise.resolve({}); },
+    share: function () { return Promise.resolve({}); },
+    upload: function (dt, n, file) { var d = this.db(); var r = { name: uid('f'), file_name: file.name, file_url: '#', attached_to_name: n, file_size: file.size, dt: dt }; d.files = d.files || []; d.files.push(r); this.put(d); return Promise.resolve(r); },
+    email: function () { return Promise.resolve({}); }
+  };
+  var API;
 
-function setDefaultTaskStartDate() {
-  var startEl = $("#task-startdate");
-  if (startEl && !startEl.value) {
-    var today = getTodayLocalDate();
-    startEl.value = today;
+  /* ================================================================
+     BOOT  (waits for the portal login → no false DEMO mode)
+  ================================================================ */
+  function fullWidth() {
+    var el = root.parentElement;
+    while (el && el !== document.body) { el.style.maxWidth = '100%'; el.style.width = '100%'; el.style.paddingLeft = '0'; el.style.paddingRight = '0'; el.style.marginLeft = '0'; el.style.marginRight = '0'; el = el.parentElement; }
+    qa('nav.navbar, .navbar, .web-footer, footer', document).forEach(function (n) { if (!n.contains(root)) n.style.display = 'none'; });
   }
-}
-
-
-function forceDefaultTaskStartDate() {
-  var startEl = $("#task-startdate");
-  if (startEl) {
-    var today = getTodayLocalDate();
-    startEl.value = today;
+  function boot() {
+    root = document.getElementById('life-tm');
+    if (!root || root.dataset.booted) return;
+    root.dataset.booted = '1';
+    // PortalLayout owns the outer page width and navigation.
+    S.live = !!(window.frappe && frappe.call && sessionUser());
+    API = S.live ? LiveAPI : DemoAPI;
+    try { S.phoneUntil = +sessionStorage.getItem('life_tm_ph') || 0; } catch (e) { }
+    bindGlobal();
+    loadAll();
   }
-}
-
-
-  // ============================================================
-  // INIT
-  // ============================================================
-
-  function init() {
-    bindModuleTabs();
-    bindSubTabs();
-    bindPriorityButtons();
-    bindWordCounts();
-    updateWordCount($("#task-details"), $("#task-wordcount"), 100);
-updateWordCount($("#ticket-other-text"), $("#ticket-other-wordcount"), 100);
-    bindTicketCategoryEvents();
-    bindPickers();
-    bindAttachments();
-    bindButtons();
-    bindModal();
-    bindTaskDateRules();
-    bindRefreshButton();
-
-    populateStaticDropdowns();
-    updateActiveTabNote("task", 0);
-    loadCurrentUser(function () {
-      applyReportTabVisibility();
-
-      loadTasks();
-      loadTickets();
-      loadUsers(function () {
-        page.setUsers(users);
-        renderTaskReport(); renderMyTasks();
-        renderTicketReport(); renderMyTickets(); renderCounts();
-      });
-    });
-    
-    forceDefaultTaskStartDate();
+  function parseCfgNote(n) {
+    if (!n || !n.content) return null;
+    var m = String(n.content).match(/<!--LIFE_CPANEL:([\s\S]*?)-->/); if (!m) return null;
+    try { return JSON.parse(m[1]); } catch (e) { return null; }
   }
-
-  // ============================================================
-  // BINDINGS
-  // ============================================================
-
-  function bindModuleTabs() {
-    var taskBtn = $("#toggle-task");
-    var ticketBtn = $("#toggle-ticket");
-
-    if (taskBtn) {
-      taskBtn.addEventListener("click", function () {
-        selectModule("task");
-      });
-    }
-
-    if (ticketBtn) {
-      ticketBtn.addEventListener("click", function () {
-        selectModule("ticket");
-      });
-    }
-  }
-
-function selectModule(moduleName) {
-  $("#toggle-task").classList.toggle("sel", moduleName === "task");
-  $("#toggle-ticket").classList.toggle("sel", moduleName === "ticket");
-
-  $("#module-task").classList.toggle("on", moduleName === "task");
-  $("#module-ticket").classList.toggle("on", moduleName === "ticket");
-
-  var activeSub = $("#module-" + moduleName + " .snav.on");
-  var idx = 0;
-
-  if (activeSub) {
-    idx = Number(activeSub.dataset.taskSub || activeSub.dataset.ticketSub || 0);
-  }
-
-  updateActiveTabNote(moduleName, idx);
-}
-
-
-  function bindSubTabs() {
-    $all("[data-task-sub]").forEach(function (tab) {
-      tab.addEventListener("click", function () {
-        showSub("task", Number(tab.dataset.taskSub || 0), tab);
-      });
-    });
-
-    $all("[data-ticket-sub]").forEach(function (tab) {
-      tab.addEventListener("click", function () {
-        showSub("ticket", Number(tab.dataset.ticketSub || 0), tab);
-      });
+  function loadAll() {
+    q('#view').innerHTML = '<div class="loading"><div class="spin"></div>Loading tasks, tickets, employees &amp; settings…</div>';
+    var meRaw;
+    return Promise.all([API.me(), API.cfg()]).then(function (r) {
+      meRaw = r[0]; S.cfgNote = r[1] ? r[1].name : null;
+      S.cfg = mergeCfg(defaultCfg(), parseCfgNote(r[1]) || {});
+      return Promise.all([API.users(), API.emps()]);
+    }).then(function (res) {
+      buildPeople(res[0] || [], res[1] || []);
+      S.realMe = setMe(meRaw.user, meRaw.name, { image: meRaw.image || ((person(meRaw.user) || {}).image) });
+      if (!S.me.preview) S.me = S.realMe; else S.me = setMe(S.me.user, S.me.name), S.me.preview = true;
+      return Promise.all([API.tasks(), API.tickets()]);
+    }).then(function (res) {
+      var n = normalizeRows(res[0] || []);
+      S.tickets = (res[1] || []).map(normTicket);
+      var miss = n.missing.slice(0, 300);
+      return miss.reduce(function (p, name) { return p.then(function () { return API.get('ToDo', name).then(function (r) { var b = base(r); if (b.grp) n.tasks = n.tasks.concat(explode(b)); }).catch(function () { }); }); }, Promise.resolve()).then(function () { return n.tasks; });
+    }).then(function (tasks) {
+      S.tasks = tasks;
+      return Promise.all([API.files('ToDo', uniq(S.tasks.map(fileKey))), API.files('Issue', S.tickets.map(function (t) { return t.id; }))]);
+    }).then(function (res) {
+      S.files = {}; (res[0] || []).forEach(function (f) { (S.files[f.attached_to_name] = S.files[f.attached_to_name] || []).push(f); });
+      S.tfiles = {}; (res[1] || []).forEach(function (f) { (S.tfiles[f.attached_to_name] = S.tfiles[f.attached_to_name] || []).push(f); });
+      if (!S.form) resetForm(); if (!S.tform) resetTForm();
+      if (!S._landed) { S._landed = 1; if (!can('assign')) S.tab.task = 'my'; if (!mod('tasks')) S.mod = 'ticket'; }
+      renderHeader(); render();
+    }).catch(function (e) {
+      q('#view').innerHTML = '<div class="card"><div class="cb empty"><b>Could not load data</b>' + esc(errMsg(e)) + '<br><br><button class="btn pri" data-act="refresh">Retry</button></div></div>';
     });
   }
-
-function showSub(type, idx, activeTab) {
-  if (
-    idx === 1 &&
-    (type === "task" || type === "ticket") &&
-    !canCurrentUserViewAllReports()
-  ) {
-    showModal(
-      "⚠️",
-      "Access Restricted",
-      "You do not have permission to view all reports."
-    );
-    return;
-  }
-
-  $all("#module-" + type + " .snav").forEach(function (x) {
-    x.classList.remove("on");
-  });
-
-  activeTab.classList.add("on");
-
-  $all("#module-" + type + " .subpage").forEach(function (page, i) {
-    page.classList.toggle("on", i === idx);
-  });
-
-  updateActiveTabNote(type, idx);
-
-  if (type === "task" && idx === 1) renderTaskReport();
-  if (type === "task" && idx === 2) renderMyTasks();
-
-  if (type === "ticket" && idx === 1) renderTicketReport();
-  if (type === "ticket" && idx === 2) renderMyTickets();
-}
-
-  function bindPriorityButtons() {
-    $all("#task-priority-grp .priority-chip").forEach(function (chip) {
-      chip.addEventListener("click", function () {
-        $all("#task-priority-grp .priority-chip").forEach(function (x) {
-          x.classList.remove("sel");
-        });
-        chip.classList.add("sel");
-        selectedTaskPriority = chip.dataset.p || "";
-      });
+  function buildPeople(users, emps) {
+    var map = {}, list = [];
+    emps.forEach(function (e) {
+      var u = (e.user_id || '').trim();
+      var p = { user: u, name: e.employee_name || u, emp: e.name, branch: e.branch || '', dept: String(e.department || '').replace(/\s*-\s*LSACPL$/i, ''), desig: e.designation || '', phone: e.cell_number || '', image: e.image || '', email: u || e.company_email || e.personal_email || '', login: !!u };
+      list.push(p); if (u) map[u.toLowerCase()] = p;
     });
+    users.forEach(function (u) {
+      if (!u.name || u.name === 'Administrator' || u.name === 'Guest') return;
+      var k = u.name.toLowerCase();
+      if (map[k]) { if (!map[k].phone) map[k].phone = u.mobile_no || u.phone || ''; if (u.user_image) map[k].image = u.user_image; return; }
+      var br = '', nu = norm(u.name.split('@')[0]);
+      BRANCHES.forEach(function (b) { if (norm(b).length > 3 && nu.indexOf(norm(b)) === 0) br = b; });
+      var p = { user: u.name, name: u.full_name || u.name, emp: '', branch: br, dept: br ? 'Branch Login' : '', desig: br ? 'Branch Login' : '', phone: u.mobile_no || u.phone || '', image: u.user_image || '', email: u.name, login: true, branchLogin: !!br };
+      map[k] = p; list.push(p);
+    });
+    list.sort(function (a, b) { return a.name.localeCompare(b.name); });
+    S.people = list; S.byUser = map;
+  }
+  function renderHeader() {
+    var me = S.realMe;
+    q('#me-name').textContent = me.name;
+    q('#me-role').textContent = (me.desig || me.role) + (me.branch ? ' · ' + me.branch : '');
+    var pic = q('#me-pic');
+    pic.innerHTML = me.image ? '<img src="' + esc(me.image) + '" alt="">' : initials(me.name);
+    var img = q('img', pic); if (img) img.onerror = function () { pic.textContent = initials(me.name); };
+    var va = q('#viewas');
+    var allowed = mod('viewas') && (me.admin || (me.perms || {}).viewas);
+    va.style.display = allowed ? '' : 'none';
+    if (allowed) va.innerHTML = '<option value="">👁 View as… (my own view)</option>' + S.people.filter(function (p) { return p.login && p.user !== me.user; }).map(function (p) { return '<option value="' + esc(p.user) + '" ' + (S.me.preview && S.me.user === p.user ? 'selected' : '') + '>' + esc(p.name + (p.branch ? ' · ' + p.branch : '')) + '</option>'; }).join('');
+  }
+  function setViewAs(u) {
+    if (!u) { S.me = S.realMe; S.tab.task = 'assign'; }
+    else { S.me = setMe(u); S.me.preview = true; S.tab.task = 'my'; S.tab.ticket = 'tmy'; }
+    closeDrawer(); render();
+  }
 
-    $all("#ticket-priority-grp .priority-chip").forEach(function (chip) {
-      chip.addEventListener("click", function () {
-        $all("#ticket-priority-grp .priority-chip").forEach(function (x) {
-          x.classList.remove("sel");
-        });
-        chip.classList.add("sel");
-        selectedTicketPriority = chip.dataset.p || "";
-      });
+  /* ================================================================
+     QUEUE  (custom_task_queue_no for single tasks, meta.mq for group tasks)
+  ================================================================ */
+  function queueOf(user, excludeId) {
+    return S.tasks.filter(function (t) { return t.assignee === user && !isClosed(t) && t.id !== excludeId; })
+      .sort(function (a, b) { return a.qk - b.qk || (PRI_W(a.pri) - PRI_W(b.pri)) || (a.created > b.created ? 1 : -1); });
+  }
+  function qRank(t) { if (isClosed(t)) return ''; var l = queueOf(t.assignee); for (var i = 0; i < l.length; i++) if (l[i].id === t.id) return i + 1; return ''; }
+  function placement(user, pri, top, excl) {
+    var l = queueOf(user, excl), w = PRI_W(pri);
+    if (!l.length) return { rank: 1, qk: 1 };
+    if (top) return { rank: 1, qk: l[0].qk - 1 };
+    var idx = l.length;
+    for (var i = 0; i < l.length; i++) { if (PRI_W(l[i].pri) > w) { idx = i; break; } }
+    var qk = idx === 0 ? l[0].qk - 1 : idx === l.length ? l[l.length - 1].qk + 1 : (l[idx - 1].qk + l[idx].qk) / 2;
+    return { rank: idx + 1, qk: qk };
+  }
+  function writeGroupMq(mid, changes) {
+    return API.get('ToDo', mid).then(function (raw) {
+      var b = base(raw); b.meta.mq = b.meta.mq || {};
+      Object.keys(changes).forEach(function (u) { b.meta.mq[u] = changes[u]; });
+      return API.save('ToDo', mid, { description: denormBase(b).description });
+    }).catch(function () { });
+  }
+  function syncQueue(user) {
+    if (!user) return Promise.resolve();
+    var l = queueOf(user), jobs = [], grp = {};
+    l.forEach(function (t, i) {
+      t.qk = i + 1;
+      if (t.mid) { if (t.mqs !== i + 1) { t.mqs = i + 1; (grp[t.mid] = grp[t.mid] || {})[user] = i + 1; } }
+      else if (t.cq !== i + 1) { t.cq = i + 1; jobs.push([t.id, { custom_task_queue_no: i + 1, custom_queue_active: 1 }]); }
+    });
+    S.tasks.forEach(function (t) { if (!t.mid && t.assignee === user && isClosed(t) && t.cq) { t.cq = 0; jobs.push([t.id, { custom_task_queue_no: 0, custom_queue_active: 0 }]); } });
+    var p = jobs.reduce(function (p, j) { return p.then(function () { return API.save('ToDo', j[0], j[1]).catch(function () { }); }); }, Promise.resolve());
+    return Object.keys(grp).reduce(function (p, mid) { return p.then(function () { return writeGroupMq(mid, grp[mid]); }); }, p);
+  }
+  function setOrder(user, ids) {
+    if (guard()) return Promise.resolve();
+    ids.forEach(function (id, i) { var t = findTask(id); if (t) t.qk = i + 1; });
+    return syncQueue(user).then(function () { render(); refreshOpen(); });
+  }
+  function nextTaskNo(offset) {
+    var pre = 'T' + String(new Date().getFullYear()).slice(2) + pad(new Date().getMonth() + 1) + '-';
+    var max = 0; S.tasks.forEach(function (t) { if (t.no && t.no.indexOf(pre) === 0) { var n = parseInt(t.no.slice(pre.length), 10); if (n > max) max = n; } });
+    return pre + String(max + 1 + (offset || 0)).padStart(4, '0');
+  }
+  function dispNo(t) { return t.no || ('#' + String(t.mid || t.id).slice(-6).toUpperCase()); }
+
+  /* ================================================================
+     REPORT-DUE / DELAY
+  ================================================================ */
+  function myUpdates(t) { return t.grp && t.grp.response === 'individual' ? t.updates.filter(function (u) { return u.by === t.assignee; }) : t.updates; }
+  function lastReport(t) { var l = myUpdates(t).filter(function (u) { return u.type === 'Report'; }); return l.length ? toDate(l[l.length - 1].at) : null; }
+  function reportDue(t) {
+    if (isClosed(t) || !t.report || t.status === 'Review Pending') return null;
+    var r = t.report, now = new Date(), last = lastReport(t), start = toDate(t.start) || toDate(t.created);
+    if (start && start > now) return null;
+    var time = r.time || '19:00', today = todayStr(), at;
+    if (r.type === 'EOD') { at = toDate(today + 'T' + time); if (!last || localStr(last).slice(0, 10) !== today) return { label: 'EOD report', at: at, late: now > at }; return null; }
+    if (r.type === 'WEEKLY') { var wd = +r.day; if (now.getDay() === wd) { at = toDate(today + 'T' + time); if (!last || (now - last) > 20 * 3600000) return { label: 'Weekly report', at: at, late: now > at }; } else if (last && (now - last) > 8 * 86400000) return { label: 'Weekly report missed', at: null, late: true }; return null; }
+    if (r.type === 'MONTHLY') { var dm = +r.dom || 1; if (now.getDate() === dm) { at = toDate(today + 'T' + time); if (!last || (now - last) > 20 * 3600000) return { label: 'Monthly report', at: at, late: now > at }; } else if (last && (now - last) > 32 * 86400000) return { label: 'Monthly report missed', at: null, late: true }; return null; }
+    if (r.type === 'SPECIFIC') { at = toDate(r.dt); if (at && now >= new Date(at.getTime() - 3600000) && (!last || last < new Date(at.getTime() - 86400000))) return { label: 'Report ' + fDT(r.dt), at: at, late: now > at }; return null; }
+    return null;
+  }
+  function repText(r) {
+    if (!r || !r.type) return '—';
+    if (r.type === 'EOD') return 'EOD by ' + (r.time || '19:00');
+    if (r.type === 'WEEKLY') return 'Weekly ' + WEEKDAYS[+r.day || 0].slice(0, 3) + ' ' + (r.time || '19:00');
+    if (r.type === 'MONTHLY') return 'Monthly d' + (r.dom || 1) + ' ' + (r.time || '19:00');
+    if (r.type === 'SPECIFIC') return 'On ' + fDT(r.dt);
+    return 'On completion';
+  }
+  function needsDelayRemark(t) {
+    if (!mod('delayMandatory') || !isOverdue(t)) return false;
+    var dd = toDate(t.due);
+    var anyone = t.grp && t.grp.response === 'group';
+    return !t.updates.some(function (u) { return u.type === 'Delay Remark' && (anyone || u.by === t.assignee) && toDate(u.at) >= dd; });
+  }
+
+  /* ================================================================
+     VISIBILITY (role data scope)
+  ================================================================ */
+  function involved(t, me) { return t.assignee === me || t.by === me || t.owner === me || t.cc.indexOf(me) > -1 || (t.grp && t.grp.members.indexOf(me) > -1); }
+  function visible() {
+    var sc = scope(), me = S.me.user;
+    if (sc === 'all') return S.tasks;
+    return S.tasks.filter(function (t) {
+      if (involved(t, me)) return true;
+      if (sc === 'dept') return S.me.dept && S.me.dept !== 'Branch Login' && t.dept === S.me.dept;
+      if (sc === 'branch') return S.me.branch && t.branch === S.me.branch;
+      return false;
     });
   }
-  
-function getWordArray(text) {
-  text = String(text || "").trim();
-  return text ? text.split(/\s+/) : [];
-}
-
-function firstNWords(text, count) {
-  return getWordArray(text).slice(0, count).join(" ");
-}
-
-function getTextWithoutSelection(input) {
-  var value = String(input.value || "");
-  var start = input.selectionStart || 0;
-  var end = input.selectionEnd || 0;
-
-  return value.slice(0, start) + value.slice(end);
-}
-
-function getTextAfterInsert(input, insertText) {
-  var value = String(input.value || "");
-  var start = input.selectionStart || 0;
-  var end = input.selectionEnd || 0;
-
-  return value.slice(0, start) + String(insertText || "") + value.slice(end);
-}
-
-function insertTextAtCursor(input, text) {
-  var start = input.selectionStart || 0;
-  var end = input.selectionEnd || 0;
-
-  input.setRangeText(text, start, end, "end");
-
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-  input.dispatchEvent(new Event("change", { bubbles: true }));
-}
-
-function updateWordCount(input, label, maxWords) {
-  if (!input || !label) return;
-
-  var count = wordCount(input.value || "");
-
-  label.textContent = count + " / " + maxWords + " words";
-  label.classList.toggle("over", count > maxWords);
-}
-
-function bindWordLimit(input, label, maxWords) {
-  if (!input) return;
-
-  input.addEventListener("beforeinput", function (e) {
-    var inputType = e.inputType || "";
-
-    if (
-      inputType.indexOf("delete") === 0 ||
-      inputType === "historyUndo" ||
-      inputType === "historyRedo" ||
-      inputType === "insertFromPaste"
-    ) {
-      return;
-    }
-
-    var insertText = e.data || "";
-
-    if (inputType === "insertParagraph" || inputType === "insertLineBreak") {
-      insertText = "\n";
-    }
-
-    if (!insertText) return;
-
-    var nextText = getTextAfterInsert(input, insertText);
-
-    if (wordCount(nextText) > maxWords) {
-      e.preventDefault();
-      updateWordCount(input, label, maxWords);
-    }
-  });
-
-  input.addEventListener("paste", function (e) {
-    e.preventDefault();
-
-    var clipboard = e.clipboardData || window.clipboardData;
-    var pasteText = clipboard ? clipboard.getData("text") : "";
-
-    if (!pasteText) return;
-
-    var currentWithoutSelection = getTextWithoutSelection(input);
-    var availableWords = maxWords - wordCount(currentWithoutSelection);
-
-    if (availableWords <= 0) {
-      updateWordCount(input, label, maxWords);
-      return;
-    }
-
-    var allowedPasteText = firstNWords(pasteText, availableWords);
-
-    if (allowedPasteText) {
-      insertTextAtCursor(input, allowedPasteText);
-    }
-
-    updateWordCount(input, label, maxWords);
-  });
-
-  input.addEventListener("input", function () {
-    updateWordCount(input, label, maxWords);
-  });
-
-  updateWordCount(input, label, maxWords);
-}
-
-function bindWordCounts() {
-  bindWordLimit($("#task-details"), $("#task-wordcount"), 100);
-  bindWordLimit($("#ticket-other-text"), $("#ticket-other-wordcount"), 100);
-}
-
-
-  function bindTicketCategoryEvents() {
-    var category = $("#ticket-category");
-    var issue = $("#ticket-issue");
-
-    if (category) {
-      category.addEventListener("change", function () {
-        var cat = category.value || "";
-        var issues = TICKET_CATEGORY_MAP[cat] || [];
-
-        if (issue) {
-          issue.innerHTML =
-            '<option value="">Select Issue</option>' +
-            issues.map(function (x) {
-              return '<option value="' + esc(x) + '">' + esc(x) + "</option>";
-            }).join("");
-        }
-
-        var otherBlock = $("#ticket-other-block");
-        var empBlock = $("#ticket-employee-involved-block");
-
-        if (otherBlock) otherBlock.style.display = "none";
-        if (empBlock) empBlock.style.display = "none";
-
-        applyTicketCategorySuggestion(cat);
-      });
-    }
-
-    if (issue) {
-      issue.addEventListener("change", function () {
-        var val = issue.value || "";
-
-        var otherBlock = $("#ticket-other-block");
-        var empBlock = $("#ticket-employee-involved-block");
-
-        if (otherBlock) otherBlock.style.display = val === "Other" ? "block" : "none";
-
-        if (empBlock) {
-          empBlock.style.display =
-            EMPLOYEE_INVOLVED_ISSUES.indexOf(val) !== -1 ? "block" : "none";
-        }
-      });
-    }
+  function tVisible() {
+    if (can('t_all')) return S.tickets;
+    var me = S.me.user;
+    return S.tickets.filter(function (t) { return t.raiser === me || t.owner === me || t.tag === me || t.cc.indexOf(me) > -1; });
   }
 
-  function bindPickers() {
-    bindPickerInput("task-assignto-search", "task-assignto-results", "taskAssignTo", false, true);
-    bindPickerInput("task-updateto-search", "task-updateto-results", "taskUpdateTo", true, false);
-    bindPickerInput("ticket-tagto-search", "ticket-tagto-results", "ticketTagTo", false, false);
-    bindPickerInput("ticket-ccto-search", "ticket-ccto-results", "ticketCcTo", true, false);
+  /* ================================================================
+     RENDER ROOT
+  ================================================================ */
+  function taskTabs() {
+    var t = [];
+    if (can('assign')) t.push(['assign', '✚ Assign Task']);
+    if (can('all_tab')) t.push(['all', '📋 All Tasks']);
+    t.push(['my', '👤 My Tasks']);
+    if (mod('team') && can('team')) t.push(['team', '👥 Team & Contacts']);
+    if (mod('reports') && can('reports')) t.push(['reports', '📊 Reports']);
+    if (S.me.admin && !S.me.preview) t.push(['cpanel', '⚙ Control Panel']);
+    return t;
+  }
+  function ticketTabs() { var t = []; if (can('t_raise')) t.push(['traise', '✚ Raise Ticket']); t.push(['tall', '🎫 All Tickets']); t.push(['tmy', '👤 My Tickets']); return t; }
+  function render() {
+    var b = '';
+    if (!S.live) b += '<div class="ban demo"><b>DEMO MODE</b> — opened outside the portal or not logged in, showing sample data. <button class="btn sm" data-act="demo-reset">Reset demo</button></div>';
+    if (S.me.preview) b += '<div class="ban prev">👁 <b>Preview:</b> exactly what <b>' + esc(S.me.name) + '</b> (' + esc(S.me.role) + ') sees. Buttons are blocked. <button class="btn sm" data-act="exit-preview">Back to my view</button>' + hb('viewas') + '</div>';
+    q('#banners').innerHTML = b;
+    var mods = [];
+    if (mod('tasks')) mods.push('task'); if (mod('tickets')) mods.push('ticket');
+    if (S.me.admin && !S.me.preview && mods.indexOf('task') < 0) mods.unshift('task');
+    if (mods.indexOf(S.mod) < 0) S.mod = mods[0] || 'task';
+    qa('#modsw button').forEach(function (x) { x.style.display = mods.indexOf(x.dataset.mod) > -1 ? '' : 'none'; x.classList.toggle('on', x.dataset.mod === S.mod); });
+    q('#h-title').textContent = S.mod === 'task' ? 'TASK MANAGEMENT PRO' : 'TICKET / HELPDESK';
+    var vt = visible(), vk = tVisible();
+    q('#mc-task').textContent = vt.filter(function (t) { return isOverdue(t); }).length || vt.filter(function (t) { return !isClosed(t); }).length;
+    q('#mc-ticket').textContent = vk.filter(tkActive).length;
+    var tabs = S.mod === 'task' ? taskTabs() : ticketTabs(), keys = tabs.map(function (t) { return t[0]; });
+    if (keys.indexOf(S.tab[S.mod]) < 0) S.tab[S.mod] = keys[0];
+    var cur = S.tab[S.mod];
+    var counts = { all: vt.filter(function (t) { return !isClosed(t); }).length, my: queueOf(S.me.user).length, team: S.people.length, tall: vk.filter(tkActive).length, tmy: vk.filter(function (t) { return (t.tag === S.me.user && tkActive(t)) || (t.raiser === S.me.user && t.status === 'Resolved'); }).length };
+    q('#tabs').innerHTML = tabs.map(function (t) { return '<button class="tab ' + (cur === t[0] ? 'on' : '') + '" data-tab="' + t[0] + '">' + t[1] + (counts[t[0]] != null ? ' <span class="cnt">' + counts[t[0]] + '</span>' : '') + '</button>'; }).join('') +
+      hb({ assign: 'a_who', all: 'all', my: 'my', team: 'team', reports: 'reports', cpanel: 'cpanel', traise: 't_raise', tall: 't_all', tmy: 't_my' }[cur]);
+    if (S.mod === 'task') {
+      if (cur === 'cpanel') { q('#kpis').innerHTML = ''; renderCPanel(); return; }
+      renderKpis(vt);
+      if (cur === 'assign') renderAssign(); else if (cur === 'all') renderAll(); else if (cur === 'my') renderMy(); else if (cur === 'team') renderTeam(); else renderReports();
+    } else {
+      renderTKpis(vk);
+      if (cur === 'traise') renderRaise(); else if (cur === 'tall') renderTAll(); else renderTMy();
+    }
+  }
+  function kpiHtml(k) { return k.map(function (x) { return '<div class="kpi ' + x[3] + '" data-kpi="' + x[4] + '"><div class="kv">' + x[1] + '</div><div class="kl"><div class="kh">' + x[0] + '</div><div class="ks">' + x[2] + '</div></div></div>'; }).join(''); }
+  function renderKpis(v) {
+    var open = v.filter(function (t) { return !isClosed(t); }), d30 = Date.now() - 30 * 86400000;
+    var done30 = v.filter(function (t) { return t.status === 'Completed' && toDate(t.completedOn) && toDate(t.completedOn).getTime() > d30; });
+    var ontime = done30.filter(function (t) { var c = toDate(t.completedOn), d = toDate(t.due); return c && d && c <= d; }).length;
+    q('#kpis').innerHTML = kpiHtml([
+      ['Open', open.length, 'All active', '', 'Active'], ['In Progress', v.filter(function (t) { return t.status === 'In Progress'; }).length, 'Being worked', 'amb', 'In Progress'],
+      ['Review Pending', v.filter(function (t) { return t.status === 'Review Pending'; }).length, 'Awaiting approval', 'pur', 'Review Pending'], ['Due Today', v.filter(dueToday).length, 'Deadline today', 'org', 'DueToday'],
+      ['Overdue', v.filter(function (t) { return isOverdue(t); }).length, 'Past deadline', 'red', 'Overdue'], ['P1 + P2', open.filter(function (t) { return t.pri === 'VVIMP' || t.pri === 'IMP'; }).length, PRI_L('VVIMP') + ' / ' + PRI_L('IMP'), 'red', 'Critical'],
+      ['Reports Due', v.filter(function (t) { return reportDue(t); }).length, 'EOD/Weekly/Monthly', 'blue', 'Reports'], ['On-Time %', done30.length ? Math.round(ontime * 100 / done30.length) + '%' : '—', done30.length + ' closed / 30d', 'teal', 'Completed']
+    ]);
+  }
+  function renderTKpis(v) {
+    var me = S.me.user;
+    q('#kpis').innerHTML = kpiHtml([
+      ['Open', v.filter(function (t) { return t.status === 'Open'; }).length, 'New / in work', '', 'Open'], ['Reopened', v.filter(function (t) { return t.status === 'Reopened'; }).length, 'Not satisfied', 'org', 'Reopened'],
+      ['On Hold', v.filter(function (t) { return t.status === 'On Hold'; }).length, 'Paused', 'amb', 'On Hold'], ['Resolved', v.filter(function (t) { return t.status === 'Resolved'; }).length, 'Awaiting close', 'pur', 'Resolved'],
+      ['SLA Breached', v.filter(tkBreach).length, 'High ' + SLA('High') + 'h · Med ' + SLA('Medium') + 'h', 'red', 'Breach'], ['High Open', v.filter(function (t) { return tkActive(t) && t.pri === 'High'; }).length, 'Urgent', 'red', 'HighOpen'],
+      ['Tagged to Me', v.filter(function (t) { return t.tag === me && tkActive(t); }).length, 'I must resolve', 'blue', 'Mine'], ['Closed', v.filter(tkClosed).length, 'Completed', 'teal', 'Closed']
+    ]);
+  }
 
-    document.addEventListener("click", function (e) {
-      if (!e.target.closest(".picker-wrap")) {
-        $all(".picker-results").forEach(function (box) {
-          box.classList.remove("show");
-        });
+  /* ================================================================
+     ASSIGN TAB
+  ================================================================ */
+  function resetForm() {
+    var due = new Date(Date.now() + 86400000); due.setHours(18, 0, 0, 0);
+    S.form = { mode: 'emp', sel: [], selBranches: [], selDepts: [], selDesigs: [], narrowBranch: '', cat: '', title: '', details: '', start: nowLocal(), due: localStr(due), pri: '', top: false, report: { type: '', time: '19:00', day: 6, dom: 1, dt: '' }, cc: [], email: true, wa: true, checklist: '', asGroup: false, response: 'group', leader: '' };
+    S.pendingFiles = [];
+  }
+  function groupKey() { return S.form.mode === 'branch' ? 'branch' : S.form.mode === 'dept' ? 'dept' : 'desig'; }
+  function groupSel() { var f = S.form; return f.mode === 'branch' ? f.selBranches : f.mode === 'dept' ? f.selDepts : f.selDesigs; }
+  function peopleForMode() { var f = S.form, k = groupKey(), sel = groupSel(); if (f.mode === 'emp') return []; return S.people.filter(function (p) { return sel.indexOf(p[k]) > -1 && (f.mode === 'branch' || !f.narrowBranch || p.branch === f.narrowBranch); }); }
+  function distinct(key) { return uniq(S.people.map(function (p) { return p[key]; })).sort(); }
+  function allBranches() { return uniq(BRANCHES.concat(distinct('branch'))); }
+  function prow(p, checked, withBox) {
+    return '<label class="prow ' + (p.login ? '' : 'dis') + '">' + (withBox ? '<input type="checkbox" data-pu="' + esc(p.user) + '" ' + (checked ? 'checked' : '') + ' ' + (p.login ? '' : 'disabled') + '>' : '') +
+      '<div class="av">' + initials(p.name) + '</div><div class="pi"><div class="pn">' + esc(p.name) + '</div><div class="pm">' + esc([p.desig, p.dept, p.branch].filter(Boolean).join(' · ')) + '</div></div>' +
+      phHtml(p, true) + (p.branchLogin ? '<span class="tag b">Branch</span>' : '') + (p.login ? '<span class="tag">' + queueOf(p.user).length + ' open</span>' : '<span class="tag r">No login</span>') + '</label>';
+  }
+  function renderAssign() {
+    var f = S.form, rep = f.report, multi = f.sel.length > 1, groupOK = mod('group') && can('group');
+    if (!multi || !groupOK) f.asGroup = false;
+    if (f.asGroup && f.sel.indexOf(f.leader) < 0) f.leader = f.sel[0];
+    var modes = [['emp', '👤 Employee(s)'], ['branch', '🏢 Branch'], ['dept', '🗂 Dept'], ['desig', '🎖 Designation']].map(function (m) { return '<button data-mode="' + m[0] + '" class="' + (f.mode === m[0] ? 'on' : '') + '">' + m[1] + '</button>'; }).join('');
+    var target = '';
+    if (f.mode === 'emp') target = '<div class="picker"><input id="f-emp" placeholder="Type name, branch, department or designation…" autocomplete="off"><div class="pres" id="f-emp-res"></div></div>';
+    else {
+      var src = f.mode === 'branch' ? allBranches() : distinct(groupKey()), chosen = groupSel(), k = groupKey();
+      target = '<div class="chips">' + src.map(function (s) { var n = S.people.filter(function (p) { return p[k] === s; }).length; return '<span class="chip ' + (chosen.indexOf(s) > -1 ? 'on' : '') + '" data-grp="' + esc(s) + '">' + esc(s) + ' <small>' + n + '</small></span>'; }).join('') + '</div>';
+      if (chosen.length) {
+        var pl = peopleForMode();
+        target += '<div class="row" style="margin-top:6px">' + (f.mode !== 'branch' ? '<select id="f-narrow" style="width:160px;height:31px;padding:2px 8px;font-size:12px">' + optList(allBranches(), f.narrowBranch, 'All branches') + '</select>' : '') + '<button class="btn sm" data-act="sel-all">All with login</button>' + (f.mode === 'branch' ? '<button class="btn sm" data-act="sel-blogin">Branch login only</button>' : '') + '<button class="btn sm" data-act="sel-mgr">Managers only</button><button class="btn sm" data-act="sel-none">Clear</button><span class="hint">' + pl.filter(function (p) { return p.login; }).length + '/' + pl.length + ' have login</span></div>';
+        target += '<div class="plist">' + (pl.length ? pl.map(function (p) { return prow(p, p.login && f.sel.indexOf(p.user) > -1, true); }).join('') : '<div class="empty">No people</div>') + '</div>';
       }
-    });
-  }
-
-  function bindPickerInput(inputId, resultId, key, multi, excludeSelf) {
-    var input = $("#" + inputId);
-    var resultBox = $("#" + resultId);
-
-    if (!input || !resultBox) return;
-
-    input.addEventListener("input", function () {
-      renderPickerResults(input, resultBox, key, multi, excludeSelf);
-    });
-  }
-
-function bindAttachments() {
-  var taskZone = $("#task-attach-zone");
-  var taskInput = $("#task-file-input");
-
-  if (taskZone && taskInput) {
-    taskInput.setAttribute("accept", ALLOWED_ATTACHMENT_ACCEPT);
-
-    taskZone.addEventListener("click", function () {
-      taskInput.click();
-    });
-
-    taskInput.addEventListener("change", function () {
-      addSelectedFiles("task", taskInput.files || []);
-      taskInput.value = "";
-    });
-  }
-
-  var ticketZone = $("#ticket-attach-zone");
-  var ticketInput = $("#ticket-file-input");
-
-  if (ticketZone && ticketInput) {
-    ticketInput.setAttribute("accept", ALLOWED_ATTACHMENT_ACCEPT);
-
-    ticketZone.addEventListener("click", function () {
-      ticketInput.click();
-    });
-
-    ticketInput.addEventListener("change", function () {
-      addSelectedFiles("ticket", ticketInput.files || []);
-      ticketInput.value = "";
-    });
-  }
-}
-
-  function bindButtons() {
-    var taskSubmit = $("#task-submit-btn");
-    if (taskSubmit) {
-      taskSubmit.addEventListener("click", submitTask);
     }
-
-    var ticketSubmit = $("#ticket-submit-btn");
-    if (ticketSubmit) {
-      ticketSubmit.addEventListener("click", submitTicket);
+    var groupUI = '';
+    if (multi && groupOK) {
+      groupUI = '<div class="sub" style="margin-top:10px">Assign as ' + hb('a_mode') + '</div><div class="seg fit" id="f-asg"><button data-asg="ind" class="' + (!f.asGroup ? 'on' : '') + '">👤 Individual tasks (' + f.sel.length + ')</button><button data-asg="grp" class="' + (f.asGroup ? 'on' : '') + '">👥 One group task</button></div>';
+      if (f.asGroup) groupUI += '<div class="grid g2" style="margin-top:8px"><div class="fld"><label class="lbl">Task response</label><div class="seg fit" id="f-resp"><button data-resp="group" class="' + (f.response === 'group' ? 'on' : '') + '">Group</button><button data-resp="individual" class="' + (f.response === 'individual' ? 'on' : '') + '">Individual</button></div></div><div class="fld"><label class="lbl">Group leader</label><select id="f-leader">' + f.sel.map(function (u) { return '<option value="' + esc(u) + '" ' + (f.leader === u ? 'selected' : '') + '>' + esc(personName(u)) + '</option>'; }).join('') + '</select></div></div><div class="hint">' + (f.response === 'group' ? 'Group response: one shared status — any member’s Done completes it for all.' : 'Individual response: each member reports &amp; completes own part; all see everyone’s updates.') + '</div>';
     }
+    var repX = '', rts = reportTypes();
+    if (rep.type === 'EOD') repX = '<div class="fld"><label class="lbl">Report by</label><input type="time" id="f-rtime" value="' + esc(rep.time) + '"></div>';
+    if (rep.type === 'WEEKLY') repX = '<div class="fld"><label class="lbl">Weekday</label><select id="f-rday">' + WEEKDAYS.map(function (d, i) { return '<option value="' + i + '" ' + (+rep.day === i ? 'selected' : '') + '>' + d + '</option>'; }).join('') + '</select></div><div class="fld"><label class="lbl">Time</label><input type="time" id="f-rtime" value="' + esc(rep.time) + '"></div>';
+    if (rep.type === 'MONTHLY') repX = '<div class="fld"><label class="lbl">Date of month</label><select id="f-rdom">' + Array.apply(null, Array(28)).map(function (x, i) { return '<option ' + (+rep.dom === i + 1 ? 'selected' : '') + '>' + (i + 1) + '</option>'; }).join('') + '</select></div><div class="fld"><label class="lbl">Time</label><input type="time" id="f-rtime" value="' + esc(rep.time) + '"></div>';
+    if (rep.type === 'SPECIFIC') repX = '<div class="fld" style="grid-column:span 2"><label class="lbl">Report date &amp; time</label><input type="datetime-local" id="f-rdt" value="' + esc(rep.dt) + '" min="' + nowLocal() + '"></div>';
+    var req = mod('repMandatory') ? ' <span class="req" style="color:#ffd2d2">*</span>' : '';
 
-    var taskApply = $("#task-report-apply");
-    if (taskApply) {
-      taskApply.addEventListener("click", function () {
-          resetTablePage("taskReport");
-          renderTaskReport();
+    q('#view').innerHTML = '<div class="asg">' +
+      '<div><div class="card"><div class="ch">① Assign to <span class="req" style="color:#ffd2d2">*</span><span class="sp">' + hb('a_who') + '</span></div><div class="cb">' +
+      '<div class="minfo"><div><span>Assigned by</span><b>' + esc(S.me.name) + '</b></div><div><span>Assigned on (auto)</span><b id="f-clock">' + fDT(nowLocal()) + '</b></div><div><span>Task no. (auto)</span><b>' + esc(nextTaskNo()) + (multi && !f.asGroup ? ' +' + (f.sel.length - 1) : '') + '</b></div></div>' +
+      '<div class="seg fit">' + modes + '</div><div style="margin-top:8px">' + target + '</div>' +
+      '<div class="sub" style="margin-top:8px">Selected (' + f.sel.length + ')</div><div class="chips selbox">' + (f.sel.map(function (u) { return '<span class="chip sel">' + (f.asGroup && u === f.leader ? '⭐ ' : '') + esc(personName(u)) + ' <span class="x" data-unsel="' + esc(u) + '">×</span></span>'; }).join('') || '<span class="hint">Nobody selected yet</span>') + '</div>' + groupUI +
+      '</div></div>' +
+      '<div class="card"><div class="ch">③ Priority &amp; queue <span class="req" style="color:#ffd2d2">*</span><span class="sp">' + hb('a_pri') + '</span></div><div class="cb">' +
+      '<div class="pg" id="f-pri">' + PRI_KEYS.map(function (k) { return '<button class="pb ' + (f.pri === k ? 'on' : '') + '" data-p="' + k + '"><span class="pn-num">' + PRI_N(k) + '</span>' + esc(PRI_L(k)) + '<small>' + esc(PRI_H(k)) + '</small></button>'; }).join('') + '</div>' +
+      '<label class="tg" style="margin-top:9px"><input type="checkbox" id="f-top" ' + (f.top ? 'checked' : '') + '> Force to queue #1 for every assignee</label></div></div></div>' +
+      '<div><div class="card"><div class="ch">② Task details<span class="sp">' + hb('a_what') + '</span></div><div class="cb">' +
+      '<div class="grid" style="grid-template-columns:1fr 2fr"><div class="fld"><label class="lbl">Category <span class="req">*</span></label><select id="f-cat">' + optList(categories(), f.cat, 'Select') + '</select></div><div class="fld"><label class="lbl">Title <span class="req">*</span> (max 80)</label><input id="f-title" maxlength="80" value="' + esc(f.title) + '" placeholder="e.g. Update all October walk-ins in ERP"></div></div>' +
+      '<div class="grid g2" style="margin-top:9px"><div class="fld"><label class="lbl">Start <span class="req">*</span></label><input type="datetime-local" id="f-start" value="' + esc(f.start) + '"></div><div class="fld"><label class="lbl">Due <span class="req">*</span> <span id="f-dur" class="grn"></span></label><input type="datetime-local" id="f-due" value="' + esc(f.due) + '" min="' + nowLocal() + '"></div></div>' +
+      '<div class="fld" style="margin-top:9px"><label class="lbl">Details <span class="req">*</span> <span id="f-wc" style="float:right">0 / 150 words</span></label><textarea id="f-details" placeholder="What exactly must be done, expected standard, who to coordinate with…">' + esc(f.details) + '</textarea></div>' +
+      (mod('checklist') ? '<details class="ck-d" ' + (f.checklist ? 'open' : '') + '><summary>＋ Checklist / sub-steps (optional)</summary><textarea id="f-check" style="min-height:56px" placeholder="One step per line">' + esc(f.checklist) + '</textarea></details>' : '') +
+      '</div></div>' +
+      '<div class="card"><div class="ch">④ Reporting rule' + req + '<span class="sp">' + hb('a_rep') + '</span></div><div class="cb">' +
+      '<div class="seg" id="f-rep">' + rts.map(function (r) { return '<button data-r="' + r.k + '" class="' + (rep.type === r.k ? 'on' : '') + '" title="' + esc(r.d) + '">' + esc(r.label) + '</button>'; }).join('') + '</div>' +
+      (repX ? '<div class="grid g3" style="margin-top:9px">' + repX + '</div>' : '<div class="hint">' + (rep.type ? esc(REP(rep.type).d) : (mod('repMandatory') ? 'Mandatory — choose how the assignee must report.' : 'Optional.')) + '</div>') +
+      '</div></div>' +
+      '<div class="card"><div class="ch">⑤ CC, notify &amp; files<span class="sp">' + hb('a_notify') + '</span></div><div class="cb">' +
+      '<div class="picker"><input id="f-cc" placeholder="CC — once done / updates go to… (type name)" autocomplete="off"><div class="pres" id="f-cc-res"></div></div>' +
+      '<div class="chips" style="margin-top:5px">' + f.cc.map(function (u) { return '<span class="chip sel">' + esc(personName(u)) + ' <span class="x" data-uncc="' + esc(u) + '">×</span></span>'; }).join('') + '<span class="chip sel" style="opacity:.7">' + esc(S.me.name) + ' (you)</span></div>' +
+      '<div class="row" style="margin-top:9px;gap:16px">' + (mod('email') ? '<label class="tg"><input type="checkbox" id="f-email" ' + (f.email ? 'checked' : '') + '> ✉️ Email</label>' : '') + (mod('wa') ? '<label class="tg"><input type="checkbox" id="f-wa" ' + (f.wa ? 'checked' : '') + '> 🟢 WhatsApp</label>' : '') + '<span class="tg">🔔 ERP <span class="tag g">always</span></span></div>' +
+      '<div class="drop" id="f-drop" style="margin-top:9px">📎 Click or drop files (max 5 MB each)</div><div class="chips" id="f-flist" style="margin-top:5px">' + fileChips() + '</div>' +
+      '</div></div></div>' +
+      '<div class="side"><div class="card"><div class="ch">Assignment preview<span class="sp">' + hb('a_prev') + '</span></div><div class="cb" id="f-preview"></div></div>' +
+      (mod('recent') ? '<div class="card"><div class="ch lt">🕘 Recent assigned (last 5)<span class="sp">' + hb('a_recent') + '</span></div><div class="cb" id="f-recent">' + recentHtml() + '</div></div>' : '') +
+      '</div></div>';
+    updateDur(); updateWc(); renderPreview(); startClock();
+  }
+  function recentHtml() {
+    var me = S.me.user, seen = {}, l = S.tasks.filter(function (t) { return t.by === me || t.owner === me; }).sort(function (a, b) { return (b.created || '') > (a.created || '') ? 1 : -1; }).filter(function (t) { var k = t.mid || t.id; if (seen[k]) return false; seen[k] = 1; return true; }).slice(0, 5);
+    if (!l.length) return '<div class="hint">You have not assigned any task yet.</div>';
+    return l.map(function (t) {
+      var who = t.grp ? '👥 ' + t.grp.members.length + ' members' : personName(t.assignee);
+      return '<div class="qi" style="padding:6px 0;cursor:pointer" data-open="' + esc(t.id) + '"><div class="pi"><div class="tl1" style="max-width:none">' + esc(dispNo(t)) + ' — ' + esc(t.title) + '</div><div class="pm">' + esc(who) + ' · ' + fDT(t.created) + '</div></div>' + priPill(t.pri) + '<span class="pill ' + (ST_CLS[t.status] || 's-open') + '">' + esc(t.status) + '</span></div>';
+    }).join('');
+  }
+  function fileChips() { return S.pendingFiles.map(function (fl, i) { return '<span class="chip sel">📄 ' + esc(fl.name) + ' <small>' + fsize(fl.size) + '</small> <span class="x" data-unfile="' + i + '">×</span></span>'; }).join(''); }
+  function startClock() { clearInterval(clockTimer); clockTimer = setInterval(function () { var c = q('#f-clock'); if (!c) { clearInterval(clockTimer); return; } c.textContent = fDT(nowLocal()); }, 15000); }
+  function updateDur() { var s = toDate(S.form.start), d = toDate(S.form.due), el = q('#f-dur'); if (!el) return; if (s && d) { el.textContent = d <= s ? '⚠ before start' : '· ' + dur(d - s); el.className = d <= s ? 'red' : 'grn'; } else el.textContent = ''; }
+  function updateWc() { var n = words(S.form.details), el = q('#f-wc'); if (el) { el.textContent = n + ' / 150 words'; el.className = n > 150 ? 'red' : 'mut'; } }
+  function renderPreview() {
+    var f = S.form, el = q('#f-preview'); if (!el) return;
+    var h = '';
+    if (!f.sel.length) h += '<div class="empty" style="padding:14px"><b>No assignee yet</b>Select people to see their queue and new task number.</div>';
+    else {
+      h += '<div class="sub">' + (f.asGroup ? '👥 Group task · ' + (f.response === 'group' ? 'group response' : 'individual response') : 'Assignees · queue position') + '</div>';
+      f.sel.slice(0, 50).forEach(function (u, i) {
+        var p = person(u) || { name: u }, l = queueOf(u), od = l.filter(function (t) { return isOverdue(t); }).length, pl = f.pri ? placement(u, f.pri, f.top) : null;
+        h += '<div class="sc"><div class="av">' + initials(p.name) + '</div><div class="pi"><div class="pn">' + (f.asGroup && u === f.leader ? '⭐ ' : '') + esc(p.name) + '</div><div class="pm">' + esc([p.desig, p.branch].filter(Boolean).join(' · ')) + '</div><div class="row" style="gap:4px;margin-top:2px;flex-wrap:nowrap">' + phHtml(p, true) + '<span class="tag">Open ' + l.length + '</span>' + (od ? '<span class="tag r">OD ' + od + '</span>' : '') + '</div></div><div class="qb"><div class="tno">' + (f.asGroup ? nextTaskNo(0) : nextTaskNo(i)) + '</div>' + (pl ? '<span class="qn ' + (pl.rank === 1 ? 'q1' : '') + '" style="margin-top:3px">#' + pl.rank + '</span>' : '<span class="tag">pick priority</span>') + '</div></div>';
+      });
+      if (f.sel.length > 50) h += '<div class="hint">+ ' + (f.sel.length - 50) + ' more…</div>';
+    }
+    var miss = function (v, txt) { return v ? txt : '<span class="red">Missing</span>'; };
+    h += '<div class="sub">Summary</div>' +
+      '<div class="sr"><span>Category</span><span>' + miss(f.cat, esc(f.cat)) + '</span></div><div class="sr"><span>Title</span><span>' + miss(f.title.trim(), esc(f.title)) + '</span></div>' +
+      '<div class="sr"><span>Priority</span><span>' + miss(f.pri, f.pri && priPill(f.pri)) + '</span></div><div class="sr"><span>Due</span><span>' + fDT(f.due) + '</span></div>' +
+      '<div class="sr"><span>Reporting</span><span>' + (mod('repMandatory') ? miss(f.report.type, esc(repText(f.report))) : esc(repText(f.report))) + '</span></div>' +
+      '<div class="sr"><span>Type</span><span>' + (f.asGroup ? '👥 Group (' + f.sel.length + ')' : f.sel.length > 1 ? f.sel.length + ' individual tasks' : 'Single task') + '</span></div>' +
+      '<div class="sr"><span>Notify</span><span>ERP' + (f.email && mod('email') ? ' · Email' : '') + (f.wa && mod('wa') ? ' · WhatsApp' : '') + '</span></div>' +
+      '<div class="row" style="margin-top:10px;flex-wrap:nowrap"><button class="btn pri lg" data-act="assign" style="flex:1;justify-content:center">✓ Assign ' + (f.asGroup ? 'Group Task' : 'Task' + (f.sel.length > 1 ? ' to ' + f.sel.length : '')) + '</button><button class="btn" data-act="form-reset">Clear</button></div>';
+    el.innerHTML = h;
+  }
+  function pickerResults(inputId, resId, exclude, onPick) {
+    var inp = q('#' + inputId), box = q('#' + resId); if (!inp || !box) return;
+    var s = inp.value.trim().toLowerCase(); if (!s) { box.classList.remove('show'); return; }
+    var m = S.people.filter(function (p) { return p.login && exclude.indexOf(p.user) < 0 && (p.name + ' ' + p.user + ' ' + p.branch + ' ' + p.dept + ' ' + p.desig + ' ' + (phonesOpen() ? digits(p.phone) : '')).toLowerCase().indexOf(s) > -1; }).slice(0, 14);
+    box.innerHTML = m.length ? m.map(function (p) { return '<div data-pick="' + esc(p.user) + '">' + prow(p, false, false) + '</div>'; }).join('') : '<div class="prow dis">No matching employee with ERP login</div>';
+    box.classList.add('show');
+    qa('[data-pick]', box).forEach(function (r) { r.addEventListener('mousedown', function (e) { e.preventDefault(); onPick(r.dataset.pick); inp.value = ''; box.classList.remove('show'); }); });
+  }
+  function validateForm() {
+    var f = S.form, e = [];
+    if (!f.sel.length) e.push('Select at least one assignee');
+    if (!f.cat) e.push('Select category'); if (!f.title.trim()) e.push('Enter task title'); if (!f.details.trim()) e.push('Enter task details');
+    if (words(f.details) > 150) e.push('Details exceed 150 words'); if (!f.pri) e.push('Select priority');
+    var s = toDate(f.start), d = toDate(f.due);
+    if (!d) e.push('Select due date-time'); else if (d < new Date()) e.push('Due date-time cannot be in the past');
+    if (s && d && d <= s) e.push('Due must be after start');
+    if (mod('repMandatory') && !f.report.type) e.push('Choose reporting rule');
+    if (f.report.type === 'SPECIFIC' && !f.report.dt) e.push('Pick report date & time');
+    return e;
+  }
+  function confirmAssign() {
+    if (guard()) return;
+    var errs = validateForm();
+    if (errs.length) { modal('⚠ Please complete the form', '<ul style="margin:0;padding-left:18px">' + errs.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>', [['OK', 'pri', closeModal]]); return; }
+    var f = S.form;
+    modal('Confirm assignment', '<div class="bn g">' + (f.asGroup ? '👥 One <b>group task</b> for <b>' + f.sel.length + '</b> members (leader: ' + esc(personName(f.leader)) + ', ' + f.response + ' response)' : 'Assigning <b>' + esc(f.title) + '</b> to <b>' + f.sel.length + '</b> ' + (f.sel.length > 1 ? 'people (separate tasks)' : 'person')) + '.</div>' +
+      '<div class="sr"><span>Priority</span><span>' + priPill(f.pri) + (f.top ? ' · forced #1' : '') + '</span></div><div class="sr"><span>Due</span><span>' + fDT(f.due) + '</span></div><div class="sr"><span>Reporting</span><span>' + esc(repText(f.report)) + '</span></div><div class="sr"><span>Attachments</span><span>' + S.pendingFiles.length + '</span></div>',
+      [['Back', '', closeModal], ['✓ Confirm &amp; Assign', 'pri', doAssign]]);
+  }
+  function newBase(f, u, extra) {
+    var p = person(u) || {}, now = nowLocal();
+    var checklist = mod('checklist') ? f.checklist.split('\n').map(function (x) { return x.trim(); }).filter(Boolean).map(function (x) { return { t: x, d: false }; }) : [];
+    var b = { meta: {}, no: nextTaskNo(0), title: f.title.trim(), details: f.details.trim(), cat: f.cat, pri: f.pri, status: 'Open', assignee: u, by: S.me.user, created: now, start: f.start, due: f.due, cc: f.cc.slice(), report: clone(f.report), notify: { email: f.email, wa: f.wa }, checklist: checklist, progress: 0, updates: [], delays: [], completedOn: '', target: { type: f.mode === 'emp' ? 'Employee' : f.mode === 'branch' ? 'Branch' : f.mode === 'dept' ? 'Department' : 'Designation', values: f.mode === 'emp' ? [] : groupSel().slice() }, qk: 1, branch: p.branch || '', dept: p.dept || '', desig: p.desig || '', grp: null };
+    Object.keys(extra || {}).forEach(function (k) { b[k] = extra[k]; });
+    return b;
+  }
+  function doAssign() {
+    var f = S.form, created = [], wantEmail = f.email && mod('email'), wantWa = f.wa && mod('wa');
+    modalBusy(f.asGroup ? 'Creating group task…' : 'Assigning tasks…');
+    var chain = Promise.resolve(), files = S.pendingFiles.slice();
+    var upload = function (name) { return files.reduce(function (pp, fl) { return pp.then(function () { return API.upload('ToDo', name, fl).then(function (r) { (S.files[name] = S.files[name] || []).push(r); }).catch(function (e) { toast(String(e), 1); }); }); }, Promise.resolve()); };
+    if (f.asGroup) {
+      var members = f.sel.slice(), leader = f.leader || members[0], mq = {};
+      members.forEach(function (u) { mq[u] = placement(u, f.pri, f.top).qk; });
+      var b = newBase(f, leader, {});
+      b.grp = { id: uid('G'), members: members, leader: leader, response: f.response, mirrors: {} };
+      b.meta = { mq: mq, mstate: {} };
+      b.updates = [{ id: uid(), at: nowLocal(), by: S.me.user, type: 'System', text: '👥 Group task assigned to ' + members.length + ' members · ' + PRI_N(f.pri) + ' ' + PRI_L(f.pri) + ' · ' + f.response + ' response · Reporting: ' + repText(f.report) }];
+      var doc = denormBase(b); doc.doctype = 'ToDo'; doc.allocated_to = leader; doc.assigned_by = S.me.user;
+      var masterName, shareFail = 0;
+      chain = API.create(doc).then(function (d) {
+        masterName = d.name;
+        return members.filter(function (u) { return u !== leader; }).reduce(function (p, u) {
+          return p.then(function () { return API.create(mirrorDoc(masterName, b, u)).then(function (md) { b.grp.mirrors[u] = md.name; }); })
+            .then(function () { return API.share('ToDo', masterName, u, true).catch(function () { shareFail++; }); });
+        }, Promise.resolve());
+      }).then(function () { return API.save('ToDo', masterName, { description: denormBase(b).description }); })
+        .then(function () { return upload(masterName); })
+        .then(function () { return API.get('ToDo', masterName); })
+        .then(function (raw) { var vs = explode(base(raw)); S.tasks = vs.concat(S.tasks); created = vs; if (shareFail) toast(shareFail + ' member(s) could not be given access — check ERP sharing', 1); return members.reduce(function (p, u) { return p.then(function () { return syncQueue(u); }); }, Promise.resolve()); });
+    } else {
+      f.sel.forEach(function (u) {
+        chain = chain.then(function () {
+          var pl = placement(u, f.pri, f.top), b = newBase(f, u, { qk: pl.qk });
+          b.updates = [{ id: uid(), at: nowLocal(), by: S.me.user, type: 'System', text: 'Task assigned · ' + PRI_N(f.pri) + ' ' + PRI_L(f.pri) + ' · Queue #' + pl.rank + ' · Reporting: ' + repText(f.report) }];
+          var doc = denormBase(b); doc.doctype = 'ToDo'; doc.allocated_to = u; doc.assigned_by = S.me.user;
+          return API.create(doc).then(function (d) { b.id = d.name; b.owner = S.me.user; b.raw = d; b.cq = 0; enrich(b); S.tasks.unshift(b); created.push(b); return upload(d.name); }).then(function () { return syncQueue(u); });
         });
-    }
-
-    ["tr-category", "tr-priority", "tr-status"].forEach(function (id) {
-      var el = $("#" + id);
-      if (el) {
-          el.addEventListener("change", function () {
-            resetTablePage("taskReport");
-            renderTaskReport();
-          });
-        }
-    });
-
-    var ticketApply = $("#ticket-report-apply");
-    if (ticketApply) {
-      ticketApply.addEventListener("click", function () {
-          resetTablePage("ticketReport");
-          renderTicketReport();
-        });
-    }
-
-    ["ticr-category", "ticr-priority", "ticr-status"].forEach(function (id) {
-      var el = $("#" + id);
-      if (el) {
-          el.addEventListener("change", function () {
-            resetTablePage("ticketReport");
-            renderTicketReport();
-          });
-        }
-    });
-  }
-
-  function bindModal() {
-    var okBtn = $("#modal-ok-btn");
-    if (okBtn) okBtn.addEventListener("click", closeModal);
-
-    var modal = $("#modal");
-    if (modal) {
-      modal.addEventListener("click", function (e) {
-        if (e.target === modal) closeModal();
       });
     }
+    chain.then(function () { return wantEmail ? sendEmails(created, 'new') : null; }).then(function () {
+      resetForm(); render(); showDispatch(created, wantWa, 'new');
+    }).catch(function (e) { closeModal(); toast('Failed: ' + errMsg(e), 1); render(); });
   }
-  
-  function bindTaskDateRules() {
-  var startEl = $("#task-startdate");
-  var deadlineEl = $("#task-deadline");
-
-  if (startEl) {
-    startEl.addEventListener("change", updateTaskDateRules);
-    startEl.addEventListener("input", updateTaskDateRules);
+  function taskMsg(t, kind) {
+    var head = kind === 'reminder' ? '⏰ *LIFE Clinics — Task Reminder*' : '📌 *LIFE Clinics — New ' + (t.grp ? 'Group ' : '') + 'Task Assigned*';
+    return head + '\n\nDear ' + personName(t.assignee) + ',\n\n*Task No:* ' + dispNo(t) + '   |   *Your Queue:* #' + (qRank(t) || '-') + (t.grp ? '\n*Group:* ' + t.grp.members.length + ' members (' + t.grp.response + ' response)' : '') +
+      '\n*Priority:* ' + PRI_N(t.pri) + ' ' + PRI_L(t.pri) + '\n*Category:* ' + t.cat + '\n*Title:* ' + t.title + '\n\n' + t.details.slice(0, 600) +
+      '\n\n*Assigned by:* ' + personName(t.by) + '\n*Assigned on:* ' + fDT(t.created) + '\n*Due:* ' + fDT(t.due) + '\n*Reporting:* ' + repText(t.report) +
+      '\n\nOpen & update: ' + location.origin + location.pathname + '\n— LIFE Task Management';
   }
-
-  if (deadlineEl) {
-    deadlineEl.addEventListener("change", updateTaskDateRules);
-    deadlineEl.addEventListener("input", updateTaskDateRules);
+  function mailHtml(title, text) { return '<div style="font-family:Arial,sans-serif;font-size:14px;color:#1d2a23"><div style="background:#14532d;color:#fff;padding:12px 16px;border-radius:8px 8px 0 0;font-size:16px;font-weight:bold">LIFE Clinics — ' + esc(title) + '</div><div style="border:1px solid #d5e6db;border-top:0;padding:16px;border-radius:0 0 8px 8px">' + esc(text).replace(/\*/g, '').replace(/\n/g, '<br>') + '</div></div>'; }
+  function sendEmails(list, kind) {
+    return list.reduce(function (p, t) { return p.then(function () { return API.email([t.assignee], t.cc, '[' + PRI_N(t.pri) + ' ' + PRI_L(t.pri) + '] ' + dispNo(t) + ' — ' + t.title, mailHtml(kind === 'reminder' ? 'Task Reminder' : 'New Task Assigned', taskMsg(t, kind)), 'ToDo', fileKey(t)).catch(function (e) { toast('Email not sent to ' + personName(t.assignee) + ': ' + errMsg(e), 1); }); }); }, Promise.resolve());
   }
-
-  updateTaskDateRules();
-}
-
-  // ============================================================
-  // DROPDOWNS / USER LOAD
-  // ============================================================
-
-function populateStaticDropdowns() {
-  fillSelect("#task-category", TASK_CATEGORIES, "Select");
-  fillSelect("#tr-category", TASK_CATEGORIES, "All");
-  fillSelect("#tr-status", TASK_STATUS_FILTERS, "All");
-
-  fillSelect("#ticket-branch", BRANCHES, "");
-  fillSelect("#ticket-category", Object.keys(TICKET_CATEGORY_MAP), "Select Category");
-  fillSelect("#ticr-category", Object.keys(TICKET_CATEGORY_MAP), "All");
-  fillSelect("#ticr-status", TICKET_STATUS_FILTERS, "All");
-}
-
-
-  function fillSelect(selector, rows, firstLabel) {
-    var el = $(selector);
-    if (!el) return;
-
-    var html = "";
-
-    if (firstLabel !== "") {
-      html += '<option value="">' + esc(firstLabel) + "</option>";
-    }
-
-    html += rows.map(function (x) {
-      return '<option value="' + esc(x) + '">' + esc(x) + "</option>";
-    }).join("");
-
-    el.innerHTML = html;
+  function waRow(u, msg, sub) {
+    var p = person(u) || {}, ph = phone91(p.phone);
+    return '<div class="sc"><div class="av">' + initials(personName(u)) + '</div><div class="pi"><div class="pn">' + esc(personName(u)) + '</div><div class="pm">' + esc(sub || '') + '</div></div>' + phHtml(p, true) +
+      (ph ? '<a class="btn wa sm" target="_blank" href="https://wa.me/' + ph + '?text=' + encodeURIComponent(msg) + '">WhatsApp</a>' : '<button class="btn sm" data-copymsg="' + esc(encodeURIComponent(msg)) + '">Copy msg</button>') + '</div>';
   }
-  
-  function normalizeRoleName(value) {
-    return String(value || "").trim();
+  function showDispatch(list, wa, kind) {
+    var rows = list.map(function (t) { return waRow(t.assignee, taskMsg(t, kind), dispNo(t) + ' · queue #' + (qRank(t) || '-')); }).join('');
+    modal(kind === 'new' ? '✅ ' + (list[0] && list[0].grp ? 'Group task assigned to ' + list.length : list.length + ' task(s) assigned') : 'Send reminder', '<div class="bn g">Saved in ERP. ' + (wa ? 'Tap WhatsApp for each person to send the ready message.' : '') + '</div>' + (wa ? rows : ''), [['Done', 'pri', closeModal]], true);
   }
 
-  function addCurrentUserRole(value) {
-    var role = "";
-
-    if (typeof value === "string") {
-      role = normalizeRoleName(value);
-    } else if (value && typeof value === "object") {
-      role = normalizeRoleName(
-        value.role ||
-        value.name ||
-        value.role_name ||
-        ""
-      );
-    }
-
-    if (!role) return;
-
-    if (currentUserRoles.indexOf(role) === -1) {
-      currentUserRoles.push(role);
-    }
-  }
-
-  function collectRolesFromClientGlobals() {
-    currentUserRoles = [];
-
-    var sources = [];
-
-    if (
-      typeof frappe !== "undefined" &&
-      frappe &&
-      Array.isArray(frappe.user_roles)
-    ) {
-      sources = sources.concat(frappe.user_roles);
-    }
-
-    if (
-      typeof frappe !== "undefined" &&
-      frappe &&
-      frappe.boot &&
-      frappe.boot.user &&
-      Array.isArray(frappe.boot.user.roles)
-    ) {
-      sources = sources.concat(frappe.boot.user.roles);
-    }
-
-    sources.forEach(addCurrentUserRole);
-  }
-
-  function collectRolesFromUserDoc(userDoc) {
-    var roles = userDoc && Array.isArray(userDoc.roles)
-      ? userDoc.roles
-      : [];
-
-    roles.forEach(addCurrentUserRole);
-  }
-
-  function userHasRole(roleName) {
-    roleName = normalizeRoleName(roleName);
-
-    if (!roleName) return false;
-
-    if (currentUserRoles.indexOf(roleName) !== -1) {
+  /* ================================================================
+     ALL TASKS
+  ================================================================ */
+  function applyFilters(list) {
+    var f = S.f, s = f.q.toLowerCase(), now = new Date();
+    return list.filter(function (t) {
+      if (s && (dispNo(t) + ' ' + t.title + ' ' + t.details + ' ' + personName(t.assignee) + ' ' + personName(t.by) + ' ' + t.branch + ' ' + t.dept).toLowerCase().indexOf(s) < 0) return false;
+      if (f.branch && t.branch !== f.branch) return false; if (f.dept && t.dept !== f.dept) return false; if (f.desig && t.desig !== f.desig) return false;
+      if (f.assignee && t.assignee !== f.assignee) return false; if (f.by && t.by !== f.by) return false; if (f.cat && t.cat !== f.cat) return false;
+      if (f.pri && t.pri !== f.pri) return false; if (f.rep && (t.report || {}).type !== f.rep) return false;
+      if (f.grp === 'grp' && !t.grp) return false; if (f.grp === 'ind' && t.grp) return false;
+      if (f.from && (t.created || '').slice(0, 10) < f.from) return false; if (f.to && (t.created || '').slice(0, 10) > f.to) return false;
+      var st = f.status;
+      if (st === 'Active' && isClosed(t)) return false; if (st === 'Overdue' && !isOverdue(t, now)) return false; if (st === 'DueToday' && !dueToday(t)) return false;
+      if (st === 'Critical' && (isClosed(t) || (t.pri !== 'VVIMP' && t.pri !== 'IMP'))) return false; if (st === 'Reports' && !reportDue(t)) return false;
+      if (STATUSES.indexOf(st) > -1 && t.status !== st) return false;
       return true;
-    }
+    });
+  }
+  function sortList(list) {
+    var k = S.sort.k, d = S.sort.d;
+    var val = function (t) {
+      if (k === 'q') return (isClosed(t) ? 1e7 : 0) + PRI_W(t.pri) * 1e5 + (+qRank(t) || 999);
+      if (k === 'no') return dispNo(t); if (k === 'title') return t.title.toLowerCase(); if (k === 'to') return personName(t.assignee).toLowerCase(); if (k === 'by') return personName(t.by).toLowerCase();
+      if (k === 'pri') return PRI_W(t.pri); if (k === 'created') return t.created; if (k === 'due') return t.due || '9'; if (k === 'status') return t.status; if (k === 'prog') return t.progress;
+      return '';
+    };
+    return list.slice().sort(function (a, b) { var x = val(a), y = val(b); return (x > y ? 1 : x < y ? -1 : 0) * d; });
+  }
+  function fsel(key, opts, val, label, all) { return '<div class="fld"><label class="lbl">' + label + '</label><select data-ff="' + key + '">' + optList(opts, val, all) + '</select></div>'; }
+  function renderAll() {
+    var v = visible(), f = S.f;
+    var names = function (arr) { return uniq(arr).map(function (u) { return [u, personName(u)]; }).sort(function (a, b) { return a[1].localeCompare(b[1]); }); };
+    var stOpts = [['Active', 'Active (not closed)'], ['Overdue', 'Overdue'], ['DueToday', 'Due today'], ['Critical', 'P1 + P2 open'], ['Reports', 'Report due']].concat(STATUSES.map(function (s) { return [s, s]; }));
+    var list = sortList(applyFilters(v));
+    q('#view').innerHTML = '<div class="card"><div class="cb">' +
+      '<div class="fbar"><div class="fld fq"><label class="lbl">Search</label><input id="ff-q" value="' + esc(f.q) + '" placeholder="Task no, title, employee, branch…"></div>' +
+      fsel('status', stOpts, f.status, 'Status', 'All statuses') + fsel('pri', PRI_KEYS.map(function (k) { return [k, PRI_N(k) + ' ' + PRI_L(k)]; }), f.pri, 'Priority') + fsel('cat', uniq(categories().concat(v.map(function (t) { return t.cat; }))), f.cat, 'Category') +
+      fsel('branch', uniq(v.map(function (t) { return t.branch; })).sort(), f.branch, 'Branch') + fsel('dept', uniq(v.map(function (t) { return t.dept; })).sort(), f.dept, 'Department') + fsel('assignee', names(v.map(function (t) { return t.assignee; })), f.assignee, 'Assigned to') +
+      fsel('desig', uniq(v.map(function (t) { return t.desig; })).sort(), f.desig, 'Designation') + fsel('by', names(v.map(function (t) { return t.by; })), f.by, 'Assigned by') + fsel('rep', REPORT_DEF.map(function (r) { return [r.k, r.label]; }), f.rep, 'Reporting') + fsel('grp', [['grp', '👥 Group tasks'], ['ind', '👤 Individual tasks']], f.grp, 'Type') +
+      '<div class="fld"><label class="lbl">Assigned from</label><input type="date" data-ff="from" value="' + esc(f.from) + '"></div><div class="fld"><label class="lbl">Assigned to</label><input type="date" data-ff="to" value="' + esc(f.to) + '"></div></div>' +
+      '<div class="vbar">' + [['table', '☰ Table'], ['queue', '⇅ Queue by Assignee'], ['board', '▦ Status Board']].map(function (x) { return '<button class="btn sm ' + (S.allView === x[0] ? 'pri' : '') + '" data-view="' + x[0] + '">' + x[1] + '</button>'; }).join('') +
+      '<span class="hint" style="margin-left:6px">' + list.length + ' tasks</span><span style="flex:1"></span><button class="btn sm" data-act="f-clear">✕ Clear filters</button>' + (can('export') ? '<button class="btn sm" data-act="export-all">⬇ CSV</button><button class="btn sm" data-act="print">🖨 Print</button>' : '') + hb('all') + '</div></div></div><div id="all-body"></div>';
+    if (S.allView === 'table') renderTable(list, '#all-body'); else if (S.allView === 'queue') renderQueueView(list); else renderBoard(list);
+  }
+  function renderTable(list, sel) {
+    var total = list.length, pages = Math.max(1, Math.ceil(total / PAGE)); if (S.page > pages) S.page = pages;
+    var rows = list.slice((S.page - 1) * PAGE, S.page * PAGE);
+    var th = function (k, l) { return '<th data-sort="' + k + '">' + l + (S.sort.k === k ? (S.sort.d > 0 ? ' ▲' : ' ▼') : '') + '</th>'; };
+    q(sel).innerHTML = '<div class="card"><div class="tw"><table class="tt">' + cols([4, 19, 13, 9, 9, 8, 10, 7, 7, 5, 9]) + '<thead><tr>' + th('q', 'Q#') + th('title', 'Task') + th('to', 'Assigned To') + '<th>Mobile</th>' + th('by', 'By') + th('pri', 'Priority') + th('due', 'Assigned / Due') + '<th>Time left</th><th>Report</th>' + th('prog', '%') + th('status', 'Status') + '</tr></thead><tbody>' +
+      (rows.length ? rows.map(rowHtml).join('') : '<tr><td colspan="11"><div class="empty"><b>No tasks match</b>Change filters or assign a new task.</div></td></tr>') +
+      '</tbody></table></div><div class="pager"><span>' + (total ? (S.page - 1) * PAGE + 1 : 0) + '–' + Math.min(S.page * PAGE, total) + ' of ' + total + '</span><button class="btn sm" data-pg="-1" ' + (S.page <= 1 ? 'disabled' : '') + '>‹ Prev</button><span>' + S.page + ' / ' + pages + '</span><button class="btn sm" data-pg="1" ' + (S.page >= pages ? 'disabled' : '') + '>Next ›</button></div></div>';
+  }
+  function rowHtml(t) {
+    var rk = qRank(t), rd = reportDue(t), nf = (S.files[fileKey(t)] || []).length, nu = t.updates.filter(function (u) { return u.type !== 'System'; }).length;
+    return '<tr class="' + (isOverdue(t) ? 'od' : '') + '" data-open="' + esc(t.id) + '" style="cursor:pointer">' +
+      TD('Q#', rk ? '<span class="qn ' + (rk === 1 ? 'q1' : '') + '">#' + rk + '</span>' : '<span class="mut">—</span>') +
+      TD('Task', '<span class="tl1" title="' + esc(t.title + '\n\n' + t.details) + '">' + esc(t.title) + '</span><div class="pm"><span class="tno">' + esc(dispNo(t)) + '</span>' + grpTag(t) + ' · ' + esc(t.cat) + ' · 📎' + nf + ' 💬' + nu + '</div>') +
+      TD('Assigned to', '<div class="pn">' + esc(personName(t.assignee)) + '</div><div class="pm">' + esc([t.desig, t.branch].filter(Boolean).join(' · ')) + '</div>') +
+      TD('Mobile', phHtml(t.assignee)) + TD('By', '<div class="pn" style="font-weight:500">' + esc(personName(t.by)) + '</div>') + TD('Priority', priPill(t.pri)) +
+      TD('Assigned / Due', '<div class="pm">' + fDT(t.created) + '</div><div style="font-weight:600">' + fDT(t.due) + '</div>') + TD('Time left', timeLeft(t)) +
+      TD('Report', rd ? '<span class="tag ' + (rd.late ? 'r' : 'b') + '">' + esc(rd.label) + '</span>' : '<span class="pm">' + esc(repText(t.report)) + '</span>') +
+      TD('Progress', '<span class="pm" style="display:block">' + t.progress + '%</span><span class="bar"><i style="width:' + t.progress + '%"></i></span>') + TD('Status', stPill(t), 'wr') + '</tr>';
+  }
+  function renderQueueView(list) {
+    var groups = {};
+    list.forEach(function (t) { (groups[t.assignee] = groups[t.assignee] || []).push(t); });
+    var keys = Object.keys(groups).sort(function (a, b) { var oa = groups[a].filter(function (t) { return isOverdue(t); }).length, ob = groups[b].filter(function (t) { return isOverdue(t); }).length; return ob - oa || groups[b].length - groups[a].length; });
+    q('#all-body').innerHTML = '<div class="card"><div class="ch lt">Tasks by assignee — working order<span class="sp"><button class="btn sm" data-act="q-expand">Expand all</button><button class="btn sm" data-act="q-collapse">Collapse</button></span></div><div class="cb" style="max-height:calc(100vh - 330px);overflow:auto">' +
+      (keys.length ? keys.map(function (u) {
+        var l = groups[u].slice().sort(function (a, b) { return (isClosed(a) - isClosed(b)) || a.qk - b.qk; }), p = person(u) || {}, open = l.filter(function (t) { return !isClosed(t); }), od = open.filter(function (t) { return isOverdue(t); }).length, top = open[0];
+        return '<div class="qg"><div class="qh" data-qtoggle="1"><span class="arr">▶</span><div class="av">' + initials(personName(u)) + '</div><div class="pi"><div class="pn">' + esc(personName(u)) + ' <span class="pm" style="display:inline">' + esc([p.desig, p.branch].filter(Boolean).join(' · ')) + '</span></div><div class="pm">Now: ' + (top ? esc(dispNo(top) + ' — ' + top.title) : '—') + '</div></div>' + phHtml(p) +
+          '<span class="tag g">' + open.length + ' open</span>' + (od ? '<span class="tag r">OD ' + od + '</span>' : '') +
+          (can('manage') || open.some(canManage) ? '<button class="btn sm pri" data-mq="' + esc(u) + '">Manage Queue</button>' : '') + '</div>' +
+          '<div class="qbd">' + l.map(function (t) { var rk = qRank(t); return '<div class="qi" data-open="' + esc(t.id) + '" style="cursor:pointer">' + (rk ? '<span class="qn ' + (rk === 1 ? 'q1' : '') + '">#' + rk + '</span>' : '<span class="qn" style="background:#aaa">✓</span>') + '<div class="pi"><div class="tl1" style="max-width:none">' + esc(dispNo(t)) + ' — ' + esc(t.title) + grpTag(t) + '</div><div class="pm">' + esc(t.cat) + ' · due ' + fDT(t.due) + ' · by ' + esc(personName(t.by)) + '</div></div>' + priPill(t.pri) + stPill(t) + '<span style="width:80px;text-align:right">' + timeLeft(t) + '</span></div>'; }).join('') + '</div></div>';
+      }).join('') : '<div class="empty"><b>No tasks match</b></div>') + '</div></div>';
+  }
+  function renderBoard(list) {
+    var c5 = [['Open', ['Open', 'Reopened']], ['In Progress', ['In Progress']], ['On Hold', ['On Hold']], ['Review Pending', ['Review Pending']], ['Completed', ['Completed']]];
+    q('#all-body').innerHTML = '<div class="board">' + c5.map(function (c) {
+      var l = list.filter(function (t) { return c[1].indexOf(t.status) > -1; }).sort(function (a, b) { return PRI_W(a.pri) - PRI_W(b.pri) || (a.due > b.due ? 1 : -1); });
+      return '<div class="bcol"><div class="bh"><span>' + c[0] + '</span><span class="tag">' + l.length + '</span></div><div class="bb">' + l.slice(0, 80).map(function (t) { return '<div class="bc" data-open="' + esc(t.id) + '"><div class="row" style="justify-content:space-between;flex-wrap:nowrap"><span class="tno">' + esc(dispNo(t)) + grpTag(t) + '</span>' + priPill(t.pri) + '</div><div class="pn" style="margin:3px 0">' + esc(t.title) + '</div><div class="pm">' + esc(personName(t.assignee)) + ' · ' + esc(t.branch) + '</div><div class="row" style="justify-content:space-between;flex-wrap:nowrap">' + phHtml(t.assignee, true) + '<span style="font-size:11.5px">' + timeLeft(t) + '</span></div></div>'; }).join('') + '</div></div>';
+    }).join('') + '</div>';
+  }
 
-    try {
-      if (
-        frappe.user &&
-        typeof frappe.user.has_role === "function" &&
-        frappe.user.has_role(roleName)
-      ) {
-        return true;
+  /* ================================================================
+     MY TASKS
+  ================================================================ */
+  function renderMy() {
+    var me = S.me.user, tome = queueOf(me);
+    var byme = S.tasks.filter(function (t) { return (t.by === me || t.owner === me) && t.assignee !== me; });
+    var ccme = S.tasks.filter(function (t) { return t.cc.indexOf(me) > -1; });
+    var reps = S.tasks.filter(function (t) { return t.assignee === me && reportDue(t); });
+    var review = byme.filter(function (t) { return t.status === 'Review Pending'; });
+    var groups = S.tasks.filter(function (t) { return t.grp && t.assignee === me; });
+    var done = S.tasks.filter(function (t) { return t.assignee === me && isClosed(t); }).sort(function (a, b) { return (b.completedOn || b.modified) > (a.completedOn || a.modified) ? 1 : -1; });
+    var tabs = [['tome', 'Assigned to Me', tome.length], ['reps', 'Reports Due', reps.length], ['review', 'Awaiting My Review', review.length], ['byme', 'Assigned by Me', byme.filter(function (t) { return !isClosed(t); }).length], ['groups', '👥 My Groups', groups.filter(function (t) { return !isClosed(t); }).length], ['cc', 'Following (CC)', ccme.filter(function (t) { return !isClosed(t); }).length], ['done', 'My Closed', done.length]];
+    var h = '<div class="stabs">' + tabs.map(function (x) { return '<button class="btn ' + (S.myTab === x[0] ? 'pri' : '') + '" data-my="' + x[0] + '">' + x[1] + ' <span class="tag">' + x[2] + '</span></button>'; }).join('') + hb('my') + '</div>';
+    if (S.myTab === 'tome') {
+      var od = tome.filter(function (t) { return isOverdue(t); }).length, top = tome[0];
+      if (od) h += '<div class="bn r">⚠ ' + od + ' overdue task(s)' + (mod('delayMandatory') ? ' — post a Delay Remark on each.' : '.') + '</div>';
+      if (top) h += '<div class="hero"><span class="qn q1">#1</span><div class="pi"><div class="pm">DO THIS NOW · ' + esc(dispNo(top)) + ' · ' + esc(top.cat) + ' · by ' + esc(personName(top.by)) + grpTag(top) + '</div><div class="tl1" data-open="' + esc(top.id) + '" style="font-size:16px;max-width:none">' + esc(top.title) + '</div><div class="row" style="margin-top:3px">' + priPill(top.pri) + stPill(top) + '<span class="tag">Due ' + fDT(top.due) + '</span>' + timeLeft(top) + '</div></div><div class="row" style="flex:none">' + myBtns(top) + '</div></div>';
+      h += tome.length > 1 ? '<div class="mtg">' + tome.slice(1).map(myCard).join('') + '</div>' : (top ? '' : '<div class="card"><div class="empty"><b>Queue is clear 🎉</b>No open tasks assigned to you.</div></div>');
+    } else if (S.myTab === 'reps' || S.myTab === 'review') {
+      var l = S.myTab === 'reps' ? reps : review;
+      h += l.length ? '<div class="mtg">' + l.map(myCard).join('') + '</div>' : '<div class="card"><div class="empty"><b>Nothing pending</b></div></div>';
+    } else {
+      var l2 = sortList(S.myTab === 'byme' ? byme : S.myTab === 'cc' ? ccme : S.myTab === 'groups' ? groups : done);
+      h += '<div id="my-tbl"></div>'; q('#view').innerHTML = h; renderTable(l2, '#my-tbl'); return;
+    }
+    q('#view').innerHTML = h;
+  }
+  function myBtns(t) {
+    var mine = isAssignee(t), rd = reportDue(t), b = '';
+    if (mine && (t.status === 'Open' || t.status === 'Reopened' || t.status === 'On Hold')) b += '<button class="btn sm amb" data-qa="start" data-id="' + esc(t.id) + '">▶ Start</button>';
+    if (mine && !isClosed(t)) b += '<button class="btn sm" data-qa="update" data-id="' + esc(t.id) + '">💬 Update</button>';
+    if (rd && mine) b += '<button class="btn sm blue" data-qa="report" data-id="' + esc(t.id) + '">📝 Report</button>';
+    if (mine && !isClosed(t) && t.status !== 'Review Pending') b += '<button class="btn sm pri" data-qa="submit" data-id="' + esc(t.id) + '">✓ Done</button>';
+    if (t.status === 'Review Pending' && canManage(t)) b += '<button class="btn sm pri" data-qa="approve" data-id="' + esc(t.id) + '">✓ Approve</button><button class="btn sm red" data-qa="reopen" data-id="' + esc(t.id) + '">↺ Reopen</button>';
+    return b + '<button class="btn sm" data-open="' + esc(t.id) + '">Open</button>';
+  }
+  function myCard(t) {
+    var rk = qRank(t), od = isOverdue(t), rd = reportDue(t), mine = isAssignee(t);
+    return '<div class="mc ' + (od ? 'od' : '') + '"><div class="mh"><span class="qn ' + (rk === 1 ? 'q1' : '') + '">#' + (rk || '-') + '</span><div class="pi"><div class="tno">' + esc(dispNo(t)) + grpTag(t) + '</div><div class="pm">' + esc(t.cat) + (mine ? ' · by ' + esc(personName(t.by)) : ' · ' + esc(personName(t.assignee))) + '</div></div>' + priPill(t.pri) + '</div>' +
+      '<div class="mb"><div class="tl1" data-open="' + esc(t.id) + '" style="max-width:none">' + esc(t.title) + '</div>' +
+      '<div class="row" style="margin-top:4px;gap:4px">' + stPill(t) + '<span class="tag">Due ' + fDT(t.due) + '</span>' + timeLeft(t) + '</div>' +
+      (rd ? '<div class="tag ' + (rd.late ? 'r' : 'a') + '" style="display:inline-block;margin-top:4px">📝 ' + esc(rd.label) + '</div>' : '') + (needsDelayRemark(t) && mine ? ' <span class="tag r">Delay remark required</span>' : '') +
+      '<div style="margin-top:5px"><span class="bar" style="max-width:none"><i style="width:' + t.progress + '%"></i></span></div></div><div class="mf">' + myBtns(t) + '</div></div>';
+  }
+
+  /* ================================================================
+     TEAM & CONTACTS
+  ================================================================ */
+  function renderTeam() {
+    if (!can('team')) { q('#view').innerHTML = '<div class="card"><div class="empty"><b>Not allowed</b>Your role cannot see Team &amp; Contacts.</div></div>'; return; }
+    var f = S.team, s = f.q.toLowerCase();
+    var list = S.people.filter(function (p) { return (!f.branch || p.branch === f.branch) && (!f.dept || p.dept === f.dept) && (!s || (p.name + ' ' + p.desig + ' ' + p.dept + ' ' + p.branch + ' ' + (phonesOpen() ? digits(p.phone) : '') + ' ' + p.user).toLowerCase().indexOf(s) > -1); });
+    var noPh = S.people.filter(function (p) { return !digits(p.phone); }).length, noLogin = S.people.filter(function (p) { return !p.login; }).length;
+    q('#view').innerHTML = '<div class="card"><div class="cb"><div class="fbar">' +
+      '<div class="fld fq"><label class="lbl">Search</label><input id="tm-q" value="' + esc(f.q) + '" placeholder="Name, designation, branch…"></div>' +
+      '<div class="fld"><label class="lbl">Branch</label><select data-tf2="branch">' + optList(allBranches(), f.branch) + '</select></div>' +
+      '<div class="fld"><label class="lbl">Department</label><select data-tf2="dept">' + optList(distinct('dept'), f.dept) + '</select></div></div>' +
+      '<div class="vbar"><span class="hint">' + list.length + ' people · <span class="red">' + noPh + ' without mobile</span> · ' + noLogin + ' without ERP login · Mobiles ' + (phonesOpen() ? '<b class="grn">visible</b>' : '<b>masked</b>' + (S.cfg.phone.codeHash ? ' <button class="lock" data-act="unlock">🔒 Unlock</button>' : '')) + '</span><span style="flex:1"></span>' + (can('export') ? '<button class="btn sm" data-act="export-team">⬇ CSV</button>' : '') + hb('team') + '</div></div></div>' +
+      '<div class="card"><div class="tw"><table class="tt">' + cols([15, 11, 9, 9, 11, 6, 11, 5, 6, 10, 7]) + '<thead><tr><th>Employee</th><th>Designation</th><th>Department</th><th>Branch</th><th>Mobile</th><th>WA</th><th>ERP Login</th><th>Open</th><th>Overdue</th><th>Now (#1)</th><th></th></tr></thead><tbody>' +
+      list.map(function (p) {
+        var l = p.login ? queueOf(p.user) : [], od = l.filter(function (t) { return isOverdue(t); }).length, ph = phone91(p.phone);
+        return '<tr>' + TD('Employee', '<div class="row" style="flex-wrap:nowrap"><div class="av">' + initials(p.name) + '</div><b class="nw">' + esc(p.name) + '</b></div>') + TD('Designation', esc(p.desig || '—')) + TD('Department', esc(p.dept || '—')) + TD('Branch', esc(p.branch || '—')) + TD('Mobile', phHtml(p)) +
+          TD('WhatsApp', ph && mod('wa') ? '<a class="btn wa sm" target="_blank" href="https://wa.me/' + ph + '">Chat</a>' : '<span class="mut">—</span>') + TD('ERP login', p.login ? '<span class="tag g">' + esc(p.user) + '</span>' : '<span class="tag r">No login</span>') +
+          TD('Open', p.login ? String(l.length) : '—') + TD('Overdue', '<b class="' + (od ? 'red' : '') + '">' + (p.login ? od : '—') + '</b>') + TD('Now (#1)', l[0] ? '<span class="tl1" data-open="' + esc(l[0].id) + '">' + esc(dispNo(l[0]) + ' — ' + l[0].title) + '</span>' : '<span class="mut">—</span>') +
+          TD('', p.login ? (can('assign') ? '<button class="btn sm pri" data-assignto="' + esc(p.user) + '">Assign</button> ' : '') + (l.length ? '<button class="btn sm" data-mq="' + esc(p.user) + '">Queue</button>' : '') : '') + '</tr>';
+      }).join('') + '</tbody></table></div></div>';
+  }
+
+  /* ================================================================
+     REPORTS
+  ================================================================ */
+  function stats(list) {
+    var o = { n: list.length, open: 0, prog: 0, rev: 0, done: 0, cxl: 0, od: 0, ontime: 0, late: 0, days: 0, missed: 0 };
+    list.forEach(function (t) {
+      if (t.status === 'Completed') { o.done++; var c = toDate(t.completedOn), d = toDate(t.due), s = toDate(t.start) || toDate(t.created); if (c && d) { if (c <= d) o.ontime++; else o.late++; } if (c && s) o.days += Math.max(0, (c - s) / 86400000); }
+      else if (t.status === 'Cancelled') o.cxl++;
+      else { o.open++; if (t.status === 'In Progress') o.prog++; if (t.status === 'Review Pending') o.rev++; if (isOverdue(t)) o.od++; var rd = reportDue(t); if (rd && rd.late) o.missed++; }
+    });
+    o.pct = o.done ? Math.round(o.ontime * 100 / o.done) : null; o.avg = o.done ? (o.days / o.done).toFixed(1) : '—';
+    return o;
+  }
+  function renderReports() {
+    var f = S.f, list = visible().filter(function (t) { return (!f.from || (t.created || '').slice(0, 10) >= f.from) && (!f.to || (t.created || '').slice(0, 10) <= f.to); });
+    var dims = [['assignee', 'Employee'], ['branch', 'Branch'], ['dept', 'Department'], ['desig', 'Designation'], ['by', 'Assigned By'], ['cat', 'Category'], ['pri', 'Priority']];
+    var dimLabel = dims.filter(function (d) { return d[0] === S.rptDim; })[0][1], groups = {};
+    list.forEach(function (t) { var k = S.rptDim === 'pri' ? PRI_N(t.pri) + ' ' + PRI_L(t.pri) : (S.rptDim === 'assignee' || S.rptDim === 'by') ? personName(t[S.rptDim]) : (t[S.rptDim] || '(blank)'); (groups[k] = groups[k] || []).push(t); });
+    var rows = Object.keys(groups).map(function (k) { return [k, stats(groups[k]), groups[k][0]]; }).sort(function (a, b) { return b[1].od - a[1].od || b[1].open - a[1].open; });
+    var tot = stats(list);
+    var aging = [['0–1 day', 0, 1], ['2–3 days', 1, 3], ['4–7 days', 3, 7], ['8–15 days', 7, 15], ['16–30 days', 15, 30], ['30+ days', 30, 1e5]].map(function (b) { return [b[0], list.filter(function (t) { if (isClosed(t)) return false; var c = toDate(t.created), a = c ? (Date.now() - c) / 86400000 : 0; return a >= b[1] && a < b[2]; }).length]; });
+    var maxA = Math.max.apply(null, aging.map(function (a) { return a[1]; }).concat([1]));
+    var pr = PRI_KEYS.map(function (k) { return [k, stats(list.filter(function (t) { return t.pri === k; }))]; }), maxP = Math.max.apply(null, pr.map(function (r) { return r[1].n; }).concat([1]));
+    S._rptRows = rows;
+    var emp = S.rptDim === 'assignee';
+    q('#view').innerHTML = '<div class="card"><div class="cb"><div class="fbar">' +
+      '<div class="fld"><label class="lbl">Assigned from</label><input type="date" data-ff="from" value="' + esc(f.from) + '"></div><div class="fld"><label class="lbl">Assigned to</label><input type="date" data-ff="to" value="' + esc(f.to) + '"></div>' +
+      '<div class="fld"><label class="lbl">Group by</label><select id="rp-dim">' + dims.map(function (d) { return '<option value="' + d[0] + '" ' + (S.rptDim === d[0] ? 'selected' : '') + '>' + d[1] + '</option>'; }).join('') + '</select></div>' +
+      '<div class="fld"><label class="lbl">Quick period</label><div class="row" style="flex-wrap:nowrap"><button class="btn sm" data-rq="7">7d</button><button class="btn sm" data-rq="30">30d</button><button class="btn sm" data-rq="90">90d</button><button class="btn sm" data-rq="0">All</button></div></div>' +
+      '<div class="fld"><label class="lbl">&nbsp;</label><div class="row" style="flex-wrap:nowrap">' + (can('export') ? '<button class="btn sm" data-act="export-rpt">⬇ CSV</button><button class="btn sm" data-act="print">🖨</button>' : '') + hb('reports') + '</div></div></div>' +
+      '<div class="ig" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr));margin-top:9px">' + [['Total', tot.n], ['Open', tot.open], ['Overdue', tot.od], ['Completed', tot.done], ['On-time %', tot.pct == null ? '—' : tot.pct + '%'], ['Late closures', tot.late], ['Avg days', tot.avg], ['Reports late', tot.missed]].map(function (x) { return '<div class="ii"><div class="k">' + x[0] + '</div><div class="v" style="font-size:18px">' + x[1] + '</div></div>'; }).join('') + '</div></div></div>' +
+      '<div class="tk2" style="grid-template-columns:minmax(0,1.8fr) minmax(0,1fr)"><div class="card"><div class="ch">Performance by ' + esc(dimLabel) + '</div><div class="tw" style="max-height:calc(100vh - 380px);overflow-y:auto"><table class="tt">' + cols(emp ? [17, 11, 6, 6, 7, 6, 7, 6, 7, 5, 7, 6, 6, 7] : [20, 7, 7, 7, 7, 7, 7, 7, 6, 8, 6, 6, 5]) + '<thead><tr><th>' + esc(dimLabel) + '</th>' + (emp ? '<th>Mobile</th>' : '') + '<th>Total</th><th>Open</th><th>In Prog</th><th>Review</th><th>Overdue</th><th>Done</th><th>On-time</th><th>Late</th><th>On-time %</th><th>Avg d</th><th>Rep late</th><th>Score</th></tr></thead><tbody>' +
+      (rows.length ? rows.map(function (r) { var s = r[1], score = s.n ? Math.min(100, Math.max(0, Math.round(100 - s.od * 15 - s.late * 5 - s.missed * 5 + (s.pct || 0) * 0.2))) : 0; return '<tr>' + TD(dimLabel, '<b>' + esc(r[0]) + '</b>') + (emp ? TD('Mobile', phHtml(r[2].assignee)) : '') + TD('Total', s.n) + TD('Open', s.open) + TD('In progress', s.prog) + TD('Review', s.rev) + TD('Overdue', '<b class="' + (s.od ? 'red' : '') + '">' + s.od + '</b>') + TD('Done', s.done) + TD('On-time', '<span class="grn">' + s.ontime + '</span>') + TD('Late', '<span class="' + (s.late ? 'red' : '') + '">' + s.late + '</span>') + TD('On-time %', s.pct == null ? '—' : s.pct + '%') + TD('Avg days', s.avg) + TD('Reports late', '<span class="' + (s.missed ? 'red' : '') + '">' + s.missed + '</span>') + TD('Score', '<span class="pill ' + (score >= 80 ? 's-done' : score >= 50 ? 's-prog' : 's-od') + '">' + score + '</span>') + '</tr>'; }).join('') : '<tr><td colspan="14"><div class="empty"><b>No data</b></div></td></tr>') +
+      '</tbody></table></div></div><div>' +
+      '<div class="card"><div class="ch">Open-task aging</div><div class="cb">' + aging.map(function (a) { return '<div class="hbar"><span class="hl">' + a[0] + '</span><span class="ht"><i style="width:' + (a[1] * 100 / maxA) + '%;background:var(--g600)"></i></span><span class="hv">' + a[1] + '</span></div>'; }).join('') + '</div></div>' +
+      '<div class="card"><div class="ch">Priority mix</div><div class="cb"><div class="legend"><span><i style="background:var(--g600)"></i>Done</span><span><i style="background:var(--blue)"></i>Open</span><span><i style="background:var(--red)"></i>Overdue</span></div>' + pr.map(function (r) { var s = r[1]; return '<div class="hbar"><span class="hl">' + PRI_N(r[0]) + ' ' + esc(PRI_L(r[0])) + '</span><span class="ht"><i style="width:' + (s.done * 100 / maxP) + '%;background:var(--g600)"></i><i style="width:' + ((s.open - s.od) * 100 / maxP) + '%;background:var(--blue)"></i><i style="width:' + (s.od * 100 / maxP) + '%;background:var(--red)"></i></span><span class="hv">' + s.n + '</span></div>'; }).join('') + '</div></div></div></div>';
+  }
+
+  /* ================================================================
+     TASK PANEL (drawer) + ACTIONS
+  ================================================================ */
+  function findTask(id) { return S.tasks.filter(function (t) { return t.id === id; })[0]; }
+  function info(k, v, raw) { return '<div class="ii"><div class="k">' + esc(k) + '</div><div class="v" title="' + esc(raw ? '' : v) + '">' + (raw ? v : esc(v)) + '</div></div>'; }
+  function openTask(id) {
+    var t = findTask(id); if (!t) return; S.openTask = id; S.openTicket = null;
+    var p = person(t.assignee) || {}, rk = qRank(t), files = S.files[fileKey(t)] || [], mgr = canManage(t), mine = isAssignee(t), rd = reportDue(t), can2 = (mine || mgr) && !isClosed(t);
+    var ckDone = t.checklist.filter(function (c) { return c.d; }).length, A = [];
+    var b = function (cls, qa2, txt) { A.push('<button class="btn ' + cls + '" data-qa="' + qa2 + '" data-id="' + esc(t.id) + '">' + txt + '</button>'); };
+    if (mine && (t.status === 'Open' || t.status === 'Reopened' || t.status === 'On Hold')) b('amb', 'start', '▶ Start');
+    if (mine && rd) b('blue', 'report', '📝 Submit ' + esc(rd.label));
+    if (mine && !isClosed(t) && t.status !== 'Review Pending') b('pri', 'submit', '✓ Done → Review');
+    if (mgr && t.status === 'Review Pending') b('pri', 'approve', '✓ Approve &amp; Close');
+    if (mgr && !isClosed(t) && t.status !== 'Review Pending') b('pri', 'closeNow', '✓ Close');
+    if (mgr && (t.status === 'Review Pending' || isClosed(t))) b('red', 'reopen', '↺ Reopen');
+    if (mgr && !isClosed(t)) { b('', 'extend', '🗓 Extend'); b('', 'pri', '⚑ Priority'); b('', 'top', '⬆ Make #1'); if (!t.grp) b('', 'reassign', '⇄ Reassign'); b('', 'hold', '⏸ Hold'); b('red', 'cancel', t.grp ? '✕ Cancel group' : '✕ Cancel'); }
+    if (!isClosed(t) && (mgr || t.cc.indexOf(S.me.user) > -1)) b('wa', 'notify', '🔔 Remind');
+    var members = '';
+    if (t.grp) {
+      var vs = S.tasks.filter(function (x) { return x.mid === t.mid; });
+      members = '<div class="sub" style="margin-top:10px">👥 Group members (' + t.grp.members.length + ') · ' + (t.grp.response === 'group' ? 'Group response — one shared status' : 'Individual response — each completes own part') + '</div><div class="ig" style="grid-template-columns:repeat(auto-fill,minmax(210px,1fr))">' +
+        t.grp.members.map(function (u) { var v = vs.filter(function (x) { return x.assignee === u; })[0] || {}; return '<div class="ii"><div class="k">' + (u === t.grp.leader ? '⭐ Leader' : 'Member') + '</div><div class="v">' + esc(personName(u)) + '</div><div class="row" style="flex-wrap:nowrap;gap:4px;margin-top:2px">' + phHtml(u, true) + '<span class="pill ' + (ST_CLS[v.status] || 's-open') + '">' + esc(v.status || '—') + '</span>' + (v.progress != null ? '<span class="pm">' + v.progress + '%</span>' : '') + '</div></div>'; }).join('') + '</div>';
+    }
+    var h = '<div class="dh"><span class="qn ' + (rk === 1 ? 'q1' : '') + '" style="min-width:40px;height:40px;font-size:15px">' + (rk ? '#' + rk : '✓') + '</span><div class="pi"><div style="font-size:11.5px;opacity:.85">' + esc(dispNo(t)) + ' · ' + esc(t.cat) + (t.grp ? ' · 👥 Group task' : '') + '</div><div style="font-size:16px;font-weight:700" class="nw">' + esc(t.title) + '</div><div class="row" style="margin-top:3px">' + priPill(t.pri) + stPill(t) + '</div></div>' + hb('drawer') + '<button class="x" data-act="close-drawer">×</button></div>' +
+      '<div class="db">' +
+      (needsDelayRemark(t) ? '<div class="bn r">⚠ Overdue by ' + dur(new Date() - toDate(t.due)) + '. ' + (mine ? 'Post a <b>Delay Remark</b> — reason + new expected time.' : 'Assignee has not posted a delay remark.') + '</div>' : (isOverdue(t) ? '<div class="bn a">Overdue by ' + dur(new Date() - toDate(t.due)) + '.</div>' : '')) +
+      (rd ? '<div class="bn ' + (rd.late ? 'r' : 'a') + '">📝 ' + esc(rd.label) + (rd.late ? ' — LATE' : '') + '</div>' : '') +
+      '<div class="ig">' + info(t.grp ? 'Viewing as member' : 'Assigned to', personName(t.assignee)) + info('Mobile', phHtml(p), true) + info('Designation', t.desig || '—') + info('Branch / Dept', [t.branch, t.dept].filter(Boolean).join(' · ') || '—') +
+      info('Assigned by', personName(t.by)) + info('Assigner mobile', phHtml(t.by), true) + info('Assigned on', fDT(t.created)) + info('Start', fDT(t.start)) +
+      info('Due', fDT(t.due)) + info('Time left', timeLeft(t), true) + info('Reporting', repText(t.report)) + info('Queue', rk ? '#' + rk + ' of ' + queueOf(t.assignee).length : '—') +
+      info('CC', t.cc.map(personName).join(', ') || '—') + info('Target', (t.target.type || 'Employee') + (t.target.values && t.target.values.length ? ': ' + t.target.values.join(', ') : '')) + info('Completed', t.completedOn ? fDT(t.completedOn) : '—') + info('Files', files.length) + '</div>' +
+      members +
+      '<div class="sub" style="margin-top:10px">Details</div><div class="dbox">' + esc(t.details || '—') + '</div>' +
+      '<div class="grid g2" style="margin-top:10px"><div><div class="sub">Progress' + (t.grp && t.grp.response === 'individual' ? ' (' + esc(personName(t.assignee)) + ')' : '') + '</div><div class="row" style="flex-wrap:nowrap"><input type="range" min="0" max="100" step="5" value="' + t.progress + '" id="d-prog" ' + (can2 ? '' : 'disabled') + ' style="flex:1"><b id="d-progv" style="width:40px;text-align:right">' + t.progress + '%</b>' + (can2 ? '<button class="btn sm pri" data-act="save-prog">Save</button>' : '') + '</div>' +
+      (t.checklist.length ? '<div class="lbl" style="margin-top:6px">Checklist ' + ckDone + '/' + t.checklist.length + '</div>' + t.checklist.map(function (c, i) { return '<label class="ck ' + (c.d ? 'done' : '') + '"><input type="checkbox" data-ck="' + i + '" ' + (c.d ? 'checked' : '') + ' ' + (can2 ? '' : 'disabled') + '><span>' + esc(c.t) + '</span></label>'; }).join('') : '') + '</div>' +
+      '<div><div class="sub">Attachments (' + files.length + ')</div><div class="chips">' + (files.length ? files.map(function (fl) { return '<a class="chip" target="_blank" href="' + esc(fl.file_url) + '">📄 ' + esc(fl.file_name || 'file') + '</a>'; }).join('') : '<span class="hint">No files</span>') + (isClosed(t) ? '' : '<button class="btn sm" data-act="add-file">＋ Add</button>') + '</div>' +
+      (t.delays.length ? '<div class="sub">Deadline changes</div>' + t.delays.map(function (d, i) { return '<div class="pm" style="white-space:normal">#' + (i + 1) + ' ' + fDT(d.old_deadline) + ' → <b>' + fDT(d.new_deadline) + '</b> · ' + esc(d.reviewed_by_name || personName(d.reviewed_by)) + ' — ' + esc(d.remarks || '') + '</div>'; }).join('') : '') + '</div></div>' +
+      '<div class="sub" style="margin-top:10px">' + (t.grp ? '👥 Group updates — everyone sees all (' : 'Updates &amp; reports (') + t.updates.length + ')</div>' +
+      (isClosed(t) ? '' : '<div class="card" style="margin-bottom:8px"><div class="cb"><div class="row" style="flex-wrap:nowrap;align-items:flex-start"><select id="d-utype" style="width:150px;flex:none">' + UPD_TYPES.map(function (x) { return '<option ' + ((x === 'Delay Remark' && needsDelayRemark(t) && mine) || (x === 'Report' && rd && mine && !needsDelayRemark(t)) ? 'selected' : '') + '>' + x + '</option>'; }).join('') + '</select><textarea id="d-utext" style="min-height:40px;height:40px" placeholder="Write update, report, query or delay reason…"></textarea><button class="btn sm" data-act="upd-file" title="Attach" style="height:40px">📎</button><button class="btn pri" data-act="post-upd" style="height:40px">Post</button></div><div class="hint" id="d-ufiles"></div></div></div>') +
+      '<div class="tl">' + (t.updates.length ? t.updates.slice().reverse().map(updHtml).join('') : '<div class="hint">No updates yet</div>') + '</div></div>' +
+      '<div class="da">' + (A.join('') || '<span class="hint">No actions available for you on this task.</span>') + '</div>';
+    showDrawer(h); S.updFiles = [];
+  }
+  function updHtml(u) {
+    return '<div class="te ' + (u.type === 'Report' ? 't-report' : u.type === 'Delay Remark' ? 't-delay' : u.type === 'System' ? 't-system' : '') + '"><div class="teh"><b>' + esc(personName(u.by)) + '</b><span class="tag ' + (u.type === 'Report' ? 'b' : u.type === 'Delay Remark' || u.type === 'Reopened' ? 'r' : u.type === 'Completion' || u.type === 'Resolved' || u.type === 'Closed' ? 'g' : '') + '">' + esc(u.type) + '</span><span>' + fDT(u.at) + '</span></div><div class="tet">' + esc(u.text) + '</div>' +
+      (u.files && u.files.length ? '<div class="chips" style="margin-top:3px">' + u.files.map(function (fl) { return '<a class="chip" target="_blank" href="' + esc(fl.url) + '">📄 ' + esc(fl.name) + '</a>'; }).join('') + '</div>' : '') + '</div>';
+  }
+  function showDrawer(h) { var dr = q('#drawer'); dr.innerHTML = h; dr.classList.add('show'); q('#ovl').classList.add('show'); }
+  function closeDrawer() { q('#drawer').classList.remove('show'); q('#ovl').classList.remove('show'); S.openTask = null; S.openTicket = null; }
+  function refreshOpen() { if (S.openTask) { if (findTask(S.openTask)) openTask(S.openTask); else closeDrawer(); } else if (S.openTicket) openTicket(S.openTicket); }
+
+  /* persist: fresh read + merge, single or group */
+  function persist(id, mutate, okMsg) {
+    if (guard()) return Promise.reject('preview');
+    var t = findTask(id); if (!t) return Promise.reject('missing');
+    if (t.mid) return persistGroup(t, mutate, okMsg);
+    return API.get('ToDo', id).then(function (raw) {
+      var fresh = enrich(base(raw)); fresh.qk = t.qk; fresh.cq = t.cq;
+      var before = isClosed(fresh);
+      mutate(fresh);
+      var d = denormBase(fresh);
+      return API.save('ToDo', id, d).then(function () {
+        raw.description = d.description; raw.status = d.status; fresh.raw = raw;
+        var i = S.tasks.indexOf(t); if (i > -1) S.tasks[i] = fresh; else S.tasks.unshift(fresh);
+        return (before !== isClosed(fresh) ? syncQueue(fresh.assignee) : Promise.resolve()).then(function () { if (okMsg) toast(okMsg); render(); refreshOpen(); return fresh; });
+      });
+    }).catch(function (e) { if (e !== 'preview') toast('Not saved: ' + errMsg(e), 1); throw e; });
+  }
+  function persistGroup(t, mutate, okMsg) {
+    var mid = t.mid, u = t.assignee;
+    return API.get('ToDo', mid).then(function (raw) {
+      var b = base(raw), vs = explode(b), v = vs.filter(function (x) { return x.assignee === u; })[0];
+      if (!v) throw { message: 'You are not a member of this group task' };
+      var beforeOverall = b.status, beforeMine = v.status;
+      v.qk = t.qk; mutate(v);
+      ['title', 'details', 'cat', 'pri', 'due', 'start', 'cc', 'report', 'updates', 'delays', 'target'].forEach(function (k) { b[k] = v[k]; });
+      b.meta.mq = b.meta.mq || {}; b.meta.mq[u] = v.qk;
+      if (b.grp.response === 'individual') {
+        b.meta.mstate = b.meta.mstate || {};
+        b.meta.mstate[u] = { status: v.status, progress: v.progress, completedOn: v.completedOn, checklist: v.checklist };
+        b.status = v._cancelAll ? 'Cancelled' : groupOverall(b);
+        b.progress = Math.round(b.grp.members.reduce(function (s, m) { return s + (+((b.meta.mstate[m] || {}).progress) || 0); }, 0) / b.grp.members.length);
+        if (b.status === 'Completed' && !b.completedOn) b.completedOn = nowLocal();
+        if (b.status !== 'Completed') b.completedOn = '';
+      } else {
+        b.status = v._cancelAll ? 'Cancelled' : v.status; b.progress = v.progress; b.completedOn = v.completedOn; b.checklist = v.checklist;
       }
-    } catch (e) {
-      // Continue with collected role list.
+      var d = denormBase(b);
+      return API.save('ToDo', mid, d).then(function () {
+        raw.description = d.description; raw.status = d.status;
+        var nb = base(raw), nvs = explode(nb);
+        S.tasks = S.tasks.filter(function (x) { return x.mid !== mid; }).concat(nvs);
+        var jobs = Promise.resolve();
+        var changed = beforeOverall !== nb.status || beforeMine !== (nvs.filter(function (x) { return x.assignee === u; })[0] || {}).status;
+        if (changed) {
+          Object.keys(nb.grp.mirrors || {}).forEach(function (m) {
+            var mv = nvs.filter(function (x) { return x.assignee === m; })[0] || {}, st = isClosed(nb) || isClosed(mv) ? (nb.status === 'Cancelled' ? 'Cancelled' : 'Closed') : 'Open';
+            jobs = jobs.then(function () { return API.save('ToDo', nb.grp.mirrors[m], { status: st }).catch(function () { }); });
+          });
+          nb.grp.members.forEach(function (m) { jobs = jobs.then(function () { return syncQueue(m); }); });
+        }
+        return jobs.then(function () { if (okMsg) toast(okMsg); render(); S.openTask = mid + '::' + u; refreshOpen(); return findTask(mid + '::' + u); });
+      });
+    }).catch(function (e) { if (e !== 'preview') toast('Not saved: ' + errMsg(e), 1); throw e; });
+  }
+  function addUpd(t, type, text, files) { t.updates.push({ id: uid(), at: nowLocal(), by: S.me.user, type: type, text: text, files: files || [] }); }
+  function uploadPending(dt, id, cache) {
+    var fl = S.updFiles || [], out = [];
+    return fl.reduce(function (p, f) { return p.then(function () { return API.upload(dt, id, f).then(function (r) { out.push({ name: r.file_name || f.name, url: r.file_url }); (cache[id] = cache[id] || []).push(r); }); }); }, Promise.resolve()).then(function () { S.updFiles = []; return out; });
+  }
+  function postUpdate() {
+    if (guard()) return;
+    var id = S.openTask, t = findTask(id), type = q('#d-utype').value, text = q('#d-utext').value.trim();
+    if (!text) { toast('Write something first', 1); return; }
+    if (needsDelayRemark(t) && isAssignee(t) && type !== 'Delay Remark') { toast('Task is overdue — post a Delay Remark first', 1); q('#d-utype').value = 'Delay Remark'; return; }
+    uploadPending('ToDo', fileKey(t), S.files).then(function (files) { return persist(id, function (f) { addUpd(f, type, text, files); if ((type === 'Report' || type === 'Update') && f.status === 'Open' && f.assignee === S.me.user) f.status = 'In Progress'; }, type + ' posted'); }).catch(function () { });
+  }
+  function quickAction(act, id) {
+    if (guard()) return;
+    var t = findTask(id); if (!t) return;
+    var mine = isAssignee(t);
+    var gate = function (next) {
+      if (mine && needsDelayRemark(t)) promptBox('Delay remark required', 'Overdue by ' + dur(new Date() - toDate(t.due)) + '. Explain the reason and your new expected completion.', 'Reason for delay…', function (txt) { persist(id, function (f) { addUpd(f, 'Delay Remark', txt); }, 'Delay remark saved').then(function () { t = findTask(S.openTask || id) || t; next(); }).catch(function () { }); });
+      else next();
+    };
+    var P = function (fn, msg) { persist(id, fn, msg).catch(function () { }); };
+    if (act === 'start') return gate(function () { P(function (f) { f.status = 'In Progress'; addUpd(f, 'System', 'Work started'); }, 'Started'); });
+    if (act === 'update') { openTask(id); setTimeout(function () { var x = q('#d-utext'); if (x) x.focus(); }, 250); return; }
+    if (act === 'report') return gate(function () { promptBox('Submit ' + ((reportDue(t) || {}).label || 'report'), 'What was done, what is pending, any blockers.', 'Report…', function (txt) { P(function (f) { addUpd(f, 'Report', txt); if (f.status === 'Open') f.status = 'In Progress'; }, 'Report submitted'); }); });
+    if (act === 'submit') return gate(function () { var open = t.checklist.filter(function (c) { return !c.d; }).length; promptBox('Mark done → send for review', (open ? '⚠ ' + open + ' checklist item(s) still unticked. ' : '') + 'Completion remarks — the assigner will approve or reopen.', 'Completion remarks…', function (txt) { P(function (f) { f.status = 'Review Pending'; f.progress = 100; addUpd(f, 'Completion', txt); }, 'Sent for review'); }); });
+    if (act === 'approve' || act === 'closeNow') return promptBox(act === 'approve' ? 'Approve & close' : 'Close as completed', 'Optional closing remark.', 'Remark (optional)…', function (txt) { P(function (f) { f.status = 'Completed'; f.progress = 100; f.completedOn = nowLocal(); addUpd(f, 'System', 'Approved & closed by ' + S.me.name + (t.grp && t.grp.response === 'individual' ? ' for ' + personName(f.assignee) : '') + (txt ? ' — ' + txt : '')); }, 'Closed'); }, true);
+    if (act === 'reopen') return promptBox('Reopen task', 'Reason (shared with assignee).', 'Reason…', function (txt) { P(function (f) { f.status = 'Reopened'; f.completedOn = ''; f.progress = Math.min(f.progress, 80); addUpd(f, 'System', 'Reopened by ' + S.me.name + ': ' + txt); }, 'Reopened'); });
+    if (act === 'hold') return promptBox('Put on hold', 'Reason.', 'Reason…', function (txt) { P(function (f) { f.status = 'On Hold'; addUpd(f, 'System', 'On hold: ' + txt); }, 'On hold'); });
+    if (act === 'cancel') return promptBox(t.grp ? 'Cancel whole group task' : 'Cancel task', 'Reason for cancelling.', 'Reason…', function (txt) { P(function (f) { f.status = 'Cancelled'; f._cancelAll = true; addUpd(f, 'System', 'Cancelled: ' + txt); }, 'Cancelled'); });
+    if (act === 'extend') {
+      modal('Extend deadline — ' + esc(dispNo(t)), '<div class="grid g2"><div class="fld"><label class="lbl">Current due</label><input readonly value="' + fDT(t.due) + '"></div><div class="fld"><label class="lbl">New due *</label><input type="datetime-local" id="m-due" min="' + nowLocal() + '" value="' + esc(t.due) + '"></div></div><div class="fld" style="margin-top:8px"><label class="lbl">Remarks *</label><textarea id="m-txt" placeholder="Why extended"></textarea></div>', [['Cancel', '', closeModal], ['Save', 'pri', function () {
+        var nd = q('#m-due').value, tx = q('#m-txt').value.trim(); if (!nd || !tx) { toast('New date and remark required', 1); return; } if (toDate(nd) < new Date()) { toast('Date is in the past', 1); return; }
+        closeModal(); P(function (f) { f.delays.push({ old_deadline: f.due, new_deadline: nd, remarks: tx, reviewed_by: S.me.user, reviewed_by_name: S.me.name, reviewed_on: fDT(nowLocal()) }); addUpd(f, 'System', 'Deadline ' + fDT(f.due) + ' → ' + fDT(nd) + ': ' + tx); f.due = nd; }, 'Deadline updated');
+      }]]); return;
     }
+    if (act === 'pri') {
+      modal('Change priority — ' + esc(dispNo(t)), '<div class="pg" id="m-pri">' + PRI_KEYS.map(function (k) { return '<button class="pb ' + (t.pri === k ? 'on' : '') + '" data-mp="' + k + '" data-p="' + k + '"><span class="pn-num">' + PRI_N(k) + '</span>' + esc(PRI_L(k)) + '<small>' + esc(PRI_H(k)) + '</small></button>'; }).join('') + '</div><label class="tg" style="margin-top:10px"><input type="checkbox" id="m-reorder" checked> Re-position in queue by new priority</label>', [['Cancel', '', closeModal], ['Save', 'pri', function () {
+        var sel = q('#m-pri .pb.on'); if (!sel) return; var np = sel.dataset.mp, re = q('#m-reorder').checked; closeModal();
+        persist(id, function (f) { addUpd(f, 'System', 'Priority ' + PRI_N(f.pri) + ' → ' + PRI_N(np) + ' ' + PRI_L(np)); f.pri = np; if (re) f.qk = placement(f.assignee, np, false, t.id).qk; }, 'Priority updated').then(function () { return syncQueue(t.assignee).then(function () { render(); refreshOpen(); }); }).catch(function () { });
+      }]]); return;
+    }
+    if (act === 'top') { var l = queueOf(t.assignee).map(function (x) { return x.id; }).filter(function (x) { return x !== id; }); l.unshift(id); return setOrder(t.assignee, l).then(function () { P(function (f) { f.qk = findTask(id) ? findTask(id).qk : f.qk; addUpd(f, 'System', 'Moved to queue #1 by ' + S.me.name); }, 'Moved to #1'); }); }
+    if (act === 'reassign') {
+      S._ra = null;
+      modal('Reassign — ' + esc(dispNo(t)), '<div class="fld"><label class="lbl">New assignee</label><div class="picker"><input id="m-ra" placeholder="Type name…" autocomplete="off"><div class="pres" id="m-ra-res"></div></div><div id="m-ra-sel" class="hint" style="margin-top:5px"></div></div><div class="fld" style="margin-top:8px"><label class="lbl">Reason</label><textarea id="m-txt"></textarea></div>', [['Cancel', '', closeModal], ['Reassign', 'pri', function () {
+        var nu = S._ra, tx = q('#m-txt').value.trim(), old = t.assignee; if (!nu) { toast('Pick a person', 1); return; } closeModal();
+        var pl = placement(nu, t.pri, false);
+        persist(id, function (f) { addUpd(f, 'System', 'Reassigned ' + personName(f.assignee) + ' → ' + personName(nu) + (tx ? ': ' + tx : '')); f.qk = pl.qk; f.status = 'Open'; })
+          .then(function () { return API.save('ToDo', id, { allocated_to: nu }); })
+          .then(function () { var x = findTask(id); x.assignee = nu; enrich(x); return syncQueue(old).then(function () { return syncQueue(nu); }).then(function () { toast('Reassigned'); render(); refreshOpen(); showDispatch([x], mod('wa'), 'new'); }); }).catch(function (e) { toast(errMsg(e), 1); });
+      }]]);
+      q('#m-ra').addEventListener('input', function () { pickerResults('m-ra', 'm-ra-res', [t.assignee], function (u) { S._ra = u; q('#m-ra-sel').innerHTML = 'Selected: <b>' + esc(personName(u)) + '</b> · ' + queueOf(u).length + ' open'; }); });
+      return;
+    }
+    if (act === 'notify') {
+      var targets = t.grp ? t.grp.members.map(function (u) { return S.tasks.filter(function (x) { return x.mid === t.mid && x.assignee === u; })[0]; }).filter(function (x) { return x && !isClosed(x); }) : [t];
+      modal('Remind', '<div class="bn a">Reminder for <b>' + esc(dispNo(t) + ' — ' + t.title) + '</b></div>' + (mod('wa') ? targets.map(function (x) { return waRow(x.assignee, taskMsg(x, 'reminder'), dispNo(x)); }).join('') : ''), (mod('email') ? [['✉️ Send Email', 'blue', function () { closeModal(); sendEmails(targets, 'reminder').then(function () { toast('Email sent'); }); P(function (f) { addUpd(f, 'System', 'Email reminder sent by ' + S.me.name); }); }]] : []).concat([['Close', '', closeModal]]), true);
+    }
+  }
+  function manageQueue(u) {
+    var draw = function () {
+      var l = queueOf(u);
+      return '<div class="hint" style="margin-bottom:6px">⤒ = make #1, ▲▼ = move. #1 is worked first. Saved instantly.</div>' + (l.map(function (t, i) { return '<div class="qi"><span class="qn ' + (i === 0 ? 'q1' : '') + '">#' + (i + 1) + '</span><div class="pi"><div class="pn">' + esc(dispNo(t)) + ' — ' + esc(t.title) + grpTag(t) + '</div><div class="pm">Due ' + fDT(t.due) + ' · ' + esc(t.status) + '</div></div>' + priPill(t.pri) + '<div class="row" style="flex-wrap:nowrap">' + (canManage(t) ? '<button class="btn sm" data-mv="top" data-id="' + esc(t.id) + '" ' + (i === 0 ? 'disabled' : '') + '>⤒</button><button class="btn sm" data-mv="up" data-id="' + esc(t.id) + '" ' + (i === 0 ? 'disabled' : '') + '>▲</button><button class="btn sm" data-mv="down" data-id="' + esc(t.id) + '" ' + (i === l.length - 1 ? 'disabled' : '') + '>▼</button>' : '<span class="tag">not yours</span>') + '</div></div>'; }).join('') || '<div class="empty"><b>No open tasks</b></div>');
+    };
+    var bindMq = function () {
+      qa('[data-mv]', q('#modal')).forEach(function (bt) {
+        bt.addEventListener('click', function () {
+          var ids = queueOf(u).map(function (x) { return x.id; }), i = ids.indexOf(bt.dataset.id);
+          if (bt.dataset.mv === 'top') { ids.splice(i, 1); ids.unshift(bt.dataset.id); } else { var j = bt.dataset.mv === 'up' ? i - 1 : i + 1, tmp = ids[j]; ids[j] = ids[i]; ids[i] = tmp; }
+          setOrder(u, ids).then(function () { q('#mq-body').innerHTML = draw(); bindMq(); toast('Queue updated'); });
+        });
+      });
+    };
+    modal('Manage queue — ' + esc(personName(u)), '<div id="mq-body">' + draw() + '</div>', [['Auto-sort by priority', '', function () {
+      var ids = queueOf(u).sort(function (a, b) { return PRI_W(a.pri) - PRI_W(b.pri) || (a.created > b.created ? 1 : -1); }).map(function (x) { return x.id; });
+      setOrder(u, ids).then(function () { q('#mq-body').innerHTML = draw(); bindMq(); toast('Sorted by priority'); });
+    }], ['Done', 'pri', closeModal]], true);
+    bindMq();
+  }
 
+  /* ================================================================
+     TICKETS
+  ================================================================ */
+  function resetTForm() { var mp = person(S.me.user || ''); S.tform = { branch: (mp && mp.branch) || 'Head Office', cat: '', issue: '', other: '', emp: '', tag: '', cc: [], pri: '', details: '', wa: true, email: true }; S.tFiles = []; }
+  function suggestResolver(cat) {
+    if (S.cfg.resolvers[cat]) return S.cfg.resolvers[cat];
+    var s = CATEGORY_TAG_TO_SUGGEST[cat]; if (!s) return '';
+    var m = S.people.filter(function (p) { return p.login && (p.name.toLowerCase().indexOf(s) > -1 || p.user.toLowerCase().indexOf(s) > -1); })[0];
+    return m ? m.user : '';
+  }
+  function renderRaise() {
+    var f = S.tform, issues = tIssues(f.cat), tp = f.tag ? person(f.tag) || { name: f.tag } : null;
+    q('#view').innerHTML = '<div class="tk2"><div class="card"><div class="ch">✚ Raise New Ticket<span class="sp">' + hb('t_raise') + '</span></div><div class="cb">' +
+      '<div class="grid g3"><div class="fld"><label class="lbl">Raised by</label><input readonly value="' + esc(S.me.name) + '"></div><div class="fld"><label class="lbl">Branch *</label><select id="k-branch">' + allBranches().map(function (b) { return '<option ' + (f.branch === b ? 'selected' : '') + '>' + esc(b) + '</option>'; }).join('') + '</select></div>' +
+      '<div class="fld"><label class="lbl">Priority * (SLA)</label><div class="pg" style="grid-template-columns:repeat(3,1fr)" id="k-pri">' + TK_PRI.map(function (p) { return '<button class="pb ' + (f.pri === p ? 'on' : '') + '" data-kp="' + p + '" data-p="' + p + '" style="padding:3px">' + p + '<small>' + (SLA(p) < 48 ? SLA(p) + ' h' : Math.round(SLA(p) / 24) + ' days') + '</small></button>'; }).join('') + '</div></div></div>' +
+      '<div class="grid g2" style="margin-top:9px"><div class="fld"><label class="lbl">Issue category *</label><select id="k-cat">' + optList(tCats(), f.cat, 'Select category') + '</select></div><div class="fld"><label class="lbl">Specific issue *</label><select id="k-issue">' + optList(issues, f.issue, f.cat ? 'Select issue' : 'Select category first') + '</select></div></div>' +
+      (f.issue === 'Other' ? '<div class="fld" style="margin-top:9px"><label class="lbl">Describe the issue *</label><input id="k-other" value="' + esc(f.other) + '" maxlength="200"></div>' : '') +
+      (EMPLOYEE_INVOLVED_ISSUES.indexOf(f.issue) > -1 ? '<div class="fld" style="margin-top:9px"><label class="lbl">Employee involved *</label><select id="k-emp">' + optList(S.people.map(function (p) { return p.name; }), f.emp, 'Select employee') + '</select></div>' : '') +
+      '<div class="grid g2" style="margin-top:9px"><div class="fld"><label class="lbl">Tag to resolver *</label><div class="picker"><input id="k-tag" placeholder="' + (tp ? esc(tp.name) + ' — type to change' : 'Type name…') + '" autocomplete="off"><div class="pres" id="k-tag-res"></div></div></div>' +
+      '<div class="fld"><label class="lbl">CC (optional)</label><div class="picker"><input id="k-cc" placeholder="Type name to add CC…" autocomplete="off"><div class="pres" id="k-cc-res"></div></div></div></div>' +
+      '<div class="chips" style="margin-top:5px">' + (tp ? '<span class="chip on">Resolver: ' + esc(tp.name) + '</span>' : '') + f.cc.map(function (u) { return '<span class="chip sel">CC: ' + esc(personName(u)) + ' <span class="x" data-uncc2="' + esc(u) + '">×</span></span>'; }).join('') + '</div>' +
+      '<div class="fld" style="margin-top:9px"><label class="lbl">Issue details *</label><textarea id="k-details" placeholder="What happened, since when, what you already tried…">' + esc(f.details) + '</textarea></div>' +
+      '<div class="row" style="margin-top:9px;gap:14px"><div class="drop" id="k-drop" style="flex:1">📎 Attach photos / screenshots (max 5 MB)</div>' + (mod('wa') ? '<label class="tg"><input type="checkbox" id="k-wa" ' + (f.wa ? 'checked' : '') + '> 🟢 WhatsApp resolver</label>' : '') + (mod('email') ? '<label class="tg"><input type="checkbox" id="k-email" ' + (f.email ? 'checked' : '') + '> ✉️ Email</label>' : '') + '</div>' +
+      '<div class="chips" style="margin-top:5px">' + S.tFiles.map(function (fl, i) { return '<span class="chip sel">📄 ' + esc(fl.name) + ' <span class="x" data-untf="' + i + '">×</span></span>'; }).join('') + '</div>' +
+      '<div class="row" style="margin-top:10px"><button class="btn pri lg" data-act="tk-submit">✓ Submit Ticket</button><button class="btn" data-act="tk-reset">Clear</button></div></div></div>' +
+      '<div class="side"><div class="card"><div class="ch">Resolver &amp; my recent tickets</div><div class="cb">' +
+      (tp ? '<div class="sc"><div class="av">' + initials(tp.name) + '</div><div class="pi"><div class="pn">' + esc(tp.name) + '</div><div class="pm">' + esc([tp.desig, tp.branch].filter(Boolean).join(' · ')) + '</div></div>' + phHtml(tp, true) + '<span class="tag">' + S.tickets.filter(function (x) { return x.tag === f.tag && tkActive(x); }).length + ' open</span></div>' : '<div class="hint">Pick a category — the default resolver is filled in automatically.</div>') +
+      '<div class="sub">My recent tickets</div>' + (S.tickets.filter(function (x) { return x.raiser === S.me.user; }).slice(0, 6).map(function (x) { return '<div class="qi" style="padding:5px 0;cursor:pointer" data-otk="' + esc(x.id) + '"><div class="pi"><div class="tl1" style="max-width:none">' + esc(x.issue || x.subject) + '</div><div class="pm">' + esc(x.id) + ' · ' + fD(x.created) + '</div></div>' + tkPill(x) + '</div>'; }).join('') || '<div class="hint">None yet</div>') +
+      '</div></div></div></div>';
+  }
+  function submitTicket() {
+    if (guard()) return;
+    var f = S.tform, e = [];
+    if (!f.cat) e.push('Select category'); if (!f.issue) e.push('Select specific issue');
+    if (f.issue === 'Other' && !f.other.trim()) e.push('Describe the issue');
+    if (EMPLOYEE_INVOLVED_ISSUES.indexOf(f.issue) > -1 && !f.emp) e.push('Select employee involved');
+    if (!f.tag) e.push('Select resolver'); if (!f.pri) e.push('Select priority'); if (!f.details.trim()) e.push('Write issue details');
+    if (e.length) { modal('⚠ Please complete the ticket', '<ul style="margin:0;padding-left:18px">' + e.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>', [['OK', 'pri', closeModal]]); return; }
+    modalBusy('Submitting ticket…');
+    var tk = { meta: {}, branch: f.branch, cat: f.cat, issue: f.issue, other: f.other.trim(), emp: f.emp, tag: f.tag, cc: f.cc.slice(), details: f.details.trim(), status: 'Open', updates: [{ id: uid(), at: nowLocal(), by: S.me.user, type: 'System', text: 'Ticket raised · ' + f.pri + ' · resolver ' + personName(f.tag) }], resolvedOn: '', closedOn: '' };
+    var doc = { doctype: 'Issue', subject: f.cat + ' - ' + f.issue, description: tkDesc(tk), priority: f.pri, status: 'Open', raised_by: S.me.user };
+    var wa = f.wa && mod('wa'), em = f.email && mod('email');
+    API.create(doc).then(function (d) {
+      var r = {}; Object.keys(doc).forEach(function (k) { r[k] = doc[k]; }); Object.keys(d || {}).forEach(function (k) { r[k] = d[k]; });
+      var row = normTicket(r); S.tickets.unshift(row);
+      return S.tFiles.reduce(function (p, fl) { return p.then(function () { return API.upload('Issue', row.id, fl).then(function (x) { (S.tfiles[row.id] = S.tfiles[row.id] || []).push(x); }).catch(function (x) { toast(String(x), 1); }); }); }, Promise.resolve()).then(function () { return row; });
+    }).then(function (row) {
+      var msg = tkMsg(row, 'new');
+      if (em) API.email([row.tag], row.cc, '[Ticket ' + row.pri + '] ' + row.id + ' — ' + row.subject, mailHtml('New Ticket', msg), 'Issue', row.id).catch(function () { });
+      resetTForm(); render();
+      modal('✅ Ticket ' + esc(row.id) + ' submitted', '<div class="bn g">Tagged to <b>' + esc(personName(row.tag)) + '</b>. SLA: ' + fDT(localStr(tkSla(row))) + '.</div>' + (wa ? waRow(row.tag, msg, 'Resolver') : ''), [['Done', 'pri', closeModal]]);
+    }).catch(function (x) { closeModal(); toast('Ticket not saved: ' + errMsg(x), 1); });
+  }
+  function tkMsg(tk, kind) {
+    return (kind === 'new' ? '🎫 *LIFE Clinics — New Ticket*' : '⏰ *LIFE Clinics — Ticket Reminder*') + '\n\n*Ticket:* ' + tk.id + '\n*Priority:* ' + tk.pri + '   *SLA:* ' + fDT(localStr(tkSla(tk) || new Date())) + '\n*Branch:* ' + tk.branch + '\n*Category:* ' + tk.cat + '\n*Issue:* ' + tk.issue + (tk.other ? ' — ' + tk.other : '') + '\n\n' + tk.details.slice(0, 600) + '\n\n*Raised by:* ' + personName(tk.raiser) + '\n\nOpen: ' + location.origin + location.pathname;
+  }
+  function tApply(list) {
+    var f = S.tf, s = f.q.toLowerCase(), me = S.me.user;
+    return list.filter(function (t) {
+      if (s && (t.id + ' ' + t.subject + ' ' + t.details + ' ' + personName(t.raiser) + ' ' + personName(t.tag) + ' ' + t.branch).toLowerCase().indexOf(s) < 0) return false;
+      if (f.pri && t.pri !== f.pri) return false; if (f.cat && t.cat !== f.cat) return false; if (f.branch && t.branch !== f.branch) return false; if (f.tag && t.tag !== f.tag) return false;
+      var st = f.status;
+      if (st === 'Active' && !tkActive(t)) return false; if (st === 'Breach' && !tkBreach(t)) return false; if (st === 'HighOpen' && !(tkActive(t) && t.pri === 'High')) return false;
+      if (st === 'Mine' && !(t.tag === me && tkActive(t))) return false; if (TK_STATUSES.indexOf(st) > -1 && t.status !== st) return false;
+      return true;
+    }).sort(function (a, b) { return (tkActive(b) - tkActive(a)) || (tkBreach(b) - tkBreach(a)) || (TK_PRI.indexOf(a.pri) - TK_PRI.indexOf(b.pri)) || (b.created > a.created ? 1 : -1); });
+  }
+  function tRow(t) {
+    var nf = (S.tfiles[t.id] || []).length;
+    return '<tr class="' + (tkBreach(t) ? 'od' : '') + '" data-otk="' + esc(t.id) + '" style="cursor:pointer">' + TD('Ticket', '<span class="tno">' + esc(t.id) + '</span><div class="pm">📎' + nf + ' 💬' + t.updates.filter(function (u) { return u.type !== 'System'; }).length + '</div>') +
+      TD('Issue', '<span class="tl1" title="' + esc(t.details) + '">' + esc(t.issue || t.subject) + '</span><div class="pm">' + esc(t.cat) + '</div>') + TD('Branch', esc(t.branch || '—')) +
+      TD('Raised by', '<div class="pn">' + esc(personName(t.raiser)) + '</div>' + phHtml(t.raiser, true)) + TD('Resolver', '<div class="pn">' + esc(personName(t.tag)) + '</div>' + phHtml(t.tag, true)) +
+      TD('Priority', '<span class="pill p-' + t.pri + '">' + t.pri + '</span>') + TD('Raised on', fDT(t.created)) + TD('SLA', tkSlaHtml(t)) + TD('Status', tkPill(t), 'wr') + '</tr>';
+  }
+  function tTable(list) { return '<div class="card"><div class="tw"><table class="tt">' + cols([11, 20, 9, 14, 14, 7, 9, 7, 9]) + '<thead><tr><th>Ticket</th><th>Issue</th><th>Branch</th><th>Raised by</th><th>Resolver</th><th>Priority</th><th>Raised on</th><th>SLA</th><th>Status</th></tr></thead><tbody>' + (list.length ? list.slice(0, 300).map(tRow).join('') : '<tr><td colspan="9"><div class="empty"><b>No tickets</b></div></td></tr>') + '</tbody></table></div>' + (list.length > 300 ? '<div class="pager">Showing 300 of ' + list.length + ' — narrow filters</div>' : '') + '</div>'; }
+  function renderTAll() {
+    var v = tVisible(), f = S.tf, list = tApply(v);
+    var sts = [['Active', 'Active (not resolved/closed)'], ['Breach', 'SLA breached'], ['HighOpen', 'High open'], ['Mine', 'Tagged to me']].concat(TK_STATUSES.map(function (s) { return [s, s]; }));
+    q('#view').innerHTML = '<div class="card"><div class="cb"><div class="fbar">' +
+      '<div class="fld fq"><label class="lbl">Search</label><input id="tf-q" value="' + esc(f.q) + '" placeholder="Ticket no, issue, person, branch…"></div>' +
+      '<div class="fld"><label class="lbl">Status</label><select data-tf="status">' + optList(sts, f.status, 'All') + '</select></div>' +
+      '<div class="fld"><label class="lbl">Priority</label><select data-tf="pri">' + optList(TK_PRI, f.pri) + '</select></div>' +
+      '<div class="fld"><label class="lbl">Category</label><select data-tf="cat">' + optList(Object.keys(S.cfg.tCats), f.cat) + '</select></div>' +
+      '<div class="fld"><label class="lbl">Branch</label><select data-tf="branch">' + optList(uniq(v.map(function (t) { return t.branch; })).sort(), f.branch) + '</select></div>' +
+      '<div class="fld"><label class="lbl">Resolver</label><select data-tf="tag">' + optList(uniq(v.map(function (t) { return t.tag; })).map(function (u) { return [u, personName(u)]; }), f.tag) + '</select></div></div>' +
+      '<div class="vbar"><span class="hint">' + list.length + ' tickets</span><span style="flex:1"></span>' + (can('export') ? '<button class="btn sm" data-act="tk-export">⬇ CSV</button>' : '') + hb('t_all') + '</div></div></div>' + tTable(list);
+  }
+  function renderTMy() {
+    var me = S.me.user, v = S.tickets;
+    var sets = { tagged: v.filter(function (t) { return t.tag === me; }), raised: v.filter(function (t) { return t.raiser === me || t.owner === me; }), close: v.filter(function (t) { return (t.raiser === me || t.owner === me) && t.status === 'Resolved'; }), cc: v.filter(function (t) { return t.cc.indexOf(me) > -1; }) };
+    var tabs = [['tagged', 'Tagged to Me', sets.tagged.filter(tkActive).length], ['close', 'Awaiting My Close', sets.close.length], ['raised', 'Raised by Me', sets.raised.length], ['cc', 'CC to Me', sets.cc.length]];
+    var list = sets[S.tmyTab].slice().sort(function (a, b) { return (tkActive(b) - tkActive(a)) || (b.created > a.created ? 1 : -1); });
+    q('#view').innerHTML = '<div class="stabs">' + tabs.map(function (x) { return '<button class="btn ' + (S.tmyTab === x[0] ? 'pri' : '') + '" data-tmy="' + x[0] + '">' + x[1] + ' <span class="tag">' + x[2] + '</span></button>'; }).join('') + hb('t_my') + '</div>' + tTable(list);
+  }
+  function findTk(id) { return S.tickets.filter(function (t) { return t.id === id; })[0]; }
+  function openTicket(id) {
+    var tk = findTk(id); if (!tk) return; S.openTicket = id; S.openTask = null;
+    var me = S.me.user, isRes = tk.tag === me, isRai = tk.raiser === me || tk.owner === me, mgr = can('t_manage'), files = S.tfiles[tk.id] || [], A = [];
+    var b = function (cls, a, txt) { A.push('<button class="btn ' + cls + '" data-tka="' + a + '" data-id="' + esc(tk.id) + '">' + txt + '</button>'); };
+    if ((isRes || mgr) && tkActive(tk)) b('pri', 'resolve', '✓ Mark Resolved');
+    if ((isRai || mgr) && tk.status === 'Resolved') { b('pri', 'close', '✓ Satisfied – Close'); b('red', 'reopen', '↺ Not satisfied – Reopen'); }
+    if ((isRai || mgr) && tk.status === 'Closed') b('red', 'reopen', '↺ Reopen');
+    if ((mgr || isRai) && tkActive(tk)) b('', 'retag', '⇄ Change resolver');
+    if (mgr && tkActive(tk)) { b('', 'tpri', '⚑ Priority'); b('', tk.status === 'On Hold' ? 'unhold' : 'hold', tk.status === 'On Hold' ? '▶ Resume' : '⏸ Hold'); }
+    if (tkActive(tk) && (isRai || mgr) && mod('wa')) b('wa', 'remind', '🔔 Remind resolver');
+    var h = '<div class="dh"><span class="qn" style="min-width:40px;height:40px;font-size:18px;background:#fff;color:var(--g800)">🎫</span><div class="pi"><div style="font-size:11.5px;opacity:.85">' + esc(tk.id) + ' · ' + esc(tk.cat) + '</div><div style="font-size:16px;font-weight:700" class="nw">' + esc(tk.issue || tk.subject) + '</div><div class="row" style="margin-top:3px"><span class="pill p-' + tk.pri + '">' + tk.pri + '</span>' + tkPill(tk) + '</div></div>' + hb('t_drawer') + '<button class="x" data-act="close-drawer">×</button></div>' +
+      '<div class="db">' + (tkBreach(tk) ? '<div class="bn r">⚠ SLA breached by ' + dur(new Date() - tkSla(tk)) + '</div>' : '') + (tk.status === 'Resolved' && isRai ? '<div class="bn a">Resolver marked this resolved. Close if satisfied, or Reopen with reason.</div>' : '') +
+      '<div class="ig">' + info('Branch', tk.branch || '—') + info('Raised by', personName(tk.raiser)) + info('Raiser mobile', phHtml(tk.raiser), true) + info('Raised on', fDT(tk.created)) +
+      info('Resolver', personName(tk.tag)) + info('Resolver mobile', phHtml(tk.tag), true) + info('SLA', tkSla(tk) ? fDT(localStr(tkSla(tk))) : '—') + info('SLA status', tkSlaHtml(tk), true) +
+      info('CC', tk.cc.map(personName).join(', ') || '—') + info('Employee involved', tk.emp || '—') + info('Other', tk.other || '—') + info('Files', files.length) + '</div>' +
+      '<div class="sub" style="margin-top:10px">Issue details</div><div class="dbox">' + esc(tk.details || '—') + '</div>' +
+      '<div class="sub" style="margin-top:10px">Attachments</div><div class="chips">' + (files.length ? files.map(function (fl) { return '<a class="chip" target="_blank" href="' + esc(fl.file_url) + '">📄 ' + esc(fl.file_name || 'file') + '</a>'; }).join('') : '<span class="hint">No files</span>') + '</div>' +
+      '<div class="sub" style="margin-top:10px">Updates (' + tk.updates.length + ')</div>' +
+      (tk.status !== 'Closed' ? '<div class="card" style="margin-bottom:8px"><div class="cb"><div class="row" style="flex-wrap:nowrap"><textarea id="k-utext" style="min-height:40px;height:40px" placeholder="Write an update / reply…"></textarea><button class="btn sm" data-act="tupd-file" style="height:40px">📎</button><button class="btn pri" data-act="tk-post" style="height:40px">Post</button></div><div class="hint" id="d-ufiles"></div></div></div>' : '') +
+      '<div class="tl">' + (tk.updates.length ? tk.updates.slice().reverse().map(updHtml).join('') : '<div class="hint">No updates yet</div>') + '</div></div>' +
+      '<div class="da">' + (A.join('') || '<span class="hint">View only.</span>') + '</div>';
+    showDrawer(h); S.updFiles = [];
+  }
+  function tPersist(id, mutate, okMsg) {
+    if (guard()) return Promise.reject('preview');
+    return API.get('Issue', id).then(function (raw) {
+      var fresh = normTicket(raw); mutate(fresh);
+      var fields = { description: tkDesc(fresh), status: tkStatusField(fresh.status) };
+      if (fresh._pri) fields.priority = fresh.pri;
+      return API.save('Issue', id, fields).then(function () {
+        raw.description = fields.description; raw.status = fields.status; if (fields.priority) raw.priority = fields.priority;
+        var nt = normTicket(raw), i = S.tickets.indexOf(findTk(id)); if (i > -1) S.tickets[i] = nt;
+        if (okMsg) toast(okMsg); render(); refreshOpen(); return nt;
+      });
+    }).catch(function (e) { if (e !== 'preview') toast('Not saved: ' + errMsg(e), 1); throw e; });
+  }
+  function tkAction(a, id) {
+    if (guard()) return;
+    var tk = findTk(id), P = function (fn, m) { tPersist(id, fn, m).catch(function () { }); };
+    if (a === 'resolve') return promptBox('Mark resolved', 'Resolution remarks — what was done.', 'Remarks…', function (x) { P(function (f) { f.status = 'Resolved'; f.resolvedOn = nowLocal(); addUpd(f, 'Resolved', x); }, 'Marked resolved'); });
+    if (a === 'close') return promptBox('Close ticket', 'Optional feedback.', 'Feedback (optional)…', function (x) { P(function (f) { f.status = 'Closed'; f.closedOn = nowLocal(); addUpd(f, 'Closed', x || 'Accepted and closed by raiser'); }, 'Ticket closed'); }, true);
+    if (a === 'reopen') return promptBox('Reopen ticket', 'Why are you not satisfied?', 'Reason…', function (x) { P(function (f) { f.status = 'Reopened'; addUpd(f, 'Reopened', x); }, 'Reopened'); });
+    if (a === 'hold') return promptBox('Put on hold', 'Reason.', 'Reason…', function (x) { P(function (f) { f.status = 'On Hold'; addUpd(f, 'System', 'On hold: ' + x); }, 'On hold'); });
+    if (a === 'unhold') return P(function (f) { f.status = 'Open'; addUpd(f, 'System', 'Resumed'); }, 'Resumed');
+    if (a === 'tpri') return modal('Change ticket priority', '<div class="pg" style="grid-template-columns:repeat(3,1fr)" id="m-tp">' + TK_PRI.map(function (p) { return '<button class="pb ' + (tk.pri === p ? 'on' : '') + '" data-mp="' + p + '" data-p="' + p + '">' + p + '</button>'; }).join('') + '</div>', [['Cancel', '', closeModal], ['Save', 'pri', function () { var s = q('#m-tp .pb.on'); closeModal(); if (s) P(function (f) { addUpd(f, 'System', 'Priority ' + f.pri + ' → ' + s.dataset.mp); f.pri = s.dataset.mp; f._pri = 1; }, 'Priority updated'); }]]);
+    if (a === 'retag') {
+      S._ra = null;
+      modal('Change resolver', '<div class="picker"><input id="m-ra" placeholder="Type name…" autocomplete="off"><div class="pres" id="m-ra-res"></div></div><div id="m-ra-sel" class="hint" style="margin-top:5px"></div>', [['Cancel', '', closeModal], ['Save', 'pri', function () { var nu = S._ra; if (!nu) { toast('Pick a person', 1); return; } closeModal(); P(function (f) { addUpd(f, 'System', 'Resolver ' + personName(f.tag) + ' → ' + personName(nu)); f.tag = nu; }, 'Resolver changed'); }]]);
+      q('#m-ra').addEventListener('input', function () { pickerResults('m-ra', 'm-ra-res', [tk.tag], function (u) { S._ra = u; q('#m-ra-sel').innerHTML = 'Selected: <b>' + esc(personName(u)) + '</b>'; }); });
+      return;
+    }
+    if (a === 'remind') return modal('Remind resolver', waRow(tk.tag, tkMsg(tk, 'remind'), 'Resolver'), [['Close', '', closeModal]]);
+  }
+  function tkPost() {
+    if (guard()) return;
+    var id = S.openTicket, x = q('#k-utext').value.trim(); if (!x) { toast('Write something first', 1); return; }
+    uploadPending('Issue', id, S.tfiles).then(function (files) { return tPersist(id, function (f) { addUpd(f, 'Update', x, files); }, 'Update posted'); }).catch(function () { });
+  }
+
+  /* ================================================================
+     CONTROL PANEL (admins only)
+  ================================================================ */
+  function sw(attr, on) { return '<label class="sw"><input type="checkbox" ' + attr + ' ' + (on ? 'checked' : '') + '><span></span></label>'; }
+  function cpDirty() { return JSON.stringify(S.draft) !== JSON.stringify(S.cfg); }
+  function renderCPanel() {
+    if (!S.me.admin || S.me.preview) { q('#view').innerHTML = '<div class="card"><div class="empty"><b>Admins only</b></div></div>'; return; }
+    if (!S.draft) S.draft = clone(S.cfg);
+    var d = S.draft, roles = Object.keys(d.roles);
+    var tabs = [['mods', '🧩 Modules'], ['roles', '🛡 Roles & Rights'], ['users', '👤 Users & Admins'], ['tmast', '📋 Task Masters'], ['kmast', '🎫 Ticket Masters'], ['phone', '🔒 Phone Privacy']];
+    var h = '<div class="cpbar">⚙ <b>Control Panel</b><span class="hint" style="margin:0">' + (S.cfg.savedOn ? 'Last saved ' + fDT(S.cfg.savedOn) + ' by ' + esc(personName(S.cfg.savedBy)) : 'Not saved yet — defaults in use') + '</span><span style="flex:1"></span>' + (cpDirty() ? '<span class="tag a">Unsaved changes</span><button class="btn sm" data-act="cp-discard">Discard</button>' : '') + '<button class="btn pri" data-act="cp-save">💾 Save Control Panel</button>' + hb('cpanel') + '</div>';
+    h += '<div class="stabs">' + tabs.map(function (t) { return '<button class="btn ' + (S.cpTab === t[0] ? 'pri' : '') + '" data-cpt="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div>';
+    var c = S.cpTab;
+    if (c === 'mods') {
+      h += '<div class="card"><div class="ch">Modules &amp; features — switch on / off for everyone</div><div class="cb"><div class="grid g3">' + MODULES.map(function (m) { return '<div class="tgl"><div style="min-width:0"><div class="tt2">' + esc(m[1]) + '</div><div class="ds">' + esc(m[2]) + '</div></div>' + sw('data-cpmod="' + m[0] + '"', d.modules[m[0]]) + '</div>'; }).join('') + '</div><div class="hint" style="margin-top:8px">Admins always keep access to Control Panel even if Tasks is switched off.</div></div></div>';
+    }
+    if (c === 'roles') {
+      var groups = uniq(PERMS.map(function (p) { return p[2]; }));
+      h += '<div class="card"><div class="ch">Roles &amp; rights — who can see / do what<span class="sp"><input id="cp-newrole" placeholder="New role name" style="height:31px;width:170px;padding:3px 8px;font-size:12.5px"><button class="btn sm" data-act="cp-addrole">＋ Add role</button></span></div><div class="tw"><table class="tt cp-mat">' + cols([34].concat(roles.map(function () { return Math.floor(66 / roles.length); }))) +
+        '<thead><tr><th>Permission</th>' + roles.map(function (r) { return '<th>' + esc(r) + (r !== 'Admin' && r !== 'Employee' ? ' <button class="lock" data-cpdelrole="' + esc(r) + '" title="Delete role">✕</button>' : '') + '</th>'; }).join('') + '</tr></thead><tbody>' +
+        '<tr><td><b>Data scope</b><div class="pm">Which tasks the role can see</div></td>' + roles.map(function (r) { return '<td><select data-rs="' + esc(r) + '" style="height:32px;font-size:12px;padding:2px 6px" ' + (r === 'Admin' ? 'disabled' : '') + '>' + SCOPES.map(function (s) { return '<option value="' + s[0] + '" ' + (d.roles[r].scope === s[0] ? 'selected' : '') + '>' + s[0].toUpperCase() + '</option>'; }).join('') + '</select></td>'; }).join('') + '</tr>' +
+        groups.map(function (g) { return '<tr><td colspan="' + (roles.length + 1) + '" style="background:#fbf7e9;font-weight:700;color:#7a5600;font-size:11px;letter-spacing:.5px;text-transform:uppercase">' + esc(g) + '</td></tr>' + PERMS.filter(function (p) { return p[2] === g; }).map(function (p) { return '<tr><td title="' + esc(p[1]) + '">' + esc(p[1]) + '</td>' + roles.map(function (r) { return '<td><input type="checkbox" data-rp="' + esc(r) + '|' + p[0] + '" ' + (d.roles[r][p[0]] ? 'checked' : '') + ' ' + (r === 'Admin' ? 'disabled' : '') + '></td>'; }).join('') + '</tr>'; }).join(''); }).join('') +
+        '</tbody></table></div><div class="cb hint">Scope: OWN = mine / by me / CC / my groups · DEPT = my department · BRANCH = my branch · ALL = everything. Admin role always has everything.</div></div>';
+    }
+    if (c === 'users') {
+      var s = S.cpq.toLowerCase(), ppl = S.people.filter(function (p) { return p.login && (!s || (p.name + ' ' + p.user + ' ' + p.desig + ' ' + p.branch).toLowerCase().indexOf(s) > -1); });
+      var desigs = distinct('desig');
+      h += '<div class="tk2" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)"><div class="card"><div class="ch">User → role<span class="sp"><input id="cp-q" value="' + esc(S.cpq) + '" placeholder="Search user…" style="height:31px;width:200px;padding:3px 8px;font-size:12.5px"></span></div><div class="tw" style="max-height:calc(100vh - 330px);overflow-y:auto"><table class="tt">' + cols([28, 20, 14, 20, 18]) + '<thead><tr><th>Employee</th><th>Designation</th><th>Branch</th><th>Role</th><th>Comes from</th></tr></thead><tbody>' +
+        ppl.map(function (p) { var src = isAdmin(p.user) ? 'Admin (core)' : d.userRoles[p.user] ? 'Set directly' : 'Rule / default'; return '<tr>' + TD('Employee', '<div class="pn">' + esc(p.name) + '</div><div class="pm">' + esc(p.user) + '</div>') + TD('Designation', esc(p.desig || '—')) + TD('Branch', esc(p.branch || '—')) + TD('Role', '<select data-ur="' + esc(p.user) + '" style="height:32px;font-size:12px;padding:2px 6px" ' + (CORE_ADMINS.indexOf(p.user.toLowerCase()) > -1 ? 'disabled' : '') + '>' + optList(Object.keys(d.roles), d.userRoles[p.user] || '', '— auto —') + '</select>') + TD('From', '<span class="tag ' + (src === 'Set directly' ? 'g' : '') + '">' + src + '</span>') + '</tr>'; }).join('') + '</tbody></table></div></div>' +
+        '<div><div class="card"><div class="ch">Designation rules</div><div class="cb">' + (d.desigRules || []).map(function (r, i) { return '<div class="row" style="flex-wrap:nowrap;margin-bottom:6px"><select data-dr="' + i + '|0" style="height:34px">' + optList(desigs, r[0], 'Designation') + '</select><span>→</span><select data-dr="' + i + '|1" style="height:34px">' + optList(Object.keys(d.roles), r[1], 'Role') + '</select><button class="btn sm red" data-cpdeldr="' + i + '">✕</button></div>'; }).join('') +
+        '<button class="btn sm" data-act="cp-adddr">＋ Add rule</button><div class="sub" style="margin-top:12px">Default role (everyone else)</div><select id="cp-defrole">' + optList(Object.keys(d.roles), d.defaultRole, null) + '</select></div></div>' +
+        '<div class="card"><div class="ch">Admins (full rights + Control Panel)</div><div class="cb"><div class="chips">' + CORE_ADMINS.filter(function (x) { return x !== 'administrator'; }).map(function (u) { return '<span class="chip on">⭐ ' + esc(personName(u)) + '</span>'; }).join('') + (d.admins || []).map(function (u) { return '<span class="chip sel">' + esc(personName(u)) + ' <span class="x" data-cpdeladm="' + esc(u) + '">×</span></span>'; }).join('') + '</div><div class="picker" style="margin-top:8px"><input id="cp-admin" placeholder="Add another admin…" autocomplete="off"><div class="pres" id="cp-admin-res"></div></div></div></div></div></div>';
+    }
+    if (c === 'tmast') {
+      h += '<div class="rg"><div class="card"><div class="ch">Task categories<span class="sp"><input id="cp-newcat" placeholder="New category" style="height:31px;width:160px;padding:3px 8px;font-size:12.5px"><button class="btn sm" data-act="cp-addcat">＋ Add</button></span></div><div class="cb" style="max-height:calc(100vh - 330px);overflow:auto">' + d.categories.map(function (cat, i) { return '<div class="mitem ' + (cat.a ? '' : 'off') + '"><span class="mtx">' + esc(cat.n) + '</span>' + sw('data-cat="' + i + '"', cat.a) + '</div>'; }).join('') + '</div></div>' +
+        '<div><div class="card"><div class="ch">Priority numbers &amp; labels</div><div class="cb">' + PRI_KEYS.map(function (k, i) { return '<div class="row" style="flex-wrap:nowrap;margin-bottom:6px"><span class="pill p-' + k + '" style="width:44px;justify-content:center">P' + (i + 1) + '</span><input data-pl="' + k + '" value="' + esc(d.pri[k].label) + '" style="width:140px;flex:none"><input data-ph="' + k + '" value="' + esc(d.pri[k].hint) + '"></div>'; }).join('') + '<div class="hint">Order is fixed: P1 is always worked before P2, P2 before P3 …</div></div></div>' +
+        '<div class="card"><div class="ch">Reporting types</div><div class="cb">' + REPORT_DEF.map(function (r) { return '<div class="mitem ' + (d.reports[r.k] ? '' : 'off') + '"><span class="mtx">' + esc(r.label) + ' <span class="pm" style="display:inline">— ' + esc(r.d) + '</span></span>' + sw('data-rt="' + r.k + '"', d.reports[r.k]) + '</div>'; }).join('') + '</div></div></div></div>';
+    }
+    if (c === 'kmast') {
+      var resPeople = S.people.filter(function (p) { return p.login; }).map(function (p) { return [p.user, p.name]; });
+      h += '<div class="tk2" style="grid-template-columns:minmax(0,1.7fr) minmax(0,1fr)"><div class="card"><div class="ch">Ticket categories, issues &amp; default resolver<span class="sp"><input id="cp-newtc" placeholder="New category" style="height:31px;width:160px;padding:3px 8px;font-size:12.5px"><button class="btn sm" data-act="cp-addtc">＋ Add</button></span></div><div class="cb" style="max-height:calc(100vh - 330px);overflow:auto">' +
+        Object.keys(d.tCats).map(function (cat) { var x = d.tCats[cat]; return '<details class="qg" style="padding:0" data-dc="' + esc(cat) + '" ' + ((S.cpOpen || {})[cat] ? 'open' : '') + '><summary class="qh" style="list-style:none"><b class="mtx">' + esc(cat) + '</b><span class="tag">' + x.issues.filter(function (i) { return i.a; }).length + ' issues</span><select data-res="' + esc(cat) + '" style="width:190px;height:31px;font-size:12px;padding:2px 6px" onclick="event.stopPropagation()">' + optList(resPeople, d.resolvers[cat] || '', 'Resolver: auto') + '</select>' + sw('data-tc="' + esc(cat) + '"', x.a) + '</summary><div class="cb">' + x.issues.map(function (iss, i) { return '<div class="mitem ' + (iss.a ? '' : 'off') + '"><span class="mtx">' + esc(iss.n) + '</span>' + sw('data-ti="' + esc(cat) + '|' + i + '"', iss.a) + '</div>'; }).join('') + '<div class="row" style="margin-top:6px;flex-wrap:nowrap"><input data-newissue="' + esc(cat) + '" placeholder="New issue under ' + esc(cat) + '"><button class="btn sm" data-cpaddissue="' + esc(cat) + '">＋ Add</button></div></div></details>'; }).join('') + '</div></div>' +
+        '<div class="card"><div class="ch">SLA hours by priority</div><div class="cb">' + TK_PRI.map(function (p) { return '<div class="row" style="flex-wrap:nowrap;margin-bottom:6px"><span class="pill p-' + p + '" style="width:80px;justify-content:center">' + p + '</span><input type="number" min="1" data-sla="' + p + '" value="' + esc(d.sla[p]) + '" style="width:110px"><span class="hint">hours</span></div>'; }).join('') + '</div></div></div>';
+    }
+    if (c === 'phone') {
+      var withPh = Object.keys(d.roles).filter(function (r) { return d.roles[r].phones; });
+      h += '<div class="rg"><div class="card"><div class="ch">Mobile number masking</div><div class="cb">' +
+        '<div class="tgl"><div><div class="tt2">Mask mobile numbers everywhere</div><div class="ds">Shows 98XXXXXX17 unless the role is allowed or the code is entered</div></div>' + sw('id="cp-mask"', d.phone.mask) + '</div>' +
+        '<div class="grid g2" style="margin-top:10px"><div class="fld"><label class="lbl">Unlock lasts (minutes)</label><input type="number" min="1" max="480" id="cp-min" value="' + esc(d.phone.minutes) + '"></div><div class="fld"><label class="lbl">Unlock code status</label><input readonly value="' + (d.phone.codeHash ? 'Code is set ✔' : 'No code set') + '"></div></div>' +
+        '<div class="sub" style="margin-top:12px">Set / change unlock code</div><div class="grid g2"><input type="password" id="cp-code1" placeholder="New code (min 4)" autocomplete="new-password"><input type="password" id="cp-code2" placeholder="Repeat code" autocomplete="new-password"></div>' +
+        '<div class="row" style="margin-top:8px"><button class="btn pri sm" data-act="cp-setcode">Set code</button>' + (d.phone.codeHash ? '<button class="btn sm red" data-act="cp-clrcode">Remove code</button>' : '') + '</div><div class="hint">Only a fingerprint (hash) of the code is stored, never the code itself.</div></div></div>' +
+        '<div class="card"><div class="ch">Who can always see numbers</div><div class="cb">' + (withPh.length ? withPh.map(function (r) { return '<span class="chip on" style="margin:0 5px 5px 0">' + esc(r) + '</span>'; }).join('') : '<span class="hint">No role</span>') + '<div class="hint" style="margin-top:8px">Change this in <b>Roles &amp; Rights</b> → “See mobile numbers unmasked”.</div><div class="bn a" style="margin-top:10px">Masking hides numbers on screen. The numbers still come from the Employee master, so for full protection also restrict Employee read permission in ERP.</div></div></div></div>';
+    }
+    q('#view').innerHTML = h;
+  }
+  function cpSave() {
+    var d = S.draft; d.savedBy = S.realMe.user; d.savedOn = nowLocal();
+    var html = '<!--LIFE_CPANEL:' + JSON.stringify(d).replace(/-->/g, '--\\u003e') + '-->\n<p><b>LIFE Task Management — Control Panel settings.</b> Do not edit by hand. Saved by ' + esc(S.realMe.name) + ' on ' + fDT(d.savedOn) + '.</p>';
+    modalBusy('Saving Control Panel…');
+    var isNew = !S.cfgNote;
+    API.saveCfg(S.cfgNote, html).then(function (name) {
+      S.cfgNote = name;
+      var admins = uniq(CORE_ADMINS.concat(d.admins || [])).filter(function (u) { return u !== 'administrator' && u !== S.realMe.user; });
+      return admins.reduce(function (p, u) { return p.then(function () { return API.share('Note', name, u, true).catch(function () { }); }); }, Promise.resolve());
+    }).then(function () {
+      S.cfg = clone(d); S.draft = clone(d);
+      S.realMe = setMe(S.realMe.user, S.realMe.name, { image: S.realMe.image }); S.me = S.realMe;
+      closeModal(); toast('Control Panel saved' + (isNew ? ' (settings note created)' : '')); renderHeader(); render();
+    }).catch(function (e) { closeModal(); toast('Not saved: ' + errMsg(e), 1); });
+  }
+  function cpClick(el) {
+    var d = S.draft, ds = el.dataset;
+    if (ds.cpt) { S.cpTab = ds.cpt; render(); return true; }
+    if (ds.cpdelrole) { if (!confirm('Delete role “' + ds.cpdelrole + '”? Users with it fall back to rules / default.')) return true; delete d.roles[ds.cpdelrole]; Object.keys(d.userRoles).forEach(function (u) { if (d.userRoles[u] === ds.cpdelrole) delete d.userRoles[u]; }); if (d.defaultRole === ds.cpdelrole) d.defaultRole = 'Employee'; render(); return true; }
+    if (ds.cpdeldr != null) { d.desigRules.splice(+ds.cpdeldr, 1); render(); return true; }
+    if (ds.cpdeladm) { d.admins = (d.admins || []).filter(function (u) { return u !== ds.cpdeladm; }); render(); return true; }
+    if (ds.cpaddissue) { var inp = q('[data-newissue="' + ds.cpaddissue.replace(/"/g, '\\"') + '"]'), v = inp && inp.value.trim(); if (!v) return true; d.tCats[ds.cpaddissue].issues.push({ n: v, a: 1 }); render(); return true; }
+    var a = ds.act;
+    if (a === 'cp-save') { cpSave(); return true; }
+    if (a === 'cp-discard') { S.draft = clone(S.cfg); render(); return true; }
+    if (a === 'cp-addrole') { var n = q('#cp-newrole').value.trim(); if (!n || d.roles[n]) { toast(n ? 'Role exists' : 'Type a role name', 1); return true; } d.roles[n] = clone(d.roles.Employee || allPerms(0)); render(); return true; }
+    if (a === 'cp-adddr') { d.desigRules.push(['', '']); render(); return true; }
+    if (a === 'cp-addcat') { var c = q('#cp-newcat').value.trim(); if (!c) return true; if (d.categories.some(function (x) { return x.n.toLowerCase() === c.toLowerCase(); })) { toast('Already exists', 1); return true; } d.categories.push({ n: c, a: 1 }); render(); return true; }
+    if (a === 'cp-addtc') { var t = q('#cp-newtc').value.trim(); if (!t || d.tCats[t]) return true; d.tCats[t] = { a: 1, issues: [{ n: 'Other', a: 1 }] }; render(); return true; }
+    if (a === 'cp-setcode') {
+      var c1 = q('#cp-code1').value, c2 = q('#cp-code2').value;
+      if (c1.length < 4) { toast('Code must be at least 4 characters', 1); return true; } if (c1 !== c2) { toast('Codes do not match', 1); return true; }
+      sha256(c1).then(function (h) { d.phone.codeHash = h; toast('Code set — click Save Control Panel'); render(); }); return true;
+    }
+    if (a === 'cp-clrcode') { d.phone.codeHash = ''; render(); return true; }
+    return false;
+  }
+  function cpChange(t) {
+    var d = S.draft; if (!d) return false; var ds = t.dataset;
+    if (ds.cpmod) { d.modules[ds.cpmod] = t.checked ? 1 : 0; render(); return true; }
+    if (ds.rp) { var x = ds.rp.split('|'); d.roles[x[0]][x[1]] = t.checked ? 1 : 0; render(); return true; }
+    if (ds.rs) { d.roles[ds.rs].scope = t.value; render(); return true; }
+    if (ds.ur) { if (t.value) d.userRoles[ds.ur] = t.value; else delete d.userRoles[ds.ur]; render(); return true; }
+    if (ds.dr) { var y = ds.dr.split('|'); d.desigRules[+y[0]][+y[1]] = t.value; render(); return true; }
+    if (ds.cat != null) { d.categories[+ds.cat].a = t.checked ? 1 : 0; render(); return true; }
+    if (ds.pl) { d.pri[ds.pl].label = t.value.trim() || d.pri[ds.pl].label; render(); return true; }
+    if (ds.ph) { d.pri[ds.ph].hint = t.value.trim(); render(); return true; }
+    if (ds.rt) { d.reports[ds.rt] = t.checked ? 1 : 0; render(); return true; }
+    if (ds.tc) { d.tCats[ds.tc].a = t.checked ? 1 : 0; render(); return true; }
+    if (ds.ti) { var z = ds.ti.split('|'); d.tCats[z[0]].issues[+z[1]].a = t.checked ? 1 : 0; render(); return true; }
+    if (ds.sla) { d.sla[ds.sla] = Math.max(1, +t.value || 1); render(); return true; }
+    if (ds.res) { if (t.value) d.resolvers[ds.res] = t.value; else delete d.resolvers[ds.res]; render(); return true; }
+    if (t.id === 'cp-mask') { d.phone.mask = t.checked ? 1 : 0; render(); return true; }
+    if (t.id === 'cp-min') { d.phone.minutes = Math.max(1, +t.value || 15); render(); return true; }
+    if (t.id === 'cp-defrole') { d.defaultRole = t.value; render(); return true; }
     return false;
   }
 
-  function isSpecialReportEmail(user) {
-    user = String(user || "").trim().toLowerCase();
-
-    return MANAGER_EMAILS.some(function (email) {
-      return String(email || "").trim().toLowerCase() === user;
-    });
+  /* ================================================================
+     MODAL / HELP (hover tip + click to pin)
+  ================================================================ */
+  function modal(title, body, buttons, wide, cls) {
+    var m = q('#modal');
+    m.className = 'modal show' + (wide ? ' wide' : '');
+    m.innerHTML = '<div class="mdh ' + (cls || '') + '">' + title + '<button class="x" data-act="close-modal">×</button></div><div class="mdb">' + body + '</div><div class="mdf"></div>';
+    var foot = q('.mdf', m);
+    (buttons || []).forEach(function (b) { var x = document.createElement('button'); x.className = 'btn ' + (b[1] || ''); x.innerHTML = b[0]; x.addEventListener('click', b[2]); foot.appendChild(x); });
+    qa('[data-mp]', m).forEach(function (bt) { bt.addEventListener('click', function () { qa('[data-mp]', m).forEach(function (o) { o.classList.remove('on'); }); bt.classList.add('on'); }); });
+    q('#ovl2').classList.add('show');
   }
-
-  function refreshCurrentUserReportPermission() {
-    isManager =
-      isSpecialReportEmail(currentUser) ||
-      userHasRole("System Manager");
-
-    canViewAllReports =
-      isManager ||
-      userHasRole("Sales Manager");
-
-    applyReportTabVisibility();
-
-    void 0;
+  function modalBusy(msg) { modal('Please wait', '<div class="loading" style="padding:16px"><div class="spin"></div>' + esc(msg) + '</div>', []); }
+  function closeModal() { q('#modal').className = 'modal'; q('#ovl2').classList.remove('show'); }
+  function promptBox(title, hint, ph, cb, optional) {
+    modal(esc(title), '<div class="hint" style="margin:0 0 6px">' + esc(hint) + '</div><textarea id="m-txt" placeholder="' + esc(ph) + '"></textarea>', [['Cancel', '', closeModal], ['Submit', 'pri', function () { var v = q('#m-txt').value.trim(); if (!v && !optional) { toast('Please write a remark', 1); return; } closeModal(); cb(v); }]]);
+    setTimeout(function () { var x = q('#m-txt'); if (x) x.focus(); }, 50);
   }
-
-  function canCurrentUserViewAllReports() {
-    return !!canViewAllReports;
+  function helpHtml(k) { var h = HELP[k] || HELP.overview; return '<b>💡 ' + h[0] + '</b><ol>' + h[1].map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ol>' + (h[2] ? '<div style="margin-top:6px;font-style:italic">' + h[2] + '</div>' : ''); }
+  function showHelp(k) { hideTip(); var h = HELP[k] || HELP.overview; modal('💡 ' + esc(h[0]), '<div class="help"><ol>' + h[1].map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ol>' + (h[2] ? '<div class="tip2" style="background:#fff7d6;border:1px solid #f2dc8c;border-radius:8px;padding:7px 10px;margin-top:10px;font-size:12.5px">💡 ' + h[2] + '</div>' : '') + '</div>', [['Got it', 'pri', closeModal]], false, 'help'); }
+  function showTip(el) {
+    var tip = q('#tip'); tip.innerHTML = helpHtml(el.dataset.help); tip.style.display = 'block';
+    var r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+    var left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), window.innerWidth - w - 8), top = r.bottom + 8;
+    if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 8);
+    tip.style.left = left + 'px'; tip.style.top = top + 'px';
   }
+  function hideTip() { var t = q('#tip'); if (t) t.style.display = 'none'; }
 
-  function applyReportTabVisibility() {
-    var allowed = canCurrentUserViewAllReports();
-
-    var taskReportTab = root.querySelector('[data-task-sub="1"]');
-    var ticketReportTab = root.querySelector('[data-ticket-sub="1"]');
-
-    if (taskReportTab) {
-      taskReportTab.style.display = allowed ? "" : "none";
-    }
-
-    if (ticketReportTab) {
-      ticketReportTab.style.display = allowed ? "" : "none";
-    }
-
-    /* If hidden report tab was active, move user back to safe tab */
-    if (!allowed) {
-      var activeTaskReport =
-        taskReportTab &&
-        taskReportTab.classList.contains("on");
-
-      var activeTicketReport =
-        ticketReportTab &&
-        ticketReportTab.classList.contains("on");
-
-      if (activeTaskReport) {
-        var taskDefaultTab =
-          root.querySelector('[data-task-sub="0"]');
-
-        if (taskDefaultTab) {
-          showSub("task", 0, taskDefaultTab);
-        }
+  /* ================================================================
+     EVENTS
+  ================================================================ */
+  function bindGlobal() {
+    root.addEventListener('mouseover', function (e) { var b = e.target.closest && e.target.closest('[data-help]'); if (b && root.contains(b)) showTip(b); });
+    root.addEventListener('mouseout', function (e) { var b = e.target.closest && e.target.closest('[data-help]'); if (b && !(e.relatedTarget && b.contains(e.relatedTarget))) hideTip(); });
+    root.addEventListener('toggle', function (e) { var d = e.target; if (d && d.dataset && d.dataset.dc) { S.cpOpen = S.cpOpen || {}; S.cpOpen[d.dataset.dc] = d.open; } }, true);
+    root.addEventListener('click', function (e) {
+      var el = e.target.closest('[data-help],[data-mod],[data-tab],[data-act],[data-otk],[data-qa],[data-tka],[data-mode],[data-grp],[data-unsel],[data-uncc],[data-uncc2],[data-unfile],[data-untf],[data-p],[data-kp],[data-r],[data-asg],[data-resp],[data-view],[data-sort],[data-pg],[data-kpi],[data-my],[data-tmy],[data-qtoggle],[data-mq],[data-rq],[data-assignto],[data-copymsg],[data-cpt],[data-cpdelrole],[data-cpdeldr],[data-cpdeladm],[data-cpaddissue],[data-open]');
+      if (!el || !root.contains(el)) { qa('.pres').forEach(function (b) { if (!b.parentNode.contains(e.target)) b.classList.remove('show'); }); return; }
+      if (e.target.closest('a.ph,a.btn,a.chip,select,input[type=checkbox]')) { if (!el.dataset.act) return; }
+      var d = el.dataset;
+      if (S.draft && S.tab.task === 'cpanel' && cpClick(el)) return;
+      if (d.help) { e.stopPropagation(); showHelp(d.help); return; }
+      if (d.mod) { S.mod = d.mod; S.page = 1; render(); return; }
+      if (d.tab) { S.tab[S.mod] = d.tab; S.page = 1; if (d.tab === 'cpanel' && !S.draft) S.draft = clone(S.cfg); render(); return; }
+      if (d.mq) { e.stopPropagation(); manageQueue(d.mq); return; }
+      if (d.otk) { openTicket(d.otk); return; }
+      if (d.qa) { quickAction(d.qa, d.id); return; }
+      if (d.tka) { tkAction(d.tka, d.id); return; }
+      if (d.copymsg) { if (navigator.clipboard) navigator.clipboard.writeText(decodeURIComponent(d.copymsg)); toast('Message copied — paste in WhatsApp'); return; }
+      if (d.assignto) { resetForm(); S.form.sel = [d.assignto]; S.tab.task = 'assign'; render(); return; }
+      if (d.kpi) { if (S.mod === 'task') { S.f.status = d.kpi; S.tab.task = can('all_tab') ? 'all' : 'my'; } else { S.tf.status = d.kpi; S.tab.ticket = 'tall'; } S.page = 1; render(); return; }
+      if (d.my) { S.myTab = d.my; render(); return; }
+      if (d.tmy) { S.tmyTab = d.tmy; render(); return; }
+      if (d.view) { S.allView = d.view; render(); return; }
+      if (d.sort) { if (S.sort.k === d.sort) S.sort.d *= -1; else S.sort = { k: d.sort, d: 1 }; render(); return; }
+      if (d.pg) { S.page += +d.pg; render(); return; }
+      if (d.qtoggle) { if (e.target.closest('[data-mq],.lock,a')) return; el.parentNode.classList.toggle('open'); return; }
+      if (d.rq != null) { var n = +d.rq; S.f.to = n ? todayStr() : ''; S.f.from = n ? localStr(new Date(Date.now() - n * 86400000)).slice(0, 10) : ''; render(); return; }
+      if (d.mode) { S.form.mode = d.mode; render(); return; }
+      if (d.asg) { S.form.asGroup = d.asg === 'grp'; if (S.form.asGroup && !S.form.leader) S.form.leader = S.form.sel[0]; render(); return; }
+      if (d.resp) { S.form.response = d.resp; render(); return; }
+      if (d.grp != null) {
+        var arr = groupSel(), i = arr.indexOf(d.grp), k = groupKey();
+        if (i > -1) arr.splice(i, 1); else { arr.push(d.grp); S.people.forEach(function (p) { if (p.login && p[k] === d.grp && (S.form.mode === 'branch' || !S.form.narrowBranch || p.branch === S.form.narrowBranch) && S.form.sel.indexOf(p.user) < 0) S.form.sel.push(p.user); }); }
+        render(); return;
       }
-
-      if (activeTicketReport) {
-        var ticketDefaultTab =
-          root.querySelector('[data-ticket-sub="0"]');
-
-        if (ticketDefaultTab) {
-          showSub("ticket", 0, ticketDefaultTab);
-        }
+      if (d.unsel) { S.form.sel = S.form.sel.filter(function (u) { return u !== d.unsel; }); render(); return; }
+      if (d.uncc) { S.form.cc = S.form.cc.filter(function (u) { return u !== d.uncc; }); render(); return; }
+      if (d.uncc2) { S.tform.cc = S.tform.cc.filter(function (u) { return u !== d.uncc2; }); render(); return; }
+      if (d.unfile != null) { S.pendingFiles.splice(+d.unfile, 1); q('#f-flist').innerHTML = fileChips(); renderPreview(); return; }
+      if (d.untf != null) { S.tFiles.splice(+d.untf, 1); render(); return; }
+      if (d.kp) { S.tform.pri = d.kp; render(); return; }
+      if (d.p && el.closest('#f-pri')) { S.form.pri = d.p; qa('#f-pri .pb').forEach(function (b) { b.classList.toggle('on', b.dataset.p === d.p); }); renderPreview(); return; }
+      if (d.r && el.closest('#f-rep')) { S.form.report.type = d.r; render(); return; }
+      if (d.open) { openTask(d.open); return; }
+      var a = d.act;
+      if (a === 'refresh') { loadAll().then(function () { toast('Refreshed'); }); return; }
+      if (a === 'unlock') { e.stopPropagation(); unlockPhones(); return; }
+      if (a === 'demo-reset') { localStorage.removeItem(DKEY); S.draft = null; loadAll(); return; }
+      if (a === 'exit-preview') { q('#viewas').value = ''; setViewAs(''); return; }
+      if (a === 'assign') { confirmAssign(); return; }
+      if (a === 'form-reset') { resetForm(); render(); return; }
+      if (a === 'tk-submit') { submitTicket(); return; }
+      if (a === 'tk-reset') { resetTForm(); render(); return; }
+      if (a === 'tk-post') { tkPost(); return; }
+      if (a === 'sel-all' || a === 'sel-blogin' || a === 'sel-mgr' || a === 'sel-none') {
+        var pl = peopleForMode().filter(function (p) { return p.login; }), pool = pl.map(function (p) { return p.user; }), ff = S.form;
+        ff.sel = ff.sel.filter(function (u) { return pool.indexOf(u) < 0; });
+        if (a === 'sel-all') ff.sel = ff.sel.concat(pool);
+        if (a === 'sel-blogin') ff.sel = ff.sel.concat(pl.filter(function (p) { return p.branchLogin; }).map(function (p) { return p.user; }));
+        if (a === 'sel-mgr') ff.sel = ff.sel.concat(pl.filter(function (p) { return /manager|head|incharge|in-charge|cluster/i.test(p.desig); }).map(function (p) { return p.user; }));
+        render(); return;
       }
-    }
-  }
-
-
-  function loadCurrentUser(done) {
-    currentUser = page.session.user;
-    currentUserFullName = page.session.full_name || currentUser;
-    collectRolesFromClientGlobals();
-    refreshCurrentUserReportPermission();
-    setText('logged-in-user-name', currentUserFullName);
-    setText('logged-in-user-role', currentUser);
-    setValue('task-assignedby', currentUserFullName);
-    setValue('ticket-raisedby', currentUserFullName);
-    if (done) done();
-  }
-
-  function isTaskVisibleToCurrentUser(t) {
-    if (canCurrentUserViewAllReports()) {
-      return true;
-    }
-
-    t = t || {};
-
-    return (
-      isCurrentUserValue(t.allocated_to) ||
-      isCurrentUserValue(t.assigned_by) ||
-      isCurrentUserValue(t.owner)
-    );
-  }
-
-  function isTicketVisibleToCurrentUser(t) {
-    if (canCurrentUserViewAllReports()) {
-      return true;
-    }
-
-    t = t || {};
-
-    var meta = getTicketMeta(t);
-
-    return (
-      isCurrentUserValue(t.owner) ||
-      isCurrentUserValue(t.raised_by) ||
-      isCurrentUserValue(meta.tag_to) ||
-      (meta.cc_to || []).some(isCurrentUserValue)
-    );
-  }
-
-function loadUsers(done) {
-  var allUsers = [];
-  var pageLength = 500;
-
-  function fetchPage(start) {
-    frappe.call({
-      method: "frappe.client.get_list",
-      args: {
-        doctype: "User",
-        fields: ["name", "full_name", "enabled"],
-        filters: {
-          enabled: 1
-        },
-        order_by: "full_name asc",
-        limit_start: start,
-        limit_page_length: pageLength
-      },
-      callback: function (r) {
-        var rows = r.message || [];
-
-        allUsers = allUsers.concat(rows);
-
-        if (rows.length === pageLength) {
-          fetchPage(start + pageLength);
-          return;
-        }
-
-        users = allUsers.filter(function (u) {
-          return u.name !== "Administrator" && u.full_name;
-        });
-
-        fillSelect(
-          "#ticket-employee-involved",
-          users.map(function (u) { return u.full_name; }),
-          "Select Employee"
-        );
-
-          if (done) done();
-        
-      },
-      error: function () {
-        users = allUsers.filter(function (u) {
-          return u.name !== "Administrator" && u.full_name;
-        });
-
-        
-          if (done) done();
-        
-      }
+      if (a === 'f-clear') { S.f = { q: '', branch: '', dept: '', desig: '', assignee: '', by: '', cat: '', pri: '', status: 'Active', rep: '', from: '', to: '', grp: '' }; S.page = 1; render(); return; }
+      if (a === 'export-all') { exportTasks(sortList(applyFilters(visible()))); return; }
+      if (a === 'export-team') { csv('LIFE_Team_Contacts', [['Name', 'Designation', 'Department', 'Branch', 'Mobile', 'ERP Login', 'Open', 'Overdue']].concat(S.people.map(function (p) { var l = p.login ? queueOf(p.user) : []; return [p.name, p.desig, p.dept, p.branch, showNum(p.phone), p.user, l.length, l.filter(function (t) { return isOverdue(t); }).length]; }))); return; }
+      if (a === 'tk-export') { csv('LIFE_Tickets', [['Ticket', 'Category', 'Issue', 'Branch', 'Raised by', 'Raiser mobile', 'Resolver', 'Resolver mobile', 'Priority', 'Raised on', 'Status', 'SLA breached', 'Details']].concat(tApply(tVisible()).map(function (t) { return [t.id, t.cat, t.issue, t.branch, personName(t.raiser), showNum(mob(t.raiser)), personName(t.tag), showNum(mob(t.tag)), t.pri, fDT(t.created), t.status, tkBreach(t) ? 'Yes' : '', t.details]; }))); return; }
+      if (a === 'export-rpt') { csv('LIFE_Task_Performance', [['Group', 'Total', 'Open', 'In Progress', 'Review', 'Overdue', 'Done', 'On-time', 'Late', 'On-time %', 'Avg days', 'Reports late']].concat((S._rptRows || []).map(function (r) { var s = r[1]; return [r[0], s.n, s.open, s.prog, s.rev, s.od, s.done, s.ontime, s.late, s.pct == null ? '' : s.pct, s.avg, s.missed]; }))); return; }
+      if (a === 'print') { window.print(); return; }
+      if (a === 'q-expand' || a === 'q-collapse') { qa('.qg').forEach(function (g) { g.classList.toggle('open', a === 'q-expand'); }); return; }
+      if (a === 'close-drawer') { closeDrawer(); return; }
+      if (a === 'close-modal') { closeModal(); return; }
+      if (a === 'post-upd') { postUpdate(); return; }
+      if (a === 'save-prog') { var v = +q('#d-prog').value; persist(S.openTask, function (f2) { f2.progress = v; addUpd(f2, 'System', 'Progress ' + v + '%'); if (f2.status === 'Open' || f2.status === 'Reopened') f2.status = 'In Progress'; }, 'Progress saved').catch(function () { }); return; }
+      if (a === 'add-file') { S._ft = 'task'; q('#fileinp').click(); return; }
+      if (a === 'upd-file' || a === 'tupd-file') { S._ft = 'upd'; q('#fileinp').click(); return; }
     });
-  }
-
-  fetchPage(0);
-}
-
-  // ============================================================
-  // PICKER
-  // ============================================================
-
-  function getPickerSelected(key) {
-    if (key === "taskAssignTo") return taskAssignTo;
-    if (key === "taskUpdateTo") return taskUpdateTo;
-    if (key === "ticketTagTo") return ticketTagTo;
-    if (key === "ticketCcTo") return ticketCcTo;
-    return [];
-  }
-
-  function setPickerSelected(key, value) {
-    if (key === "taskAssignTo") taskAssignTo = value;
-    if (key === "taskUpdateTo") taskUpdateTo = value;
-    if (key === "ticketTagTo") ticketTagTo = value;
-    if (key === "ticketCcTo") ticketCcTo = value;
-  }
-
-  function getPickerChipId(key) {
-    return {
-      taskAssignTo: "task-assignto-chip",
-      taskUpdateTo: "task-updateto-chip",
-      ticketTagTo: "ticket-tagto-chip",
-      ticketCcTo: "ticket-ccto-chip"
-    }[key];
-  }
-
-  function renderPickerResults(input, resultBox, key, multi, excludeSelf) {
-    var q = String(input.value || "").trim().toLowerCase();
-
-    if (!q) {
-      resultBox.innerHTML = "";
-      resultBox.classList.remove("show");
-      return;
-    }
-
-    var selected = getPickerSelected(key);
-
-    var matches = users.filter(function (u) {
-      var txt = (u.full_name + " " + u.name).toLowerCase();
-      if (excludeSelf && u.name === currentUser) return false;
-      if (selected.indexOf(u.name) !== -1) return false;
-      return txt.indexOf(q) !== -1;
-    }).slice(0, 10);
-
-    if (!matches.length) {
-      resultBox.innerHTML =
-        '<div class="picker-item" style="cursor:default;color:#8C8C8C">No matching employee found.</div>';
-      resultBox.classList.add("show");
-      return;
-    }
-
-    resultBox.innerHTML = matches.map(function (u) {
-      return '' +
-        '<div class="picker-item" data-email="' + esc(u.name) + '">' +
-          '<div class="picker-avatar">' + esc(initials(u.full_name || u.name)) + '</div>' +
-          '<div>' +
-            '<div class="picker-name">' + esc(u.full_name || u.name) + '</div>' +
-            '<div class="picker-role">' + esc(u.name) + '</div>' +
-          '</div>' +
-        '</div>';
-    }).join("");
-
-    resultBox.classList.add("show");
-
-    resultBox.querySelectorAll(".picker-item[data-email]").forEach(function (item) {
-      item.addEventListener("click", function () {
-        var email = item.dataset.email || "";
-        var selectedNow = getPickerSelected(key).slice();
-
-        if (multi) {
-          if (selectedNow.indexOf(email) === -1) selectedNow.push(email);
-        } else {
-          selectedNow = [email];
-        }
-
-        setPickerSelected(key, selectedNow);
-
-        input.value = "";
-        resultBox.innerHTML = "";
-        resultBox.classList.remove("show");
-
-        renderPickerChips(key);
-      });
+    q('#ovl').addEventListener('click', closeDrawer);
+    q('#ovl2').addEventListener('click', closeModal);
+    q('#viewas').addEventListener('change', function (e) { setViewAs(e.target.value); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { if (q('#modal').classList.contains('show')) closeModal(); else closeDrawer(); } });
+    root.addEventListener('input', function (e) {
+      var t = e.target, id = t.id, f = S.form, tf = S.tform;
+      if (id === 'f-emp') return pickerResults('f-emp', 'f-emp-res', f.sel, function (u) { f.sel.push(u); render(); });
+      if (id === 'f-cc') return pickerResults('f-cc', 'f-cc-res', f.cc.concat([S.me.user]), function (u) { f.cc.push(u); render(); });
+      if (id === 'k-tag') return pickerResults('k-tag', 'k-tag-res', [S.me.user], function (u) { tf.tag = u; render(); });
+      if (id === 'k-cc') return pickerResults('k-cc', 'k-cc-res', tf.cc.concat([S.me.user, tf.tag]), function (u) { tf.cc.push(u); render(); });
+      if (id === 'cp-admin') return pickerResults('cp-admin', 'cp-admin-res', CORE_ADMINS.concat(S.draft.admins || []), function (u) { S.draft.admins = (S.draft.admins || []).concat([u]); render(); });
+      if (id === 'f-title') { f.title = t.value; return; }
+      if (id === 'f-details') { if (words(t.value) > 150) t.value = t.value.split(/\s+/).slice(0, 150).join(' '); f.details = t.value; updateWc(); return; }
+      if (id === 'f-check') { f.checklist = t.value; return; }
+      if (id === 'k-details') { tf.details = t.value; return; }
+      if (id === 'k-other') { tf.other = t.value; return; }
+      var live = { 'ff-q': [S.f, 'q'], 'tf-q': [S.tf, 'q'], 'tm-q': [S.team, 'q'], 'cp-q': [S, 'cpq'] }[id];
+      if (live) { live[0][live[1]] = t.value; S.page = 1; clearTimeout(S._qt); S._qt = setTimeout(function () { var pos = t.selectionStart; render(); var n = q('#' + id); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }, 250); return; }
+      if (id === 'd-prog') { q('#d-progv').textContent = t.value + '%'; return; }
     });
-  }
-
-  function renderPickerChips(key) {
-    var row = $("#" + getPickerChipId(key));
-    if (!row) return;
-
-    var selected = getPickerSelected(key);
-
-    var html = selected.map(function (email) {
-      return '' +
-        '<div class="selected-chip">' +
-          esc(userLabel(email)) +
-          '<span class="x" data-key="' + esc(key) + '" data-email="' + esc(email) + '">×</span>' +
-        '</div>';
-    }).join("");
-
-    if (key === "taskUpdateTo") {
-      html += '<div class="selected-chip locked">' + esc(currentUserFullName || currentUser) + ' (you — always included)</div>';
-    }
-
-    row.innerHTML = html;
-
-    row.querySelectorAll(".selected-chip .x").forEach(function (x) {
-      x.addEventListener("click", function () {
-        var email = x.dataset.email || "";
-        var arr = getPickerSelected(key).filter(function (v) {
-          return v !== email;
-        });
-
-        setPickerSelected(key, arr);
-        renderPickerChips(key);
-      });
+    root.addEventListener('change', function (e) {
+      var t = e.target, id = t.id, f = S.form, tf = S.tform;
+      if (S.tab.task === 'cpanel' && S.mod === 'task' && cpChange(t)) return;
+      if (t.dataset.pu) { var u = t.dataset.pu; if (t.checked) { if (f.sel.indexOf(u) < 0) f.sel.push(u); } else f.sel = f.sel.filter(function (x) { return x !== u; }); render(); return; }
+      if (t.dataset.ff) { S.f[t.dataset.ff] = t.value; S.page = 1; render(); return; }
+      if (t.dataset.tf) { S.tf[t.dataset.tf] = t.value; render(); return; }
+      if (t.dataset.tf2) { S.team[t.dataset.tf2] = t.value; render(); return; }
+      if (t.dataset.ck != null && S.openTask) { var i = +t.dataset.ck, ck = t.checked; persist(S.openTask, function (x) { x.checklist[i].d = ck; var dn = x.checklist.filter(function (c) { return c.d; }).length; x.progress = Math.max(x.progress, Math.round(dn * 20 / x.checklist.length) * 5); if (x.status === 'Open') x.status = 'In Progress'; }).catch(function () { }); return; }
+      if (id === 'rp-dim') { S.rptDim = t.value; render(); return; }
+      if (id === 'f-cat') { f.cat = t.value; renderPreview(); return; }
+      if (id === 'f-title') { f.title = t.value; renderPreview(); return; }
+      if (id === 'f-start') { f.start = t.value; updateDur(); return; }
+      if (id === 'f-due') { if (toDate(t.value) && toDate(t.value) < new Date()) { toast('Due cannot be in the past', 1); t.value = f.due; return; } f.due = t.value; updateDur(); renderPreview(); return; }
+      if (id === 'f-top') { f.top = t.checked; renderPreview(); return; }
+      if (id === 'f-email') { f.email = t.checked; renderPreview(); return; }
+      if (id === 'f-wa') { f.wa = t.checked; renderPreview(); return; }
+      if (id === 'f-leader') { f.leader = t.value; render(); return; }
+      if (id === 'f-narrow') { f.narrowBranch = t.value; render(); return; }
+      if (id === 'f-rtime') { f.report.time = t.value; renderPreview(); return; }
+      if (id === 'f-rday') { f.report.day = +t.value; renderPreview(); return; }
+      if (id === 'f-rdom') { f.report.dom = +t.value; renderPreview(); return; }
+      if (id === 'f-rdt') { f.report.dt = t.value; renderPreview(); return; }
+      if (id === 'k-branch') { tf.branch = t.value; return; }
+      if (id === 'k-cat') { tf.cat = t.value; tf.issue = ''; var sg = suggestResolver(t.value); if (sg) tf.tag = sg; render(); return; }
+      if (id === 'k-issue') { tf.issue = t.value; render(); return; }
+      if (id === 'k-emp') { tf.emp = t.value; return; }
+      if (id === 'k-wa') { tf.wa = t.checked; return; }
+      if (id === 'k-email') { tf.email = t.checked; return; }
     });
-  }
-
-  function applyTicketCategorySuggestion(category) {
-    var searchText = CATEGORY_TAG_TO_SUGGEST[category];
-
-    if (!searchText || !users.length) return;
-
-    var match = users.find(function (u) {
-      return (
-        String(u.full_name || "").toLowerCase().indexOf(searchText.toLowerCase()) !== -1 ||
-        String(u.name || "").toLowerCase().indexOf(searchText.toLowerCase()) !== -1
-      );
-    });
-
-    if (match) {
-      ticketTagTo = [match.name];
-      renderPickerChips("ticketTagTo");
-    }
-  }
-
-  // ============================================================
-// ATTACHMENTS - VALIDATION + UPLOAD
-// Documents, images, and HTML files - max 5 MB
-// ============================================================
-
-// var MAX_ATTACHMENT_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
-
-// var ALLOWED_ATTACHMENT_EXTENSIONS = [
-//   // Images
-//   "jpg", "jpeg", "png", "gif", "webp", "bmp", "heic", "heif",
-  
-//   // Documents
-//   "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
-//   "txt", "csv", "rtf", "odt", "ods", "odp",
-  
-//   // Web files - HTML SUPPORT ADDED
-//   "html", "htm", "xhtml"
-// ];
-
-// var ALLOWED_ATTACHMENT_ACCEPT =
-//   ".jpg,.jpeg,.png,.gif,.webp,.bmp,.heic,.heif," +
-//   ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.odt,.ods,.odp," +
-//   ".html,.htm,.xhtml," + // HTML files added
-//   "image/*,application/pdf,text/html"; // Added text/html MIME type
-
-// function getFileExtension(fileName) {
-//   fileName = String(fileName || "").toLowerCase().trim();
-
-//   if (fileName.indexOf(".") === -1) return "";
-
-//   return fileName.split(".").pop();
-// }
-
-// function isAllowedAttachmentType(file) {
-//   var fileName = file && file.name ? file.name : "";
-//   var mimeType = file && file.type ? String(file.type).toLowerCase() : "";
-//   var ext = getFileExtension(fileName);
-
-//   // Allow HTML files by MIME type
-//   if (mimeType === "text/html" || mimeType === "application/xhtml+xml") {
-//     return true;
-//   }
-
-//   // Allow all normal browser-recognized image files
-//   if (mimeType.indexOf("image/") === 0) {
-//     return ALLOWED_ATTACHMENT_EXTENSIONS.indexOf(ext) !== -1;
-//   }
-
-//   // Allow by extension also, because some systems/browsers do not send MIME type
-//   return ALLOWED_ATTACHMENT_EXTENSIONS.indexOf(ext) !== -1;
-// }
-
-// function getFileIcon(file) {
-//   var mimeType = String(file.type || "").toLowerCase();
-//   var ext = getFileExtension(file.name || "");
-  
-//   if (mimeType.indexOf("image/") === 0) return "🖼️";
-//   if (mimeType === "text/html" || ext === "html" || ext === "htm" || ext === "xhtml") {
-//     return "🌐";
-//   }
-//   return "📄";
-// }
-
-// function validateAttachmentFile(file) {
-//   if (!file) {
-//     return {
-//       ok: false,
-//       message: "Invalid file."
-//     };
-//   }
-
-//   if (!isAllowedAttachmentType(file)) {
-//     return {
-//       ok: false,
-//       message: "Only documents, images, and HTML files are allowed."
-//     };
-//   }
-
-//   if (Number(file.size || 0) > MAX_ATTACHMENT_SIZE_BYTES) {
-//     return {
-//       ok: false,
-//       message: "File size must be 5 MB or below."
-//     };
-//   }
-
-//   return {
-//     ok: true,
-//     message: ""
-//   };
-// }
-
-// ============================================================
-// ATTACHMENTS - VALIDATION + UPLOAD
-// Documents, images, and HTML files - max 5 MB
-// ============================================================
-
-// var MAX_ATTACHMENT_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
-
-// var ALLOWED_ATTACHMENT_EXTENSIONS = [
-//   // Images
-//   "jpg", "jpeg", "png", "gif", "webp", "bmp", "heic", "heif",
-  
-//   // Documents
-//   "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
-//   "txt", "csv", "rtf", "odt", "ods", "odp",
-  
-//   // Web files - HTML SUPPORT ADDED
-//   "html", "htm", "xhtml"
-// ];
-
-// var ALLOWED_ATTACHMENT_ACCEPT =
-//   ".jpg,.jpeg,.png,.gif,.webp,.bmp,.heic,.heif," +
-//   ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.odt,.ods,.odp," +
-//   ".html,.htm,.xhtml," + // HTML files added
-//   "image/*,application/pdf,text/html"; // Added text/html MIME type
-
-// function getFileExtension(fileName) {
-//   fileName = String(fileName || "").toLowerCase().trim();
-
-//   if (fileName.indexOf(".") === -1) return "";
-
-//   return fileName.split(".").pop();
-// }
-
-// function isAllowedAttachmentType(file) {
-//   var fileName = file && file.name ? file.name : "";
-//   var mimeType = file && file.type ? String(file.type).toLowerCase() : "";
-//   var ext = getFileExtension(fileName);
-
-//   // CRITICAL FIX: Allow HTML files by MIME type FIRST
-//   if (mimeType === "text/html" || 
-//       mimeType === "application/xhtml+xml" ||
-//       ext === "html" || 
-//       ext === "htm" || 
-//       ext === "xhtml") {
-//     return true;
-//   }
-
-//   // Allow all normal browser-recognized image files
-//   if (mimeType.indexOf("image/") === 0) {
-//     return ALLOWED_ATTACHMENT_EXTENSIONS.indexOf(ext) !== -1;
-//   }
-
-//   // Allow by extension also, because some systems/browsers do not send MIME type
-//   return ALLOWED_ATTACHMENT_EXTENSIONS.indexOf(ext) !== -1;
-// }
-
-// function getFileIcon(file) {
-//   var mimeType = String(file.type || "").toLowerCase();
-//   var ext = getFileExtension(file.name || "");
-  
-//   if (mimeType.indexOf("image/") === 0) return "🖼️";
-//   if (mimeType === "text/html" || 
-//       ext === "html" || 
-//       ext === "htm" || 
-//       ext === "xhtml") {
-//     return "🌐";
-//   }
-//   return "📄";
-// }
-
-// function validateAttachmentFile(file) {
-//   if (!file) {
-//     return {
-//       ok: false,
-//       message: "Invalid file."
-//     };
-//   }
-
-//   if (!isAllowedAttachmentType(file)) {
-//     return {
-//       ok: false,
-//       message: "Only documents, images, and HTML files are allowed."
-//     };
-//   }
-
-//   if (Number(file.size || 0) > MAX_ATTACHMENT_SIZE_BYTES) {
-//     return {
-//       ok: false,
-//       message: "File size must be 5 MB or below."
-//     };
-//   }
-
-//   return {
-//     ok: true,
-//     message: ""
-//   };
-// }
-
-// function validateAttachmentList(files) {
-//   files = files || [];
-
-//   var errors = [];
-
-//   Array.prototype.slice.call(files).forEach(function (file) {
-//     var validation = validateAttachmentFile(file);
-
-//     if (!validation.ok) {
-//       errors.push((file.name || "File") + " - " + validation.message);
-//     }
-//   });
-
-//   if (errors.length) {
-//     return {
-//       ok: false,
-//       message: errors.join("\n")
-//     };
-//   }
-
-//   return {
-//     ok: true,
-//     message: ""
-//   };
-// }
-
-// function addSelectedFiles(type, files) {
-//   var arr = type === "task" ? taskFiles : ticketFiles;
-//   var rejected = [];
-
-//   Array.prototype.slice.call(files || []).forEach(function (file) {
-//     var validation = validateAttachmentFile(file);
-
-//     if (!validation.ok) {
-//       rejected.push("• " + (file.name || "File") + " - " + validation.message);
-//       return;
-//     }
-
-//     // Prevent same file from being added again
-//     var alreadyAdded = arr.some(function (existingFile) {
-//       return (
-//         existingFile.name === file.name &&
-//         existingFile.size === file.size &&
-//         existingFile.lastModified === file.lastModified
-//       );
-//     });
-
-//     if (!alreadyAdded) {
-//       arr.push(file);
-//     }
-//   });
-
-//   if (type === "task") taskFiles = arr;
-//   if (type === "ticket") ticketFiles = arr;
-
-//   renderSelectedFiles(type);
-
-//   if (rejected.length) {
-//     showModal(
-//       "⚠️",
-//       "Invalid Attachment",
-//       "Only documents, images, and HTML files up to 5 MB are allowed.\n\n" + rejected.join("\n")
-//     );
-//   }
-// }
-
-// function renderSelectedFiles(type) {
-//   var list = $("#" + type + "-attach-list");
-//   var arr = type === "task" ? taskFiles : ticketFiles;
-
-//   if (!list) return;
-
-//   if (!arr.length) {
-//     list.innerHTML = "";
-//     return;
-//   }
-
-//   list.innerHTML = arr.map(function (file, idx) {
-//     var icon = getFileIcon(file);
-
-//     return '' +
-//       '<div class="attach-item">' +
-//         '<span class="an">' + icon + ' ' + esc(file.name || "File") + '</span>' +
-//         '<span class="asize">' + esc(formatFileSize(file.size || 0)) + '</span>' +
-//         '<span class="x" data-type="' + esc(type) + '" data-idx="' + idx + '">×</span>' +
-//       '</div>';
-//   }).join("");
-
-//   list.querySelectorAll(".attach-item .x").forEach(function (x) {
-//     x.addEventListener("click", function () {
-//       var idx = Number(x.dataset.idx || 0);
-
-//       if (type === "task") taskFiles.splice(idx, 1);
-//       if (type === "ticket") ticketFiles.splice(idx, 1);
-
-//       renderSelectedFiles(type);
-//     });
-//   });
-// }
-
-// function uploadFiles(doctype, docname, files) {
-//   files = files || [];
-
-//   if (!files.length) return Promise.resolve([]);
-
-//   var validation = validateAttachmentList(files);
-
-//   if (!validation.ok) {
-//     return Promise.reject(validation.message);
-//   }
-
-//   return Promise.all(files.map(function (file) {
-//     return uploadOneFile(doctype, docname, file);
-//   }));
-// }
-
-// function uploadOneFile(doctype, docname, file) {
-//   return new Promise(function (resolve, reject) {
-//     var validation = validateAttachmentFile(file);
-
-//     if (!validation.ok) {
-//       reject((file.name || "File") + " - " + validation.message);
-//       return;
-//     }
-
-//     var formData = new FormData();
-
-//     formData.append("file", file, file.name);
-//     formData.append("is_private", "1");
-//     formData.append("folder", "Home/Attachments");
-//     formData.append("doctype", doctype);
-//     formData.append("docname", docname);
-
-//     page.upload(formData).then(resolve, reject);
-//   });
-// }
-
-
-
-// ============================================================
-// ATTACHMENTS - VALIDATION + UPLOAD
-// Documents, images, and HTML files - max 5 MB
-// ============================================================
-
-var MAX_ATTACHMENT_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
-var MAX_ATTACHMENT_COUNT = 5; // Maximum 5 files
-
-var ALLOWED_ATTACHMENT_EXTENSIONS = [
-  // Images
-  "jpg", "jpeg", "png", "gif", "webp", "bmp", "heic", "heif",
-  
-  // Documents
-  "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
-  "txt", "csv", "rtf", "odt", "ods", "odp",
-  
-  // Web files - HTML SUPPORT ADDED
-  "html", "htm", "xhtml"
-];
-
-// UPDATED: Include all HTML-related MIME types and extensions
-var ALLOWED_ATTACHMENT_MIME_TYPES = [
-  "text/html",
-  "application/xhtml+xml",
-  "application/xml",
-  "text/xml"
-];
-
-var ALLOWED_ATTACHMENT_ACCEPT =
-  ".jpg,.jpeg,.png,.gif,.webp,.bmp,.heic,.heif," +
-  ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.odt,.ods,.odp," +
-  ".html,.htm,.xhtml," +
-  "image/*,application/pdf,text/html,application/xhtml+xml";
-
-function getFileExtension(fileName) {
-  fileName = String(fileName || "").toLowerCase().trim();
-
-  if (fileName.indexOf(".") === -1) return "";
-
-  var parts = fileName.split(".");
-  return parts[parts.length - 1];
-}
-
-function isAllowedAttachmentType(file) {
-  var fileName = file && file.name ? file.name : "";
-  var mimeType = file && file.type ? String(file.type).toLowerCase() : "";
-  var ext = getFileExtension(fileName);
-
-  // DEBUG: Log what we're checking
-  void 0;
-  void 0;
-  void 0;
-
-  // ============================================================
-  // CRITICAL FIX: Explicitly allow HTML files
-  // Check BOTH extension and MIME type
-  // ============================================================
-  
-  // 1. Check if it's an HTML file by extension
-  if (ext === "html" || ext === "htm" || ext === "xhtml") {
-    void 0;
-    return true;
-  }
-
-  // 2. Check if it's an HTML file by MIME type
-  if (mimeType === "text/html" || 
-      mimeType === "application/xhtml+xml" ||
-      mimeType === "application/xml" ||
-      mimeType === "text/xml") {
-    void 0;
-    return true;
-  }
-
-  // Allow all normal browser-recognized image files
-  if (mimeType.indexOf("image/") === 0) {
-    var isAllowed = ALLOWED_ATTACHMENT_EXTENSIONS.indexOf(ext) !== -1;
-    void 0;
-    return isAllowed;
-  }
-
-  // Allow by extension for other document types
-  var isAllowedByExt = ALLOWED_ATTACHMENT_EXTENSIONS.indexOf(ext) !== -1;
-  void 0;
-  return isAllowedByExt;
-}
-
-function getFileIcon(file) {
-  var mimeType = String(file.type || "").toLowerCase();
-  var ext = getFileExtension(file.name || "");
-  
-  if (mimeType.indexOf("image/") === 0) return "🖼️";
-  if (ext === "html" || ext === "htm" || ext === "xhtml") {
-    return "🌐";
-  }
-  if (mimeType === "text/html" || mimeType === "application/xhtml+xml") {
-    return "🌐";
-  }
-  return "📄";
-}
-
-function validateAttachmentFile(file) {
-  if (!file) {
-    return {
-      ok: false,
-      message: "Invalid file."
-    };
-  }
-
-  // Get file info for debugging
-  var fileName = file.name || "Unknown";
-  var ext = getFileExtension(fileName);
-  var mimeType = file.type || "";
-
-  void 0;
-
-  // Explicit HTML check FIRST
-  if (ext === "html" || ext === "htm" || ext === "xhtml") {
-    void 0;
-    // Size check still applies
-    if (Number(file.size || 0) > MAX_ATTACHMENT_SIZE_BYTES) {
-      return {
-        ok: false,
-        message: "HTML file size must be 5 MB or below."
-      };
-    }
-    return {
-      ok: true,
-      message: ""
-    };
-  }
-
-  if (mimeType === "text/html" || mimeType === "application/xhtml+xml") {
-    void 0;
-    if (Number(file.size || 0) > MAX_ATTACHMENT_SIZE_BYTES) {
-      return {
-        ok: false,
-        message: "HTML file size must be 5 MB or below."
-      };
-    }
-    return {
-      ok: true,
-      message: ""
-    };
-  }
-
-  // Normal validation for other file types
-  if (!isAllowedAttachmentType(file)) {
-    return {
-      ok: false,
-      message: "Only documents, images, and HTML files are allowed."
-    };
-  }
-
-  if (Number(file.size || 0) > MAX_ATTACHMENT_SIZE_BYTES) {
-    return {
-      ok: false,
-      message: "File size must be 5 MB or below."
-    };
-  }
-
-  return {
-    ok: true,
-    message: ""
-  };
-}
-
-function validateAttachmentList(files) {
-  files = Array.prototype.slice.call(files || []);
-
-  var errors = [];
-
-  if (files.length > MAX_ATTACHMENT_COUNT) {
-    return {
-      ok: false,
-      message: "You can upload maximum " + MAX_ATTACHMENT_COUNT + " files only."
-    };
-  }
-
-  files.forEach(function (file) {
-    var validation = validateAttachmentFile(file);
-
-    if (!validation.ok) {
-      errors.push((file.name || "File") + " - " + validation.message);
-    }
-  });
-
-  if (errors.length) {
-    return {
-      ok: false,
-      message: errors.join("\n")
-    };
-  }
-
-  return {
-    ok: true,
-    message: ""
-  };
-}
-
-function addSelectedFiles(type, files) {
-  var arr = type === "task" ? taskFiles : ticketFiles;
-  var rejected = [];
-  var validNewFiles = [];
-
-  Array.prototype.slice.call(files || []).forEach(function (file) {
-    var validation = validateAttachmentFile(file);
-
-    if (!validation.ok) {
-      rejected.push("• " + (file.name || "File") + " - " + validation.message);
-      return;
-    }
-
-    var alreadyAdded = arr.some(function (existingFile) {
-      return (
-        existingFile.name === file.name &&
-        existingFile.size === file.size &&
-        existingFile.lastModified === file.lastModified
-      );
-    });
-
-    var alreadyInNew = validNewFiles.some(function (existingFile) {
-      return (
-        existingFile.name === file.name &&
-        existingFile.size === file.size &&
-        existingFile.lastModified === file.lastModified
-      );
-    });
-
-    if (!alreadyAdded && !alreadyInNew) {
-      validNewFiles.push(file);
-    }
-  });
-
-  if (arr.length + validNewFiles.length > MAX_ATTACHMENT_COUNT) {
-    showModal(
-      "⚠️",
-      "Maximum Files Limit",
-      "You can upload maximum " + MAX_ATTACHMENT_COUNT + " files only.\n\nCurrently selected: " +
-        arr.length +
-        "\nTrying to add: " +
-        validNewFiles.length +
-        "\n\nPlease remove some files and try again."
-    );
-    return;
-  }
-
-  validNewFiles.forEach(function (file) {
-    arr.push(file);
-  });
-
-  if (type === "task") taskFiles = arr;
-  if (type === "ticket") ticketFiles = arr;
-
-  renderSelectedFiles(type);
-
-  if (rejected.length) {
-    showModal(
-      "⚠️",
-      "Invalid Attachment",
-      "Only documents, images, and HTML files up to 5 MB are allowed.\n\n" + rejected.join("\n")
-    );
-  }
-}
-
-
-function renderSelectedFiles(type) {
-  var list = $("#" + type + "-attach-list");
-  var arr = type === "task" ? taskFiles : ticketFiles;
-
-  if (!list) return;
-
-  if (!arr.length) {
-    list.innerHTML = "";
-    return;
-  }
-
-  list.innerHTML = arr.map(function (file, idx) {
-    var icon = getFileIcon(file);
-
-    return '' +
-      '<div class="attach-item">' +
-        '<span class="an">' + icon + ' ' + esc(file.name || "File") + '</span>' +
-        '<span class="asize">' + esc(formatFileSize(file.size || 0)) + '</span>' +
-        '<span class="x" data-type="' + esc(type) + '" data-idx="' + idx + '">×</span>' +
-      '</div>';
-  }).join("");
-
-  list.querySelectorAll(".attach-item .x").forEach(function (x) {
-    x.addEventListener("click", function () {
-      var idx = Number(x.dataset.idx || 0);
-
-      if (type === "task") taskFiles.splice(idx, 1);
-      if (type === "ticket") ticketFiles.splice(idx, 1);
-
-      renderSelectedFiles(type);
-    });
-  });
-}
-
-function uploadFiles(doctype, docname, files) {
-  files = files || [];
-
-  if (!files.length) return Promise.resolve([]);
-
-  var validation = validateAttachmentList(files);
-
-  if (!validation.ok) {
-    return Promise.reject(validation.message);
-  }
-
-  return Promise.all(files.map(function (file) {
-    return uploadOneFile(doctype, docname, file);
-  }));
-}
-
-function normalizeTaskUpdateFiles(uploadedRows, originalFiles) {
-  uploadedRows = uploadedRows || [];
-  originalFiles = originalFiles || [];
-
-  return uploadedRows.map(function (f, idx) {
-    var original = originalFiles[idx] || {};
-
-    return {
-      file_name: f.file_name || original.name || f.name || "Open File",
-      file_url: f.file_url || "",
-      file_id: f.name || "",
-      size: original.size || f.file_size || 0,
-      uploaded_on: getNowLocalDateTime()
-    };
-  });
-}
-
-function renderTaskUpdateFileRows(files) {
-  files = files || [];
-
-  if (!files.length) {
-    return '<div class="life-update-no-files">No files added in this update.</div>';
-  }
-
-  return '' +
-    '<div class="life-update-file-list">' +
-      files.map(function (f) {
-        var fileName = f.file_name || f.file_url || "Open File";
-        var fileUrl = f.file_url || "";
-
-        return '' +
-          '<div class="life-update-file-row">' +
-            '<div class="life-update-file-name">📎 ' + esc(fileName) + '</div>' +
-            (
-              fileUrl
-                ? '<a href="' + esc(fileUrl) + '" target="_blank" class="life-update-file-open">Open</a>'
-                : ''
-            ) +
-          '</div>';
-      }).join("") +
-    '</div>';
-}
-
-// function uploadOneFile(doctype, docname, file) {
-//   return new Promise(function (resolve, reject) {
-//     var validation = validateAttachmentFile(file);
-
-//     if (!validation.ok) {
-//       reject((file.name || "File") + " - " + validation.message);
-//       return;
-//     }
-
-//     var formData = new FormData();
-
-//     formData.append("file", file, file.name);
-//     formData.append("is_private", "1");
-//     formData.append("folder", "Home/Attachments");
-//     formData.append("doctype", doctype);
-//     formData.append("docname", docname);
-
-//     var xhr = new XMLHttpRequest();
-//     xhr.open("POST", "/api/method/upload_file", true);
-
-//     var csrfToken =
-//       (window.frappe && frappe.csrf_token) ||
-//       window.csrf_token ||
-//       "";
-
-//     if (csrfToken) {
-//       xhr.setRequestHeader("X-Frappe-CSRF-Token", csrfToken);
-//     }
-
-//     xhr.onreadystatechange = function () {
-//       if (xhr.readyState !== 4) return;
-
-//       var response = {};
-
-//       try {
-//         response = JSON.parse(xhr.responseText || "{}");
-//       } catch (e) {
-//         reject("Unable to read upload response.");
-//         return;
-//       }
-
-//       if (xhr.status >= 200 && xhr.status < 300 && response.message) {
-//         resolve(response.message);
-//       } else {
-//         reject(response.exception || response.message || "File upload failed.");
-//       }
-//     };
-
-//     xhr.onerror = function () {
-//       reject("Network error while uploading file.");
-//     };
-
-//     xhr.send(formData);
-//   });
-// }
-
-
-function uploadOneFile(doctype, docname, file) {
-  return new Promise(function (resolve, reject) {
-    var validation = validateAttachmentFile(file);
-
-    if (!validation.ok) {
-      reject((file.name || "File") + " - " + validation.message);
-      return;
-    }
-
-    var formData = new FormData();
-    var fileName = file.name || "";
-    var ext = getFileExtension(fileName);
-    var mimeType = String(file.type || "").toLowerCase();
-
-    // Determine if this is an HTML file
-    var isHtmlFile = (
-      ext === "html" || 
-      ext === "htm" || 
-      ext === "xhtml" ||
-      mimeType === "text/html" ||
-      mimeType === "application/xhtml+xml"
-    );
-
-    formData.append("file", file, file.name);
-    
-    // Use Home folder for all files
-    formData.append("folder", "Home");
-    
-    // Make HTML files public, others private
-    if (isHtmlFile) {
-      formData.append("is_private", "0");
-      void 0;
-    } else {
-      formData.append("is_private", "1");
-      void 0;
-    }
-    
-    formData.append("doctype", doctype);
-    formData.append("docname", docname);
-
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", "/api/method/upload_file", true);
-
-    var csrfToken =
-      (window.frappe && frappe.csrf_token) ||
-      window.csrf_token ||
-      "";
-
-    if (csrfToken) {
-      xhr.setRequestHeader("X-Frappe-CSRF-Token", csrfToken);
-    }
-
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-
-      var response = {};
-      try {
-        response = JSON.parse(xhr.responseText || "{}");
-      } catch (e) {
-        reject("Unable to read upload response.");
-        return;
-      }
-
-      if (xhr.status >= 200 && xhr.status < 300 && response.message) {
-        void 0;
-        if (response.message.file_url) {
-          void 0;
-        }
-        resolve(response.message);
-      } else {
-        reject(response.exception || response.message || "File upload failed.");
-      }
-    };
-
-    xhr.onerror = function () {
-      reject("Network error while uploading file.");
-    };
-
-    xhr.send(formData);
-  });
-}
-  // ============================================================
-  // TASKS
-  // ============================================================
-
-  function submitTask() {
-    var assignTo = taskAssignTo[0] || "";
-    var category = getValue("task-category");
-    var startDate = getValue("task-startdate");
-    var deadlineDateTime = getValue("task-deadline");
-    var deadline = getDatePartFromDateTime(deadlineDateTime);
-    var details = getValue("task-details");
-
-    if (!assignTo) {
-      showModal("⚠️", "Select Assignee", "Please search and select who this task is being assigned to.");
-      return;
-    }
-
-    if (!category) {
-      showModal("⚠️", "Category Required", "Please select a task category.");
-      return;
-    }
-
-    var dateValidation = validateTaskDatesBeforeSubmit(startDate, deadlineDateTime);
-
-    if (!dateValidation.ok) {
-      showModal("⚠️", "Invalid Task Dates", dateValidation.message);
-      return;
-    }
-
-    if (!details) {
-      showModal("⚠️", "Details Required", "Please enter task details.");
-      return;
-    }
-
-    if (wordCount(details) > 100) {
-      showModal("⚠️", "Too Many Words", "Task details cannot exceed 100 words.");
-      return;
-    }
-
-    if (!selectedTaskPriority) {
-      showModal("⚠️", "Priority Required", "Please select task priority.");
-      return;
-    }
-
-    var updateTo = taskUpdateTo.slice();
-
-    if (updateTo.indexOf(currentUser) === -1) {
-      updateTo.push(currentUser);
-    }
-
-    var meta = {
-      category: category,
-      start_date: startDate,
-      deadline_datetime: deadlineDateTime,
-      duration_label: calculateTaskDurationDays(startDate, deadlineDateTime),
-      update_to: updateTo
-    };
-
-    var doc = {
-      doctype: "ToDo",
-      description: buildTaskDescription(details, meta),
-      allocated_to: assignTo,
-      assigned_by: currentUser,
-      priority: selectedTaskPriority,
-      status: "Open",
-      date: deadline
-    };
-    
-    var taskFileValidation = validateAttachmentList(taskFiles);
-
-    if (!taskFileValidation.ok) {
-      showModal(
-        "⚠️",
-        "Invalid Attachment",
-        "Please remove invalid task attachment(s):\n\n" + taskFileValidation.message
-      );
-      return;
-    }
-
-    var btn = $("#task-submit-btn");
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "Assigning...";
-    }
-
-    frappe.call({
-      method: "frappe.client.insert",
-      args: {
-        doc: doc
-      },
-      callback: function (r) {
-        var saved = r.message || {};
-
-        uploadFiles("ToDo", saved.name, taskFiles)
-          .then(function () {
-            showModal("✅", "Task Assigned", "Task " + saved.name + " assigned to " + userLabel(assignTo) + ".");
-            resetTaskForm();
-            loadTasks();
-
-            if (btn) {
-              btn.disabled = false;
-              btn.textContent = "✓ Assign Task";
-            }
-          })
-          .catch(function (err) {
-            showModal("⚠️", "Task Saved, Attachment Failed", getErrorMessage(err));
-            resetTaskForm();
-            loadTasks();
-
-            if (btn) {
-              btn.disabled = false;
-              btn.textContent = "✓ Assign Task";
-            }
-          });
-      },
-      error: function (err) {
-        showModal("⚠️", "Task Save Failed", getErrorMessage(err));
-
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = "✓ Assign Task";
-        }
+    q('#fileinp').addEventListener('change', function (e) {
+      var files = Array.prototype.slice.call(e.target.files || []); e.target.value = '';
+      var ok = files.filter(function (fl) { if (fl.size > MAX_FILE) { toast(fl.name + ' is over 5 MB', 1); return false; } return true; });
+      if (S._ft === 'form') { S.pendingFiles = S.pendingFiles.concat(ok); var fl = q('#f-flist'); if (fl) fl.innerHTML = fileChips(); renderPreview(); }
+      else if (S._ft === 'tform') { S.tFiles = S.tFiles.concat(ok); render(); }
+      else if (S._ft === 'upd') { S.updFiles = (S.updFiles || []).concat(ok); var h = q('#d-ufiles'); if (h) h.textContent = '📎 ' + S.updFiles.map(function (x) { return x.name; }).join(', '); }
+      else if (S._ft === 'task' && S.openTask) {
+        if (guard()) return;
+        var t0 = findTask(S.openTask), key = fileKey(t0), id = S.openTask;
+        ok.reduce(function (p, f) { return p.then(function () { return API.upload('ToDo', key, f).then(function (r) { (S.files[key] = S.files[key] || []).push(r); }); }); }, Promise.resolve())
+          .then(function () { return persist(id, function (x) { addUpd(x, 'System', 'Attached: ' + ok.map(function (f) { return f.name; }).join(', ')); }, 'File attached'); }).catch(function (er) { toast(String(errMsg(er)), 1); });
       }
     });
-  }
-
-  function resetTaskForm() {
-    setValue("task-category", "");
-    forceDefaultTaskStartDate();
-    setValue("task-deadline", "");
-    setText("task-duration-label", "");
-    updateTaskDateRules();
-    setValue("task-details", "");
-
-    updateWordCount($("#task-details"), $("#task-wordcount"), 100);
-
-    selectedTaskPriority = "";
-    $all("#task-priority-grp .priority-chip").forEach(function (x) {
-      x.classList.remove("sel");
-    });
-
-    taskAssignTo = [];
-    taskUpdateTo = [];
-    renderPickerChips("taskAssignTo");
-    renderPickerChips("taskUpdateTo");
-
-    taskFiles = [];
-    renderSelectedFiles("task");
-  }
-
-function loadTasks() {
-  frappe.call({
-    method: "frappe.client.get_list",
-    args: {
-      doctype: "ToDo",
-      fields: [
-        "name",
-        "description",
-        "allocated_to",
-        "assigned_by",
-        "priority",
-        "status",
-        "date",
-        "creation",
-        "modified",
-        "owner"
-      ],
-      order_by: "modified desc",
-      limit_page_length: 500
-    },
-    callback: function (r) {
-      tasks = (r.message || []).filter(isTaskVisibleToCurrentUser);
-
-      loadAttachmentCache(
-        "ToDo",
-        tasks.map(function (t) { return t.name; }),
-        function () {
-          renderTaskReport();
-          renderMyTasks();
-          renderCounts();
-        }
-      );
-    },
-    error: function () {
-      tasks = [];
-      renderTaskReport();
-      renderMyTasks();
-      renderCounts();
-    }
-  });
-}
-
-
-  function getTaskMeta(task) {
-    return parseMeta(task.description, "TASK");
-  }
-
-function getTaskDetails(task) {
-  return htmlToReadableText(removeMeta(task.description || ""));
-}
-
-function getTaskStatus(task) {
-  var meta = getTaskMeta(task);
-
-  if (task.status === "Cancelled") {
-    return "Cancelled";
-  }
-
-  if (task.status === "Closed") {
-    return "Closed";
-  }
-
-  if (meta.workflow_state === "Completed") {
-    return "Completed";
-  }
-
-  var deadlineDateTime = meta.deadline_datetime || "";
-
-  if (!deadlineDateTime && task.date) {
-    deadlineDateTime = task.date + "T23:59";
-  }
-
-  deadlineDateTime = normalizeDateTimeValue(deadlineDateTime);
-
-  var activeForOverdue =
-    task.status === "Open" &&
-    (
-      !meta.workflow_state ||
-      meta.workflow_state === "Open" ||
-      meta.workflow_state === "Reopened"
-    );
-
-  if (
-    activeForOverdue &&
-    deadlineDateTime &&
-    deadlineDateTime < getNowLocalDateTime()
-  ) {
-    return "Overdue";
-  }
-
-  if (meta.workflow_state === "Reopened") {
-    return "Reopened";
-  }
-
-  return task.status || "Open";
-}
-
-
-function renderTaskReport() {
-  var body = $("#task-report-body");
-  if (!body) return;
-
-  var catF = getValue("tr-category");
-  var priF = getValue("tr-priority");
-  var statF = getValue("tr-status");
-
-  var filtered = tasks.filter(function (t) {
-    var meta = getTaskMeta(t);
-    var status = getTaskStatus(t);
-
-    return (
-      (!catF || meta.category === catF) &&
-      (!priF || t.priority === priF) &&
-      (!statF || status === statF) && taskMatchesAssigneeSearch(t)
-    );
-  });
-  filtered = sortByModifiedLatest(filtered);
-
-  renderTaskTiles();
-
-  setText("task-report-count", String(filtered.length));
-  var pageData = getPaginatedRows("taskReport", filtered);
-
-  if (!filtered.length) {
-    body.innerHTML =
-      '<tr><td colspan="9" style="text-align:center;color:#8C8C8C;padding:18px">No tasks found.</td></tr>';
-    return;
-  }
-
-  body.innerHTML = pageData.rows.map(function (t) {
-    var meta = getTaskMeta(t);
-    var status = getTaskStatus(t);
-    var details = getTaskDetails(t);
-    var updateTo = (meta.update_to || []).map(userDisplayName).join(", ") || "—";
-    var workedDays = calculateWorkedDaysLabel(t, meta);
-
-    var detailId = registerDetailHtml(
-      "Task Details - " + t.name,
-      buildTaskDetailsHtml(t, meta, details, updateTo),
-      buildTaskExtraHistorySection(meta)
-    );
-
-    return '' +
-      '<tr class="life-clickable-row" ' +
-        'data-detail-html-id="' + esc(detailId) + '" ' +
-        'data-doctype="ToDo" ' +
-        'data-docname="' + esc(t.name) + '">' +
-
-        // Assigned By + Start Date
-        '<td>' +
-          '<div class="life-user-date-cell">' +
-            '<div class="life-user-name">' +
-              esc(userDisplayName(t.assigned_by || t.owner)) +
-            '</div>' +
-            '<div class="life-user-date">Start: ' +
-              esc(formatLifeDate(meta.start_date || t.creation)) +
-            '</div>' +
-          '</div>' +
-        '</td>' +
-
-        // Assigned To + Deadline
-        '<td>' +
-          '<div class="life-user-date-cell">' +
-            '<div class="life-user-name">' +
-              esc(userDisplayName(t.allocated_to)) +
-            '</div>' +
-            '<div class="life-user-date">Due: ' +
-              esc(formatLifeDateTime(meta.deadline_datetime || t.date)) +
-            '</div>' +
-            '<div class="life-user-date">Worked: ' +
-              esc(workedDays) +
-            '</div>' +
-          '</div>' +
-        '</td>' +
-
-        // Category
-        '<td>' +
-          '<div class="life-row-main-text">' +
-            esc(meta.category || "—") +
-          '</div>' +
-        '</td>' +
-
-        // Details preview, row click opens full details
-        '<td style="max-width:280px;white-space:normal">' +
-          '<div class="life-row-main-text">' +
-            esc(shortPreviewText(details || "—", 110)) +
-          '</div>' +
-        '</td>' +
-
-        // Priority
-        '<td>' + priorityPill(t.priority) + '</td>' +
-
-        // Update To
-        '<td style="max-width:180px;white-space:normal">' +
-          esc(updateTo) +
-        '</td>' +
-
-        // Attachments
-        '<td>' + attachmentChip("ToDo", t.name) + '</td>' +
-
-        // Status
-        '<td>' + statusPill(status) + '</td>' +
-
-        // Action
-        '<td>' + renderTaskActionButtons(t) + '</td>' +
-
-      '</tr>';
-  }).join("");
-
-  bindTaskActionButtons(body);
-  bindAttachmentChips(body);
-  bindClickableTaskRows(body);
-  renderTablePagination(body, "taskReport", pageData, renderTaskReport);
-}
-
-function renderTaskTiles() {
-  var box = $("#task-tiles");
-  if (!box) return;
-
-  var total = tasks.length;
-
-  var inProgress = tasks.filter(function (t) {
-    var status = getTaskStatus(t);
-    return status === "Open" || status === "Reopened";
-  }).length;
-
-  var reviewPending = tasks.filter(function (t) {
-    return getTaskStatus(t) === "Completed";
-  }).length;
-
-  var overdue = tasks.filter(function (t) {
-    return getTaskStatus(t) === "Overdue";
-  }).length;
-
-  box.innerHTML = [
-    { l: "Total Tasks", v: total, c: "t-pn" },
-    { l: "In Progress", v: inProgress, c: "t-po" },
-    { l: "Review Pending", v: reviewPending, c: "t-pgr" },
-    { l: "Overdue", v: overdue, c: "t-pr" }
-  ].map(function (x) {
-    return '<div class="tile ' + x.c + '"><div class="tl">' + esc(x.l) + '</div><div class="tv">' + esc(x.v) + '</div></div>';
-  }).join("");
-}
-
-
-function renderMyTasks() {
-  var toBody = $("#mytask-to-body");
-  var byBody = $("#mytask-by-body");
-
-  if (!toBody || !byBody) return;
-
-  var toMe = tasks.filter(function (t) {
-    return isCurrentUserValue(t.allocated_to);
-  });
-
-  var byMe = tasks.filter(function (t) {
-    return (
-      t.owner === currentUser ||
-      t.assigned_by === currentUser ||
-      userDisplayName(t.owner) === currentUserFullName ||
-      userDisplayName(t.assigned_by) === currentUserFullName
-    );
-  });
-
-  setText("mytask-to-count", String(toMe.length));
-  setText("mytask-by-count", String(byMe.length));
-  
-  toMe = sortByModifiedLatest(toMe);
-    byMe = sortByModifiedLatest(byMe);
-  var toPageData = getPaginatedRows("myTaskTo", toMe);
-  var byPageData = getPaginatedRows("myTaskBy", byMe);
-
-  // ============================================================
-  // Assigned To Me
-  // New columns:
-  // From | Category | Deadline | Priority | Status | Action
-  // Row click opens task details
-  // ============================================================
-
-  toBody.innerHTML = toMe.length
-    ? toPageData.rows.map(function (t) {
-        var meta = getTaskMeta(t);
-        var status = getTaskStatus(t);
-        var details = getTaskDetails(t);
-        var updateTo = (meta.update_to || []).map(userDisplayName).join(", ") || "—";
-
-        var detailId = registerDetailHtml(
-          "Task Details - " + t.name,
-          buildTaskDetailsHtml(t, meta, details, updateTo),
-          buildTaskExtraHistorySection(meta)
-        );
-
-        return '' +
-          '<tr class="life-clickable-row" ' +
-            'data-detail-html-id="' + esc(detailId) + '" ' +
-            'data-doctype="ToDo" ' +
-            'data-docname="' + esc(t.name) + '">' +
-
-            '<td>' +
-              '<div class="life-user-date-cell">' +
-                '<div class="life-user-name">' +
-                  esc(userDisplayName(t.assigned_by || t.owner)) +
-                '</div>' +
-                '<div class="life-user-date">Start: ' +
-                  esc(formatLifeDate(meta.start_date || t.creation)) +
-                '</div>' +
-              '</div>' +
-            '</td>' +
-
-            '<td>' +
-              '<div class="life-row-main-text">' +
-                esc(meta.category || "—") +
-              '</div>' +
-            '</td>' +
-
-            '<td>' +
-              esc(formatLifeDateTime(meta.deadline_datetime || t.date)) +
-            '</td>' +
-
-            '<td>' + priorityPill(t.priority) + '</td>' +
-
-            '<td>' + statusPill(status) + '</td>' +
-
-            '<td>' + renderTaskActionButtons(t) + '</td>' +
-
-          '</tr>';
-      }).join("")
-    : '<tr><td colspan="6" style="text-align:center;color:#8C8C8C;padding:14px">No tasks assigned to you.</td></tr>';
-
-  // ============================================================
-  // Assigned By Me
-  // New columns:
-  // To | Category | Deadline | Priority | Status
-  // Row click opens task details
-  // ============================================================
-
-  byBody.innerHTML = byMe.length
-    ? byPageData.rows.map(function (t) {
-        var meta = getTaskMeta(t);
-        var status = getTaskStatus(t);
-        var details = getTaskDetails(t);
-        var updateTo = (meta.update_to || []).map(userDisplayName).join(", ") || "—";
-
-        var detailId = registerDetailHtml(
-          "Task Details - " + t.name,
-          buildTaskDetailsHtml(t, meta, details, updateTo),
-          buildTaskExtraHistorySection(meta)
-        );
-
-        return '' +
-          '<tr class="life-clickable-row" ' +
-            'data-detail-html-id="' + esc(detailId) + '" ' +
-            'data-doctype="ToDo" ' +
-            'data-docname="' + esc(t.name) + '">' +
-
-            '<td>' +
-              '<div class="life-user-date-cell">' +
-                '<div class="life-user-name">' +
-                  esc(userDisplayName(t.allocated_to)) +
-                '</div>' +
-                '<div class="life-user-date">Due: ' +
-                  esc(formatLifeDateTime(meta.deadline_datetime || t.date)) +
-                '</div>' +
-              '</div>' +
-            '</td>' +
-
-            '<td>' +
-              '<div class="life-row-main-text">' +
-                esc(meta.category || "—") +
-              '</div>' +
-            '</td>' +
-
-            '<td>' +
-              esc(formatLifeDateTime(meta.deadline_datetime || t.date)) +
-            '</td>' +
-
-            '<td>' + priorityPill(t.priority) + '</td>' +
-
-            '<td>' + statusPill(status) + '</td>' +
-
-            '<td>' + renderTaskActionButtons(t) + '</td>' +
-            
-            '</tr>';
-      }).join("")
-    : '<tr><td colspan="6" style="text-align:center;color:#8C8C8C;padding:14px">You have not assigned any tasks.</td></tr>';
-
-  bindTaskActionButtons(toBody);
-  bindTaskActionButtons(byBody);
-
-  bindClickableTaskRows(toBody);
-  bindClickableTaskRows(byBody);
-  
-  renderTablePagination(toBody, "myTaskTo", toPageData, renderMyTasks);
- renderTablePagination(byBody, "myTaskBy", byPageData, renderMyTasks);
-}
-
-function bindClickableTaskRows(scope) {
-  (scope || root).querySelectorAll(".life-clickable-row").forEach(function (row) {
-    if (row.dataset.boundClickableTaskRow === "1") return;
-
-    row.dataset.boundClickableTaskRow = "1";
-
-    row.addEventListener("click", function (e) {
-      // Do not open details when clicking action buttons, links, or form controls
-      if (
-          e.target.closest("button") ||
-          e.target.closest("a") ||
-          e.target.closest(".btn") ||
-          e.target.closest("input") ||
-          e.target.closest("select") ||
-          e.target.closest("textarea") ||
-          e.target.closest(".attach-chip-table")
-        ) {
-        return;
-      }
-
-      var id = row.dataset.detailHtmlId || "";
-      var detail = detailHtmlRegistry[id] || {};
-
-      var doctype = row.dataset.doctype || "";
-      var docname = row.dataset.docname || "";
-
-      var html =
-        (detail.html || "") +
-        modalAttachmentHtml(doctype, docname) +
-        (detail.afterHtml || "");
-
-      showRichModal(
-        "📄",
-        detail.title || "Task Details",
-        html
-      );
-    });
-  });
-}
-
-function markTaskDone(name) {
-  promptWorkflowRemarks(
-    "Complete Task",
-    "Completion Remarks *",
-    100,
-    function (remarks) {
-      frappe.call({
-        method: "frappe.client.get",
-        args: {
-          doctype: "ToDo",
-          name: name
-        },
-        callback: function (r) {
-          var doc = r.message;
-
-          if (!doc) {
-            showModal("⚠️", "Task Not Found", "Unable to load task.");
-            return;
-          }
-
-          var meta = getTaskMeta(doc);
-          var details = getTaskDetails(doc);
-
-          meta.workflow_state = "Completed";
-          meta.completed_on = getNowLocalDateTime();
-          meta.completed_by = currentUser;
-          meta.completed_by_name = currentUserFullName || currentUser;
-          meta.completion_remarks = remarks;
-
-          meta.worked_days = calculateWorkedDaysLabel(
-            {
-              creation: doc.creation,
-              modified: doc.modified,
-              date: doc.date,
-              status: "Closed"
-            },
-            meta
-          );
-
-          meta.completion_history = meta.completion_history || [];
-          meta.completion_history.push({
-            by: currentUser,
-            by_name: currentUserFullName || currentUser,
-            on: meta.completed_on,
-            remarks: remarks
-          });
-
-          // Important: keep ERP ToDo open until assigner closes it
-          doc.status = "Open";
-          doc.description = buildTaskDescription(details, meta);
-
-          frappe.call({
-            method: "frappe.client.save",
-            args: {
-              doc: doc
-            },
-            callback: function () {
-              toast("Task completion submitted for assigner review.", true);
-              loadTasks();
-            },
-            error: function (err) {
-              showModal("⚠️", "Update Failed", getErrorMessage(err));
-            }
-          });
-        },
-        error: function (err) {
-          showModal("⚠️", "Task Load Failed", getErrorMessage(err));
-        }
-      });
-    }
-  );
-}
-
-function closeTaskAfterReview(name) {
-  frappe.confirm(
-    "Are you satisfied with this task completion and want to close it?",
-    function () {
-      frappe.call({
-        method: "frappe.client.get",
-        args: {
-          doctype: "ToDo",
-          name: name
-        },
-        callback: function (r) {
-          var doc = r.message;
-
-          if (!doc) {
-            showModal("⚠️", "Task Not Found", "Unable to load task.");
-            return;
-          }
-
-          var meta = getTaskMeta(doc);
-          var details = getTaskDetails(doc);
-
-          meta.workflow_state = "Closed";
-          meta.closed_on = getNowLocalDateTime();
-          meta.closed_by = currentUser;
-          meta.closed_by_name = currentUserFullName || currentUser;
-
-          meta.close_history = meta.close_history || [];
-          meta.close_history.push({
-            by: currentUser,
-            by_name: currentUserFullName || currentUser,
-            on: meta.closed_on,
-            remarks: "Accepted and closed by assigner."
-          });
-
-          doc.status = "Closed";
-          doc.description = buildTaskDescription(details, meta);
-
-          frappe.call({
-            method: "frappe.client.save",
-            args: {
-              doc: doc
-            },
-            callback: function () {
-              toast("Task closed successfully.", true);
-              loadTasks();
-            },
-            error: function (err) {
-              showModal("⚠️", "Close Failed", getErrorMessage(err));
-            }
-          });
-        },
-        error: function (err) {
-          showModal("⚠️", "Task Load Failed", getErrorMessage(err));
-        }
-      });
-    }
-  );
-}
-
-function reopenTaskAfterReview(name) {
-  promptWorkflowRemarks(
-    "Reopen Task",
-    "Review Remarks *",
-    100,
-    function (remarks) {
-      frappe.call({
-        method: "frappe.client.get",
-        args: {
-          doctype: "ToDo",
-          name: name
-        },
-        callback: function (r) {
-          var doc = r.message;
-
-          if (!doc) {
-            showModal("⚠️", "Task Not Found", "Unable to load task.");
-            return;
-          }
-
-          var meta = getTaskMeta(doc);
-          var details = getTaskDetails(doc);
-
-          meta.workflow_state = "Reopened";
-          meta.reopened_on = getNowLocalDateTime();
-          meta.reopened_by = currentUser;
-          meta.reopened_by_name = currentUserFullName || currentUser;
-          meta.reopen_review_remarks = remarks;
-
-          meta.reopen_history = meta.reopen_history || [];
-          meta.reopen_history.push({
-            by: currentUser,
-            by_name: currentUserFullName || currentUser,
-            on: meta.reopened_on,
-            remarks: remarks
-          });
-
-          doc.status = "Open";
-          doc.description = buildTaskDescription(details, meta);
-
-          frappe.call({
-            method: "frappe.client.save",
-            args: {
-              doc: doc
-            },
-            callback: function () {
-              toast("Task reopened successfully.", true);
-              loadTasks();
-            },
-            error: function (err) {
-              showModal("⚠️", "Reopen Failed", getErrorMessage(err));
-            }
-          });
-        },
-        error: function (err) {
-          showModal("⚠️", "Task Load Failed", getErrorMessage(err));
-        }
-      });
-    }
-  );
-}
-
-
-function undoTaskCompleted(name) {
-  frappe.confirm(
-    "Do you want to undo completion and reopen this task?",
-    function () {
-      frappe.call({
-        method: "frappe.client.get",
-        args: {
-          doctype: "ToDo",
-          name: name
-        },
-        callback: function (r) {
-          var doc = r.message;
-
-          if (!doc) {
-            showModal("⚠️", "Task Not Found", "Unable to load task.");
-            return;
-          }
-
-          var meta = getTaskMeta(doc);
-          var details = getTaskDetails(doc);
-
-          delete meta.completed_on;
-          delete meta.completed_by;
-          delete meta.completed_by_name;
-          delete meta.worked_days;
-
-          doc.status = "Open";
-          doc.description = buildTaskDescription(details, meta);
-
-          frappe.call({
-            method: "frappe.client.save",
-            args: {
-              doc: doc
-            },
-            callback: function () {
-              toast("Task reopened successfully.", true);
-              loadTasks();
-            },
-            error: function (err) {
-              showModal("⚠️", "Undo Failed", getErrorMessage(err));
-            }
-          });
-        },
-        error: function (err) {
-          showModal("⚠️", "Task Load Failed", getErrorMessage(err));
-        }
-      });
-    }
-  );
-}
-
-
-function openTaskDelayReview(name) {
-  var task = tasks.find(function (t) {
-    return t.name === name;
-  });
-
-  if (!task) {
-    showModal("⚠️", "Task Not Found", "Unable to find this overdue task.");
-    return;
-  }
-
-  var status = getTaskStatus(task);
-
-  if (status !== "Overdue") {
-    showModal(
-      "⚠️",
-      "Not Allowed",
-      "Deadline can be changed from this button only when the task is overdue."
-    );
-    return;
-  }
-
-  if (!isTaskAssigner(task)) {
-    showModal(
-      "⚠️",
-      "Not Allowed",
-      "Only the task assigner can change deadline for an overdue task."
-    );
-    return;
-  }
-
-  var meta = getTaskMeta(task);
-  var oldDeadline = meta.deadline_datetime || (task.date ? task.date + "T23:59" : "");
-
-  ensureTaskDelayReviewModal();
-
-  var modal = $("#life-task-delay-modal");
-  if (!modal) return;
-
-  modal.dataset.taskName = name || "";
-  modal.dataset.oldDeadline = oldDeadline || "";
-
-  var titleEl = modal.querySelector(".life-delay-title");
-  var subEl = modal.querySelector(".life-delay-sub");
-
-  if (titleEl) {
-    titleEl.textContent = "Change Overdue Task Deadline";
-  }
-
-  if (subEl) {
-    subEl.textContent = "Only the assigner can extend the deadline. After saving, task will become Open.";
-  }
-
-  setText("life-delay-old-deadline", oldDeadline ? formatLifeDateTime(oldDeadline) : "—");
-
-  var suggested = getSuggestedDelayDateTimeParts();
-
-  setValue("life-delay-date", suggested.date);
-  setValue("life-delay-hour", suggested.hour);
-  setValue("life-delay-minute", suggested.minute);
-  setValue("life-delay-ampm", suggested.ampm);
-  setValue("life-delay-remarks", "");
-
-  setText("life-delay-wordcount", "0 / 100 words");
-  showDelayError("");
-
-  var dateEl = $("#life-delay-date");
-  if (dateEl) {
-    dateEl.setAttribute("min", getTodayLocalDate());
-  }
-
-  modal.classList.add("show");
-}
-
-
-
-function ensureTaskDelayReviewModal() {
-  if ($("#life-task-delay-modal")) return;
-
-  var app = $("#life-tt-app") || root;
-
-  app.insertAdjacentHTML("beforeend", `
-    <div id="life-task-delay-modal" class="life-delay-modal">
-      <div class="life-delay-box">
-        <div class="life-delay-head">
-          <div>
-            <div class="life-delay-title">Review Delayed Task</div>
-            <div class="life-delay-sub">Set a new deadline and mention why the task was delayed</div>
-          </div>
-          <button type="button" class="life-delay-close" id="life-delay-close-btn">×</button>
-        </div>
-
-        <div class="life-delay-body">
-          <div class="life-delay-old">
-            <strong>Current / Old Deadline:</strong>
-            <span id="life-delay-old-deadline">—</span>
-          </div>
-
-          <div class="life-delay-grid">
-            <div class="field-block">
-              <label class="lbl">New Deadline Date <span class="required-mark">*</span></label>
-              <input type="date" id="life-delay-date">
-            </div>
-
-            <div class="field-block">
-              <label class="lbl">New Deadline Time <span class="required-mark">*</span></label>
-              <div class="life-delay-time-row">
-                <select id="life-delay-hour"></select>
-                <select id="life-delay-minute"></select>
-                <select id="life-delay-ampm">
-                  <option value="AM">AM</option>
-                  <option value="PM">PM</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div class="field-block">
-            <label class="lbl">Delay Review Remarks <span class="required-mark">*</span></label>
-            <textarea id="life-delay-remarks" placeholder="Mention why the task was delayed and why the deadline is being extended."></textarea>
-            <div class="life-delay-wordcount" id="life-delay-wordcount">0 / 100 words</div>
-          </div>
-
-          <div class="life-delay-error" id="life-delay-error"></div>
-        </div>
-
-        <div class="life-delay-footer">
-          <button type="button" class="btn btn-gy" id="life-delay-cancel-btn">Cancel</button>
-          <button type="button" class="btn btn-n" id="life-delay-save-btn">Save Review</button>
-        </div>
-      </div>
-    </div>
-  `);
-
-  populateDelayTimeDropdowns();
-
-  var closeBtn = $("#life-delay-close-btn");
-  var cancelBtn = $("#life-delay-cancel-btn");
-  var saveBtn = $("#life-delay-save-btn");
-  var dateEl = $("#life-delay-date");
-  var remarksEl = $("#life-delay-remarks");
-
-  if (closeBtn) closeBtn.addEventListener("click", closeTaskDelayReviewModal);
-  if (cancelBtn) cancelBtn.addEventListener("click", closeTaskDelayReviewModal);
-  if (saveBtn) saveBtn.addEventListener("click", submitTaskDelayReviewModal);
-
-  if (dateEl) {
-    dateEl.addEventListener("change", function () {
-      validateDelayDateSoft();
+    root.addEventListener('click', function (e) { if (e.target.closest('#f-drop')) { S._ft = 'form'; q('#fileinp').click(); } if (e.target.closest('#k-drop')) { S._ft = 'tform'; q('#fileinp').click(); } });
+    root.addEventListener('dragover', function (e) { var d = e.target.closest && e.target.closest('.drop'); if (d) { e.preventDefault(); d.classList.add('over'); } });
+    root.addEventListener('dragleave', function (e) { var d = e.target.closest && e.target.closest('.drop'); if (d) d.classList.remove('over'); });
+    root.addEventListener('drop', function (e) {
+      var d = e.target.closest && e.target.closest('.drop'); if (!d) return; e.preventDefault(); d.classList.remove('over');
+      var ok = Array.prototype.slice.call(e.dataTransfer.files || []).filter(function (fl) { return fl.size <= MAX_FILE || (toast(fl.name + ' over 5 MB', 1), false); });
+      if (d.id === 'k-drop') { S.tFiles = S.tFiles.concat(ok); render(); } else { S.pendingFiles = S.pendingFiles.concat(ok); q('#f-flist').innerHTML = fileChips(); renderPreview(); }
     });
   }
-
-  if (remarksEl) {
-  bindWordLimit(remarksEl, $("#life-delay-wordcount"), 100);
-}
-
-  var modal = $("#life-task-delay-modal");
-  if (modal) {
-    modal.addEventListener("click", function (e) {
-      if (e.target === modal) {
-        closeTaskDelayReviewModal();
-      }
-    });
-  }
-}
-
-function populateDelayTimeDropdowns() {
-  var hourEl = $("#life-delay-hour");
-  var minuteEl = $("#life-delay-minute");
-
-  if (hourEl) {
-    hourEl.innerHTML = "";
-
-    for (var h = 1; h <= 12; h++) {
-      var hh = String(h).padStart(2, "0");
-      hourEl.innerHTML += '<option value="' + hh + '">' + hh + '</option>';
-    }
-  }
-
-  if (minuteEl) {
-    minuteEl.innerHTML = "";
-
-    for (var m = 0; m < 60; m += 5) {
-      var mm = String(m).padStart(2, "0");
-      minuteEl.innerHTML += '<option value="' + mm + '">' + mm + '</option>';
-    }
-  }
-}
-
-function getSuggestedDelayDateTimeParts() {
-  var d = new Date();
-
-  // Default: current time + 1 hour
-  d.setHours(d.getHours() + 1);
-
-  var yyyy = d.getFullYear();
-  var mm = String(d.getMonth() + 1).padStart(2, "0");
-  var dd = String(d.getDate()).padStart(2, "0");
-
-  var hour24 = d.getHours();
-  var minute = Math.ceil(d.getMinutes() / 5) * 5;
-
-  if (minute >= 60) {
-    minute = 0;
-    hour24 += 1;
-  }
-
-  var ampm = hour24 >= 12 ? "PM" : "AM";
-  var hour12 = hour24 % 12;
-  if (hour12 === 0) hour12 = 12;
-
-  return {
-    date: yyyy + "-" + mm + "-" + dd,
-    hour: String(hour12).padStart(2, "0"),
-    minute: String(minute).padStart(2, "0"),
-    ampm: ampm
-  };
-}
-
-function buildDelayDateTimeValue() {
-  var date = getValue("life-delay-date");
-  var hour = Number(getValue("life-delay-hour") || 0);
-  var minute = getValue("life-delay-minute");
-  var ampm = getValue("life-delay-ampm");
-
-  if (!date || !hour || !minute || !ampm) return "";
-
-  if (ampm === "PM" && hour < 12) {
-    hour += 12;
-  }
-
-  if (ampm === "AM" && hour === 12) {
-    hour = 0;
-  }
-
-  return date + "T" + String(hour).padStart(2, "0") + ":" + minute;
-}
-
-function validateDelayDateSoft() {
-  var dateEl = $("#life-delay-date");
-  if (!dateEl) return;
-
-  var today = getTodayLocalDate();
-
-  dateEl.setAttribute("min", today);
-
-  if (dateEl.value && dateEl.value < today) {
-    dateEl.value = today;
-    showDelayError("Past dates are not allowed. Date has been reset to today.");
-  } else {
-    showDelayError("");
-  }
-}
-
-function submitTaskDelayReviewModal() {
-  var modal = $("#life-task-delay-modal");
-  if (!modal) return;
-
-  var name = modal.dataset.taskName || "";
-  var oldDeadline = modal.dataset.oldDeadline || "";
-
-  var remarks = getValue("life-delay-remarks");
-  var newDeadline = buildDelayDateTimeValue();
-
-  if (!newDeadline) {
-    showDelayError("Please select new deadline date and time.");
-    return;
-  }
-
-  if (newDeadline < getNowLocalDateTime()) {
-    showDelayError("New deadline cannot be in the past. Please select a future date/time.");
-    return;
-  }
-
-  if (!remarks) {
-    showDelayError("Please enter delay review remarks.");
-    return;
-  }
-
-  if (wordCount(remarks) > 100) {
-    showDelayError("Delay review remarks cannot exceed 100 words.");
-    return;
-  }
-
-  closeTaskDelayReviewModal();
-
-  saveTaskDelayReview(name, oldDeadline, {
-    new_deadline: newDeadline,
-    remarks: remarks
-  });
-}
-
-function closeTaskDelayReviewModal() {
-  var modal = $("#life-task-delay-modal");
-  if (modal) modal.classList.remove("show");
-}
-
-function showDelayError(message) {
-  var el = $("#life-delay-error");
-  if (!el) return;
-
-  if (!message) {
-    el.textContent = "";
-    el.classList.remove("show");
-    return;
-  }
-
-  el.textContent = message;
-  el.classList.add("show");
-}
-
-
-function saveTaskDelayReview(name, oldDeadline, values) {
-  var newDeadline = String(values.new_deadline || "").trim();
-  var remarks = String(values.remarks || "").trim();
-
-  if (!remarks) {
-    showModal("⚠️", "Remarks Required", "Please enter deadline change remarks.");
-    return;
-  }
-
-  if (wordCount(remarks) > 100) {
-    showModal("⚠️", "Remarks Too Long", "Deadline change remarks cannot exceed 100 words.");
-    return;
-  }
-
-  if (!newDeadline) {
-    showModal("⚠️", "New Deadline Required", "Please select a new deadline.");
-    return;
-  }
-
-  var normalizedNewDeadline = normalizeDateTimeValue(newDeadline);
-
-  if (normalizedNewDeadline < getNowLocalDateTime()) {
-    showModal("⚠️", "Past Deadline Not Allowed", "New deadline cannot be in the past.");
-    return;
-  }
-
-  frappe.call({
-    method: "frappe.client.get",
-    args: {
-      doctype: "ToDo",
-      name: name
-    },
-    callback: function (r) {
-      var doc = r.message;
-
-      if (!doc) {
-        showModal("⚠️", "Task Not Found", "Unable to load task.");
-        return;
-      }
-
-      var currentStatus = getTaskStatus(doc);
-
-      if (currentStatus !== "Overdue") {
-        showModal(
-          "⚠️",
-          "Not Allowed",
-          "Deadline can be changed only when the task is overdue."
-        );
-        return;
-      }
-
-      if (!isTaskAssigner(doc)) {
-        showModal(
-          "⚠️",
-          "Not Allowed",
-          "Only the task assigner can change deadline for this overdue task."
-        );
-        return;
-      }
-
-      var meta = getTaskMeta(doc);
-      var details = getTaskDetails(doc);
-
-      meta.delay_reviews = meta.delay_reviews || [];
-
-      meta.delay_reviews.push({
-        review_type: "Assigner Deadline Change",
-        reviewed_by: currentUser,
-        reviewed_by_name: currentUserFullName || currentUser,
-        reviewed_on: getNowReadableDateTime(),
-        old_deadline: oldDeadline || meta.deadline_datetime || doc.date || "",
-        new_deadline: normalizedNewDeadline,
-        remarks: remarks
-      });
-
-      meta.deadline_datetime = normalizedNewDeadline;
-      meta.duration_label = calculateTaskDurationDays(
-        meta.start_date || getTaskStartDate(doc, meta),
-        normalizedNewDeadline
-      );
-
-      // Important:
-      // After assigner changes overdue deadline, task becomes Open again.
-      meta.workflow_state = "Open";
-
-      doc.status = "Open";
-      doc.date = getDatePartFromDateTime(normalizedNewDeadline);
-      doc.description = buildTaskDescription(details, meta);
-
-      frappe.call({
-        method: "frappe.client.save",
-        args: {
-          doc: doc
-        },
-        callback: function () {
-          toast("Deadline changed successfully. Task is now Open.", true);
-          loadTasks();
-        },
-        error: function (err) {
-          showModal("⚠️", "Deadline Change Failed", getErrorMessage(err));
-        }
-      });
-    },
-    error: function (err) {
-      showModal("⚠️", "Task Load Failed", getErrorMessage(err));
-    }
-  });
-}
-
-
-function isTaskAssignee(t) {
-  return isCurrentUserValue(t.allocated_to);
-}
-
-function isTaskAssigner(t) {
-  return (
-    isCurrentUserValue(t.assigned_by || "") ||
-    isCurrentUserValue(t.owner || "") ||
-    t.assigned_by === currentUser ||
-    t.owner === currentUser
-  );
-}
-
-function isTicketResolver(t, meta) {
-  meta = meta || getTicketMeta(t);
-  return isCurrentUserValue(meta.tag_to || "");
-}
-
-function isTicketRaiser(t) {
-  return (
-    isCurrentUserValue(t.raised_by || "") ||
-    isCurrentUserValue(t.owner || "") ||
-    t.raised_by === currentUser ||
-    t.owner === currentUser
-  );
-}
-
-function bindDialogRemarksWordLimit(dialog, fieldname, maxWords) {
-  setTimeout(function () {
-    if (!dialog || !dialog.fields_dict || !dialog.fields_dict[fieldname]) return;
-
-    var field = dialog.fields_dict[fieldname];
-    var input = null;
-
-    if (field.$input && field.$input[0]) {
-      input = field.$input[0];
-    }
-
-    if (!input) return;
-
-    var wrapper = field.$wrapper && field.$wrapper[0] ? field.$wrapper[0] : input.parentNode;
-
-    var countEl = document.createElement("div");
-    countEl.className = "wordcount";
-    countEl.textContent = "0 / " + maxWords + " words";
-    countEl.style.marginTop = "5px";
-
-    wrapper.appendChild(countEl);
-
-    bindWordLimit(input, countEl, maxWords);
-  }, 300);
-}
-
-function promptWorkflowRemarks(title, label, maxWords, callback) {
-  maxWords = maxWords || 100;
-
-  var dialog = frappe.prompt(
-    [
-      {
-        fieldname: "remarks",
-        label: (label || "Remarks") + " max " + maxWords + " words",
-        fieldtype: "Small Text",
-        reqd: 1
-      }
-    ],
-    function (values) {
-      var remarks = String(values.remarks || "").trim();
-
-      if (!remarks) {
-        showModal("⚠️", "Remarks Required", "Please enter remarks.");
-        return;
-      }
-
-      if (wordCount(remarks) > maxWords) {
-        showModal(
-          "⚠️",
-          "Too Many Words",
-          "Remarks cannot exceed " + maxWords + " words."
-        );
-        return;
-      }
-
-      callback(remarks);
-    },
-    title || "Remarks",
-    "Submit"
-  );
-
-  bindDialogRemarksWordLimit(dialog, "remarks", maxWords);
-}
-
-
-function buildWorkflowHistoryHtml(title, rows, typeLabel) {
-  rows = rows || [];
-
-  if (!rows.length) {
-    return "";
-  }
-
-  return '' +
-    '<div class="life-detail-section">' +
-      '<div class="life-detail-section-title">' + esc(title) + '</div>' +
-      '<div class="life-history-list">' +
-        rows.map(function (h, idx) {
-          return '' +
-            '<div class="life-history-card">' +
-              '<div class="life-history-head">' +
-                '<div class="life-history-title">' +
-                  esc(typeLabel || "History") + ' #' + (idx + 1) + ' - ' +
-                  esc(h.by_name || h.completed_by_name || h.resolved_by_name || h.reopened_by_name || h.closed_by_name || h.by || "—") +
-                '</div>' +
-                '<div class="life-history-date">' +
-                  esc(formatLifeDateTime(h.on || h.completed_on || h.resolved_on || h.reopened_on || h.closed_on || "")) +
-                '</div>' +
-              '</div>' +
-              '<div class="life-detail-label">Remarks</div>' +
-              '<div class="life-history-remarks">' + esc(h.remarks || "—") + '</div>' +
-            '</div>';
-        }).join("") +
-      '</div>' +
-    '</div>';
-}
-
-function buildTaskWorkflowHistorySection(meta) {
-  meta = meta || {};
-
-  return '' +
-    buildWorkflowHistoryHtml(
-      "Completion History",
-      meta.completion_history || [],
-      "Completion"
-    ) +
-    buildWorkflowHistoryHtml(
-      "Reopen History",
-      meta.reopen_history || [],
-      "Reopen"
-    ) +
-    buildWorkflowHistoryHtml(
-      "Close History",
-      meta.close_history || [],
-      "Close"
-    );
-}
-
-function buildTaskExtraHistorySection(meta) {
-  return ''
-    + buildTaskAssignerUpdatesSection(meta)
-    + buildTaskWorkflowHistorySection(meta)
-    + buildTaskDelayHistorySection(meta);
-}
-
-
-function buildTaskAssignerUpdatesSection(meta) {
-  meta = meta || {};
-
-  var rows = meta.assigner_updates || [];
-
-  if (!rows.length) {
-    return "";
-  }
-
-  return '' +
-    '<div class="life-detail-section">' +
-      '<div class="life-detail-section-title">Assigner Updates / Reference Notes</div>' +
-      '<div class="life-history-list">' +
-        rows.map(function (h, idx) {
-          var files = h.files || [];
-
-          var fileBlock = "";
-
-          if (files.length) {
-            fileBlock =
-              '<div class="life-update-files-block">' +
-                '<div class="life-detail-label">Files Added In This Update</div>' +
-                renderTaskUpdateFileRows(files) +
-              '</div>';
-          } else if (Number(h.file_count || 0) > 0) {
-            // Fallback for old updates saved before this improvement
-            fileBlock =
-              '<div class="life-update-files-block">' +
-                '<div class="life-detail-label">Files Added In This Update</div>' +
-                '<div class="life-update-no-files">' +
-                  Number(h.file_count || 0) + ' file(s) were added, but file-level mapping is not available for this older update. Check the main attachments section.' +
-                '</div>' +
-              '</div>';
-          } else {
-            fileBlock =
-              '<div class="life-update-files-block">' +
-                '<div class="life-detail-label">Files Added In This Update</div>' +
-                '<div class="life-update-no-files">No files added in this update.</div>' +
-              '</div>';
-          }
-
-          return '' +
-            '<div class="life-history-card life-update-history-card">' +
-              '<div class="life-history-head">' +
-                '<div class="life-history-title">' +
-                  'Update #' + (idx + 1) + ' - ' + esc(h.by_name || h.by || "—") +
-                '</div>' +
-                '<div class="life-history-date">' +
-                  esc(formatLifeDateTime(h.on || "")) +
-                '</div>' +
-              '</div>' +
-
-              '<div class="life-history-grid">' +
-                '<div>' +
-                  '<div class="life-detail-label">Update Type</div>' +
-                  '<div class="life-detail-value">' + esc(h.update_type || "Information") + '</div>' +
-                '</div>' +
-                '<div>' +
-                  '<div class="life-detail-label">Stage</div>' +
-                  '<div class="life-detail-value">Assigner Update</div>' +
-                '</div>' +
-              '</div>' +
-
-              '<div class="life-detail-label">Remarks</div>' +
-              '<div class="life-history-remarks">' + esc(h.remarks || "—") + '</div>' +
-
-              fileBlock +
-            '</div>';
-        }).join("") +
-      '</div>' +
-    '</div>';
-}
-
-
-function buildTicketWorkflowHistorySection(meta) {
-  meta = meta || {};
-
-  return '' +
-    buildWorkflowHistoryHtml(
-      "Resolution History",
-      meta.resolution_history || [],
-      "Resolution"
-    ) +
-    buildWorkflowHistoryHtml(
-      "Reopen History",
-      meta.reopen_history || [],
-      "Reopen"
-    ) +
-    buildWorkflowHistoryHtml(
-      "Close History",
-      meta.close_history || [],
-      "Close"
-    );
-}
-
-function renderTaskActionButtons(t) {
-  var status = getTaskStatus(t);
-
-  if (status === "Cancelled" || status === "Closed") {
-    return "—";
-  }
-
-  // OVERDUE RULE:
-  // Assignee should not act.
-  // Assigner must change deadline first.
-  if (status === "Overdue") {
-    if (isTaskAssigner(t)) {
-      return '' +
-        '<button class="btn btn-deadline btn-sm task-change-deadline-btn" data-name="' + esc(t.name) + '">' +
-          'Change Deadline' +
-        '</button>';
-    }
-
-    return '<span class="pill p-o">Waiting for Assigner Deadline Review</span>';
-  }
-
-  // Completed task: assigner must close or reopen.
-  if (status === "Completed") {
-    if (isTaskAssigner(t)) {
-      return '' +
-        '<div class="life-action-stack">' +
-          '<button class="btn btn-g btn-sm task-close-btn" data-name="' + esc(t.name) + '">' +
-            'Close Task' +
-          '</button>' +
-          '<button class="btn btn-undo btn-sm task-reopen-btn" data-name="' + esc(t.name) + '">' +
-            'Reopen Task' +
-          '</button>' +
-        '</div>';
-    }
-
-    return '<span class="pill p-o">Waiting for Assigner Review</span>';
-  }
-
-  var buttons = [];
-
-  // Assigner can add updates only while task is active, not overdue.
-  if (isTaskAssigner(t) && (status === "Open" || status === "Reopened")) {
-    buttons.push(
-      '<button class="btn btn-info btn-sm task-add-update-btn" data-name="' + esc(t.name) + '">' +
-        'Add Update' +
-      '</button>'
-    );
-  }
-
-  // Assignee can complete only Open / Reopened task.
-  if (isTaskAssignee(t) && (status === "Open" || status === "Reopened")) {
-    buttons.push(
-      '<button class="btn btn-g btn-sm task-done-btn" data-name="' + esc(t.name) + '">' +
-        'Mark Complete' +
-      '</button>'
-    );
-  }
-
-  if (!buttons.length) {
-    return "—";
-  }
-
-  return '<div class="life-action-stack">' + buttons.join("") + '</div>';
-}
-
-
-function bindTaskActionButtons(scope) {
-  (scope || root).querySelectorAll(".task-done-btn").forEach(function (btn) {
-    if (btn.dataset.boundTaskDone === "1") return;
-
-    btn.dataset.boundTaskDone = "1";
-
-    btn.addEventListener("click", function () {
-      markTaskDone(btn.dataset.name);
-    });
-  });
-
-  (scope || root).querySelectorAll(".task-close-btn").forEach(function (btn) {
-    if (btn.dataset.boundTaskClose === "1") return;
-
-    btn.dataset.boundTaskClose = "1";
-
-    btn.addEventListener("click", function () {
-      closeTaskAfterReview(btn.dataset.name);
-    });
-  });
-  
-  (scope || root).querySelectorAll(".task-add-update-btn").forEach(function (btn) {
-      if (btn.dataset.boundTaskAddUpdate === "1") return;
-    
-      btn.dataset.boundTaskAddUpdate = "1";
-    
-      btn.addEventListener("click", function () {
-        openTaskUpdateModal(btn.dataset.name);
-      });
-    });
-
-  (scope || root).querySelectorAll(".task-reopen-btn").forEach(function (btn) {
-    if (btn.dataset.boundTaskReopen === "1") return;
-
-    btn.dataset.boundTaskReopen = "1";
-
-    btn.addEventListener("click", function () {
-      reopenTaskAfterReview(btn.dataset.name);
-    });
-  });
-  
-  (scope || root).querySelectorAll(".task-change-deadline-btn").forEach(function (btn) {
-      if (btn.dataset.boundTaskChangeDeadline === "1") return;
-    
-      btn.dataset.boundTaskChangeDeadline = "1";
-    
-      btn.addEventListener("click", function () {
-        openTaskDelayReview(btn.dataset.name);
-      });
-    });
-
-  (scope || root).querySelectorAll(".task-review-delay-btn").forEach(function (btn) {
-    if (btn.dataset.boundTaskReview === "1") return;
-
-    btn.dataset.boundTaskReview = "1";
-
-    btn.addEventListener("click", function () {
-      openTaskDelayReview(btn.dataset.name);
-    });
-  });
-}
-
-function openTaskUpdateModal(name) {
-  var task = tasks.find(function (t) {
-    return t.name === name;
-  });
-
-  if (!task) {
-    showModal("⚠️", "Task Not Found", "Unable to find this task.");
-    return;
-  }
-
-  var status = getTaskStatus(task);
-      if (status === "Overdue") {
-      showModal(
-        "⚠️",
-        "Update Not Allowed",
-        "This task is overdue. First the assigner must change the deadline. Updates cannot be added in overdue state."
-      );
-      return;
-    }
-
-  if (status === "Closed" || status === "Cancelled" || status === "Completed") {
-    showModal("⚠️", "Not Allowed", "Updates cannot be added to closed or cancelled tasks.");
-    return;
-  }
-
-  if (!isTaskAssigner(task)) {
-    showModal("⚠️", "Not Allowed", "Only the task assigner can add updates.");
-    return;
-  }
-
-  ensureTaskUpdateModal();
-
-  taskUpdateFiles = [];
-  renderTaskUpdateFiles();
-
-  var modal = $("#life-task-update-modal");
-  if (!modal) return;
-
-  modal.dataset.taskName = name || "";
-
-  setValue("life-task-update-type", "Information");
-  setValue("life-task-update-remarks", "");
-  setText("life-task-update-wordcount", "0 / 100 words");
-  showTaskUpdateError("");
-  
-  resetLifePopupScroll(modal);
-
-  modal.classList.add("show");
-}
-
-function resetLifePopupScroll(modal) {
-  if (!modal) return;
-
-  var box = modal.querySelector(".life-delay-box");
-  var body = modal.querySelector(".life-delay-body");
-
-  modal.scrollTop = 0;
-
-  if (box) {
-    box.scrollTop = 0;
-  }
-
-  if (body) {
-    body.scrollTop = 0;
-  }
-
-  setTimeout(function () {
-    modal.scrollTop = 0;
-    if (box) box.scrollTop = 0;
-    if (body) body.scrollTop = 0;
-  }, 0);
-
-  setTimeout(function () {
-    modal.scrollTop = 0;
-    if (box) box.scrollTop = 0;
-    if (body) body.scrollTop = 0;
-  }, 50);
-}
-
-function ensureTaskUpdateModal() {
-  if ($("#life-task-update-modal")) return;
-
-  var app = $("#life-tt-app") || root;
-
-  app.insertAdjacentHTML("beforeend", `
-    <div id="life-task-update-modal" class="life-delay-modal">
-      <div class="life-delay-box">
-        <div class="life-delay-head">
-          <div>
-            <div class="life-delay-title">Add Task Update</div>
-            <div class="life-delay-sub">Add new information or reference files for the assignee</div>
-          </div>
-          <button type="button" class="life-delay-close" id="life-task-update-close">×</button>
-        </div>
-
-        <div class="life-delay-body">
-          <div class="field-block">
-            <label class="lbl">Update Type <span class="required-mark">*</span></label>
-            <select id="life-task-update-type">
-              <option value="Information">Information</option>
-              <option value="Reference File">Reference File</option>
-              <option value="Correction">Correction</option>
-              <option value="Urgent Note">Urgent Note</option>
-            </select>
-          </div>
-
-          <div class="field-block">
-            <label class="lbl">Update Remarks <span class="required-mark">*</span> max 100 words</label>
-            <textarea id="life-task-update-remarks" placeholder="Enter the new instruction, clarification, or file reference note."></textarea>
-            <div class="life-delay-wordcount" id="life-task-update-wordcount">0 / 100 words</div>
-          </div>
-
-          <div class="field-block">
-            <label class="lbl">Reference Attachments Optional</label>
-            <div class="attach-zone" id="life-task-update-attach-zone">
-              📎 Click to attach reference files
-            </div>
-            <input type="file" id="life-task-update-file-input" multiple style="display:none">
-            <div class="attach-list" id="life-task-update-attach-list"></div>
-          </div>
-
-          <div class="life-delay-error" id="life-task-update-error"></div>
-        </div>
-
-        <div class="life-delay-footer">
-          <button type="button" class="btn btn-gy btn-sm" id="life-task-update-cancel">Cancel</button>
-          <button type="button" class="btn btn-n btn-sm" id="life-task-update-save">Save Update</button>
-        </div>
-      </div>
-    </div>
-  `);
-
-  var closeBtn = $("#life-task-update-close");
-  var cancelBtn = $("#life-task-update-cancel");
-  var saveBtn = $("#life-task-update-save");
-  var zone = $("#life-task-update-attach-zone");
-  var fileInput = $("#life-task-update-file-input");
-  var remarksEl = $("#life-task-update-remarks");
-
-  if (closeBtn) closeBtn.addEventListener("click", closeTaskUpdateModal);
-  if (cancelBtn) cancelBtn.addEventListener("click", closeTaskUpdateModal);
-  if (saveBtn) saveBtn.addEventListener("click", submitTaskUpdateModal);
-
-  if (zone && fileInput) {
-    zone.addEventListener("click", function () {
-      fileInput.click();
-    });
-
-    fileInput.addEventListener("change", function () {
-      addTaskUpdateFiles(fileInput.files || []);
-      fileInput.value = "";
-    });
-  }
-
-  if (remarksEl) {
-    remarksEl.addEventListener("input", function () {
-      var count = wordCount(remarksEl.value);
-      setText("life-task-update-wordcount", count + " / 100 words");
-
-      var wc = $("#life-task-update-wordcount");
-      if (wc) {
-        wc.classList.toggle("over", count > 100);
-      }
-    });
-  }
-}
-
-function closeTaskUpdateModal() {
-  var modal = $("#life-task-update-modal");
-  if (modal) modal.classList.remove("show");
-
-  taskUpdateFiles = [];
-  renderTaskUpdateFiles();
-  showTaskUpdateError("");
-}
-
-function showTaskUpdateError(message) {
-  var el = $("#life-task-update-error");
-  if (!el) return;
-
-  if (!message) {
-    el.textContent = "";
-    el.classList.remove("show");
-    return;
-  }
-
-  el.textContent = message;
-  el.classList.add("show");
-}
-
-function addTaskUpdateFiles(files) {
-  var rejected = [];
-  var validNewFiles = [];
-
-  Array.prototype.slice.call(files || []).forEach(function (file) {
-    var validation = validateAttachmentFile(file);
-
-    if (!validation.ok) {
-      rejected.push("• " + (file.name || "File") + " - " + validation.message);
-      return;
-    }
-
-    var alreadyAdded = taskUpdateFiles.some(function (existingFile) {
-      return (
-        existingFile.name === file.name &&
-        existingFile.size === file.size &&
-        existingFile.lastModified === file.lastModified
-      );
-    });
-
-    var alreadyInNew = validNewFiles.some(function (existingFile) {
-      return (
-        existingFile.name === file.name &&
-        existingFile.size === file.size &&
-        existingFile.lastModified === file.lastModified
-      );
-    });
-
-    if (!alreadyAdded && !alreadyInNew) {
-      validNewFiles.push(file);
-    }
-  });
-
-  if (taskUpdateFiles.length + validNewFiles.length > MAX_ATTACHMENT_COUNT) {
-    showTaskUpdateError(
-      "You can upload maximum " + MAX_ATTACHMENT_COUNT + " files only.\n\n" +
-      "Currently selected: " + taskUpdateFiles.length + "\n" +
-      "Trying to add: " + validNewFiles.length + "\n\n" +
-      "Please remove some files and try again."
-    );
-    return;
-  }
-
-  validNewFiles.forEach(function (file) {
-    taskUpdateFiles.push(file);
-  });
-
-  renderTaskUpdateFiles();
-
-  if (rejected.length) {
-    showTaskUpdateError(
-      "Only allowed documents/images/HTML files up to 5 MB can be attached.\n\n" +
-      rejected.join("\n")
-    );
-  }
-}
-function renderTaskUpdateFiles() {
-  var list = $("#life-task-update-attach-list");
-  if (!list) return;
-
-  if (!taskUpdateFiles.length) {
-    list.innerHTML = "";
-    return;
-  }
-
-  list.innerHTML = taskUpdateFiles.map(function (file, idx) {
-    var mimeType = String(file.type || "").toLowerCase();
-    var icon = mimeType.indexOf("image/") === 0 ? "🖼️" : "📄";
-
-    return '' +
-      '<div class="attach-item">' +
-        '<span class="an">' + icon + ' ' + esc(file.name || "File") + '</span>' +
-        '<span class="asize">' + esc(formatFileSize(file.size || 0)) + '</span>' +
-        '<span class="x" data-idx="' + idx + '">×</span>' +
-      '</div>';
-  }).join("");
-
-  list.querySelectorAll(".attach-item .x").forEach(function (x) {
-    x.addEventListener("click", function () {
-      var idx = Number(x.dataset.idx || 0);
-      taskUpdateFiles.splice(idx, 1);
-      renderTaskUpdateFiles();
-    });
-  });
-}
-
-function submitTaskUpdateModal() {
-  var modal = $("#life-task-update-modal");
-  if (!modal) return;
-
-  var name = modal.dataset.taskName || "";
-  var updateType = getValue("life-task-update-type");
-  var remarks = getValue("life-task-update-remarks");
-
-  if (!name) {
-    showTaskUpdateError("Task reference missing. Please close and try again.");
-    return;
-  }
-
-  if (!updateType) {
-    showTaskUpdateError("Please select update type.");
-    return;
-  }
-
-  if (!remarks) {
-    showTaskUpdateError("Please enter update remarks.");
-    return;
-  }
-
-  if (wordCount(remarks) > 100) {
-    showTaskUpdateError("Update remarks cannot exceed 100 words.");
-    return;
-  }
-
-  var validation = validateAttachmentList(taskUpdateFiles);
-
-  if (!validation.ok) {
-    showTaskUpdateError(validation.message);
-    return;
-  }
-
-  var saveBtn = $("#life-task-update-save");
-  if (saveBtn) {
-    saveBtn.disabled = true;
-    saveBtn.textContent = "Saving.";
-  }
-
-  saveTaskAssignerUpdate(name, {
-    update_type: updateType,
-    remarks: remarks,
-    files: taskUpdateFiles.slice()
-  }, function () {
-    if (saveBtn) {
-      saveBtn.disabled = false;
-      saveBtn.textContent = "Save Update";
-    }
-  });
-}
-
-function saveTaskAssignerUpdate(name, values, alwaysCallback) {
-  values = values || {};
-
-  frappe.call({
-    method: "frappe.client.get",
-    args: {
-      doctype: "ToDo",
-      name: name
-    },
-    callback: function (r) {
-      var doc = r.message;
-
-      if (!doc) {
-        if (alwaysCallback) alwaysCallback();
-        showTaskUpdateError("Unable to load task.");
-        return;
-      }
-
-      var status = getTaskStatus(doc);
-
-      if (status === "Closed" || status === "Cancelled" || status === "Completed") {
-        if (alwaysCallback) alwaysCallback();
-        showTaskUpdateError("Updates can be added only while task is Open or Reopened.");
-        return;
-      }
-
-      if (status === "Overdue") {
-        if (alwaysCallback) alwaysCallback();
-        showTaskUpdateError("This task is overdue. First change the deadline. Updates cannot be added in overdue state.");
-        return;
-      }
-
-      if (!isTaskAssigner(doc)) {
-        if (alwaysCallback) alwaysCallback();
-        showTaskUpdateError("Only the task assigner can add updates.");
-        return;
-      }
-
-      var filesToUpload = values.files || [];
-
-      uploadFiles("ToDo", doc.name, filesToUpload)
-        .then(function (uploadedRows) {
-          var meta = getTaskMeta(doc);
-          var details = getTaskDetails(doc);
-
-          var updateFiles = normalizeTaskUpdateFiles(uploadedRows, filesToUpload);
-
-          meta.assigner_updates = meta.assigner_updates || [];
-
-          meta.assigner_updates.push({
-            update_id: "UPD-" + Date.now(),
-            by: currentUser,
-            by_name: currentUserFullName || currentUser,
-            on: getNowLocalDateTime(),
-            update_type: values.update_type || "Information",
-            remarks: values.remarks || "",
-            file_count: updateFiles.length,
-            files: updateFiles
-          });
-
-          doc.description = buildTaskDescription(details, meta);
-
-          frappe.call({
-            method: "frappe.client.save",
-            args: {
-              doc: doc
-            },
-            callback: function () {
-              closeTaskUpdateModal();
-              toast("Task update added successfully.", true);
-              loadTasks();
-
-              if (alwaysCallback) alwaysCallback();
-            },
-            error: function (err) {
-              if (alwaysCallback) alwaysCallback();
-              showTaskUpdateError(getErrorMessage(err));
-            }
-          });
-        })
-        .catch(function (err) {
-          if (alwaysCallback) alwaysCallback();
-          showTaskUpdateError(getErrorMessage(err));
-        });
-    },
-    error: function (err) {
-      if (alwaysCallback) alwaysCallback();
-      showTaskUpdateError(getErrorMessage(err));
-    }
-  });
-}
-
-  // ============================================================
-  // TICKETS / ISSUES
-  // ============================================================
-
-  function submitTicket() {
-    var branch = getValue("ticket-branch");
-    var category = getValue("ticket-category");
-    var issue = getValue("ticket-issue");
-    var otherText = getValue("ticket-other-text");
-    var employeeInvolved = getValue("ticket-employee-involved");
-    var details = getValue("ticket-details");
-    var tagTo = ticketTagTo[0] || "";
-    var ccTo = ticketCcTo.slice();
-
-    if (!category) {
-      showModal("⚠️", "Category Required", "Please select issue category.");
-      return;
-    }
-
-    if (!issue) {
-      showModal("⚠️", "Issue Required", "Please select the specific issue.");
-      return;
-    }
-
-    if (issue === "Other" && !otherText) {
-      showModal("⚠️", "Issue Description Required", "Please describe the issue because you selected Other.");
-      return;
-    }
-
-    if (EMPLOYEE_INVOLVED_ISSUES.indexOf(issue) !== -1 && !employeeInvolved) {
-      showModal("⚠️", "Employee Required", "Please select the employee involved.");
-      return;
-    }
-
-    if (!tagTo) {
-      showModal("⚠️", "Resolver Required", "Please select Tag To Resolver.");
-      return;
-    }
-
-    if (!details) {
-      showModal("⚠️", "Details Required", "Please describe what happened.");
-      return;
-    }
-
-    if (!selectedTicketPriority) {
-      showModal("⚠️", "Priority Required", "Please select ticket priority.");
-      return;
-    }
-
-    var meta = {
-      branch: branch,
-      category: category,
-      issue: issue,
-      other_text: otherText,
-      employee_involved: employeeInvolved,
-      tag_to: tagTo,
-      cc_to: ccTo
-    };
-
-    var subject = category + " - " + issue;
-
-    var doc = {
-      doctype: "Issue",
-      subject: subject,
-      description: buildTicketDescription(details, meta),
-      priority: selectedTicketPriority,
-      status: "Open",
-      raised_by: currentUser
-    };
-    
-    var ticketFileValidation = validateAttachmentList(ticketFiles);
-
-    if (!ticketFileValidation.ok) {
-      showModal(
-        "⚠️",
-        "Invalid Attachment",
-        "Please remove invalid ticket attachment(s):\n\n" + ticketFileValidation.message
-      );
-      return;
-    }
-
-    var btn = $("#ticket-submit-btn");
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "Submitting...";
-    }
-
-    frappe.call({
-      method: "frappe.client.insert",
-      args: {
-        doc: doc
-      },
-      callback: function (r) {
-        var saved = r.message || {};
-
-        uploadFiles("Issue", saved.name, ticketFiles)
-          .then(function () {
-            showModal("✅", "Ticket Submitted", "Ticket " + saved.name + " has been submitted and tagged to " + userLabel(tagTo) + ".");
-            resetTicketForm();
-            loadTickets();
-
-            if (btn) {
-              btn.disabled = false;
-              btn.textContent = "✓ Submit Ticket";
-            }
-          })
-          .catch(function (err) {
-            showModal("⚠️", "Ticket Saved, Attachment Failed", getErrorMessage(err));
-            resetTicketForm();
-            loadTickets();
-
-            if (btn) {
-              btn.disabled = false;
-              btn.textContent = "✓ Submit Ticket";
-            }
-          });
-      },
-      error: function (err) {
-        showModal("⚠️", "Ticket Save Failed", getErrorMessage(err));
-
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = "✓ Submit Ticket";
-        }
-      }
-    });
-  }
-
-  function resetTicketForm() {
-    setValue("ticket-category", "");
-    setValue("ticket-issue", "");
-    setValue("ticket-other-text", "");
-    setValue("ticket-employee-involved", "");
-    setValue("ticket-details", "");
-
-    var issue = $("#ticket-issue");
-    if (issue) issue.innerHTML = '<option value="">Select Category First</option>';
-
-    var otherBlock = $("#ticket-other-block");
-    var empBlock = $("#ticket-employee-involved-block");
-
-    if (otherBlock) otherBlock.style.display = "none";
-    if (empBlock) empBlock.style.display = "none";
-
-    selectedTicketPriority = "";
-    $all("#ticket-priority-grp .priority-chip").forEach(function (x) {
-      x.classList.remove("sel");
-    });
-
-    ticketTagTo = [];
-    ticketCcTo = [];
-    renderPickerChips("ticketTagTo");
-    renderPickerChips("ticketCcTo");
-
-    ticketFiles = [];
-    renderSelectedFiles("ticket");
-  }
-
-function loadTickets() {
-  frappe.call({
-    method: "frappe.client.get_list",
-    args: {
-      doctype: "Issue",
-      fields: [
-        "name",
-        "subject",
-        "description",
-        "priority",
-        "status",
-        "owner",
-        "raised_by",
-        "opening_date",
-        "creation",
-        "modified"
-      ],
-      order_by: "modified desc",
-      limit_page_length: 500
-    },
-    callback: function (r) {
-      tickets = (r.message || []).filter(isTicketVisibleToCurrentUser);
-
-      loadAttachmentCache(
-        "Issue",
-        tickets.map(function (t) { return t.name; }),
-        function () {
-          renderTicketReport();
-          renderMyTickets();
-          renderCounts();
-        }
-      );
-    },
-    error: function () {
-      tickets = [];
-      renderTicketReport();
-      renderMyTickets();
-      renderCounts();
-    }
-  });
-}
-
-
-function getTicketMeta(ticket) {
-  var meta = parseMeta(ticket.description, "TICKET");
-
-  if (
-    meta &&
-    (
-      meta.branch ||
-      meta.category ||
-      meta.issue ||
-      meta.tag_to ||
-      (meta.cc_to && meta.cc_to.length)
-    )
-  ) {
-    return meta;
-  }
-
-  var text = stripHtml(removeMeta(ticket.description || ""));
-
-  var fallback = {};
-
-  fallback.branch = extractLabelValue(text, "Branch", ["Category"]);
-  fallback.category = extractLabelValue(text, "Category", ["Issue"]);
-  fallback.issue = extractLabelValue(text, "Issue", ["Tagged To", "Tag To", "CC To", "Details"]);
-  fallback.other_text = extractLabelValue(text, "Other Issue", ["Employee Involved", "Tagged To", "CC To", "Details"]);
-  fallback.employee_involved = extractLabelValue(text, "Employee Involved", ["Tagged To", "CC To", "Details"]);
-
-  var tagToText =
-    extractLabelValue(text, "Tagged To", ["CC To", "Details"]) ||
-    extractLabelValue(text, "Tag To", ["CC To", "Details"]);
-
-  var ccToText = extractLabelValue(text, "CC To", ["Details"]);
-
-  fallback.tag_to = resolveUserValue(tagToText);
-
-  fallback.cc_to = ccToText
-    ? ccToText.split(",").map(function (x) {
-        return resolveUserValue(x);
-      }).filter(Boolean)
-    : [];
-
-  return fallback;
-}
-
-function renderTicketActionButtons(t) {
-  var meta = getTicketMeta(t);
-
-  if (t.status === "Closed") {
-    return "—";
-  }
-
-  if (t.status === "Resolved") {
-    if (isTicketRaiser(t)) {
-      return '' +
-        '<div class="life-action-stack">' +
-          '<button class="btn btn-g btn-sm ticket-close-btn" data-name="' + esc(t.name) + '">' +
-            'Close Ticket' +
-          '</button>' +
-          '<button class="btn btn-undo btn-sm ticket-reopen-btn" data-name="' + esc(t.name) + '">' +
-            'Reopen Ticket' +
-          '</button>' +
-        '</div>';
-    }
-
-    return '<span class="pill p-o">Waiting for Raiser Review</span>';
-  }
-
-  if (isTicketResolver(t, meta)) {
-    return '' +
-      '<button class="btn btn-g btn-sm ticket-resolve-btn" data-name="' + esc(t.name) + '">' +
-        'Resolve Ticket' +
-      '</button>';
-  }
-
-  return "—";
-}
-
-
-function bindTicketActionButtons(scope) {
-  (scope || root).querySelectorAll(".ticket-resolve-btn").forEach(function (btn) {
-    if (btn.dataset.boundTicketResolve === "1") return;
-
-    btn.dataset.boundTicketResolve = "1";
-
-    btn.addEventListener("click", function () {
-      markTicketResolved(btn.dataset.name);
-    });
-  });
-
-  (scope || root).querySelectorAll(".ticket-close-btn").forEach(function (btn) {
-    if (btn.dataset.boundTicketClose === "1") return;
-
-    btn.dataset.boundTicketClose = "1";
-
-    btn.addEventListener("click", function () {
-      closeTicketAfterReview(btn.dataset.name);
-    });
-  });
-
-  (scope || root).querySelectorAll(".ticket-reopen-btn").forEach(function (btn) {
-    if (btn.dataset.boundTicketReopen === "1") return;
-
-    btn.dataset.boundTicketReopen = "1";
-
-    btn.addEventListener("click", function () {
-      reopenTicketAfterReview(btn.dataset.name);
-    });
-  });
-}
-
-
-function markTicketResolved(name) {
-  promptWorkflowRemarks(
-    "Resolve Ticket",
-    "Resolution Remarks *",
-    100,
-    function (remarks) {
-      frappe.call({
-        method: "frappe.client.get",
-        args: {
-          doctype: "Issue",
-          name: name
-        },
-        callback: function (r) {
-          var doc = r.message;
-
-          if (!doc) {
-            showModal("⚠️", "Ticket Not Found", "Unable to load ticket.");
-            return;
-          }
-
-          var meta = getTicketMeta(doc);
-          var details = getTicketDetails(doc);
-
-          meta.workflow_state = "Resolved";
-          meta.resolved_on = getNowLocalDateTime();
-          meta.resolved_by = currentUser;
-          meta.resolved_by_name = currentUserFullName || currentUser;
-          meta.resolution_remarks = remarks;
-
-          meta.resolution_history = meta.resolution_history || [];
-          meta.resolution_history.push({
-            by: currentUser,
-            by_name: currentUserFullName || currentUser,
-            on: meta.resolved_on,
-            remarks: remarks
-          });
-
-          doc.status = "Resolved";
-          doc.description = buildTicketDescription(details, meta);
-
-          frappe.call({
-            method: "frappe.client.save",
-            args: {
-              doc: doc
-            },
-            callback: function () {
-              toast("Ticket resolved and sent for raiser review.", true);
-              loadTickets();
-            },
-            error: function (err) {
-              showModal("⚠️", "Resolve Failed", getErrorMessage(err));
-            }
-          });
-        },
-        error: function (err) {
-          showModal("⚠️", "Ticket Load Failed", getErrorMessage(err));
-        }
-      });
-    }
-  );
-}
-
-function closeTicketAfterReview(name) {
-  frappe.confirm(
-    "Are you satisfied with this ticket resolution and want to close it?",
-    function () {
-      frappe.call({
-        method: "frappe.client.get",
-        args: {
-          doctype: "Issue",
-          name: name
-        },
-        callback: function (r) {
-          var doc = r.message;
-
-          if (!doc) {
-            showModal("⚠️", "Ticket Not Found", "Unable to load ticket.");
-            return;
-          }
-
-          var meta = getTicketMeta(doc);
-          var details = getTicketDetails(doc);
-
-          meta.workflow_state = "Closed";
-          meta.closed_on = getNowLocalDateTime();
-          meta.closed_by = currentUser;
-          meta.closed_by_name = currentUserFullName || currentUser;
-
-          meta.close_history = meta.close_history || [];
-          meta.close_history.push({
-            by: currentUser,
-            by_name: currentUserFullName || currentUser,
-            on: meta.closed_on,
-            remarks: "Accepted and closed by ticket raiser."
-          });
-
-          doc.status = "Closed";
-          doc.description = buildTicketDescription(details, meta);
-
-          frappe.call({
-            method: "frappe.client.save",
-            args: {
-              doc: doc
-            },
-            callback: function () {
-              toast("Ticket closed successfully.", true);
-              loadTickets();
-            },
-            error: function (err) {
-              showModal("⚠️", "Close Failed", getErrorMessage(err));
-            }
-          });
-        },
-        error: function (err) {
-          showModal("⚠️", "Ticket Load Failed", getErrorMessage(err));
-        }
-      });
-    }
-  );
-}
-
-function reopenTicketAfterReview(name) {
-  promptWorkflowRemarks(
-    "Reopen Ticket",
-    "Review Remarks *",
-    100,
-    function (remarks) {
-      frappe.call({
-        method: "frappe.client.get",
-        args: {
-          doctype: "Issue",
-          name: name
-        },
-        callback: function (r) {
-          var doc = r.message;
-
-          if (!doc) {
-            showModal("⚠️", "Ticket Not Found", "Unable to load ticket.");
-            return;
-          }
-
-          var meta = getTicketMeta(doc);
-          var details = getTicketDetails(doc);
-
-          meta.workflow_state = "Reopened";
-          meta.reopened_on = getNowLocalDateTime();
-          meta.reopened_by = currentUser;
-          meta.reopened_by_name = currentUserFullName || currentUser;
-          meta.reopen_review_remarks = remarks;
-
-          meta.reopen_history = meta.reopen_history || [];
-          meta.reopen_history.push({
-            by: currentUser,
-            by_name: currentUserFullName || currentUser,
-            on: meta.reopened_on,
-            remarks: remarks
-          });
-
-          doc.status = "Open";
-          doc.description = buildTicketDescription(details, meta);
-
-          frappe.call({
-            method: "frappe.client.save",
-            args: {
-              doc: doc
-            },
-            callback: function () {
-              toast("Ticket reopened successfully.", true);
-              loadTickets();
-            },
-            error: function (err) {
-              showModal("⚠️", "Reopen Failed", getErrorMessage(err));
-            }
-          });
-        },
-        error: function (err) {
-          showModal("⚠️", "Ticket Load Failed", getErrorMessage(err));
-        }
-      });
-    }
-  );
-}
-
-
-
-function getTicketDetails(ticket) {
-  var text = htmlToReadableText(removeMeta(ticket.description || ""));
-
-  var detailsOnly = extractLabelValue(text, "Details", []);
-
-  return detailsOnly || text;
-}
-
-function getTicketStatus(t) {
-  var meta = getTicketMeta(t);
-
-  if (t.status === "Closed") {
-    return "Closed";
-  }
-
-  if (t.status === "Resolved") {
-    return "Resolved";
-  }
-
-  if (meta.workflow_state === "Reopened" && t.status === "Open") {
-    return "Reopened";
-  }
-
-  return t.status || "Open";
-}
-
-
-
-function renderTicketReport() {
-  var body = $("#ticket-report-body");
-  if (!body) return;
-
-  var catF = getValue("ticr-category");
-  var priF = getValue("ticr-priority");
-  var statF = getValue("ticr-status");
-
-  var filtered = tickets.filter(function (t) {
-    var meta = getTicketMeta(t);
-
-    return (
-      (!catF || meta.category === catF) &&
-      (!priF || t.priority === priF) &&
-      (!statF || getTicketStatus(t) === statF)
-    );
-  });
-
-  renderTicketTiles();
-
-  setText("ticket-report-count", String(filtered.length));
-  filtered = sortByModifiedLatest(filtered);
-  var pageData = getPaginatedRows("ticketReport", filtered);
-
-  if (!filtered.length) {
-    body.innerHTML =
-      '<tr><td colspan="10" style="text-align:center;color:#8C8C8C;padding:18px">No tickets found.</td></tr>';
-    return;
-  }
-
-  body.innerHTML = pageData.rows.map(function (t) {
-    var meta = getTicketMeta(t);
-
-    var detailId = registerDetailHtml(
-      "Ticket Details - " + t.name,
-      buildTicketDetailsHtml(t, meta),
-        buildTicketWorkflowHistorySection(meta)
-    );
-
-    return '' +
-      '<tr class="life-clickable-row" ' +
-        'data-detail-html-id="' + esc(detailId) + '" ' +
-        'data-doctype="Issue" ' +
-        'data-docname="' + esc(t.name) + '">' +
-
-        '<td>' +
-          '<div class="life-user-date-cell">' +
-            '<div class="life-user-name">' +
-              esc(userDisplayName(t.raised_by || t.owner)) +
-            '</div>' +
-            '<div class="life-user-date">' +
-              esc(formatLifeDate(t.opening_date || t.creation)) +
-            '</div>' +
-          '</div>' +
-        '</td>' +
-
-        '<td>' + esc(meta.branch || "—") + '</td>' +
-
-        '<td>' + esc(meta.category || "—") + '</td>' +
-
-        '<td style="max-width:260px;white-space:normal">' +
-          '<div class="life-row-main-text">' +
-            esc(shortPreviewText(meta.issue || t.subject || "—", 110)) +
-          '</div>' +
-        '</td>' +
-
-        '<td>' + esc(userDisplayName(meta.tag_to || "")) + '</td>' +
-
-        '<td style="max-width:160px;white-space:normal">' +
-          esc((meta.cc_to || []).map(userDisplayName).join(", ") || "—") +
-        '</td>' +
-
-        '<td>' + priorityPill(t.priority) + '</td>' +
-
-        '<td>' + attachmentChip("Issue", t.name) + '</td>' +
-
-        '<td>' + statusPill(getTicketStatus(t)) + '</td>' +
-
-        '<td>' + renderTicketActionButtons(t) + '</td>' +
-
-      '</tr>';
-  }).join("");
-
-  bindTicketActionButtons(body);
-  bindAttachmentChips(body);
-  bindClickableTicketRows(body);
-  renderTablePagination(body, "ticketReport", pageData, renderTicketReport);
-}
-
-function renderTicketTiles() {
-  var box = $("#ticket-tiles");
-  if (!box) return;
-
-  var total = tickets.length;
-
-  var open = tickets.filter(function (t) {
-    var status = getTicketStatus(t);
-    return status === "Open" || status === "Reopened";
-  }).length;
-
-  var reviewPending = tickets.filter(function (t) {
-    return getTicketStatus(t) === "Resolved";
-  }).length;
-
-  var closed = tickets.filter(function (t) {
-    return getTicketStatus(t) === "Closed";
-  }).length;
-
-  box.innerHTML = [
-    { l: "Total Tickets", v: total, c: "t-pn" },
-    { l: "Open / Reopened", v: open, c: "t-po" },
-    { l: "Review Pending", v: reviewPending, c: "t-pgr" },
-    { l: "Closed", v: closed, c: "t-pg" }
-  ].map(function (x) {
-    return '<div class="tile ' + x.c + '"><div class="tl">' + esc(x.l) + '</div><div class="tv">' + esc(x.v) + '</div></div>';
-  }).join("");
-}
-
-
-function renderMyTickets() {
-  var toBody = $("#myticket-tome-body");
-  var byBody = $("#myticket-byme-body");
-
-  if (!toBody || !byBody) return;
-
-  var toMe = tickets.filter(function (t) {
-    var meta = getTicketMeta(t);
-
-    return (
-      isCurrentUserValue(meta.tag_to) ||
-      (meta.cc_to || []).some(isCurrentUserValue)
-    );
-  });
-
-  var byMe = tickets.filter(function (t) {
-    return (
-      t.owner === currentUser ||
-      t.raised_by === currentUser ||
-      userDisplayName(t.owner) === currentUserFullName ||
-      userDisplayName(t.raised_by) === currentUserFullName
-    );
-  });
-
-  setText("myticket-tome-count", String(toMe.length));
-  setText("myticket-byme-count", String(byMe.length));
-  toMe = sortByModifiedLatest(toMe);
-    byMe = sortByModifiedLatest(byMe);
-  var toMePageData = getPaginatedRows("myTicketToMe", toMe);
-  var byMePageData = getPaginatedRows("myTicketByMe", byMe);
-
-  // ============================================================
-  // Tagged To Me / CC'd To Me
-  // New columns:
-  // From | Issue | Priority | Status | Action
-  // Row click opens ticket details
-  // ============================================================
-
-  toBody.innerHTML = toMe.length
-    ? toMePageData.rows.map(function (t) {
-        var meta = getTicketMeta(t);
-
-        var detailId = registerDetailHtml(
-          "Ticket Details - " + t.name,
-          buildTicketDetailsHtml(t, meta),
-            buildTicketWorkflowHistorySection(meta)
-        );
-
-        return '' +
-          '<tr class="life-clickable-row" ' +
-          'data-detail-html-id="' + esc(detailId) + '" ' +
-          'data-doctype="Issue" ' +
-          'data-docname="' + esc(t.name) + '">' +
-
-            '<td>' +
-              '<div class="life-user-date-cell">' +
-                '<div class="life-user-name">' +
-                  esc(userDisplayName(t.raised_by || t.owner)) +
-                '</div>' +
-                '<div class="life-user-date">' +
-                  esc(formatLifeDate(t.opening_date || t.creation)) +
-                '</div>' +
-              '</div>' +
-            '</td>' +
-
-            '<td>' +
-              '<div class="life-row-main-text">' +
-                esc(shortPreviewText(meta.issue || t.subject || "—", 90)) +
-              '</div>' +
-            '</td>' +
-
-            '<td>' + priorityPill(t.priority) + '</td>' +
-
-            '<td>' + statusPill(getTicketStatus(t)) + '</td>' +
-
-            '<td>' + renderTicketActionButtons(t) + '</td>' +
-
-          '</tr>';
-      }).join("")
-    : '<tr><td colspan="5" style="text-align:center;color:#8C8C8C;padding:14px">No tickets tagged to you.</td></tr>';
-
-  // ============================================================
-  // Raised By Me
-  // New columns:
-  // Issue | Tag To | Priority | Status
-  // Row click opens ticket details
-  // ============================================================
-
-  byBody.innerHTML = byMe.length
-    ? byMePageData.rows.map(function (t) {
-        var meta = getTicketMeta(t);
-
-        var detailId = registerDetailHtml(
-          "Ticket Details - " + t.name,
-          buildTicketDetailsHtml(t, meta),
-            buildTicketWorkflowHistorySection(meta)
-        );
-
-        return '' +
-          '<tr class="life-clickable-row" ' +
-          'data-detail-html-id="' + esc(detailId) + '" ' +
-          'data-doctype="Issue" ' +
-          'data-docname="' + esc(t.name) + '">' +
-
-            '<td>' +
-              '<div class="life-row-main-text">' +
-                esc(shortPreviewText(meta.issue || t.subject || "—", 110)) +
-              '</div>' +
-            '</td>' +
-
-            '<td>' + esc(userDisplayName(meta.tag_to || "")) + '</td>' +
-
-            '<td>' + priorityPill(t.priority) + '</td>' +
-
-           '<td>' + statusPill(getTicketStatus(t)) + '</td>' +
-
-            '<td>' + renderTicketActionButtons(t) + '</td>' +
-            
-            '</tr>';
-      }).join("")
-    : '<tr><td colspan="5" style="text-align:center;color:#8C8C8C;padding:14px">You have not raised any tickets.</td></tr>';
-
-  bindTicketActionButtons(toBody);
-  bindTicketActionButtons(byBody);
-
-  bindClickableTicketRows(toBody);
-  bindClickableTicketRows(byBody);
-  
-  renderTablePagination(toBody, "myTicketToMe", toMePageData, renderMyTickets);
-renderTablePagination(byBody, "myTicketByMe", byMePageData, renderMyTickets);
-}
-
-function bindClickableTicketRows(scope) {
-  (scope || root).querySelectorAll(".life-clickable-row").forEach(function (row) {
-    if (row.dataset.boundClickableRow === "1") return;
-
-    row.dataset.boundClickableRow = "1";
-
-    row.addEventListener("click", function (e) {
-      if (
-        e.target.closest("button") ||
-        e.target.closest("a") ||
-        e.target.closest(".btn") ||
-        e.target.closest("input") ||
-        e.target.closest("select") ||
-        e.target.closest("textarea") ||
-        e.target.closest(".attach-chip-table")
-      ) {
-        return;
-      }
-
-      var id = row.dataset.detailHtmlId || "";
-      var detail = detailHtmlRegistry[id] || {};
-
-      var doctype = row.dataset.doctype || "Issue";
-      var docname = row.dataset.docname || "";
-
-      var html =
-        (detail.html || "") +
-        (docname ? modalAttachmentHtml(doctype, docname) : "") +
-        (detail.afterHtml || "");
-
-      showRichModal("📄", detail.title || "Ticket Details", html);
-    });
-  });
-}
-
-
-  // ============================================================
-  // COUNTS
-  // ============================================================
-
-  function renderCounts() {
-    var taskPending = tasks.filter(function (t) {
-      var status = getTaskStatus(t);
-    
-      return (
-        t.allocated_to === currentUser &&
-        status !== "Completed" &&
-        status !== "Closed" &&
-        status !== "Cancelled"
-      );
-    }).length;
-
-    var ticketPending = tickets.filter(function (t) {
-      var meta = getTicketMeta(t);
-      return (
-        (isCurrentUserValue(meta.tag_to) || (meta.cc_to || []).some(isCurrentUserValue)) &&
-        t.status !== "Resolved" &&
-        t.status !== "Closed"
-      );
-    }).length;
-
-    setText("task-pending-cnt", String(taskPending));
-    setText("ticket-pending-cnt", String(ticketPending));
-  }
-  
-  /* ============================================================
-   TASK QUEUE NUMBER PATCH
-   Paste above init();
-   Uses custom_task_queue_no, custom_queue_active,
-   custom_queue_updated_by, custom_queue_updated_on, custom_completed_on
-   ============================================================ */
-
-function queueNow() {
-  var v = getNowReadableDateTime ? getNowReadableDateTime() : "";
-  if (!v) {
-    var d = new Date();
-    var yyyy = d.getFullYear();
-    var mm = String(d.getMonth() + 1).padStart(2, "0");
-    var dd = String(d.getDate()).padStart(2, "0");
-    var hh = String(d.getHours()).padStart(2, "0");
-    var mi = String(d.getMinutes()).padStart(2, "0");
-    v = yyyy + "-" + mm + "-" + dd + " " + hh + ":" + mi;
-  }
-  return v.length === 16 ? v + ":00" : v;
-}
-
-function qCall(method, args) {
-  return new Promise(function (resolve, reject) {
-    frappe.call({
-      method: method,
-      args: args || {},
-      callback: function (r) {
-        resolve(r.message);
-      },
-      error: function (err) {
-        reject(err);
-      }
-    });
-  });
-}
-
-function setTodoValues(name, values) {
-  values.custom_queue_updated_by = currentUser;
-  values.custom_queue_updated_on = queueNow();
-
-  return qCall("frappe.client.set_value", {
-    doctype: "ToDo",
-    name: name,
-    fieldname: values
-  });
-}
-
-function getQueueNo(t) {
-  return Number(t.custom_task_queue_no || 0);
-}
-
-function isTaskQueueActive(t) {
-  var status = getTaskStatus(t);
-  return ["Completed", "Closed", "Cancelled"].indexOf(status) === -1;
-}
-
-function queueNoHtml(t) {
-  if (!isTaskQueueActive(t)) {
-    return '<span class="life-queue-empty">—</span>';
-  }
-
-  var no = getQueueNo(t);
-
-  if (!no) {
-    return '<span class="life-queue-empty">Pending</span>';
-  }
-
-  return '<span class="life-queue-pill">#' + esc(no) + '</span>';
-}
-
-function sortQueueRows(rows) {
-  return (rows || []).slice().sort(function (a, b) {
-    var aq = getQueueNo(a) || 999999;
-    var bq = getQueueNo(b) || 999999;
-
-    if (aq !== bq) return aq - bq;
-
-    return getModifiedTime(a) - getModifiedTime(b);
-  });
-}
-
-function fetchAssigneeQueue(assignee) {
-  return qCall("frappe.client.get_list", {
-    doctype: "ToDo",
-    fields: [
-      "name",
-      "description",
-      "allocated_to",
-      "assigned_by",
-      "priority",
-      "status",
-      "date",
-      "creation",
-      "modified",
-      "owner",
-      "custom_task_queue_no",
-      "custom_queue_active",
-      "custom_queue_updated_by",
-      "custom_queue_updated_on",
-      "custom_completed_on"
-    ],
-    filters: {
-      allocated_to: assignee
-    },
-    order_by: "custom_task_queue_no asc, modified asc",
-    limit_page_length: 500
-  }).then(function (rows) {
-    rows = rows || [];
-
-    rows = rows.filter(function (t) {
-      return isTaskQueueActive(t);
-    });
-
-    return sortQueueRows(rows);
-  });
-}
-
-function saveQueueOrder(assignee, orderedNames) {
-  var now = queueNow();
-
-  var chain = Promise.resolve();
-
-  orderedNames.forEach(function (name, idx) {
-    name = typeof name === 'string' ? name : name && name.name;
-    if (!name) throw new Error('A task document name is required to reorder the queue.');
-    chain = chain.then(function () {
-      return setTodoValues(name, {
-        custom_task_queue_no: idx + 1,
-        custom_queue_active: 1,
-        custom_queue_updated_by: currentUser,
-        custom_queue_updated_on: now
-      });
-    });
-  });
-
-  return chain;
-}
-
-function rebuildQueueForAssignee(assignee) {
-  if (!assignee) return Promise.resolve();
-
-  return qCall("frappe.client.get_list", {
-    doctype: "ToDo",
-    fields: [
-      "name",
-      "description",
-      "allocated_to",
-      "assigned_by",
-      "priority",
-      "status",
-      "date",
-      "creation",
-      "modified",
-      "owner",
-      "custom_task_queue_no",
-      "custom_queue_active",
-      "custom_completed_on"
-    ],
-    filters: {
-      allocated_to: assignee
-    },
-    order_by: "custom_task_queue_no asc, modified asc",
-    limit_page_length: 500
-  }).then(function (rows) {
-    rows = rows || [];
-
-    var active = [];
-    var inactive = [];
-
-    rows.forEach(function (t) {
-      if (isTaskQueueActive(t)) active.push(t);
-      else inactive.push(t);
-    });
-
-    active = sortQueueRows(active);
-
-    var chain = Promise.resolve();
-
-    inactive.forEach(function (t) {
-      chain = chain.then(function () {
-        return setTodoValues(t.name, {
-          custom_task_queue_no: 0,
-          custom_queue_active: 0
-        });
-      });
-    });
-
-    return chain.then(function () {
-      return saveQueueOrder(
-        assignee,
-        active.map(function (t) { return t.name; })
-      );
-    });
-  });
-}
-
-function normalizeRequestedQueueNo(value, maxAllowed) {
-  var no = Number(value || 0);
-
-  if (!no || no < 1) no = maxAllowed;
-  if (no > maxAllowed) no = maxAllowed;
-
-  return no;
-}
-
-function refreshTaskQueueDefault() {
-  var assignee = taskAssignTo[0] || "";
-  var input = $("#task-queue-no");
-  var help = $("#task-queue-help");
-
-  if (!input) return;
-
-  if (!assignee) {
-    input.value = "";
-    if (help) help.textContent = "Select an assignee to auto-calculate the running task number.";
-    return;
-  }
-
-  if (help) help.textContent = "Checking current running tasks...";
-
-  fetchAssigneeQueue(assignee)
-    .then(function (queue) {
-      var nextNo = queue.length + 1;
-      input.value = nextNo;
-
-      if (help) {
-        help.textContent =
-          queue.length
-            ? userDisplayName(assignee) + " has " + queue.length + " running task(s). New task will be #" + nextNo + " by default."
-            : userDisplayName(assignee) + " has no running tasks. New task will be #1.";
-      }
-    })
-    .catch(function () {
-      if (help) help.textContent = "Unable to calculate queue number. It will be assigned on submit.";
-    });
-}
-
-function createTaskWithQueue(doc, requestedQueueNo) {
-  var assignee = doc.allocated_to;
-
-  return fetchAssigneeQueue(assignee).then(function (queueBefore) {
-    var maxAllowed = queueBefore.length + 1;
-    var finalNo = normalizeRequestedQueueNo(requestedQueueNo, maxAllowed);
-
-    doc.custom_task_queue_no = finalNo;
-    doc.custom_queue_active = 1;
-    doc.custom_queue_updated_by = currentUser;
-    doc.custom_queue_updated_on = queueNow();
-
-    return qCall("frappe.client.insert", {
-      doc: doc
-    }).then(function (saved) {
-      saved = saved || {};
-
-      return fetchAssigneeQueue(assignee).then(function (queueAfter) {
-        queueAfter = queueAfter.filter(function (t) {
-          return t.name !== saved.name;
-        });
-
-        queueAfter = sortQueueRows(queueAfter);
-        queueAfter.splice(finalNo - 1, 0, saved);
-
-        return saveQueueOrder(
-          assignee,
-          queueAfter.map(function (t) { return t.name; }),
-          "New task inserted into running queue."
-        ).then(function () {
-          return saved;
-        });
-      });
-    });
-  });
-}
-
-/* ------------------------------------------------------------
-   Inject queue field and manage button into existing HTML
-   ------------------------------------------------------------ */
-
-function ensureTaskQueueUI() {
-  if (!$("#task-queue-no")) {
-    var priorityBlock = $("#task-priority-grp")
-      ? $("#task-priority-grp").closest(".field-block")
-      : null;
-
-    if (priorityBlock) {
-      priorityBlock.insertAdjacentHTML(
-        "afterend",
-        '' +
-        '<div class="field-block" id="task-queue-block">' +
-          '<label class="lbl">Task Number <span class="required-mark">*</span></label>' +
-          '<input type="number" id="task-queue-no" min="1" placeholder="Auto">' +
-          '<div class="life-queue-help" id="task-queue-help">' +
-            'Select an assignee to auto-calculate the running task number.' +
-          '</div>' +
-        '</div>'
-      );
-    }
-  }
-
-  if (!$("#life-manage-queue-btn")) {
-    var fbar = $("#task-sub-1 .fbar");
-
-    if (fbar) {
-      fbar.insertAdjacentHTML(
-        "beforeend",
-        '<button type="button" class="apbtn life-manage-queue-btn" id="life-manage-queue-btn">↕ Manage Assignee Queue</button>'
-      );
-    }
-  }
-
-  if ($("#life-manage-queue-btn") && !$("#life-manage-queue-btn").dataset.boundQueueManage) {
-    $("#life-manage-queue-btn").dataset.boundQueueManage = "1";
-    $("#life-manage-queue-btn").addEventListener("click", openManageQueuePrompt);
-  }
-
-  addQueueHeader("#task-report-body", "Task No");
-  addQueueHeader("#mytask-to-body", "Task No");
-  addQueueHeader("#mytask-by-body", "Task No");
-}
-
-function addQueueHeader(bodySelector, label) {
-  var body = $(bodySelector);
-  if (!body) return;
-
-  var table = body.closest("table");
-  if (!table) return;
-
-  var tr = table.querySelector("thead tr");
-  if (!tr) return;
-
-  if (tr.querySelector(".life-queue-th")) return;
-
-  tr.insertAdjacentHTML("afterbegin", '<th class="life-queue-th">' + esc(label) + '</th>');
-}
-
-/* ------------------------------------------------------------
-   Keep default queue number updated when assignee is selected
-   ------------------------------------------------------------ */
-
-var oldRenderPickerChipsForQueue = renderPickerChips;
-
-renderPickerChips = function (key) {
-  oldRenderPickerChipsForQueue(key);
-
-  if (key === "taskAssignTo") {
-    refreshTaskQueueDefault();
-  }
-};
-
-/* ------------------------------------------------------------
-   Replace loadTasks to include queue fields
-   ------------------------------------------------------------ */
-
-loadTasks = function () {
-  frappe.call({
-    method: "frappe.client.get_list",
-    args: {
-      doctype: "ToDo",
-      fields: [
-        "name",
-        "description",
-        "allocated_to",
-        "assigned_by",
-        "priority",
-        "status",
-        "date",
-        "creation",
-        "modified",
-        "owner",
-        "custom_task_queue_no",
-        "custom_queue_active",
-        "custom_queue_updated_by",
-        "custom_queue_updated_on",
-        "custom_completed_on"
-      ],
-      order_by: "modified desc",
-      limit_page_length: 500
-    },
-    callback: function (r) {
-      tasks = (r.message || []).filter(isTaskVisibleToCurrentUser);
-
-      loadAttachmentCache(
-        "ToDo",
-        tasks.map(function (t) { return t.name; }),
-        function () {
-          renderTaskReport();
-          renderMyTasks();
-          renderCounts();
-        }
-      );
-    },
-    error: function () {
-      tasks = [];
-      renderTaskReport();
-      renderMyTasks();
-      renderCounts();
-    }
-  });
-};
-
-/* ------------------------------------------------------------
-   Replace submitTask to create task with queue shifting
-   ------------------------------------------------------------ */
-
-submitTask = function () {
-  var assignTo = taskAssignTo[0] || "";
-  var category = getValue("task-category");
-  var startDate = getValue("task-startdate");
-  var deadlineDateTime = getValue("task-deadline");
-  var deadline = getDatePartFromDateTime(deadlineDateTime);
-  var details = getValue("task-details");
-  var requestedQueueNo = Number(getValue("task-queue-no") || 0);
-
-  if (!assignTo) {
-    showModal("⚠️", "Select Assignee", "Please search and select who this task is being assigned to.");
-    return;
-  }
-
-  if (!category) {
-    showModal("⚠️", "Category Required", "Please select a task category.");
-    return;
-  }
-
-  var dateValidation = validateTaskDatesBeforeSubmit(startDate, deadlineDateTime);
-
-  if (!dateValidation.ok) {
-    showModal("⚠️", "Invalid Task Dates", dateValidation.message);
-    return;
-  }
-
-  if (!details) {
-    showModal("⚠️", "Details Required", "Please enter task details.");
-    return;
-  }
-
-  if (wordCount(details) > 100) {
-    showModal("⚠️", "Too Many Words", "Task details cannot exceed 100 words.");
-    return;
-  }
-
-  if (!selectedTaskPriority) {
-    showModal("⚠️", "Priority Required", "Please select task priority.");
-    return;
-  }
-
-  var taskFileValidation = validateAttachmentList(taskFiles);
-
-  if (!taskFileValidation.ok) {
-    showModal(
-      "⚠️",
-      "Invalid Attachment",
-      "Please remove invalid task attachment(s):\n\n" + taskFileValidation.message
-    );
-    return;
-  }
-
-  var updateTo = taskUpdateTo.slice();
-
-  if (updateTo.indexOf(currentUser) === -1) {
-    updateTo.push(currentUser);
-  }
-
-  var meta = {
-    category: category,
-    start_date: startDate,
-    deadline_datetime: deadlineDateTime,
-    duration_label: calculateTaskDurationDays(startDate, deadlineDateTime),
-    update_to: updateTo
-  };
-
-  var doc = {
-    doctype: "ToDo",
-    description: buildTaskDescription(details, meta),
-    allocated_to: assignTo,
-    assigned_by: currentUser,
-    priority: selectedTaskPriority,
-    status: "Open",
-    date: deadline
-  };
-
-  var btn = $("#task-submit-btn");
-
-  function finalSubmit() {
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "Assigning...";
-    }
-
-    createTaskWithQueue(doc, requestedQueueNo)
-      .then(function (saved) {
-        return uploadFiles("ToDo", saved.name, taskFiles).then(function () {
-          showModal(
-            "✅",
-            "Task Assigned",
-            "Task " + saved.name + " assigned to " + userLabel(assignTo) + " as Task #" + getValue("task-queue-no") + "."
-          );
-
-          resetTaskForm();
-
-          if ($("#task-queue-no")) {
-            $("#task-queue-no").value = "";
-          }
-
-          loadTasks();
-
-          if (btn) {
-            btn.disabled = false;
-            btn.textContent = "✓ Assign Task";
-          }
-        }).catch(function (err) {
-          showModal("⚠️", "Task Saved, Attachment Failed", getErrorMessage(err));
-          resetTaskForm();
-          loadTasks();
-
-          if (btn) {
-            btn.disabled = false;
-            btn.textContent = "✓ Assign Task";
-          }
-        });
-      })
-      .catch(function (err) {
-        showModal("⚠️", "Task Save Failed", getErrorMessage(err));
-
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = "✓ Assign Task";
-        }
-      });
-  }
-
-  fetchAssigneeQueue(assignTo)
-    .then(function (queue) {
-      var maxAllowed = queue.length + 1;
-      requestedQueueNo = normalizeRequestedQueueNo(requestedQueueNo, maxAllowed);
-
-      if ($("#task-queue-no")) {
-        $("#task-queue-no").value = requestedQueueNo;
-      }
-
-      if (requestedQueueNo === 1 && queue.length > 0) {
-        var confirmed = window.confirm(
-          "This will place the new task as #1 for " +
-            userDisplayName(assignTo) +
-            ". Existing running tasks will move down by one number. Continue?"
-        );
-
-        if (confirmed) {
-          finalSubmit();
-        }
-      } else {
-        finalSubmit();
-      }
-    })
-    .catch(function (err) {
-      showModal("⚠️", "Queue Check Failed", getErrorMessage(err));
-    });
-};
-
-/* ------------------------------------------------------------
-   Reset queue field also
-   ------------------------------------------------------------ */
-
-var oldResetTaskFormForQueue = resetTaskForm;
-
-resetTaskForm = function () {
-  oldResetTaskFormForQueue();
-
-  if ($("#task-queue-no")) $("#task-queue-no").value = "";
-  if ($("#task-queue-help")) {
-    $("#task-queue-help").textContent =
-      "Select an assignee to auto-calculate the running task number.";
-  }
-};
-
-/* ------------------------------------------------------------
-   Add Edit Queue button to existing task actions
-   ------------------------------------------------------------ */
-
-var oldRenderTaskActionButtonsForQueue = renderTaskActionButtons;
-
-renderTaskActionButtons = function (t) {
-  var originalHtml = oldRenderTaskActionButtonsForQueue(t);
-  var status = getTaskStatus(t);
-
-  if (
-    isTaskQueueActive(t) &&
-    (isTaskAssigner(t) || isManager)
-  ) {
-    var editBtn =
-      '<button class="btn btn-review btn-sm task-edit-queue-btn" data-name="' + esc(t.name) + '">' +
-        'Edit No' +
-      '</button>';
-
-    if (!originalHtml || originalHtml === "—") {
-      return '<div class="life-action-stack">' + editBtn + '</div>';
-    }
-
-    if (originalHtml.indexOf("life-action-stack") !== -1) {
-      return originalHtml.replace("</div>", editBtn + "</div>");
-    }
-
-    return '<div class="life-action-stack">' + originalHtml + editBtn + '</div>';
-  }
-
-  return originalHtml;
-};
-
-var oldBindTaskActionButtonsForQueue = bindTaskActionButtons;
-
-bindTaskActionButtons = function (scope) {
-  oldBindTaskActionButtonsForQueue(scope);
-
-  (scope || root).querySelectorAll(".task-edit-queue-btn").forEach(function (btn) {
-    if (btn.dataset.boundQueueEdit === "1") return;
-
-    btn.dataset.boundQueueEdit = "1";
-
-    btn.addEventListener("click", function () {
-      openEditTaskQueueModal(btn.dataset.name);
-    });
-  });
-};
-
-function openEditTaskQueueModal(name) {
-  var task = tasks.find(function (t) {
-    return t.name === name;
-  });
-
-  if (!task) {
-    showModal(
-      "⚠️",
-      "Task Not Found",
-      "Unable to find this task."
-    );
-    return;
-  }
-
-  if (!isTaskQueueActive(task)) {
-    showModal(
-      "⚠️",
-      "Not Allowed",
-      "Completed, closed, and cancelled tasks are not part of the running queue."
-    );
-    return;
-  }
-
-  if (!(isTaskAssigner(task) || isManager)) {
-    showModal(
-      "⚠️",
-      "Not Allowed",
-      "Only the assigner or manager can change task numbers."
-    );
-    return;
-  }
-
-  ensureManageQueueWebStyles();
-  closeManageQueueWebModal();
-
-  var currentNo = getQueueNo(task) || 1;
-
-  var overlay = document.createElement("div");
-  overlay.id = "life-web-queue-overlay";
-  overlay.className = "life-web-queue-overlay";
-
-  overlay.innerHTML =
-    '<div class="life-web-queue-dialog" style="width:470px;" role="dialog" aria-modal="true">' +
-
-      '<div class="life-web-queue-head">' +
-        '<div class="life-web-queue-title">Change Task Number</div>' +
-        '<button type="button" class="life-web-queue-close" id="life-web-edit-q-close">&times;</button>' +
-      '</div>' +
-
-      '<div class="life-web-queue-body">' +
-        '<div class="life-web-queue-note">' +
-          'Change the running task number for <strong>' +
-            esc(shortPreviewText(getTaskDetails(task) || task.name, 90)) +
-          '</strong>.' +
-        '</div>' +
-
-        '<label style="' +
-          'display:block;margin-bottom:6px;color:#0F3D1E;' +
-          'font-size:9.5px;font-weight:800;text-transform:uppercase;">' +
-          'New Task Number' +
-        '</label>' +
-
-        '<input type="number" min="1" id="life-web-edit-q-input" ' +
-          'value="' + esc(currentNo) + '" class="life-web-queue-no" ' +
-          'style="width:100%;max-width:160px;text-align:left;padding:0 10px;">' +
-      '</div>' +
-
-      '<div class="life-web-queue-foot">' +
-        '<button type="button" class="life-web-queue-btn life-web-queue-cancel" ' +
-          'id="life-web-edit-q-cancel">Cancel</button>' +
-        '<button type="button" class="life-web-queue-btn life-web-queue-save" ' +
-          'id="life-web-edit-q-save">Save</button>' +
-      '</div>' +
-
-    '</div>';
-
-  document.body.appendChild(overlay);
-
-  var input = overlay.querySelector("#life-web-edit-q-input");
-  var closeBtn = overlay.querySelector("#life-web-edit-q-close");
-  var cancelBtn = overlay.querySelector("#life-web-edit-q-cancel");
-  var saveBtn = overlay.querySelector("#life-web-edit-q-save");
-
-  function closeEdit() {
-    closeManageQueueWebModal();
-  }
-
-  function saveEdit() {
-    var newNo = Number(input ? input.value : 0);
-
-    if (!Number.isFinite(newNo) || newNo < 1) {
-      showModal(
-        "⚠️",
-        "Invalid Task Number",
-        "Please enter a valid task number starting from 1."
-      );
-      return;
-    }
-
-    closeEdit();
-    moveTaskInQueue(name, newNo);
-  }
-
-  if (closeBtn) closeBtn.addEventListener("click", closeEdit);
-  if (cancelBtn) cancelBtn.addEventListener("click", closeEdit);
-  if (saveBtn) saveBtn.addEventListener("click", saveEdit);
-
-  if (input) {
-    input.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        saveEdit();
-      }
-    });
-
-    window.setTimeout(function () {
-      input.focus();
-      input.select();
-    }, 30);
-  }
-
-  overlay.addEventListener("click", function (e) {
-    if (e.target === overlay) closeEdit();
-  });
-}
-
-function moveTaskInQueue(name, newNo) {
-  qCall("frappe.client.get", {
-    doctype: "ToDo",
-    name: name
-  }).then(function (doc) {
-    if (!doc) {
-      showModal("⚠️", "Task Not Found", "Unable to load task.");
-      return;
-    }
-
-    if (!(isTaskAssigner(doc) || isManager)) {
-      showModal("⚠️", "Not Allowed", "Only the assigner or manager can change task numbers.");
-      return;
-    }
-
-    return fetchAssigneeQueue(doc.allocated_to).then(function (queue) {
-      queue = queue.filter(function (t) {
-        return t.name !== name;
-      });
-
-      var maxAllowed = queue.length + 1;
-      var finalNo = normalizeRequestedQueueNo(newNo, maxAllowed);
-
-      function applyMove() {
-        queue.splice(finalNo - 1, 0, doc);
-
-        return saveQueueOrder(
-          doc.allocated_to,
-          queue.map(function (t) { return t.name; }),
-          "Task number manually changed."
-        ).then(function () {
-          toast("Task queue updated.", true);
-          loadTasks();
-        });
-      }
-
-      if (finalNo === 1 && queue.length > 0) {
-        var confirmed = window.confirm(
-          "This will move this task to #1. Existing running tasks for " +
-            userDisplayName(doc.allocated_to) +
-            " will move down. Continue?"
-        );
-
-        if (confirmed) {
-          return applyMove();
-        }
-
-        return;
-      } else {
-        return applyMove();
-      }
-    });
-  }).catch(function (err) {
-    showModal("⚠️", "Queue Update Failed", getErrorMessage(err));
-  });
-}
-
-/* ------------------------------------------------------------
-   Manage full queue for one assignee
-   ------------------------------------------------------------ */
-
-function openManageQueuePrompt() {
-  /*
-    Web Page-safe replacement for frappe.prompt().
-    Select an employee, then open that employee's running queue.
-  */
-  ensureManageQueueWebStyles();
-  closeManageQueueWebModal();
-
-  if (!users || !users.length) {
-    loadUsers(function () {
-      if (!users || !users.length) {
-        showModal(
-          "⚠️",
-          "Employees Not Available",
-          "Unable to load the employee/user list for Manage Assignee Queue."
-        );
-        return;
-      }
-
-      openManageQueuePrompt();
-    });
-
-    return;
-  }
-
-  var overlay = document.createElement("div");
-  overlay.id = "life-web-queue-overlay";
-  overlay.className = "life-web-queue-overlay";
-
-  overlay.innerHTML =
-    '<div class="life-web-queue-dialog life-web-assignee-picker-dialog" ' +
-      'role="dialog" aria-modal="true" aria-labelledby="life-web-assignee-picker-title">' +
-
-      '<div class="life-web-queue-head">' +
-        '<div>' +
-          '<div class="life-web-queue-title" id="life-web-assignee-picker-title">' +
-            'Manage Assignee Queue' +
-          '</div>' +
-          '<div style="margin-top:3px;font-size:10.5px;font-weight:500;color:rgba(255,255,255,.74);">' +
-            'Search and select an employee to manage their running task order.' +
-          '</div>' +
-        '</div>' +
-
-        '<button type="button" class="life-web-queue-close" ' +
-          'id="life-web-assignee-picker-close" aria-label="Close">&times;</button>' +
-      '</div>' +
-
-      '<div class="life-web-queue-body">' +
-        '<div style="max-width:700px;margin:0 auto;">' +
-
-          '<label style="' +
-            'display:block;margin-bottom:6px;color:#0F3D1E;' +
-            'font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;">' +
-            'Assignee / Employee' +
-          '</label>' +
-
-          '<div style="position:relative;">' +
-            '<input type="text" id="life-web-assignee-search" ' +
-              'placeholder="Search employee name or email..." autocomplete="off" ' +
-              'style="' +
-                'width:100%;height:40px;padding:0 12px;' +
-                'border:1.5px solid #CFE1D2;border-radius:8px;' +
-                'background:#FFFFFF;color:#152418;font-family:inherit;' +
-                'font-size:12px;outline:none;">' +
-          '</div>' +
-
-          '<div id="life-web-assignee-results" style="' +
-            'margin-top:8px;max-height:360px;overflow-y:auto;' +
-            'background:#FFFFFF;border:1px solid #DCE9DE;border-radius:9px;">' +
-          '</div>' +
-
-        '</div>' +
-      '</div>' +
-
-      '<div class="life-web-queue-foot">' +
-        '<button type="button" class="life-web-queue-btn life-web-queue-cancel" ' +
-          'id="life-web-assignee-picker-cancel">Cancel</button>' +
-      '</div>' +
-
-    '</div>';
-
-  document.body.appendChild(overlay);
-
-  var input = overlay.querySelector("#life-web-assignee-search");
-  var results = overlay.querySelector("#life-web-assignee-results");
-  var closeBtn = overlay.querySelector("#life-web-assignee-picker-close");
-  var cancelBtn = overlay.querySelector("#life-web-assignee-picker-cancel");
-
-  function closePicker() {
-    closeManageQueueWebModal();
-  }
-
-  function renderAssigneeResults(query) {
-    query = String(query || "").trim().toLowerCase();
-
-    var matches = (users || [])
-      .filter(function (u) {
-        var email = String(u.name || "");
-        var name = String(u.full_name || "");
-        var haystack = (name + " " + email).toLowerCase();
-
-        return !query || haystack.indexOf(query) !== -1;
-      })
-      .slice(0, 40);
-
-    if (!matches.length) {
-      results.innerHTML =
-        '<div style="padding:18px;text-align:center;color:#5F6F63;font-size:11.5px;">' +
-          'No matching employee found.' +
-        '</div>';
-      return;
-    }
-
-    results.innerHTML = matches.map(function (u) {
-      var name = u.full_name || u.name || "—";
-      var email = u.name || "";
-
-      return '' +
-        '<button type="button" class="life-web-assignee-item" ' +
-          'data-email="' + esc(email) + '" ' +
-          'style="' +
-            'width:100%;display:flex;align-items:center;gap:10px;' +
-            'padding:10px 12px;text-align:left;cursor:pointer;' +
-            'background:#FFFFFF;border:0;border-bottom:1px solid #EEF4EF;' +
-            'font-family:inherit;">' +
-
-          '<span style="' +
-            'width:30px;height:30px;flex:0 0 auto;border-radius:50%;' +
-            'display:inline-flex;align-items:center;justify-content:center;' +
-            'background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;' +
-            'font-size:10px;font-weight:800;">' +
-            esc(initials(name)) +
-          '</span>' +
-
-          '<span style="min-width:0;">' +
-            '<span style="' +
-              'display:block;color:#0F3D1E;font-size:12px;font-weight:700;' +
-              'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' +
-              esc(name) +
-            '</span>' +
-
-            '<span style="' +
-              'display:block;margin-top:2px;color:#5F6F63;font-size:10.5px;font-weight:500;' +
-              'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' +
-              esc(email) +
-            '</span>' +
-          '</span>' +
-
-        '</button>';
-    }).join("");
-
-    results.querySelectorAll(".life-web-assignee-item").forEach(function (btn) {
-      btn.addEventListener("mouseenter", function () {
-        btn.style.background = "#F3FAF4";
-      });
-
-      btn.addEventListener("mouseleave", function () {
-        btn.style.background = "#FFFFFF";
-      });
-
-      btn.addEventListener("click", function () {
-        var assignee = String(btn.dataset.email || "").trim();
-
-        if (!assignee) return;
-
-        closePicker();
-        openManageQueueDialog(assignee);
-      });
-    });
-  }
-
-  renderAssigneeResults("");
-
-  if (input) {
-    input.addEventListener("input", function () {
-      renderAssigneeResults(input.value);
-    });
-
-    window.setTimeout(function () {
-      input.focus();
-    }, 30);
-  }
-
-  if (closeBtn) {
-    closeBtn.addEventListener("click", closePicker);
-  }
-
-  if (cancelBtn) {
-    cancelBtn.addEventListener("click", closePicker);
-  }
-
-  overlay.addEventListener("click", function (e) {
-    if (e.target === overlay) {
-      closePicker();
-    }
-  });
-}
-
-function queuePriorityBadge(priority) {
-  priority = String(priority || "—");
-
-  var cls = "life-q-low";
-
-  if (priority === "High") cls = "life-q-high";
-  else if (priority === "Medium") cls = "life-q-medium";
-  else if (priority === "Low") cls = "life-q-low";
-
-  return '<span class="life-q-badge ' + cls + '">' + esc(priority) + '</span>';
-}
-
-function queueStatusBadge(status) {
-  status = String(status || "—");
-
-  var cls = "life-q-open";
-
-  if (status === "Overdue") cls = "life-q-overdue";
-  else if (status === "Completed" || status === "Closed") cls = "life-q-completed";
-  else if (status === "Cancelled") cls = "life-q-cancelled";
-  else cls = "life-q-open";
-
-  return '<span class="life-q-badge ' + cls + '">' + esc(status) + '</span>';
-}
-
-function ensureManageQueueWebStyles() {
-  if (document.getElementById("life-manage-queue-web-style")) return;
-
-  var style = document.createElement("style");
-  style.id = "life-manage-queue-web-style";
-  style.textContent = `
-    .life-web-queue-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 1000005;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 38px 18px;
-      overflow-y: auto;
-      background: rgba(15, 61, 30, 0.58);
-      font-family: Inter, "Segoe UI", Arial, sans-serif;
-    }
-
-    .life-web-queue-dialog {
-      width: 980px;
-      max-width: 96vw;
-      max-height: 88vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      background: #FFFFFF;
-      border: 1px solid #CFE1D2;
-      border-radius: 14px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.28);
-    }
-
-    .life-web-queue-head {
-      flex: 0 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      padding: 14px 18px;
-      color: #FFFFFF;
-      background: linear-gradient(135deg, #0F3D1E 0%, #1B5E20 100%);
-    }
-
-    .life-web-queue-title {
-      font-size: 15px;
-      font-weight: 800;
-      line-height: 1.3;
-    }
-
-    .life-web-queue-close {
-      width: 30px;
-      height: 30px;
-      flex: 0 0 auto;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid rgba(255,255,255,0.35);
-      border-radius: 50%;
-      background: transparent;
-      color: #FFFFFF;
-      font-size: 20px;
-      line-height: 1;
-      cursor: pointer;
-    }
-
-    .life-web-queue-close:hover {
-      background: rgba(255,255,255,0.12);
-    }
-
-    .life-web-queue-body {
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow: auto;
-      padding: 18px 20px 10px;
-      background: #F8FCF8;
-    }
-
-    .life-web-queue-note {
-      margin-bottom: 15px;
-      padding: 10px 13px;
-      color: #14501F;
-      background: #E8F5E9;
-      border: 1px solid #B9DFBE;
-      border-left: 4px solid #43A047;
-      border-radius: 8px;
-      font-size: 11.5px;
-      font-weight: 600;
-      line-height: 1.5;
-    }
-
-    .life-web-queue-table-wrap {
-      width: 100%;
-      overflow-x: auto;
-      background: #FFFFFF;
-      border: 1px solid #CFE1D2;
-      border-radius: 10px;
-    }
-
-    .life-web-queue-table {
-      width: 100%;
-      min-width: 810px;
-      border-collapse: collapse;
-      table-layout: fixed;
-      background: #FFFFFF;
-    }
-
-    .life-web-queue-table th {
-      padding: 10px 12px;
-      color: #14501F;
-      background: #E8F5E9;
-      border-right: 1px solid #C7DFC9;
-      border-bottom: 2px solid #43A047;
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 0.05em;
-      text-align: left;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .life-web-queue-table th:last-child {
-      border-right: 0;
-    }
-
-    .life-web-queue-table td {
-      padding: 10px 12px;
-      color: #26372A;
-      background: #FFFFFF;
-      border-right: 1px solid #E1ECE3;
-      border-bottom: 1px solid #E5EFE6;
-      font-size: 11.5px;
-      vertical-align: middle;
-    }
-
-    .life-web-queue-table td:last-child {
-      border-right: 0;
-    }
-
-    .life-web-queue-table tbody tr:nth-child(even) td {
-      background: #F7FBF7;
-    }
-
-    .life-web-queue-no {
-      width: 62px;
-      height: 34px;
-      padding: 0 7px;
-      color: #0F3D1E;
-      background: #FFFFFF;
-      border: 1.5px solid #43A047;
-      border-radius: 7px;
-      outline: none;
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 800;
-      text-align: center;
-    }
-
-    .life-web-queue-no:focus {
-      border-color: #1B5E20;
-      box-shadow: 0 0 0 3px rgba(67,160,71,0.14);
-    }
-
-    .life-web-queue-task {
-      color: #152418;
-      font-size: 12px;
-      font-weight: 600;
-      line-height: 1.4;
-      white-space: normal;
-      word-break: break-word;
-    }
-
-    .life-web-queue-deadline {
-      color: #35633D;
-      font-size: 11px;
-      font-weight: 600;
-      line-height: 1.35;
-      white-space: normal;
-    }
-
-    .life-web-queue-foot {
-      flex: 0 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 9px;
-      padding: 13px 20px 16px;
-      background: #FFFFFF;
-      border-top: 1px solid #DCE9DE;
-    }
-
-    .life-web-queue-btn {
-      min-width: 96px;
-      height: 36px;
-      padding: 0 16px;
-      border-radius: 8px;
-      font-family: inherit;
-      font-size: 11.5px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .life-web-queue-cancel {
-      color: #35633D;
-      background: #FFFFFF;
-      border: 1px solid #CFE1D2;
-    }
-
-    .life-web-queue-cancel:hover {
-      background: #F3FAF4;
-    }
-
-    .life-web-queue-save {
-      color: #FFFFFF;
-      background: linear-gradient(135deg, #2E7D32, #1B5E20);
-      border: 1px solid #1B5E20;
-    }
-
-    .life-web-queue-save:hover {
-      background: linear-gradient(135deg, #388E3C, #14501F);
-    }
-
-    .life-web-queue-save:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-    }
-
-    @media (max-width: 700px) {
-      .life-web-queue-overlay {
-        padding: 18px 8px;
-      }
-
-      .life-web-queue-dialog {
-        max-width: 99vw;
-        max-height: 94vh;
-      }
-
-      .life-web-queue-body {
-        padding: 12px;
-      }
-
-      .life-web-queue-foot {
-        padding: 11px 12px;
-      }
-    }
-  `;
-
-  document.head.appendChild(style);
-}
-
-function closeManageQueueWebModal() {
-  var overlay = document.getElementById("life-web-queue-overlay");
-
-  if (overlay && overlay.parentNode) {
-    overlay.parentNode.removeChild(overlay);
-  }
-}
-
-function openManageQueueDialog(assignee) {
-  assignee = String(assignee || "").trim();
-
-  if (!assignee || assignee === "Unassigned") {
-    showModal(
-      "⚠️",
-      "Assignee Required",
-      "Unable to identify the assignee for this queue."
-    );
-    return;
-  }
-
-  ensureManageQueueWebStyles();
-  closeManageQueueWebModal();
-
-  fetchAssigneeQueue(assignee)
-    .then(function (queue) {
-      queue = queue || [];
-
-      if (!queue.length) {
-        showModal(
-          "ℹ️",
-          "No Running Tasks",
-          userDisplayName(assignee) + " has no running tasks."
-        );
-        return;
-      }
-
-      var rowsHtml = queue.map(function (t, idx) {
-        var meta = getTaskMeta(t);
-        var details = getTaskDetails(t);
-        var status = getTaskStatus(t);
-
-        return '' +
-          '<tr>' +
-            '<td>' +
-              '<input type="number" min="1" class="life-bulk-qno life-web-queue-no" ' +
-                'data-name="' + esc(t.name) + '" ' +
-                'value="' + esc(getQueueNo(t) || (idx + 1)) + '">' +
-            '</td>' +
-
-            '<td>' +
-              '<div class="life-web-queue-task">' +
-                esc(shortPreviewText(details || "No task details", 120)) +
-              '</div>' +
-            '</td>' +
-
-            '<td>' +
-              queuePriorityBadge(t.priority) +
-            '</td>' +
-
-            '<td>' +
-              '<div class="life-web-queue-deadline">' +
-                esc(formatLifeDateTime(meta.deadline_datetime || t.date)) +
-              '</div>' +
-            '</td>' +
-
-            '<td>' +
-              queueStatusBadge(status) +
-            '</td>' +
-          '</tr>';
-      }).join("");
-
-      var overlay = document.createElement("div");
-      overlay.id = "life-web-queue-overlay";
-      overlay.className = "life-web-queue-overlay";
-
-      overlay.innerHTML =
-        '<div class="life-web-queue-dialog" role="dialog" aria-modal="true" aria-labelledby="life-web-queue-title">' +
-
-          '<div class="life-web-queue-head">' +
-            '<div class="life-web-queue-title" id="life-web-queue-title">' +
-              'Manage Assignee Queue — ' + esc(userDisplayName(assignee)) +
-            '</div>' +
-
-            '<button type="button" class="life-web-queue-close" id="life-web-queue-close" aria-label="Close">&times;</button>' +
-          '</div>' +
-
-          '<div class="life-web-queue-body">' +
-
-            '<div class="life-web-queue-note">' +
-              'Edit the running task numbers for <strong>' +
-                esc(userDisplayName(assignee)) +
-              '</strong>. Lower task number means higher running priority. ' +
-              'Completed tasks are not included in this queue.' +
-            '</div>' +
-
-            '<div class="life-web-queue-table-wrap">' +
-              '<table class="life-web-queue-table">' +
-
-                '<colgroup>' +
-                  '<col style="width:90px">' +
-                  '<col style="width:330px">' +
-                  '<col style="width:120px">' +
-                  '<col style="width:160px">' +
-                  '<col style="width:120px">' +
-                '</colgroup>' +
-
-                '<thead>' +
-                  '<tr>' +
-                    '<th>Task No</th>' +
-                    '<th>Task</th>' +
-                    '<th>Priority</th>' +
-                    '<th>Deadline</th>' +
-                    '<th>Status</th>' +
-                  '</tr>' +
-                '</thead>' +
-
-                '<tbody>' +
-                  rowsHtml +
-                '</tbody>' +
-
-              '</table>' +
-            '</div>' +
-
-          '</div>' +
-
-          '<div class="life-web-queue-foot">' +
-            '<button type="button" class="life-web-queue-btn life-web-queue-cancel" id="life-web-queue-cancel">Cancel</button>' +
-            '<button type="button" class="life-web-queue-btn life-web-queue-save" id="life-web-queue-save">Save Queue</button>' +
-          '</div>' +
-
-        '</div>';
-
-      document.body.appendChild(overlay);
-
-      var closeBtn = overlay.querySelector("#life-web-queue-close");
-      var cancelBtn = overlay.querySelector("#life-web-queue-cancel");
-      var saveBtn = overlay.querySelector("#life-web-queue-save");
-
-      function closeModalLocal() {
-        document.removeEventListener('keydown', escHandler);
-        closeManageQueueWebModal();
-      }
-
-      if (closeBtn) {
-        closeBtn.addEventListener("click", closeModalLocal);
-      }
-
-      if (cancelBtn) {
-        cancelBtn.addEventListener("click", closeModalLocal);
-      }
-
-      overlay.addEventListener("click", function (e) {
-        if (e.target === overlay) {
-          closeModalLocal();
-        }
-      });
-
-      var escHandler = function (e) {
-        if (e.key === "Escape") {
-          closeModalLocal();
-          document.removeEventListener("keydown", escHandler);
-        }
-      };
-
-      document.addEventListener("keydown", escHandler);
-
-      if (saveBtn) {
-        saveBtn.addEventListener("click", function () {
-          var inputs = overlay.querySelectorAll(".life-bulk-qno");
-          var rows = [];
-
-          inputs.forEach(function (input) {
-            rows.push({
-              name: input.dataset.name || "",
-              no: Number(input.value || 0)
-            });
-          });
-
-          saveBtn.disabled = true;
-          saveBtn.textContent = "Saving...";
-
-          applyBulkQueue(
-            assignee,
-            rows,
-            {
-              hide: function () {
-                document.removeEventListener("keydown", escHandler);
-                closeModalLocal();
-              },
-              setBusy: function (busy) {
-                saveBtn.disabled = !!busy;
-                saveBtn.textContent = busy ? "Saving..." : "Save Queue";
-              }
-            }
-          );
-        });
-      }
-
-      var firstInput = overlay.querySelector(".life-bulk-qno");
-
-      if (firstInput) {
-        window.setTimeout(function () {
-          firstInput.focus();
-          firstInput.select();
-        }, 30);
-      }
-    })
-    .catch(function (err) {
-      void 0;
-
-      showModal(
-        "⚠️",
-        "Queue Load Failed",
-        getErrorMessage(err)
-      );
-    });
-}
-
-function applyBulkQueue(assignee, rows, dialog) {
-  rows = rows || [];
-
-  var invalid = rows.some(function (r) {
-    return !r.name || !Number.isFinite(r.no) || r.no < 1;
-  });
-
-  if (invalid) {
-    if (dialog && typeof dialog.setBusy === "function") {
-      dialog.setBusy(false);
-    }
-
-    showModal(
-      "⚠️",
-      "Invalid Task Number",
-      "Every running task must have a valid task number starting from 1."
-    );
-    return;
-  }
-
-  var used = {};
-  var duplicate = false;
-
-  rows.forEach(function (r) {
-    if (used[r.no]) duplicate = true;
-    used[r.no] = true;
-  });
-
-  if (duplicate) {
-    if (dialog && typeof dialog.setBusy === "function") {
-      dialog.setBusy(false);
-    }
-
-    showModal(
-      "⚠️",
-      "Duplicate Task Number",
-      "Duplicate task numbers are not allowed. Give every running task a unique number."
-    );
-    return;
-  }
-
-  rows.sort(function (a, b) {
-    return a.no - b.no;
-  });
-
-  saveQueueOrder(
-    assignee,
-    rows.map(function (r) {
-      return r.name;
-    }),
-    "Bulk task number update from Manage Assignee Queue."
-  )
-    .then(function () {
-      if (dialog && typeof dialog.hide === "function") {
-        dialog.hide();
-      }
-
-      toast(
-        "Assignee queue updated successfully.",
-        true
-      );
-
-      loadTasks();
-    })
-    .catch(function (err) {
-      void 0;
-
-      if (dialog && typeof dialog.setBusy === "function") {
-        dialog.setBusy(false);
-      }
-
-      showModal(
-        "⚠️",
-        "Queue Save Failed",
-        getErrorMessage(err)
-      );
-    });
-}
-
-/* ------------------------------------------------------------
-   Render task tables with Task No column
-   ------------------------------------------------------------ */
-
-var oldRenderTaskReportForQueue = renderTaskReport;
-
-renderTaskReport = function () {
-  ensureTaskQueueUI();
-
-  var body = $("#task-report-body");
-  if (!body) return;
-
-  var catF = getValue("tr-category");
-  var priF = getValue("tr-priority");
-  var statF = getValue("tr-status");
-
-  var filtered = tasks.filter(function (t) {
-    var meta = getTaskMeta(t);
-    var status = getTaskStatus(t);
-
-    return (
-      (!catF || meta.category === catF) &&
-      (!priF || t.priority === priF) &&
-      (!statF || status === statF) && taskMatchesAssigneeSearch(t)
-    );
-  });
-
-  filtered = sortByModifiedLatest(filtered);
-
-  renderTaskTiles();
-
-  setText("task-report-count", String(filtered.length));
-  var pageData = getPaginatedRows("taskReport", filtered);
-
-  if (!filtered.length) {
-    body.innerHTML =
-      '<tr><td colspan="10" style="text-align:center;color:#8C8C8C;padding:18px">No tasks found.</td></tr>';
-    return;
-  }
-
-  body.innerHTML = pageData.rows.map(function (t) {
-    var meta = getTaskMeta(t);
-    var status = getTaskStatus(t);
-    var details = getTaskDetails(t);
-    var updateTo = (meta.update_to || []).map(userDisplayName).join(", ") || "—";
-    var workedDays = calculateWorkedDaysLabel(t, meta);
-
-    var detailId = registerDetailHtml(
-      "Task Details - " + t.name,
-      buildTaskDetailsHtml(t, meta, details, updateTo),
-      buildTaskExtraHistorySection(meta)
-    );
-
-    return '' +
-      '<tr class="life-clickable-row" ' +
-        'data-detail-html-id="' + esc(detailId) + '" ' +
-        'data-doctype="ToDo" ' +
-        'data-docname="' + esc(t.name) + '">' +
-
-        '<td>' + queueNoHtml(t) + '</td>' +
-
-        '<td>' +
-          '<div class="life-user-date-cell">' +
-            '<div class="life-user-name">' + esc(userDisplayName(t.assigned_by || t.owner)) + '</div>' +
-            '<div class="life-user-date">Start: ' + esc(formatLifeDate(meta.start_date || t.creation)) + '</div>' +
-          '</div>' +
-        '</td>' +
-
-        '<td>' +
-          '<div class="life-user-date-cell">' +
-            '<div class="life-user-name">' + esc(userDisplayName(t.allocated_to)) + '</div>' +
-            '<div class="life-user-date">Due: ' + esc(formatLifeDateTime(meta.deadline_datetime || t.date)) + '</div>' +
-            '<div class="life-user-date">Worked: ' + esc(workedDays) + '</div>' +
-          '</div>' +
-        '</td>' +
-
-        '<td><div class="life-row-main-text">' + esc(meta.category || "—") + '</div></td>' +
-
-        '<td style="max-width:280px;white-space:normal">' +
-          '<div class="life-row-main-text">' + esc(shortPreviewText(details || "—", 110)) + '</div>' +
-        '</td>' +
-
-        '<td>' + priorityPill(t.priority) + '</td>' +
-        '<td style="max-width:180px;white-space:normal">' + esc(updateTo) + '</td>' +
-        '<td>' + attachmentChip("ToDo", t.name) + '</td>' +
-        '<td>' + statusPill(status) + '</td>' +
-        '<td>' + renderTaskActionButtons(t) + '</td>' +
-      '</tr>';
-  }).join("");
-
-  bindTaskActionButtons(body);
-  bindAttachmentChips(body);
-  bindClickableTaskRows(body);
-  renderTablePagination(body, "taskReport", pageData, renderTaskReport);
-};
-
-renderMyTasks = function () {
-  ensureTaskQueueUI();
-
-  var toBody = $("#mytask-to-body");
-  var byBody = $("#mytask-by-body");
-
-  if (!toBody || !byBody) return;
-
-  var toMe = tasks.filter(function (t) {
-    return isCurrentUserValue(t.allocated_to);
-  });
-
-  var byMe = tasks.filter(function (t) {
-    return (
-      t.owner === currentUser ||
-      t.assigned_by === currentUser ||
-      userDisplayName(t.owner) === currentUserFullName ||
-      userDisplayName(t.assigned_by) === currentUserFullName
-    );
-  });
-
-  setText("mytask-to-count", String(toMe.length));
-  setText("mytask-by-count", String(byMe.length));
-
-  toMe = toMe.slice().sort(function (a, b) {
-    if (isTaskQueueActive(a) && isTaskQueueActive(b)) {
-      return (getQueueNo(a) || 999999) - (getQueueNo(b) || 999999);
-    }
-    return getModifiedTime(b) - getModifiedTime(a);
-  });
-
-  byMe = sortByModifiedLatest(byMe);
-
-  var toPageData = getPaginatedRows("myTaskTo", toMe);
-  var byPageData = getPaginatedRows("myTaskBy", byMe);
-
-  toBody.innerHTML = toMe.length
-    ? toPageData.rows.map(function (t) {
-        var meta = getTaskMeta(t);
-        var status = getTaskStatus(t);
-        var details = getTaskDetails(t);
-        var updateTo = (meta.update_to || []).map(userDisplayName).join(", ") || "—";
-
-        var detailId = registerDetailHtml(
-          "Task Details - " + t.name,
-          buildTaskDetailsHtml(t, meta, details, updateTo),
-          buildTaskExtraHistorySection(meta)
-        );
-
-        return '' +
-          '<tr class="life-clickable-row" data-detail-html-id="' + esc(detailId) + '" data-doctype="ToDo" data-docname="' + esc(t.name) + '">' +
-            '<td>' + queueNoHtml(t) + '</td>' +
-            '<td>' +
-              '<div class="life-user-date-cell">' +
-                '<div class="life-user-name">' + esc(userDisplayName(t.assigned_by || t.owner)) + '</div>' +
-                '<div class="life-user-date">Start: ' + esc(formatLifeDate(meta.start_date || t.creation)) + '</div>' +
-              '</div>' +
-            '</td>' +
-            '<td><div class="life-row-main-text">' + esc(meta.category || "—") + '</div></td>' +
-            '<td>' + esc(formatLifeDateTime(meta.deadline_datetime || t.date)) + '</td>' +
-            '<td>' + priorityPill(t.priority) + '</td>' +
-            '<td>' + statusPill(status) + '</td>' +
-            '<td>' + renderTaskActionButtons(t) + '</td>' +
-          '</tr>';
-      }).join("")
-    : '<tr><td colspan="7" style="text-align:center;color:#8C8C8C;padding:14px">No tasks assigned to you.</td></tr>';
-
-  byBody.innerHTML = byMe.length
-    ? byPageData.rows.map(function (t) {
-        var meta = getTaskMeta(t);
-        var status = getTaskStatus(t);
-        var details = getTaskDetails(t);
-        var updateTo = (meta.update_to || []).map(userDisplayName).join(", ") || "—";
-
-        var detailId = registerDetailHtml(
-          "Task Details - " + t.name,
-          buildTaskDetailsHtml(t, meta, details, updateTo),
-          buildTaskExtraHistorySection(meta)
-        );
-
-        return '' +
-          '<tr class="life-clickable-row" data-detail-html-id="' + esc(detailId) + '" data-doctype="ToDo" data-docname="' + esc(t.name) + '">' +
-            '<td>' + queueNoHtml(t) + '</td>' +
-            '<td>' +
-              '<div class="life-user-date-cell">' +
-                '<div class="life-user-name">' + esc(userDisplayName(t.allocated_to)) + '</div>' +
-                '<div class="life-user-date">Due: ' + esc(formatLifeDateTime(meta.deadline_datetime || t.date)) + '</div>' +
-              '</div>' +
-            '</td>' +
-            '<td><div class="life-row-main-text">' + esc(meta.category || "—") + '</div></td>' +
-            '<td>' + esc(formatLifeDateTime(meta.deadline_datetime || t.date)) + '</td>' +
-            '<td>' + priorityPill(t.priority) + '</td>' +
-            '<td>' + statusPill(status) + '</td>' +
-            '<td>' + renderTaskActionButtons(t) + '</td>' +
-          '</tr>';
-      }).join("")
-    : '<tr><td colspan="7" style="text-align:center;color:#8C8C8C;padding:14px">You have not assigned any tasks.</td></tr>';
-
-  bindTaskActionButtons(toBody);
-  bindTaskActionButtons(byBody);
-
-  bindClickableTaskRows(toBody);
-  bindClickableTaskRows(byBody);
-
-  renderTablePagination(toBody, "myTaskTo", toPageData, renderMyTasks);
-  renderTablePagination(byBody, "myTaskBy", byPageData, renderMyTasks);
-};
-
-/* ------------------------------------------------------------
-   Make completed tasks leave queue
-   ------------------------------------------------------------ */
-
-var oldMarkTaskDoneForQueue = markTaskDone;
-
-markTaskDone = function (name) {
-  promptWorkflowRemarks(
-    "Complete Task",
-    "Completion Remarks *",
-    100,
-    function (remarks) {
-      frappe.call({
-        method: "frappe.client.get",
-        args: {
-          doctype: "ToDo",
-          name: name
-        },
-        callback: function (r) {
-          var doc = r.message;
-
-          if (!doc) {
-            showModal("⚠️", "Task Not Found", "Unable to load task.");
-            return;
-          }
-
-          var assignee = doc.allocated_to;
-          var meta = getTaskMeta(doc);
-          var details = getTaskDetails(doc);
-
-          meta.workflow_state = "Completed";
-          meta.completed_on = getNowLocalDateTime();
-          meta.completed_by = currentUser;
-          meta.completed_by_name = currentUserFullName || currentUser;
-          meta.completion_remarks = remarks;
-
-          meta.worked_days = calculateWorkedDaysLabel(
-            {
-              creation: doc.creation,
-              modified: doc.modified,
-              date: doc.date,
-              status: "Closed"
-            },
-            meta
-          );
-
-          meta.completion_history = meta.completion_history || [];
-          meta.completion_history.push({
-            by: currentUser,
-            by_name: currentUserFullName || currentUser,
-            on: meta.completed_on,
-            remarks: remarks
-          });
-
-          doc.status = "Open";
-          doc.description = buildTaskDescription(details, meta);
-          doc = appendQueueHistoryToDoc(
-          doc,
-          0,
-          "Task completed and removed from running queue.",
-          assignee
-          );
-        
-          doc.custom_queue_active = 0;
-          doc.custom_task_queue_no = 0;
-          doc.custom_completed_on = queueNow();
-          doc.custom_queue_updated_by = currentUser;
-          doc.custom_queue_updated_on = queueNow();
-
-          frappe.call({
-            method: "frappe.client.save",
-            args: {
-              doc: doc
-            },
-            callback: function () {
-              rebuildQueueForAssignee(assignee).then(function () {
-                toast("Task completion submitted and removed from running queue.", true);
-                loadTasks();
-              });
-            },
-            error: function (err) {
-              showModal("⚠️", "Update Failed", getErrorMessage(err));
-            }
-          });
-        },
-        error: function (err) {
-          showModal("⚠️", "Task Load Failed", getErrorMessage(err));
-        }
-      });
-    }
-  );
-};
-
-/* ------------------------------------------------------------
-   Initial UI injection
-   ------------------------------------------------------------ */
-
-ensureTaskQueueUI();
-
-/* ============================================================
-   TASK QUEUE HISTORY PATCH
-   Paste above init();
-   ============================================================ */
-
-function makeQueueHistoryEntry(oldNo, newNo, reason, assignee) {
-  return {
-    old_no: Number(oldNo || 0),
-    new_no: Number(newNo || 0),
-    changed_by: currentUser,
-    changed_by_name: currentUserFullName || currentUser,
-    changed_on: getNowLocalDateTime(),
-    assignee: assignee || "",
-    reason: reason || "Task number changed."
-  };
-}
-
-function appendQueueHistoryToDoc(doc, newNo, reason, assignee) {
-  doc = doc || {};
-
-  var oldNo = Number(doc.custom_task_queue_no || 0);
-  newNo = Number(newNo || 0);
-
-  if (oldNo === newNo) {
-    return doc;
-  }
-
-  var meta = getTaskMeta(doc);
-  var details = getTaskDetails(doc);
-
-  meta.queue_history = meta.queue_history || [];
-
-  meta.queue_history.push(
-    makeQueueHistoryEntry(
-      oldNo,
-      newNo,
-      reason,
-      assignee || doc.allocated_to || ""
-    )
-  );
-
-  /* Keep last 100 queue changes only, to avoid very heavy description */
-  if (meta.queue_history.length > 100) {
-    meta.queue_history = meta.queue_history.slice(-100);
-  }
-
-  doc.description = buildTaskDescription(details, meta);
-
-  return doc;
-}
-
-/* Override existing setTodoValues so queue no changes are recorded */
-setTodoValues = function (name, values, reason) {
-  values = values || {};
-
-  var hasQueueNoChange = Object.prototype.hasOwnProperty.call(
-    values,
-    "custom_task_queue_no"
-  );
-
-  values.custom_queue_updated_by = currentUser;
-  values.custom_queue_updated_on = queueNow();
-
-  if (!hasQueueNoChange) {
-    return qCall("frappe.client.set_value", {
-      doctype: "ToDo",
-      name: name,
-      fieldname: values
-    });
-  }
-
-  return qCall("frappe.client.get", {
-    doctype: "ToDo",
-    name: name
-  }).then(function (doc) {
-    doc = appendQueueHistoryToDoc(
-      doc,
-      Number(values.custom_task_queue_no || 0),
-      reason || "Task number changed.",
-      doc.allocated_to
-    );
-
-    Object.keys(values).forEach(function (key) {
-      doc[key] = values[key];
-    });
-
-    return qCall("frappe.client.save", {
-      doc: doc
-    });
-  });
-};
-
-/* Override queue save so every reorder writes history */
-saveQueueOrder = function (assignee, orderedNames, reason) {
-  var chain = Promise.resolve();
-
-  orderedNames.forEach(function (name, idx) {
-    name = typeof name === 'string' ? name : name && name.name;
-    if (!name) throw new Error('A task document name is required to reorder the queue.');
-    chain = chain.then(function () {
-      return setTodoValues(
-        name,
-        {
-          custom_task_queue_no: idx + 1,
-          custom_queue_active: 1
-        },
-        reason || "Queue reordered for " + userDisplayName(assignee) + "."
-      );
-    });
-  });
-
-  return chain;
-};
-
-/* Queue history UI inside Task Details modal */
-function buildTaskQueueHistoryHtml(history) {
-  history = history || [];
-
-  if (!history.length) {
-    return '<div class="life-empty-history">No task number change history available.</div>';
-  }
-
-  return '' +
-    '<div class="life-queue-history-list">' +
-      history.slice().reverse().map(function (h) {
-        var oldNo = Number(h.old_no || 0);
-        var newNo = Number(h.new_no || 0);
-
-        return '' +
-          '<div class="life-queue-history-card">' +
-
-            '<div class="life-queue-history-top">' +
-              '<div class="life-queue-history-title">' +
-                esc(h.changed_by_name || h.changed_by || "—") +
-              '</div>' +
-              '<div class="life-queue-history-date">' +
-                esc(formatLifeDateTime(h.changed_on || "")) +
-              '</div>' +
-            '</div>' +
-
-            '<div class="life-queue-history-change">' +
-              '<span>Old: ' + esc(oldNo || "—") + '</span>' +
-              '<span>→</span>' +
-              '<span>New: ' + esc(newNo || "—") + '</span>' +
-            '</div>' +
-
-            '<div class="life-queue-history-meta">' +
-              'Assignee: ' + esc(userDisplayName(h.assignee || "")) +
-            '</div>' +
-
-            '<div class="life-queue-history-reason">' +
-              esc(h.reason || "Task number changed.") +
-            '</div>' +
-
-          '</div>';
-      }).join("") +
-    '</div>';
-}
-
-function buildTaskQueueHistorySection(meta) {
-  meta = meta || {};
-
-  return '' +
-    '<div class="life-detail-section">' +
-      '<div class="life-detail-section-title">Task Number Change History</div>' +
-      buildTaskQueueHistoryHtml(meta.queue_history || []) +
-    '</div>';
-}
-
-/* Attach queue history to existing task extra history section */
-var oldBuildTaskExtraHistorySectionForQueueHistory =
-  typeof buildTaskExtraHistorySection === "function"
-    ? buildTaskExtraHistorySection
-    : function () { return ""; };
-
-buildTaskExtraHistorySection = function (meta) {
-  meta = meta || {};
-
-  return (
-    oldBuildTaskExtraHistorySectionForQueueHistory(meta) +
-    buildTaskQueueHistorySection(meta)
-  );
-};
-
-/* ============================================================
-   ALL TASKS — GROUP OPEN TASKS BY ASSIGNEE
-   Paste above init();
-   ============================================================ */
-
-var lifeRenderTaskReportBaseForAssigneeGroup = renderTaskReport;
-
-function ensureAssigneeGroupViewUI() {
-  if ($("#tr-view-mode")) return;
-
-  var fbar = $("#task-sub-1 .fbar");
-  if (!fbar) return;
-
-  fbar.insertAdjacentHTML(
-    "beforeend",
-    '' +
-    '<div class="life-view-mode-control">' +
-      '<label class="lbl">View</label>' +
-      '<select id="tr-view-mode">' +
-        '<option value="list">Normal List</option>' +
-        '<option value="assignee_open">Open Tasks by Assignee</option>' +
-      '</select>' +
-    '</div>'
-  );
-
-  var viewMode = $("#tr-view-mode");
-
-  if (viewMode) {
-    viewMode.addEventListener("change", function () {
-      resetTablePage("taskReport");
-
-      if (viewMode.value === "assignee_open") {
-        var statusFilter = $("#tr-status");
-
-        /*
-          Keep Status as All when entering grouped view.
-          In grouped view, All means only Open / Reopened / Overdue.
-        */
-        if (statusFilter) statusFilter.value = "";
-      }
-
-      renderTaskReport();
-    });
-  }
-}
-
-function getTaskReportViewMode() {
-  var el = $("#tr-view-mode");
-  return el ? String(el.value || "list") : "list";
-}
-
-function isOpenTaskForAssigneeGroup(t) {
-  var status = getTaskStatus(t);
-
-  return (
-    status === "Open" ||
-    status === "Reopened" ||
-    status === "Overdue"
-  );
-}
-
-function getTaskDeadlineSortValue(t) {
-  var meta = getTaskMeta(t);
-  var value = meta.deadline_datetime || t.date || t.modified || t.creation || "";
-
-  value = String(value || "").replace(" ", "T");
-
-  var time = new Date(value).getTime();
-
-  return isNaN(time) ? 9999999999999 : time;
-}
-
-function sortTasksInsideAssigneeGroup(rows) {
-  return (rows || []).slice().sort(function (a, b) {
-    var aq = getQueueNo(a) || 999999;
-    var bq = getQueueNo(b) || 999999;
-
-    if (aq !== bq) return aq - bq;
-
-    var ad = getTaskDeadlineSortValue(a);
-    var bd = getTaskDeadlineSortValue(b);
-
-    if (ad !== bd) return ad - bd;
-
-    return getModifiedTime(b) - getModifiedTime(a);
-  });
-}
-
-function groupTasksByAssignee(rows) {
-  var groups = {};
-
-  (rows || []).forEach(function (t) {
-    var assignee = t.allocated_to || "Unassigned";
-
-    if (!groups[assignee]) {
-      groups[assignee] = [];
-    }
-
-    groups[assignee].push(t);
-  });
-
-  return groups;
-}
-
-
-function buildGroupedTaskReportRowHtml(t) {
-  var meta = getTaskMeta(t);
-  var status = getTaskStatus(t);
-  var details = getTaskDetails(t);
-  var updateTo = (meta.update_to || []).map(userDisplayName).join(", ") || "—";
-  var workedDays = calculateWorkedDaysLabel(t, meta);
-
-  var detailId = registerDetailHtml(
-    "Task Details - " + t.name,
-    buildTaskDetailsHtml(t, meta, details, updateTo),
-    buildTaskExtraHistorySection(meta)
-  );
-
-  return '' +
-    '<tr class="life-clickable-row" ' +
-      'data-detail-html-id="' + esc(detailId) + '" ' +
-      'data-doctype="ToDo" ' +
-      'data-docname="' + esc(t.name) + '">' +
-
-      '<td>' + queueNoHtml(t) + '</td>' +
-
-      '<td>' +
-        '<div class="life-user-date-cell">' +
-          '<div class="life-user-name">' + esc(userDisplayName(t.assigned_by || t.owner)) + '</div>' +
-          '<div class="life-user-date">Start: ' + esc(formatLifeDate(meta.start_date || t.creation)) + '</div>' +
-        '</div>' +
-      '</td>' +
-
-      '<td>' +
-        '<div class="life-user-date-cell">' +
-          '<div class="life-user-name">' + esc(userDisplayName(t.allocated_to)) + '</div>' +
-          '<div class="life-user-date">Due: ' + esc(formatLifeDateTime(meta.deadline_datetime || t.date)) + '</div>' +
-          '<div class="life-user-date">Worked: ' + esc(workedDays) + '</div>' +
-        '</div>' +
-      '</td>' +
-
-      '<td><div class="life-row-main-text">' + esc(meta.category || "—") + '</div></td>' +
-
-      '<td style="max-width:280px;white-space:normal">' +
-        '<div class="life-row-main-text">' + esc(shortPreviewText(details || "—", 110)) + '</div>' +
-      '</td>' +
-
-      '<td>' + priorityPill(t.priority) + '</td>' +
-      '<td style="max-width:180px;white-space:normal">' + esc(updateTo) + '</td>' +
-      '<td>' + attachmentChip("ToDo", t.name) + '</td>' +
-      '<td>' + statusPill(status) + '</td>' +
-      '<td>' + renderTaskActionButtons(t) + '</td>' +
-
-    '</tr>';
-}
-
-function clearTaskReportPagerForGroupedView() {
-  var pager = $("#life-pager-taskReport");
-  if (pager) pager.innerHTML = "";
-}
-
-function bindAssigneeGroupButtons(scope) {
-  (scope || root).querySelectorAll(".life-group-manage-btn").forEach(function (btn) {
-    if (btn.dataset.boundAssigneeGroup === "1") return;
-
-    btn.dataset.boundAssigneeGroup = "1";
-
-    btn.addEventListener("click", function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-
-      var assignee = btn.dataset.assignee || "";
-
-      if (assignee && assignee !== "Unassigned") {
-        openManageQueueDialog(assignee);
-      }
-    });
-  });
-}
-
-function renderTaskReportGroupedByAssignee() {
-  ensureTaskQueueUI();
-  ensureAssigneeGroupViewUI();
-
-  var body = $("#task-report-body");
-  if (!body) return;
-
-  var catF = getValue("tr-category");
-  var priF = getValue("tr-priority");
-  var statF = getValue("tr-status");
-
-  var filtered = tasks.filter(function (t) {
-    var meta = getTaskMeta(t);
-    var status = getTaskStatus(t);
-
-    /*
-      In grouped view:
-      - If Status is All, show only running/open tasks.
-      - If a Status is selected, respect that selected status.
-    */
-    var statusOk = statF
-      ? status === statF
-      : isOpenTaskForAssigneeGroup(t);
-
-    return (
-      (!catF || meta.category === catF) &&
-      (!priF || t.priority === priF) &&
-      statusOk
-    );
-  });
-
-  renderTaskTiles();
-  setText("task-report-count", String(filtered.length));
-  clearTaskReportPagerForGroupedView();
-
-  if (!filtered.length) {
-    body.innerHTML =
-      '<tr><td colspan="10" style="text-align:center;color:#8C8C8C;padding:18px">' +
-        'No running tasks found for grouping.' +
-      '</td></tr>';
-    return;
-  }
-
-  var groups = groupTasksByAssignee(filtered);
-
-  var assigneeKeys = Object.keys(groups).sort(function (a, b) {
-    return userDisplayName(a).localeCompare(userDisplayName(b));
-  });
-
-  var html = "";
-
-  assigneeKeys.forEach(function (assignee) {
-    var rows = sortTasksInsideAssigneeGroup(groups[assignee]);
-
-    html += buildAssigneeGroupHeaderHtml(assignee, rows);
-
-    html += rows.map(function (t) {
-      return buildGroupedTaskReportRowHtml(t);
-    }).join("");
-  });
-
-  body.innerHTML = html;
-
-  bindTaskActionButtons(body);
-  bindAttachmentChips(body);
-  bindClickableTaskRows(body);
-  bindAssigneeGroupButtons(body);
-}
-
-/* Final override of All Tasks Report */
-renderTaskReport = function () {
-  ensureAssigneeGroupViewUI();
-
-  if (getTaskReportViewMode() === "assignee_open") {
-    renderTaskReportGroupedByAssignee();
-    return;
-  }
-
-  lifeRenderTaskReportBaseForAssigneeGroup();
-};
-
-/* ============================================================
-   FORCE ALL TASKS DEFAULT VIEW AS GROUPED BY ASSIGNEE
-   Paste below existing grouping patch and above init();
-   ============================================================ */
-
-function forceAssigneeGroupedViewDefault() {
-  ensureAssigneeGroupViewUI();
-
-  var mode = $("#tr-view-mode");
-
-  if (!mode) return;
-
-  if (mode.dataset.lifeDefaultGrouped !== "1") {
-    mode.value = "assignee_open";
-    mode.dataset.lifeDefaultGrouped = "1";
-  }
-}
-
-/* Final final override */
-renderTaskReport = function () {
-  forceAssigneeGroupedViewDefault();
-
-  if (getTaskReportViewMode() === "assignee_open") {
-    renderTaskReportGroupedByAssignee();
-    return;
-  }
-
-  lifeRenderTaskReportBaseForAssigneeGroup();
-};
-
-/* ============================================================
-   ASSIGNEE GROUP ACCORDION PATCH
-   Paste BELOW existing grouped-view patch and ABOVE init();
-   ============================================================ */
-
-var lifeAssigneeGroupOpenState = lifeAssigneeGroupOpenState || {};
-
-function isAssigneeGroupExpanded(assignee) {
-  return lifeAssigneeGroupOpenState[assignee] === true;
-}
-
-function toggleAssigneeGroup(assignee) {
-  lifeAssigneeGroupOpenState[assignee] = !isAssigneeGroupExpanded(assignee);
-  renderTaskReportGroupedByAssignee();
-}
-
-
-function bindAssigneeGroupButtons(scope) {
-  (scope || root).querySelectorAll(".life-assignee-toggle-zone").forEach(function (zone) {
-    if (zone.dataset.boundAssigneeToggle === "1") return;
-
-    zone.dataset.boundAssigneeToggle = "1";
-
-    zone.addEventListener("click", function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-
-      var assignee = zone.dataset.assignee || "";
-
-      if (assignee) {
-        toggleAssigneeGroup(assignee);
-      }
-    });
-  });
-
-  (scope || root).querySelectorAll(".life-group-manage-btn").forEach(function (btn) {
-    if (btn.dataset.boundAssigneeGroup === "1") return;
-
-    btn.dataset.boundAssigneeGroup = "1";
-
-    btn.addEventListener("click", function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-
-      var assignee = btn.dataset.assignee || "";
-
-      if (assignee && assignee !== "Unassigned") {
-        openManageQueueDialog(assignee);
-      }
-    });
-  });
-}
-
-renderTaskReportGroupedByAssignee = function () {
-  ensureTaskQueueUI();
-  ensureAssigneeGroupViewUI();
-
-  var body = $("#task-report-body");
-  if (!body) return;
-
-  var catF = getValue("tr-category");
-  var priF = getValue("tr-priority");
-  var statF = getValue("tr-status");
-
-  var filtered = tasks.filter(function (t) {
-    var meta = getTaskMeta(t);
-    var status = getTaskStatus(t);
-
-    var statusOk = statF
-      ? status === statF
-      : isOpenTaskForAssigneeGroup(t);
-
-    return (
-      (!catF || meta.category === catF) &&
-      (!priF || t.priority === priF) &&
-      statusOk
-    );
-  });
-
-  renderTaskTiles();
-  setText("task-report-count", String(filtered.length));
-  clearTaskReportPagerForGroupedView();
-
-  if (!filtered.length) {
-    body.innerHTML =
-      '<tr><td colspan="10" style="text-align:center;color:#8C8C8C;padding:18px">' +
-        'No running tasks found for grouping.' +
-      '</td></tr>';
-    return;
-  }
-
-  var groups = groupTasksByAssignee(filtered);
-
-  var assigneeKeys = Object.keys(groups).sort(function (a, b) {
-    return userDisplayName(a).localeCompare(userDisplayName(b));
-  });
-
-  var html = "";
-
-  assigneeKeys.forEach(function (assignee) {
-    var rows = sortTasksInsideAssigneeGroup(groups[assignee]);
-    var expanded = isAssigneeGroupExpanded(assignee);
-
-    html += buildAssigneeGroupHeaderHtml(assignee, rows, expanded);
-
-    if (expanded) {
-      html += rows.map(function (t) {
-        return buildGroupedTaskReportRowHtml(t);
-      }).join("");
-    }
-  });
-
-  body.innerHTML = html;
-
-  bindTaskActionButtons(body);
-  bindAttachmentChips(body);
-  bindClickableTaskRows(body);
-  bindAssigneeGroupButtons(body);
-};
-
-/* ============================================================
-   COMPLETED TASKS IN GROUPED VIEW - CLEAN DISPLAY PATCH
-   Paste below grouped accordion patch and above init();
-   ============================================================ */
-
-function getGroupedTaskModeLabel() {
-  var statF = getValue("tr-status");
-
-  if (statF === "Completed") return "completed";
-  if (statF === "Closed") return "closed";
-  if (statF === "Cancelled") return "cancelled";
-
-  return "running";
-}
-
-function groupedQueueNoHtml(t) {
-  var status = getTaskStatus(t);
-
-  if (status === "Completed") {
-    return '<span class="life-queue-empty">Done</span>';
-  }
-
-  if (status === "Closed") {
-    return '<span class="life-queue-empty">Closed</span>';
-  }
-
-  if (status === "Cancelled") {
-    return '<span class="life-queue-empty">Cancelled</span>';
-  }
-
-  return queueNoHtml(t);
-}
-
-/* Override grouped task row to show Done instead of queue no for completed */
-function buildGroupedTaskReportRowHtml(t) {
-  var meta = getTaskMeta(t);
-  var status = getTaskStatus(t);
-  var details = getTaskDetails(t);
-  var updateTo = (meta.update_to || []).map(userDisplayName).join(", ") || "—";
-  var workedDays = calculateWorkedDaysLabel(t, meta);
-
-  var detailId = registerDetailHtml(
-    "Task Details - " + t.name,
-    buildTaskDetailsHtml(t, meta, details, updateTo),
-    buildTaskExtraHistorySection(meta)
-  );
-
-  return '' +
-    '<tr class="life-clickable-row" ' +
-      'data-detail-html-id="' + esc(detailId) + '" ' +
-      'data-doctype="ToDo" ' +
-      'data-docname="' + esc(t.name) + '">' +
-
-      '<td>' + groupedQueueNoHtml(t) + '</td>' +
-
-      '<td>' +
-        '<div class="life-user-date-cell">' +
-          '<div class="life-user-name">' + esc(userDisplayName(t.assigned_by || t.owner)) + '</div>' +
-          '<div class="life-user-date">Start: ' + esc(formatLifeDate(meta.start_date || t.creation)) + '</div>' +
-        '</div>' +
-      '</td>' +
-
-      '<td>' +
-        '<div class="life-user-date-cell">' +
-          '<div class="life-user-name">' + esc(userDisplayName(t.allocated_to)) + '</div>' +
-          '<div class="life-user-date">Due: ' + esc(formatLifeDateTime(meta.deadline_datetime || t.date)) + '</div>' +
-          '<div class="life-user-date">Worked: ' + esc(workedDays) + '</div>' +
-        '</div>' +
-      '</td>' +
-
-      '<td><div class="life-row-main-text">' + esc(meta.category || "—") + '</div></td>' +
-
-      '<td style="max-width:280px;white-space:normal">' +
-        '<div class="life-row-main-text">' + esc(shortPreviewText(details || "—", 110)) + '</div>' +
-      '</td>' +
-
-      '<td>' + priorityPill(t.priority) + '</td>' +
-      '<td style="max-width:180px;white-space:normal">' + esc(updateTo) + '</td>' +
-      '<td>' + attachmentChip("ToDo", t.name) + '</td>' +
-      '<td>' + statusPill(status) + '</td>' +
-      '<td>' + renderTaskActionButtons(t) + '</td>' +
-
-    '</tr>';
-}
-
-/* Override group header so completed view does not say running task(s) */
-function buildAssigneeGroupHeaderHtml(assignee, rows, expanded) {
-  rows = rows || [];
-
-  var sortedRows = sortTasksInsideAssigneeGroup(rows);
-  var modeLabel = getGroupedTaskModeLabel();
-
-  var overdueCount = rows.filter(function (t) {
-    return getTaskStatus(t) === "Overdue";
-  }).length;
-
-  var highCount = rows.filter(function (t) {
-    return t.priority === "High";
-  }).length;
-
-  var openCount = rows.filter(function (t) {
-    var s = getTaskStatus(t);
-    return s === "Open" || s === "Reopened";
-  }).length;
-
-  var completedCount = rows.filter(function (t) {
-    return getTaskStatus(t) === "Completed";
-  }).length;
-
-  var nextTask = sortedRows[0];
-
-  var nextLabel = modeLabel === "running" ? "Next" : "Latest";
-
-  var nextText = nextTask
-    ? shortPreviewText(getTaskDetails(nextTask) || "No task details", 90)
-    : "No task";
-
-  return '' +
-    '<tr class="life-assignee-group-row" data-assignee="' + esc(assignee) + '">' +
-      '<td colspan="10">' +
-        '<div class="life-assignee-accordion-head">' +
-
-          '<div class="life-assignee-toggle-zone" data-assignee="' + esc(assignee) + '">' +
-            '<span class="life-assignee-arrow">' + (expanded ? "▼" : "▶") + '</span>' +
-
-            '<div class="life-assignee-title-box">' +
-              '<div class="life-assignee-group-name">' +
-                  '<span class="life-assignee-user-icon" aria-hidden="true">' +
-                    '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">' +
-                      '<path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v1.5c0 .28.22.5.5.5h15c.28 0 .5-.22.5-.5V18c0-2.66-5.33-4-8-4z"></path>' +
-                    '</svg>' +
-                  '</span>' +
-                  '<span>' + esc(userDisplayName(assignee)) + '</span>' +
-                '</div>' +
-              '<div class="life-assignee-group-next">' +
-                nextLabel + ': ' + esc(nextText) +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-
-          '<div class="life-assignee-group-info-row">' +
-            '<span class="life-assignee-stat gold">' +
-              esc(rows.length) + ' ' + esc(modeLabel) + ' task(s)' +
-            '</span>' +
-
-            (
-              modeLabel === "running"
-                ? '<span class="life-assignee-stat green">Open: ' + esc(openCount) + '</span>' +
-                  '<span class="life-assignee-stat">High: ' + esc(highCount) + '</span>' +
-                  '<span class="life-assignee-stat red">Overdue: ' + esc(overdueCount) + '</span>' +
-                  '<button type="button" class="life-group-manage-btn" data-assignee="' + esc(assignee) + '">' +
-                    'Manage Queue' +
-                  '</button>'
-                : '<span class="life-assignee-stat green">Completed: ' + esc(completedCount) + '</span>' +
-                  '<span class="life-assignee-stat">High: ' + esc(highCount) + '</span>'
-            ) +
-
-            (
-              expanded
-                ? ''
-                : '<span class="life-assignee-collapsed-note">Click employee name to expand tasks</span>'
-            ) +
-          '</div>' +
-
-        '</div>' +
-      '</td>' +
-    '</tr>';
-}
-
-/* ============================================================
-   ALL TASKS HEADER EMPLOYEE SEARCH FILTER
-   Paste below grouped/accordion patches and above init();
-   ============================================================ */
-
-function ensureAllTasksEmployeeSearchUI() {
-  var body = $("#task-report-body");
-  if (!body) return;
-
-  var card = body.closest(".card");
-  if (!card) return;
-
-  var hdr = card.querySelector(".card-hdr");
-  if (!hdr) return;
-
-  if (hdr.dataset.lifeAssigneeSearchReady === "1") return;
-  hdr.dataset.lifeAssigneeSearchReady = "1";
-
-  var countBadge = $("#task-report-count");
-
-  hdr.innerHTML =
-    '<div class="life-alltasks-head-left">' +
-      '<span>All Tasks</span>' +
-    '</div>' +
-    '<div class="life-alltasks-head-actions">' +
-      '<input type="text" id="life-task-assignee-search" class="life-task-assignee-search" ' +
-        'placeholder="Search employee / assignee...">' +
-      '<button type="button" id="life-task-assignee-clear" class="life-task-assignee-clear">Clear</button>' +
-      '<span class="badge" id="task-report-count">' + esc(countBadge ? countBadge.textContent : "0") + '</span>' +
-    '</div>';
-
-  var searchInput = $("#life-task-assignee-search");
-  var clearBtn = $("#life-task-assignee-clear");
-
-  if (searchInput) {
-    searchInput.addEventListener("input", function () {
-      resetTablePage("taskReport");
-      renderTaskReport();
-    });
-  }
-
-  if (clearBtn) {
-    clearBtn.addEventListener("click", function () {
-      var input = $("#life-task-assignee-search");
-
-      if (input) {
-        input.value = "";
-      }
-
-      resetTablePage("taskReport");
-      renderTaskReport();
-    });
-  }
-}
-
-function getAssigneeSearchText() {
-  var input = $("#life-task-assignee-search");
-  return input ? String(input.value || "").trim().toLowerCase() : "";
-}
-
-function taskMatchesAssigneeSearch(t) {
-  var q = getAssigneeSearchText();
-
-  if (!q) return true;
-
-  var assignee = t.allocated_to || "";
-  var assigneeName = userDisplayName(assignee);
-  var label = userLabel(assignee);
-
-  var text = [
-    assignee,
-    assigneeName,
-    label
-  ].join(" ").toLowerCase();
-
-  return text.indexOf(q) !== -1;
-}
-
-/* Override grouped renderer with employee-search support */
-renderTaskReportGroupedByAssignee = function () {
-  ensureTaskQueueUI();
-  ensureAssigneeGroupViewUI();
-  ensureAllTasksEmployeeSearchUI();
-
-  var body = $("#task-report-body");
-  if (!body) return;
-
-  var catF = getValue("tr-category");
-  var priF = getValue("tr-priority");
-  var statF = getValue("tr-status");
-  var assigneeSearch = getAssigneeSearchText();
-
-  var filtered = tasks.filter(function (t) {
-    var meta = getTaskMeta(t);
-    var status = getTaskStatus(t);
-
-    var statusOk = statF
-      ? status === statF
-      : isOpenTaskForAssigneeGroup(t);
-
-    return (
-      (!catF || meta.category === catF) &&
-      (!priF || t.priority === priF) &&
-      statusOk &&
-      taskMatchesAssigneeSearch(t)
-    );
-  });
-
-  renderTaskTiles();
-  setText("task-report-count", String(filtered.length));
-  clearTaskReportPagerForGroupedView();
-
-  if (!filtered.length) {
-    body.innerHTML =
-      '<tr><td colspan="10" style="text-align:center;color:#8C8C8C;padding:18px">' +
-        (
-          assigneeSearch
-            ? 'No task groups found for "' + esc(assigneeSearch) + '".'
-            : 'No running tasks found for grouping.'
-        ) +
-      '</td></tr>';
-    return;
-  }
-
-  var groups = groupTasksByAssignee(filtered);
-
-  var assigneeKeys = Object.keys(groups).sort(function (a, b) {
-    return userDisplayName(a).localeCompare(userDisplayName(b));
-  });
-
-  var html = "";
-
-  assigneeKeys.forEach(function (assignee) {
-    var rows = sortTasksInsideAssigneeGroup(groups[assignee]);
-    var expanded = isAssigneeGroupExpanded(assignee);
-
-    html += buildAssigneeGroupHeaderHtml(assignee, rows, expanded);
-
-    if (expanded) {
-      html += rows.map(function (t) {
-        return buildGroupedTaskReportRowHtml(t);
-      }).join("");
-    }
-  });
-
-  body.innerHTML = html;
-
-  bindTaskActionButtons(body);
-  bindAttachmentChips(body);
-  bindClickableTaskRows(body);
-  bindAssigneeGroupButtons(body);
-};
-
-/* Final override so header search is always created */
-var lifeRenderTaskReportAfterAssigneeSearch = renderTaskReport;
-
-renderTaskReport = function () {
-  ensureAllTasksEmployeeSearchUI();
-
-  if (typeof forceAssigneeGroupedViewDefault === "function") {
-    forceAssigneeGroupedViewDefault();
-  }
-
-  if (getTaskReportViewMode && getTaskReportViewMode() === "assignee_open") {
-    renderTaskReportGroupedByAssignee();
-    return;
-  }
-
-  lifeRenderTaskReportAfterAssigneeSearch();
-};
-
-/* ============================================================
-   TASK CANCEL / REOPEN WITH REMARK HISTORY
-   Paste near bottom of JS, before final init();
-   ============================================================ */
-
-function isTaskCanceller(t) {
-  return isTaskAssigner(t) || isManager;
-}
-
-function canCancelTask(t) {
-  var status = getTaskStatus(t);
-
-  return (
-    isTaskCanceller(t) &&
-    ["Completed", "Closed", "Cancelled"].indexOf(status) === -1
-  );
-}
-
-function canReopenCancelledTask(t) {
-  return isTaskCanceller(t) && getTaskStatus(t) === "Cancelled";
-}
-
-function makeTaskStatusHistoryEntry(action, oldStatus, newStatus, remark) {
-  return {
-    action: action || "",
-    old_status: oldStatus || "",
-    new_status: newStatus || "",
-    remark: remark || "",
-    changed_by: currentUser,
-    changed_by_name: currentUserFullName || currentUser,
-    changed_on: getNowLocalDateTime()
-  };
-}
-
-function appendTaskStatusHistoryToDoc(doc, action, oldStatus, newStatus, remark) {
-  doc = doc || {};
-
-  var meta = getTaskMeta(doc);
-  var details = getTaskDetails(doc);
-
-  meta.status_history = meta.status_history || [];
-
-  meta.status_history.push(
-    makeTaskStatusHistoryEntry(action, oldStatus, newStatus, remark)
-  );
-
-  if (meta.status_history.length > 100) {
-    meta.status_history = meta.status_history.slice(-100);
-  }
-
-  doc.description = buildTaskDescription(details, meta);
-
-  return doc;
-}
-
-function buildTaskStatusHistoryHtml(history) {
-  history = history || [];
-
-  if (!history.length) {
-    return '<div class="life-empty-history">No cancel / reopen history available.</div>';
-  }
-
-  return '' +
-    '<div class="life-history-list">' +
-      history.slice().reverse().map(function (h, idx) {
-        return '' +
-          '<div class="life-history-card">' +
-            '<div class="life-history-head">' +
-              '<div class="life-history-title">' +
-                esc(h.action || "Status Update") + ' - ' +
-                esc(h.changed_by_name || h.changed_by || "—") +
-              '</div>' +
-              '<div class="life-history-date">' +
-                esc(formatLifeDateTime(h.changed_on || "")) +
-              '</div>' +
-            '</div>' +
-
-            '<div class="life-history-grid">' +
-              '<div>' +
-                '<div class="life-detail-label">Old Status</div>' +
-                '<div class="life-detail-value">' + esc(h.old_status || "—") + '</div>' +
-              '</div>' +
-              '<div>' +
-                '<div class="life-detail-label">New Status</div>' +
-                '<div class="life-detail-value">' + esc(h.new_status || "—") + '</div>' +
-              '</div>' +
-            '</div>' +
-
-            '<div class="life-detail-label">Remark</div>' +
-            '<div class="life-history-remarks">' + esc(h.remark || "—") + '</div>' +
-          '</div>';
-      }).join("") +
-    '</div>';
-}
-
-function buildTaskStatusHistorySection(meta) {
-  meta = meta || {};
-
-  return '' +
-    '<div class="life-detail-section">' +
-      '<div class="life-detail-section-title">Cancel / Reopen History</div>' +
-      buildTaskStatusHistoryHtml(meta.status_history || []) +
-    '</div>';
-}
-
-/* Add cancel/reopen history into existing Task Details modal */
-var oldBuildTaskExtraHistorySectionForCancelReopen =
-  typeof buildTaskExtraHistorySection === "function"
-    ? buildTaskExtraHistorySection
-    : function () { return ""; };
-
-buildTaskExtraHistorySection = function (meta) {
-  meta = meta || {};
-
-  return (
-    oldBuildTaskExtraHistorySectionForCancelReopen(meta) +
-    buildTaskStatusHistorySection(meta)
-  );
-};
-
-function openCancelTaskDialog(name) {
-  var task = tasks.find(function (t) {
-    return t.name === name;
-  });
-
-  if (!task) {
-    showModal("⚠️", "Task Not Found", "Unable to find this task.");
-    return;
-  }
-
-  if (!canCancelTask(task)) {
-    showModal("⚠️", "Not Allowed", "Only the assigner or manager can cancel a running task.");
-    return;
-  }
-
-  var d = new frappe.ui.Dialog({
-    title: "Cancel Task",
-    fields: [
-      {
-        fieldtype: "Small Text",
-        fieldname: "remark",
-        label: "Cancellation Remark",
-        reqd: 1
-      }
-    ],
-    primary_action_label: "Cancel Task",
-    primary_action: function (values) {
-      var remark = String(values.remark || "").trim();
-
-      if (!remark) {
-        frappe.msgprint("Please enter cancellation remark.");
-        return;
-      }
-
-      d.hide();
-      cancelTaskWithRemark(name, remark);
-    }
-  });
-
-  d.show();
-}
-
-function cancelTaskWithRemark(name, remark) {
-  qCall("frappe.client.get", {
-    doctype: "ToDo",
-    name: name
-  }).then(function (doc) {
-    var oldStatus = getTaskStatus(doc);
-    var assignee = doc.allocated_to || "";
-
-    if (!canCancelTask(doc)) {
-      throw new Error("Only the assigner or manager can cancel this task.");
-    }
-
-    doc = appendTaskStatusHistoryToDoc(
-      doc,
-      "Cancelled",
-      oldStatus,
-      "Cancelled",
-      remark
-    );
-
-    doc = appendQueueHistoryToDoc(
-      doc,
-      0,
-      "Task cancelled and removed from running queue.",
-      assignee
-    );
-
-    doc.status = "Cancelled";
-    doc.custom_queue_active = 0;
-    doc.custom_task_queue_no = 0;
-    doc.custom_queue_updated_by = currentUser;
-    doc.custom_queue_updated_on = queueNow();
-
-    return qCall("frappe.client.save", {
-      doc: doc
-    }).then(function () {
-      return rebuildQueueForAssignee(assignee);
-    });
-  }).then(function () {
-    toast("Task cancelled and removed from running queue.", true);
-    loadTasks();
-  }).catch(function (err) {
-    showModal("⚠️", "Cancel Failed", getErrorMessage(err));
-  });
-}
-
-function openReopenTaskDialog(name) {
-  var task = tasks.find(function (t) {
-    return t.name === name;
-  });
-
-  if (!task) {
-    showModal("⚠️", "Task Not Found", "Unable to find this task.");
-    return;
-  }
-
-  if (!canReopenCancelledTask(task)) {
-    showModal("⚠️", "Not Allowed", "Only cancelled tasks can be reopened by the assigner or manager.");
-    return;
-  }
-
-  var d = new frappe.ui.Dialog({
-    title: "Reopen Cancelled Task",
-    fields: [
-      {
-        fieldtype: "Small Text",
-        fieldname: "remark",
-        label: "Reopen Remark",
-        reqd: 1
-      }
-    ],
-    primary_action_label: "Reopen Task",
-    primary_action: function (values) {
-      var remark = String(values.remark || "").trim();
-
-      if (!remark) {
-        frappe.msgprint("Please enter reopen remark.");
-        return;
-      }
-
-      d.hide();
-      reopenCancelledTaskWithRemark(name, remark);
-    }
-  });
-
-  d.show();
-}
-
-function reopenCancelledTaskWithRemark(name, remark) {
-  qCall("frappe.client.get", {
-    doctype: "ToDo",
-    name: name
-  }).then(function (doc) {
-    var oldStatus = getTaskStatus(doc);
-    var assignee = doc.allocated_to || "";
-
-    if (!canReopenCancelledTask(doc)) {
-      throw new Error("Only cancelled tasks can be reopened by the assigner or manager.");
-    }
-
-    return fetchAssigneeQueue(assignee).then(function (runningRows) {
-      var nextNo = (runningRows || []).length + 1;
-
-      doc = appendTaskStatusHistoryToDoc(
-        doc,
-        "Reopened",
-        oldStatus,
-        "Open",
-        remark
-      );
-
-      doc = appendQueueHistoryToDoc(
-        doc,
-        nextNo,
-        "Cancelled task reopened and added back to running queue.",
-        assignee
-      );
-
-      doc.status = "Open";
-      doc.custom_queue_active = 1;
-      doc.custom_task_queue_no = nextNo;
-      doc.custom_completed_on = null;
-      doc.custom_queue_updated_by = currentUser;
-      doc.custom_queue_updated_on = queueNow();
-
-      return qCall("frappe.client.save", {
-        doc: doc
-      });
-    });
-  }).then(function () {
-    toast("Task reopened and added back to running queue.", true);
-    loadTasks();
-  }).catch(function (err) {
-    showModal("⚠️", "Reopen Failed", getErrorMessage(err));
-  });
-}
-
-/* Add Cancel / Reopen buttons to task action column */
-var oldRenderTaskActionButtonsForCancelReopen = renderTaskActionButtons;
-
-renderTaskActionButtons = function (t) {
-  var originalHtml = oldRenderTaskActionButtonsForCancelReopen(t);
-  var extraHtml = "";
-
-  if (canCancelTask(t)) {
-    extraHtml +=
-      '<button class="btn btn-sm life-task-cancel-btn task-cancel-btn" data-name="' + esc(t.name) + '">' +
-        'Cancel' +
-      '</button>';
-  }
-
-  if (canReopenCancelledTask(t)) {
-    extraHtml +=
-      '<button class="btn btn-sm life-task-reopen-btn task-reopen-cancelled-btn" data-name="' + esc(t.name) + '">' +
-        'Reopen' +
-      '</button>';
-  }
-
-  if (!extraHtml) return originalHtml;
-
-  if (!originalHtml || originalHtml === "—") {
-    return '<div class="life-action-stack">' + extraHtml + '</div>';
-  }
-
-  if (originalHtml.indexOf("life-action-stack") !== -1) {
-    return originalHtml.replace("</div>", extraHtml + "</div>");
-  }
-
-  return '<div class="life-action-stack">' + originalHtml + extraHtml + '</div>';
-};
-
-var oldBindTaskActionButtonsForCancelReopen = bindTaskActionButtons;
-
-bindTaskActionButtons = function (scope) {
-  oldBindTaskActionButtonsForCancelReopen(scope);
-
-  (scope || root).querySelectorAll(".task-cancel-btn").forEach(function (btn) {
-    if (btn.dataset.boundCancelTask === "1") return;
-
-    btn.dataset.boundCancelTask = "1";
-
-    btn.addEventListener("click", function (e) {
-      e.stopPropagation();
-      openCancelTaskDialog(btn.dataset.name);
-    });
-  });
-
-  (scope || root).querySelectorAll(".task-reopen-cancelled-btn").forEach(function (btn) {
-    if (btn.dataset.boundReopenTask === "1") return;
-
-    btn.dataset.boundReopenTask = "1";
-
-    btn.addEventListener("click", function (e) {
-      e.stopPropagation();
-      openReopenTaskDialog(btn.dataset.name);
-    });
-  });
-};
-
-/* ============================================================
-   TASK REASSIGN PATCH
-   Paste near bottom of JS, before final init();
-   ============================================================ */
-
-function isTaskReassigner(t) {
-  return isTaskAssigner(t) || isManager;
-}
-
-function canReassignTask(t) {
-  var status = getTaskStatus(t);
-
-  return (
-    isTaskReassigner(t) &&
-    ["Completed", "Closed", "Cancelled"].indexOf(status) === -1
-  );
-}
-
-function makeTaskReassignHistoryEntry(oldAssignee, newAssignee, remark, newQueueNo) {
-  return {
-    old_assignee: oldAssignee || "",
-    old_assignee_name: userDisplayName(oldAssignee || ""),
-    new_assignee: newAssignee || "",
-    new_assignee_name: userDisplayName(newAssignee || ""),
-    new_queue_no: Number(newQueueNo || 0),
-    remark: remark || "",
-    changed_by: currentUser,
-    changed_by_name: currentUserFullName || currentUser,
-    changed_on: getNowLocalDateTime()
-  };
-}
-
-function appendTaskReassignHistoryToDoc(doc, oldAssignee, newAssignee, remark, newQueueNo) {
-  doc = doc || {};
-
-  var meta = getTaskMeta(doc);
-  var details = getTaskDetails(doc);
-
-  meta.reassign_history = meta.reassign_history || [];
-
-  meta.reassign_history.push(
-    makeTaskReassignHistoryEntry(
-      oldAssignee,
-      newAssignee,
-      remark,
-      newQueueNo
-    )
-  );
-
-  if (meta.reassign_history.length > 100) {
-    meta.reassign_history = meta.reassign_history.slice(-100);
-  }
-
-  doc.description = buildTaskDescription(details, meta);
-
-  return doc;
-}
-
-function buildTaskReassignHistoryHtml(history) {
-  history = history || [];
-
-  if (!history.length) {
-    return '<div class="life-empty-history">No reassignment history available.</div>';
-  }
-
-  return '' +
-    '<div class="life-history-list">' +
-      history.slice().reverse().map(function (h) {
-        return '' +
-          '<div class="life-history-card life-update-history-card">' +
-            '<div class="life-history-head">' +
-              '<div class="life-history-title">' +
-                'Reassigned by ' + esc(h.changed_by_name || h.changed_by || "—") +
-              '</div>' +
-              '<div class="life-history-date">' +
-                esc(formatLifeDateTime(h.changed_on || "")) +
-              '</div>' +
-            '</div>' +
-
-            '<div class="life-history-grid">' +
-              '<div>' +
-                '<div class="life-detail-label">Old Assignee</div>' +
-                '<div class="life-detail-value">' + esc(h.old_assignee_name || h.old_assignee || "—") + '</div>' +
-              '</div>' +
-
-              '<div>' +
-                '<div class="life-detail-label">New Assignee</div>' +
-                '<div class="life-detail-value">' + esc(h.new_assignee_name || h.new_assignee || "—") + '</div>' +
-              '</div>' +
-
-              '<div>' +
-                '<div class="life-detail-label">New Queue No</div>' +
-                '<div class="life-detail-value">#' + esc(h.new_queue_no || "—") + '</div>' +
-              '</div>' +
-            '</div>' +
-
-            '<div class="life-detail-label">Remark</div>' +
-            '<div class="life-history-remarks">' + esc(h.remark || "—") + '</div>' +
-          '</div>';
-      }).join("") +
-    '</div>';
-}
-
-function buildTaskReassignHistorySection(meta) {
-  meta = meta || {};
-
-  return '' +
-    '<div class="life-detail-section">' +
-      '<div class="life-detail-section-title">Reassignment History</div>' +
-      buildTaskReassignHistoryHtml(meta.reassign_history || []) +
-    '</div>';
-}
-
-/* Add reassignment history into Task Details modal */
-var oldBuildTaskExtraHistorySectionForReassign =
-  typeof buildTaskExtraHistorySection === "function"
-    ? buildTaskExtraHistorySection
-    : function () { return ""; };
-
-buildTaskExtraHistorySection = function (meta) {
-  meta = meta || {};
-
-  return (
-    oldBuildTaskExtraHistorySectionForReassign(meta) +
-    buildTaskReassignHistorySection(meta)
-  );
-};
-
-function openReassignTaskDialog(name) {
-  var task = tasks.find(function (t) {
-    return t.name === name;
-  });
-
-  if (!task) {
-    showModal("⚠️", "Task Not Found", "Unable to find this task.");
-    return;
-  }
-
-  if (!canReassignTask(task)) {
-    showModal(
-      "⚠️",
-      "Not Allowed",
-      "Only the assigner or manager can reassign a running task."
-    );
-    return;
-  }
-
-  var oldAssignee = task.allocated_to || "";
-
-  var d = new frappe.ui.Dialog({
-    title: "Reassign Task",
-    fields: [
-      {
-        fieldtype: "Link",
-        fieldname: "new_assignee",
-        label: "New Assignee",
-        options: "User",
-        reqd: 1,
-        onchange: function () {
-          var newAssignee = String(d.get_value("new_assignee") || "").trim();
-
-          if (!newAssignee || newAssignee === oldAssignee) {
-            d.set_value("new_queue_no", "");
-            return;
-          }
-
-          fetchAssigneeQueue(newAssignee).then(function (rows) {
-            var nextNo = (rows || []).length + 1;
-            d.set_value("new_queue_no", nextNo);
-
-            var help = d.fields_dict.reassign_queue_help;
-            if (help && help.$wrapper) {
-              help.$wrapper.html(
-                '<div style="margin-top:4px;color:#64748B;font-size:11px;font-weight:700;">' +
-                  'Current running tasks for new assignee: <b>' + (rows || []).length + '</b>. ' +
-                  'Suggested task number: <b>#' + nextNo + '</b>. ' +
-                  'You can change it to insert the task in-between.' +
-                '</div>'
-              );
-            }
-          });
-        }
-      },
-      {
-        fieldtype: "Int",
-        fieldname: "new_queue_no",
-        label: "Task Number For New Assignee",
-        reqd: 1,
-        default: 1
-      },
-      {
-        fieldtype: "HTML",
-        fieldname: "reassign_queue_help",
-        options:
-          '<div style="margin-top:4px;color:#64748B;font-size:11px;font-weight:700;">' +
-            'Select a new assignee to calculate task number.' +
-          '</div>'
-      },
-      {
-        fieldtype: "Small Text",
-        fieldname: "remark",
-        label: "Reassignment Remark",
-        reqd: 1
-      }
-    ],
-    primary_action_label: "Reassign Task",
-    primary_action: function (values) {
-      var newAssignee = String(values.new_assignee || "").trim();
-      var newQueueNo = Number(values.new_queue_no || 0);
-      var remark = String(values.remark || "").trim();
-
-      if (!newAssignee) {
-        frappe.msgprint("Please select new assignee.");
-        return;
-      }
-
-      if (newAssignee === oldAssignee) {
-        frappe.msgprint("New assignee cannot be same as current assignee.");
-        return;
-      }
-
-      if (!newQueueNo || newQueueNo < 1) {
-        frappe.msgprint("Please enter valid task number.");
-        return;
-      }
-
-      if (!remark) {
-        frappe.msgprint("Please enter reassignment remark.");
-        return;
-      }
-
-      d.hide();
-      reassignTaskWithRemark(name, newAssignee, remark, newQueueNo);
-    }
-  });
-
-  d.show();
-}
-
-
-function reassignTaskWithRemark(name, newAssignee, remark, requestedQueueNo) {
-  var oldAssignee = "";
-  var finalQueueNo = 1;
-
-  qCall("frappe.client.get", {
-    doctype: "ToDo",
-    name: name
-  }).then(function (doc) {
-    if (!doc) {
-      throw new Error("Unable to load task.");
-    }
-
-    if (!canReassignTask(doc)) {
-      throw new Error("Only the assigner or manager can reassign this task.");
-    }
-
-    oldAssignee = doc.allocated_to || "";
-
-    if (!newAssignee || newAssignee === oldAssignee) {
-      throw new Error("Please select a different assignee.");
-    }
-
-    return fetchAssigneeQueue(newAssignee).then(function (runningRows) {
-      runningRows = runningRows || [];
-
-      finalQueueNo = normalizeRequestedQueueNo(
-        requestedQueueNo,
-        runningRows.length + 1
-      );
-
-      doc = appendTaskReassignHistoryToDoc(
-        doc,
-        oldAssignee,
-        newAssignee,
-        remark,
-        finalQueueNo
-      );
-
-      doc = appendQueueHistoryToDoc(
-        doc,
-        finalQueueNo,
-        "Task reassigned from " +
-          userDisplayName(oldAssignee) +
-          " to " +
-          userDisplayName(newAssignee) +
-          " at task number #" +
-          finalQueueNo +
-          ".",
-        newAssignee
-      );
-
-      doc.allocated_to = newAssignee;
-      doc.custom_queue_active = 1;
-      doc.custom_task_queue_no = finalQueueNo;
-      doc.custom_queue_updated_by = currentUser;
-      doc.custom_queue_updated_on = queueNow();
-
-      return qCall("frappe.client.save", {
-        doc: doc
-      });
-    });
-  }).then(function () {
-    return rebuildQueueForAssignee(oldAssignee);
-  }).then(function () {
-    return fetchAssigneeQueue(newAssignee);
-  }).then(function (newRows) {
-    newRows = newRows || [];
-
-    var movedTask = null;
-    var otherRows = [];
-
-    newRows.forEach(function (row) {
-      if (row.name === name) {
-        movedTask = row;
-      } else {
-        otherRows.push(row);
-      }
-    });
-
-    if (!movedTask) {
-      return rebuildQueueForAssignee(newAssignee);
-    }
-
-    otherRows = sortQueueRows(otherRows);
-
-    var insertIndex = Math.max(0, Math.min(finalQueueNo - 1, otherRows.length));
-    otherRows.splice(insertIndex, 0, movedTask);
-
-    return saveQueueOrder(
-      newAssignee,
-      otherRows,
-      "Task reassigned and inserted into new assignee queue."
-    );
-  }).then(function () {
-    toast("Task reassigned successfully.", true);
-    loadTasks();
-  }).catch(function (err) {
-    showModal("⚠️", "Reassign Failed", getErrorMessage(err));
-  });
-}
-
-
-/* Add Reassign button to task action column */
-var oldRenderTaskActionButtonsForReassign = renderTaskActionButtons;
-
-renderTaskActionButtons = function (t) {
-  var originalHtml = oldRenderTaskActionButtonsForReassign(t);
-  var extraHtml = "";
-
-  if (canReassignTask(t)) {
-    extraHtml +=
-      '<button class="btn btn-sm life-task-reassign-btn task-reassign-btn" data-name="' + esc(t.name) + '">' +
-        'Reassign' +
-      '</button>';
-  }
-
-  if (!extraHtml) return originalHtml;
-
-  if (!originalHtml || originalHtml === "—") {
-    return '<div class="life-action-stack">' + extraHtml + '</div>';
-  }
-
-  if (originalHtml.indexOf("life-action-stack") !== -1) {
-    return originalHtml.replace("</div>", extraHtml + "</div>");
-  }
-
-  return '<div class="life-action-stack">' + originalHtml + extraHtml + '</div>';
-};
-
-var oldBindTaskActionButtonsForReassign = bindTaskActionButtons;
-
-bindTaskActionButtons = function (scope) {
-  oldBindTaskActionButtonsForReassign(scope);
-
-  (scope || root).querySelectorAll(".task-reassign-btn").forEach(function (btn) {
-    if (btn.dataset.boundReassignTask === "1") return;
-
-    btn.dataset.boundReassignTask = "1";
-
-    btn.addEventListener("click", function (e) {
-      e.stopPropagation();
-      openReassignTaskDialog(btn.dataset.name);
-    });
-  });
-};
-
-
-  init();
-  return { refresh: refreshTaskTicketBlock };
-
+  function exportTasks(list) {
+    csv('LIFE_Tasks', [['Task No', 'Type', 'Queue', 'Title', 'Details', 'Category', 'Assigned To', 'Mobile', 'Designation', 'Branch', 'Department', 'Assigned By', 'Priority', 'Status', 'Overdue', 'Assigned On', 'Start', 'Due', 'Completed On', 'Reporting', 'Progress %', 'Updates', 'Last Update', 'CC']].concat(list.map(function (t) {
+      var lu = t.updates.filter(function (u) { return u.type !== 'System'; }).slice(-1)[0];
+      return [dispNo(t), t.grp ? 'Group (' + t.grp.response + ')' : 'Individual', qRank(t), t.title, t.details, t.cat, personName(t.assignee), showNum(mob(t.assignee)), t.desig, t.branch, t.dept, personName(t.by), PRI_N(t.pri) + ' ' + PRI_L(t.pri), t.status, isOverdue(t) ? 'Yes' : '', fDT(t.created), fDT(t.start), fDT(t.due), t.completedOn ? fDT(t.completedOn) : '', repText(t.report), t.progress, t.updates.length, lu ? fDT(lu.at) + ' ' + personName(lu.by) + ': ' + lu.text : '', t.cc.map(personName).join('; ')];
+    })));
+  }
+
+  /* ================================================================
+     DEMO SEED (only used outside the portal)
+  ================================================================ */
+  function demoSeed() {
+    var people = [
+      ['bhuvan@lifescc.com', 'K Bhuvan Prasad', 'Management', 'COO', 'Head Office', '9000000001'], ['gachibowli@lifescc.com', 'Gachibowli branch', 'Branch Login', 'Branch Login', 'Gachibowli', '9000000020'],
+      ['madhapur@lifescc.com', 'Madhapur branch', 'Branch Login', 'Branch Login', 'Madhapur', ''], ['vizag@lifescc.com', 'Vizag branch', 'Branch Login', 'Branch Login', 'Vizag', '9000000021'],
+      ['teena@lifescc.com', 'Teena Mahur', 'Operations', 'Cluster Head', 'Madhapur', '9000000002'], ['preethi@lifescc.com', 'Preethi', 'Operations', 'Cluster Head', 'Vijayawada', '9000000003'],
+      ['narendhar@lifescc.com', 'Narendhar', 'IT', 'ERP Developer', 'Head Office', '9000000005'], ['yaswanth@lifescc.com', 'yaswanthkumaryy1234', 'IT', 'ERP Developer', 'Head Office', '9000000006'],
+      ['kavya@lifescc.com', 'Kavya', 'IT', 'ERP Developer', 'Head Office', '9000000007'], ['viveka@lifescc.com', 'Viveka', 'HR', 'HR Manager', 'Head Office', '9000000008'],
+      ['valli@lifescc.com', 'Valli', 'Stock', 'Store Incharge', 'Head Office', '9000000009'], ['ravikishore@lifescc.com', 'Ravi Kishore', 'Audit', 'Audit Manager', 'Head Office', '9000000010'],
+      ['sairaj@lifescc.com', 'Nampally Sai Raj', 'Sales', 'Center Manager', 'Kukatpally', '9000000011'], ['ishwarya@lifescc.com', 'Anupoju Ishwarya', 'Sales', 'Center Manager', 'Banjara Hills', '9044488817'],
+      ['madhavi@lifescc.com', 'Komara Sai Madhavi', 'Medical', 'Consultant Doctor', 'SR Nagar', '9700035832'], ['satya@lifescc.com', 'Satya', 'Accounts', 'Accounts Manager', 'Head Office', '9000000013'],
+      ['surya@lifescc.com', 'Surya Teja', 'Operations', 'Ops Coordinator', 'Head Office', '9000000014'], ['', 'Sabitri Oraon', 'Service', 'Dr.Assistant', 'Kukatpally', '8106024089'], ['', 'Yatagiri Haritha', 'Service', 'Therapist', 'SR Nagar', '']
+    ];
+    var users = [], emps = [];
+    people.forEach(function (p, i) { if (p[0]) users.push({ name: p[0], full_name: p[1], mobile_no: p[5] }); if (p[2] !== 'Branch Login') emps.push({ name: 'HR-EMP-' + (100 + i), employee_name: p[1], user_id: p[0] || null, department: p[2], designation: p[3], branch: p[4], cell_number: p[5] }); });
+    var titles = [['Update all walk-ins in ERP with proper data', 'Audit will be there after 6th. Every walk-in from 1st Oct must be entered with lead source, concern and counsellor.', 'Operations'], ['Pending products from corporate — follow up', 'Pending products yet to receive from corporate; check indent and update status.', 'Inventory / Stock'], ['Machine AMC renewal documents', 'Collect AMC docs for laser and cavitation machines and upload.', 'Machinery'], ['Weekly sales MIS to COO', 'Branch-wise booking, visits and ticket size.', 'Sales'], ['Fix CC dashboard lead filter', 'Lead source filter shows duplicates; fix and test.', 'IT'], ['Consent forms audit — October', 'Verify every procedure has signed consent and before/after photos.', 'Audit'], ['Staff attendance correction list', 'Prepare biometric mismatch list for payroll.', 'HR'], ['Branch cleanliness checklist photos', 'Daily 10am photos of reception, rooms, washroom.', 'Facility / Maintenance'], ['Pending dues recovery — top 20 clients', 'Call and confirm payment dates; update ERP remarks.', 'Accounts'], ['Diwali offer creatives', 'Coordinate with marketing for branch standees.', 'Marketing']];
+    var asg = ['gachibowli@lifescc.com', 'teena@lifescc.com', 'sairaj@lifescc.com', 'yaswanth@lifescc.com', 'narendhar@lifescc.com', 'kavya@lifescc.com', 'valli@lifescc.com', 'ravikishore@lifescc.com', 'ishwarya@lifescc.com', 'madhapur@lifescc.com', 'vizag@lifescc.com', 'viveka@lifescc.com', 'bhuvan@lifescc.com'];
+    var pris = ['VVIMP', 'IMP', 'HI', 'MED', 'LOW', 'HI', 'MED'], sts = ['Open', 'In Progress', 'Open', 'Review Pending', 'Completed', 'In Progress', 'Open', 'Completed', 'On Hold', 'Open'], reps = ['EOD', 'WEEKLY', 'COMPLETION', 'EOD', 'MONTHLY'];
+    var todos = [], now = Date.now(), pre = 'T' + String(new Date().getFullYear()).slice(2) + pad(new Date().getMonth() + 1) + '-';
+    for (var i = 0; i < 30; i++) {
+      var tt = titles[i % titles.length], u = asg[i % asg.length], pp = people.filter(function (x) { return x[0] === u; })[0];
+      var created = new Date(now - (i * 0.9 + 0.2) * 86400000), due = new Date(created.getTime() + ((i % 5) + 1) * 86400000), st = sts[i % sts.length];
+      var t = { meta: {}, no: pre + String(i + 1).padStart(4, '0'), title: tt[0], details: tt[1], cat: tt[2], pri: pris[i % pris.length], status: st, assignee: u, by: i % 4 === 0 ? 'teena@lifescc.com' : 'bhuvan@lifescc.com', created: localStr(created), start: localStr(created), due: localStr(due), cc: i % 3 === 0 ? ['ravikishore@lifescc.com'] : [], report: { type: reps[i % reps.length], time: '19:00', day: 6, dom: 1 }, notify: {}, checklist: i % 2 ? [{ t: 'Collect data', d: true }, { t: 'Enter in ERP', d: st === 'Completed' }, { t: 'Share proof', d: false }] : [], progress: (i * 13) % 90, updates: [{ id: 'u' + i, at: localStr(created), by: 'bhuvan@lifescc.com', type: 'System', text: 'Task assigned' }].concat(i % 3 === 1 ? [{ id: 'v' + i, at: localStr(new Date(created.getTime() + 6 * 3600000)), by: u, type: 'Report', text: 'Started collecting data, 40% done.' }] : []), delays: [], completedOn: st === 'Completed' ? localStr(new Date(due.getTime() + (i % 2 ? -3600000 : 7200000))) : '', target: { type: 'Employee' }, qk: PRI_W(pris[i % pris.length]) * 10 + i / 100, branch: pp[4], dept: pp[2], desig: pp[3] };
+      var d = denormBase(t); d.name = 'td' + i; d.allocated_to = u; d.assigned_by = t.by; d.owner = t.by; d.creation = t.created.replace('T', ' ') + ':00'; d.modified = d.creation; d.custom_task_queue_no = 0;
+      todos.push(d);
+    }
+    // one demo group task (individual response)
+    var gm = ['teena@lifescc.com', 'preethi@lifescc.com', 'sairaj@lifescc.com'], gc = new Date(now - 86400000);
+    var g = { meta: { mq: { 'teena@lifescc.com': 0.5, 'preethi@lifescc.com': 0.5, 'sairaj@lifescc.com': 0.5 }, mstate: { 'teena@lifescc.com': { status: 'In Progress', progress: 40 }, 'preethi@lifescc.com': { status: 'Open', progress: 0 }, 'sairaj@lifescc.com': { status: 'Review Pending', progress: 100 } } }, no: pre + '0031', title: 'Branch Diwali footfall plan — all clusters', details: 'Each cluster to submit footfall plan, staff roster and offer standee placement.', cat: 'Operations', pri: 'IMP', status: 'In Progress', assignee: gm[0], by: 'bhuvan@lifescc.com', created: localStr(gc), start: localStr(gc), due: localStr(new Date(now + 2 * 86400000)), cc: [], report: { type: 'EOD', time: '19:00' }, notify: {}, checklist: [], progress: 47, updates: [{ id: 'g1', at: localStr(gc), by: 'bhuvan@lifescc.com', type: 'System', text: '👥 Group task assigned to 3 members' }, { id: 'g2', at: localStr(new Date(gc.getTime() + 5 * 3600000)), by: 'teena@lifescc.com', type: 'Report', text: 'Madhapur & Gachibowli roster ready.' }, { id: 'g3', at: localStr(new Date(gc.getTime() + 7 * 3600000)), by: 'sairaj@lifescc.com', type: 'Completion', text: 'Kukatpally plan done and shared.' }], delays: [], completedOn: '', target: { type: 'Employee' }, qk: 1, grp: { id: 'Gdemo', members: gm, leader: gm[0], response: 'individual', mirrors: {} } };
+    var gd = denormBase(g); gd.name = 'tdg'; gd.allocated_to = gm[0]; gd.assigned_by = 'bhuvan@lifescc.com'; gd.owner = 'bhuvan@lifescc.com'; gd.creation = g.created.replace('T', ' ') + ':00'; gd.modified = gd.creation;
+    todos.unshift(gd);
+    var issues = [], cats = Object.keys(TICKET_CATEGORY_MAP), res = ['narendhar@lifescc.com', 'viveka@lifescc.com', 'satya@lifescc.com', 'valli@lifescc.com', 'surya@lifescc.com'], raisers = ['gachibowli@lifescc.com', 'madhapur@lifescc.com', 'vizag@lifescc.com', 'bhuvan@lifescc.com', 'sairaj@lifescc.com'], tsts = ['Open', 'Open', 'Resolved', 'Closed', 'Reopened', 'On Hold'];
+    for (var j = 0; j < 16; j++) {
+      var c = cats[j % cats.length], iss = TICKET_CATEGORY_MAP[c][j % 3], cr = new Date(now - (j * 0.7 + 0.3) * 86400000), s2 = tsts[j % tsts.length];
+      var tk = { meta: {}, branch: BRANCHES[j % BRANCHES.length], cat: c, issue: iss, other: '', emp: '', tag: res[j % res.length], cc: [], details: 'Issue noticed at branch: ' + iss + '. Please check and resolve.', status: s2, updates: [{ at: localStr(cr), by: raisers[j % raisers.length], type: 'System', text: 'Ticket raised' }], resolvedOn: s2 === 'Resolved' || s2 === 'Closed' ? localStr(new Date(cr.getTime() + 20 * 3600000)) : '', closedOn: s2 === 'Closed' ? localStr(new Date(cr.getTime() + 30 * 3600000)) : '' };
+      issues.push({ name: 'ISS-2026-' + String(j + 1).padStart(5, '0'), subject: c + ' - ' + iss, description: tkDesc(tk), priority: TK_PRI[j % 3], status: tkStatusField(s2), raised_by: raisers[j % raisers.length], owner: raisers[j % raisers.length], creation: localStr(cr).replace('T', ' ') + ':00', modified: localStr(cr).replace('T', ' ') + ':00' });
+    }
+    return { users: users, emps: emps, todos: todos, issues: issues, files: [], cfg: null };
+  }
+
+  /* ================================================================
+     START — waits for frappe login; never falls into demo on the portal
+  ================================================================ */
+  var tries = 0;
+  function start() {
+    if (!document.getElementById('life-tm')) return;
+    if (window.frappe && frappe.call && !sessionUser() && tries < 20) { tries++; setTimeout(start, 250); return; }
+    boot();
+  }
+  if (window.frappe && typeof frappe.ready === 'function') frappe.ready(start);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(start, 50); }); else setTimeout(start, 50);
+})();
+return { refresh: () => document.getElementById('life-tm')?.querySelector('[data-act=refresh]')?.click() };
 }
