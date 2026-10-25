@@ -6,8 +6,10 @@ export const kinds = {
   champ: { icon: '👑', title: 'CONGRATULATIONS!', color: '#f5c542' },
 };
 export const visitStatusCount = row => ['visit', 'visited', 'visited booked', 'visited not booked'].includes(String(row.custom_visit_status || '').trim().toLowerCase().replace(/[-_]+/g, ' ').replace(/\s+/g, ' '));
-export const visited = row => visitStatusCount(row) || ['Visited-BKD', 'Visited-Not BKD', 'Visited · Outcome pending'].includes(visitStatus(row));
-export const booked = row => !!row.custom_appointment_date_and_time && !['cancelled', 'canceled'].includes(String(row.custom_appointment_status || row.custom_visit_status || '').toLowerCase());
+// Appointment outcomes and the separate Visit Status must never feed each other's counters.
+const appointmentOutcome = row => visitStatus({custom_appointment_status:row.custom_appointment_status});
+export const visited = row => ['Visited-BKD', 'Visited-Not BKD', 'Visited · Outcome pending'].includes(appointmentOutcome(row));
+export const booked = row => !!row.custom_appointment_date_and_time && !['cancelled', 'canceled'].includes(String(row.custom_appointment_status || '').toLowerCase());
 export function leaderboard(data) {
   const agents = new Map();
   for (const row of data.rows) {
@@ -37,7 +39,7 @@ export function leaderboard(data) {
       if (inPeriod(row.custom_appointment_date_and_time)) {
         if (booked(row)) agent[period].booked++;
         if (visited(row)) agent[period].walkins++;
-        if (visitStatus(row) === 'Visited-BKD') agent[period].visitedBooked++;
+        if (appointmentOutcome(row) === 'Visited-BKD') agent[period].visitedBooked++;
       }
     }
   }
@@ -57,6 +59,20 @@ export function highlights(agents) {
   }
   return lines.length ? lines : ['⭐ Highlights appear here when agents hit targets'];
 }
+// Persisted activity, not opening a form, is evidence that a lead was touched.
+export function hasRecordedActivity(row) {
+  if (row.custom_cc_first_touched_at || row.custom_last_call_time || row.custom_convox_last_call_time) return true;
+  if (Number(row.custom_call_count) > 0 || Number(row.custom_convox_call_count) > 0) return true;
+  if (row.custom_next_followup_date) return true;
+  const normalize = value => String(value || '').trim().toLowerCase();
+  const untouched = new Set(['', 'lead', 'new', 'open', 'untouched', 'uncontacted', 'not contacted']);
+  if (!untouched.has(normalize(row.custom_cc_sub_status))) return true;
+  if (!untouched.has(normalize(row.custom_cc_stage))) return true;
+  if (!untouched.has(normalize(row.status))) return true;
+  const visit = normalize(row.custom_visit_status);
+  if (visit && !['pending', 'not set'].includes(visit)) return true;
+  return booked(row) || visited(row);
+}
 // Frappe timestamps are site-local: compare like-for-like without browser timezone conversion.
 export function waitingLeads(data, elapsedMs = 0) {
   if (!data) return [];
@@ -65,8 +81,7 @@ export function waitingLeads(data, elapsedMs = 0) {
   return data.rows.filter(row => String(row.creation).startsWith(data.today)
     && row.custom_call_count != null && Number(row.custom_call_count) === 0
     && Object.hasOwn(row, 'custom_last_call_time') && !row.custom_last_call_time
-    && !booked(row) && !visited(row)
-    && !['converted', 'lost', 'do not contact'].includes(String(row.status || '').toLowerCase()))
+    && !hasRecordedActivity(row))
     .map(row => ({...row, minutes: Math.floor((now-stamp(row.creation))/60000)}))
     .filter(row => row.minutes >= 10).sort((a,b) => b.minutes-a.minutes);
 }

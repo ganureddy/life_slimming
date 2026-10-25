@@ -154,7 +154,7 @@ onUnmounted(() => {
         </div>
       </template></section>
       <section class="right">
-        <div v-if="waiting.length" class="waiting" role="status"><b>⚠ LEAD WAITING · NO CALL RECORDED</b><h4>{{ waiting[0].lead_name || waiting[0].name }}</h4><p>{{ data.agents[waiting[0].lead_owner] || 'Unassigned' }} · {{ waiting[0].minutes }} min<span v-if="waiting.length>1"> · +{{ waiting.length-1 }} more</span></p><p class="visit-status">Visit Status: {{ waiting[0].custom_visit_status || 'Not set' }}</p></div>
+        <div v-if="waiting.length" class="waiting" role="status"><b>⚠ LEAD WAITING · NO ACTIVITY RECORDED</b><h4>{{ waiting[0].lead_name || waiting[0].name }}</h4><p>{{ data.agents[waiting[0].lead_owner] || 'Unassigned' }} · {{ waiting[0].minutes }} min<span v-if="waiting.length>1"> · +{{ waiting.length-1 }} more</span></p><p class="visit-status">Visit Status: {{ waiting[0].custom_visit_status || 'Not set' }}</p></div>
         <div class="pane-wrap">
           <div v-if="!idle" class="pane">
             <div class="sec">🔔 LATEST LEAD</div><div class="latest"><div class="bell">🔔</div><div><small>LATEST LEAD RECEIVED</small><h3>{{ latest?.lead_name || 'Waiting for leads…' }}</h3><p v-if="latest">{{ data.agents[latest.lead_owner] || 'Unassigned' }} · {{ latest.source }} · {{ latest.branch || latest.lead_assign_to_branch }}</p><p v-if="latest" class="visit-status">Visit Status: {{ latest.custom_visit_status || 'Not set' }}</p></div></div>

@@ -81,6 +81,8 @@ class LiveTVTests(unittest.TestCase):
         self.assertEqual(result['week_end'], '2026-11-02')
         self.assertTrue(all(item[2] == '2026-10-06' for item in frappe.get_all.call_args.kwargs['or_filters']))
         self.assertIn('custom_call_count', frappe.get_all.call_args.kwargs['fields'])
+        for field in ['custom_cc_first_touched_at', 'custom_convox_call_count', 'custom_convox_last_call_time', 'custom_cc_sub_status', 'custom_cc_stage', 'custom_next_followup_date']:
+            self.assertIn(field, frappe.get_all.call_args.kwargs['fields'])
 
     def test_manager_scope(self):
         module, frappe, _ = self.load(roles=('Sales Manager',))

@@ -13,7 +13,7 @@ const fs = require('node:fs');
  const wait=async expression=>{for(let i=0;i<150;i++){if(await evaluate(expression))return;await new Promise(r=>setTimeout(r,100));}throw Error('Timed out: '+expression);};
  const agents=Object.fromEntries(Array.from({length:13},(_,i)=>['agent'+i,'Agent '+i+' Long Name']));
  const rows=Array.from({length:13},(_,i)=>({name:'L'+i,lead_name:'Client '+i,lead_owner:'agent'+i,creation:'2026-10-11 09:00:00',modified:'2026-10-11 09:00:00',branch:'Banjara Hills',custom_appointment_date_and_time:'2026-10-11 12:00:00',custom_appointment_status:'Visited Booked',custom_visit_status:'Visited',custom_call_count:1,custom_last_call_time:'2026-10-11 09:01:00'}));
- rows.push({name:'waiting',lead_name:'Waiting Client',lead_owner:'agent0',creation:'2026-10-11 09:40:00',modified:'2026-10-11 09:40:00',custom_call_count:0,custom_last_call_time:null,custom_visit_status:'Follow up required'});
+ rows.push({name:'waiting',lead_name:'Waiting Client',lead_owner:'agent0',creation:'2026-10-11 09:40:00',modified:'2026-10-11 09:40:00',custom_call_count:0,custom_last_call_time:null,custom_visit_status:'Pending'});
  ws.on('message',async raw=>{
   const m=JSON.parse(raw);if(m.id){jobs.get(m.id)?.(m);jobs.delete(m.id);return;}
   if(m.method==='Runtime.exceptionThrown') errors.push(m.params.exceptionDetails.exception?.description||m.params.exceptionDetails.text);

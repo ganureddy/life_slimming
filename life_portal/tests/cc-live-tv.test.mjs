@@ -115,12 +115,39 @@ test('raw visit status breakdowns use scheduled dates, falling back to creation 
  assert.deepEqual(agent.visitStatuses.week, {Visited:2,Pending:1,'Not set':1});
 });
 
-test('Visit Status tile counts explicit visits and refreshes even when appointment status stays Booked', () => {
+test('Visit Status changes remain separate from appointment outcomes and visited alerts', () => {
  const before=snapshot([{...row,custom_appointment_status:'Booked',custom_visit_status:''}]);
  const next=snapshot([{...row,custom_appointment_status:'Booked',custom_visit_status:'Visited'}]);
  assert.equal(leaderboard(before)[0].today.visitStatus,0);
  assert.equal(leaderboard(next)[0].today.visitStatus,1);
- assert.equal(leaderboard(next)[0].today.walkins,1);
- assert.equal(changes(before,next)[0].type,'walkin');
+ assert.equal(leaderboard(next)[0].today.walkins,0);
+ assert.deepEqual(changes(before,next),[]);
  assert.equal(leaderboard(snapshot([{...row,custom_visit_status:'Not Visited'}]))[0].today.visitStatus,0);
+});
+
+
+test('Visit Status cannot fabricate a visited-booked outcome or cancel a scheduled appointment', () => {
+ const agent=leaderboard(snapshot([{...row,custom_appointment_status:'Booked',custom_visit_status:'Visited Booked'}]))[0];
+ assert.equal(agent.today.visitStatus,1);assert.equal(agent.today.walkins,0);assert.equal(agent.today.visitedBooked,0);
+ const cancelledVisit=leaderboard(snapshot([{...row,custom_appointment_status:'Booked',custom_visit_status:'Cancelled'}]))[0];
+ assert.equal(cancelledVisit.today.booked,1);
+});
+
+test('waiting alert excludes first touch, ConVox activity, followup and saved outcomes', () => {
+ const waiting={...row,custom_appointment_date_and_time:null,custom_appointment_status:'',custom_call_count:0,custom_last_call_time:null,creation:'2026-10-09 09:40:00'};
+ for(const activity of [
+  {custom_cc_first_touched_at:'2026-10-09 09:45:00'},
+  {custom_convox_call_count:1},
+  {custom_convox_last_call_time:'2026-10-09 09:45:00'},
+  {custom_next_followup_date:'2026-10-10 10:00:00'},
+  {custom_cc_sub_status:'No Response'},
+  {custom_cc_stage:'FOLLOW-UP'},
+  {status:'Not interested'},
+  {custom_visit_status:'Visited'},
+  {custom_visit_status:'Not Visited'},
+  {custom_visit_status:'Rescheduled'},
+  {custom_visit_status:'Cancelled'},
+ ]) assert.equal(waitingLeads(snapshot([{...waiting,...activity}])).length,0,JSON.stringify(activity));
+ const untouched={...waiting,status:'Lead',custom_cc_sub_status:'Lead',custom_cc_stage:'UNTOUCHED',custom_visit_status:'Pending'};
+ assert.equal(waitingLeads(snapshot([untouched]))[0].minutes,20);
 });
