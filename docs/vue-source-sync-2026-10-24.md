@@ -1,3 +1,5 @@
+> Architecture update: the three controller-backed pages described here were replaced by reactive Vue on 25 October. See [conversion details](vue-reactive-conversion-2026-10-25.md).
+
 # Vue pages aligned with ERP sources — 24 October 2026
 
 Compared all twelve default Vue modules against the production sources refreshed from ERP. Six changed sources required Vue updates. CC legacy sources and their routing remain unchanged.

@@ -28,7 +28,7 @@ const assert=require('node:assert/strict'),WebSocket=require('ws');
  try{
   await send('Runtime.enable');await send('Page.enable');await send('Fetch.enable',{patterns:[{urlPattern:'*/api/method/*'}]});
   for(const width of[1440,390]){
-   manager=false;permitted=['Branch A','Branch B'];calls.length=0;await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<600});await send('Page.navigate',{url:base+'/life_portal/salemaster'});
+   manager=false;permitted=['Branch A','Branch B'];calls.length=0;await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<600});await send('Page.navigate',{url:base+'/life_portal/native/sales-master'});
    await wait('document.querySelector(".rr-pginfo")?.textContent.includes("26 records")');
    assert.equal(await evaluate('!!document.querySelector("iframe")'),false);assert.equal(await evaluate('document.querySelectorAll(".rr-table thead th").length'),12);assert.equal(await evaluate('document.querySelectorAll(".rr-table tbody tr").length'),20);assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'),true);
    assert.deepEqual(reports().map(call=>JSON.parse(call.args.filters).branch),['Branch A','Branch B']);assert.equal(await evaluate('document.querySelector(".rr-table").textContent.includes("Foreign Client")'),false);assert.equal(await evaluate('document.querySelector(".rr-table tbody tr td:nth-child(2)").textContent'),'14-Oct-26');assert.equal(await evaluate('document.querySelector(".rr-table tbody tr td:nth-child(9)").textContent'),'₹50.00');assert.equal(await evaluate('document.querySelector(".rr-table tbody tr td:nth-child(10)").textContent'),'₹1,000.00');

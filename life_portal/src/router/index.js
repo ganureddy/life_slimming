@@ -6,8 +6,9 @@ const menu = access.menu;
 import portalPages from "../data/portalPages.json";
 import PortalSourcePage from "../pages/PortalSourcePage.vue";
 
-// Keep remaining source screens active while their native Vue parity work is pending.
-const nativeModules = new Set(["unjoined", "wlres", "clusterhome", "conv", "pricelist", "documents", "salemaster", "tasks", "clireg", "discountaudit", "empsale", "appt"]);
+// User approval is required before promoting Vue previews to main module URLs.
+// Keep all mapped legacy modules active; native components are preview routes only.
+const nativeModules = new Set([]);
 const keepLegacyModule = (id) => Boolean(portalPages[id]) && !nativeModules.has(id);
 
 export const routeLoading = ref(false);

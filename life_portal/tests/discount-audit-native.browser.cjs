@@ -51,7 +51,7 @@ const WebSocket = require('../node_modules/ws');
     await send('Fetch.enable', { patterns: [{ urlPattern: '*/api/method/*' }] });
     for (const width of [1440, 390]) {
       await send('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: width < 500 });
-      await send('Page.navigate', { url: base + '/life_portal/discountaudit' });
+      await send('Page.navigate', { url: base + '/life_portal/native/discount-audit' });
       await wait("document.querySelector('#ldr-body')?.textContent.includes('Fixture Client')");
       // Independent report data must not wait for the branch list.
       await wait('true'); assert(heldBranches, 'branch request is still pending');

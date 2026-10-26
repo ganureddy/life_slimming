@@ -25,7 +25,7 @@ test('employee identity learns only unambiguous name aliases and keeps practitio
 test('employee normalization supports old report aliases and legacy exports retain all transaction fields',()=>{
  const row=api.normalizeReportRow({invoice:'OLD',credit_type:'incentive',sales_person_name:'Arun',employee_id:'EMP-2',paid_amount:1050,paid_amount_without_tax:1000,tax_amount:50,client_name:'Client',sharing_type:'Single'});
  assert.equal(row.incentive_employee,'Arun');assert.equal(row.incentive_employee_share,1000);assert.equal(row.gst_amount,50);assert.equal(row.client_name,'Client');assert.equal(row.sharing_type,'Single');
- for(const file of ['src/pages/EmployeeSaleMasterPage.vue','src/composables/useEmployeeSaleMaster.js','src/lib/employee-sale.js','src/components/employee-sale/ReportSearchSelect.vue']){
+ for(const file of ['src/pages/EmployeeSaleMasterPage.vue','src/composables/useEmployeeAnalytics.js','src/lib/employee-analytics.js','src/components/employee-sale/TreatmentTree.vue']){
  const text=fs.readFileSync(path.join(root,file),'utf8');assert(!/portal_pages|PortalSourcePage|<iframe|v-html|innerHTML|\beval\s*\(|new Function\s*\(|window\.frappe/.test(text),file);
  }
 });

@@ -63,7 +63,7 @@ const WebSocket = require('../node_modules/ws');
     };
     for (const width of [1440,390]) {
       await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:width<500});
-      await send('Page.navigate',{url:base+'/life_portal/empsale'});
+      await send('Page.navigate',{url:base+'/life_portal/native/employee-sales'});
       await wait("document.querySelector('#ref-status')?.textContent.includes('Loaded 2 invoices')");
       assert.equal(await evaluate('document.querySelectorAll("iframe").length'),0);
       assert(await evaluate('document.documentElement.scrollWidth<=innerWidth+1'),'no overflow at '+width);
@@ -93,7 +93,7 @@ const WebSocket = require('../node_modules/ws');
       await click('[data-tab="0"]');fs.writeFileSync('/tmp/employee-vue-'+width+'.png',Buffer.from((await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false})).data,'base64'));
       deny=true;await click('#ref-generate-btn');await wait("document.querySelector('#ref-status').textContent.includes('Employee report access denied')");deny=false;await click('#ref-status button');await wait("document.querySelector('#ref-status').textContent.includes('Loaded 1 invoices')");
     }
-    restricted=true;calls.length=0;await send('Page.navigate',{url:base+'/life_portal/empsale'});
+    restricted=true;calls.length=0;await send('Page.navigate',{url:base+'/life_portal/native/employee-sales'});
     await wait("document.querySelector('#ref-status')?.textContent.includes('Loaded 2 invoices')");
     const queries=calls.filter(call=>call.method==='frappe.desk.query_report.run').map(call=>JSON.parse(call.args.filters).branch).sort();
     assert.deepEqual(queries,['Clinic A','Clinic B'],'restricted all-branch requests must explicitly name only permitted branches');

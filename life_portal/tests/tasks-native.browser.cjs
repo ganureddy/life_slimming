@@ -63,7 +63,7 @@ const WebSocket = require('../node_modules/ws');
     for (const width of [1440, 390]) {
       calls.length = 0; denyTasks = false;
       await send('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: false });
-      await send('Page.navigate', { url: base + '/life_portal/tasks' });
+      await send('Page.navigate', { url: base + '/life_portal/native/tasks' });
       await wait("document.querySelector('#mytask-to-body')?.textContent.includes('IT')");
       assert(heldUserRequest, 'records must not wait for the user master list');
       assert.equal(calls.some(call => call.method === 'frappe.client.get' && call.args.doctype === 'User'), false, 'bootstrap supplies authenticated identity');
@@ -148,7 +148,7 @@ const WebSocket = require('../node_modules/ws');
     }
     manager = false;
     todos.set('OUTSIDE-TASK', { ...todos.get('TASK-2'), name: 'OUTSIDE-TASK', allocated_to: 'outsider@example.test', assigned_by: 'outsider@example.test', owner: 'outsider@example.test', description: description('Outside-only task') });
-    await send('Page.navigate', { url: base + '/life_portal/tasks' });
+    await send('Page.navigate', { url: base + '/life_portal/native/tasks' });
     await wait("document.querySelector('#mytask-to-body')?.textContent.includes('IT')");
     await releaseUsers();
     assert.equal(await evaluate("document.querySelector('[data-task-sub=\"1\"]').style.display"), 'none');
@@ -162,7 +162,7 @@ const WebSocket = require('../node_modules/ws');
     await wait("document.querySelector('#mytask-to-body')?.textContent.includes('IT')");
     await releaseUsers(); await wait("!document.querySelector('#life-refresh-btn').disabled");
     assert.equal(await evaluate("!!document.querySelector('.task-page-error')"), false);
-    await send('Page.navigate', { url: base + '/life_portal/clusterhome' });
+    await send('Page.navigate', { url: base + '/life_portal/native/cluster-dashboard' });
     await wait("!document.querySelector('#life-tt-app')");
     assert.equal(await evaluate("!!document.querySelector('#life-manage-queue-web-style')"), false);
     console.log('Task permissions, file upload, error/retry and page cleanup checks passed.');

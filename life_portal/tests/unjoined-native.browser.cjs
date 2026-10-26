@@ -67,7 +67,7 @@ const WebSocket = require('ws');
   for(const width of [1440,390]){
    forms.clear();duplicate=false;manager=false;calls.length=0;
    await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<600});
-   await send('Page.navigate',{url:base+'/life_portal/unjoined'});
+   await send('Page.navigate',{url:base+'/life_portal/native/unjoined'});
    await wait('document.querySelector("#ujNotice")?.textContent.startsWith("Loaded")');
    assert.equal(await evaluate('!!document.querySelector("iframe")'),false,'native route has no legacy frame');
    assert.equal(await evaluate('document.querySelectorAll("#ujBranch option").length'),2);

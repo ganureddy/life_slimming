@@ -8,6 +8,8 @@ See [MIGRATION_PROGRESS.md](MIGRATION_PROGRESS.md) for the current page-by-page 
 
 ## Current evidence
 
+25 October update: Tasks, Employee Sale Master and Cluster Dashboard now use reactive Vue templates and composables, with their DOM controllers removed. See [verification and limits](../docs/vue-reactive-conversion-2026-10-25.md). Older evidence below describes the previous baseline.
+
 The twelve default Vue modules retain their original page CSS. The source parity
 suite compares the checked-in legacy rules directly to the native styles;
 Frappe website wrappers are excluded because PortalLayout owns that chrome.

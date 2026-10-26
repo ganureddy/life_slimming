@@ -79,7 +79,7 @@ const WebSocket = require('../node_modules/ws');
     for (const width of [1440, 390]) {
       reset();
       await send('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: width < 500 });
-      await send('Page.navigate', { url: base + '/life_portal/appt' });
+      await send('Page.navigate', { url: base + '/life_portal/native/appointments' });
       await wait("document.querySelector('.room-count')?.textContent==='3'");
       await input('.date-filter', date); await boardReady(); await wait("document.querySelector('.total-count').textContent==='3'");
       assert.equal(await evaluate('document.querySelectorAll("iframe").length'), 0);
@@ -148,7 +148,7 @@ const WebSocket = require('../node_modules/ws');
     assert.equal(await evaluate('document.body.style.overflow'), '');
     // Links from Client Info now carry the validated branch and patient.
     reset();
-    await send('Page.navigate', {url:base+'/life_portal/appt?branch=Clinic%20A&patient=PAT-1'});
+    await send('Page.navigate', {url:base+'/life_portal/native/appointments?branch=Clinic%20A&patient=PAT-1'});
     await wait("document.querySelector('.room-count')?.textContent==='3'");
     await input('.date-filter',date); await boardReady();
     await click(`.add-appt-btn[data-room="${room1}"][data-slot="07:30 AM"]`);

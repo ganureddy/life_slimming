@@ -57,7 +57,7 @@ const WebSocket = require('../node_modules/ws');
     await send('Fetch.enable', { patterns: [{ urlPattern: '*/api/method/*' }] });
     for (const width of [1440, 390]) {
       await send('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: width < 500 });
-      await send('Page.navigate', { url: base + '/life_portal/clireg' });
+      await send('Page.navigate', { url: base + '/life_portal/native/client-registration' });
       await wait("document.querySelector('#regRows')?.textContent.includes('Existing Client')");
       assert.equal(await evaluate('document.querySelectorAll("iframe").length'), 0);
       assert(await evaluate('document.documentElement.scrollWidth <= innerWidth + 1'), 'no page overflow at ' + width);
@@ -96,7 +96,7 @@ const WebSocket = require('../node_modules/ws');
       assert(patient.custom_remarks.includes('Relative in LIFE: Relative Client (Clinic A)'));
     }
     deny = true;
-    await send('Page.navigate', { url: base + '/life_portal/clireg' });
+    await send('Page.navigate', { url: base + '/life_portal/native/client-registration' });
     await wait("document.querySelector('#regRows')?.textContent.includes('Registration access denied')");
     deny = false; await click('#regRows button'); await wait("document.querySelector('#regRows').textContent.includes('Existing Client')");
     await input('#fName', 'Clear me'); await click('.btn-o'); await wait("document.querySelector('#fName').value===''");

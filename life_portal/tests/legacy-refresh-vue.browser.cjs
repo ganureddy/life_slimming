@@ -43,7 +43,7 @@ const WebSocket=require('../node_modules/ws');
   console.log(JSON.stringify({route,width,ready:true,overflow}));
  }
  }
- await evalJs(`document.querySelector('a[href="/life_portal/tasks"]').click()`);
+ await evalJs(`document.querySelector('a[href="/life_portal/native/tasks"]').click()`);
  await wait("document.querySelector('#life-tm #view') && !document.querySelector('#life-tm #view').textContent.includes('Loading tasks')");
  assert.equal(await evalJs("!!document.querySelector('#clusterApp')"),false);
  assert.deepEqual(errors,[]);assert(calls.some(call=>call.method==='frappe.desk.query_report.run'));

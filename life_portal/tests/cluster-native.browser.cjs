@@ -23,7 +23,7 @@ const assert=require('node:assert/strict'),WebSocket=require('ws');
  try{
   await send('Runtime.enable');await send('Page.enable');await send('Fetch.enable',{patterns:[{urlPattern:'*/api/method/*'}]});
   for(const width of[1440,390]){
-   mode='success';calls.length=0;await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<600});await send('Page.navigate',{url:base+'/life_portal/clusterhome'});
+   mode='success';calls.length=0;await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<600});await send('Page.navigate',{url:base+'/life_portal/native/cluster-dashboard'});
    await wait('document.querySelector("#cdCards") && !document.querySelector(".cd-btn").disabled');
    assert.equal(await evaluate('!!document.querySelector("iframe")'),false);assert.equal(await evaluate('document.querySelectorAll(".cd-card").length'),4);assert.equal(await evaluate('document.querySelector(".cd-card .v").textContent'),'₹1,23,456');
    assert.equal(await evaluate('document.querySelectorAll("#cdClusterSel option").length'),4);assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'),true);
