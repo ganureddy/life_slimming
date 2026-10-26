@@ -1,67 +1,323 @@
 <script setup>
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue';
-import { request } from '../api/http';
-import { session } from '../lib/session';
-import ledgers from '../data/expenditureLedgers.json';
-import '../styles/branch-expenditure.css';
-
-const LM=ledgers.LM, LM_OPTIONS=ledgers.LM_OPTIONS;
-const CASH_IN=['Cash Received From MD','Cash Received From Others','Petty Cash Received'];
-const CASH_TO_HO=['Cash Given to Head Office'];
-const CASH_ACCOUNT='173001 - Cash in Hand - LSACPL';
-const HEAD_OFFICE_COST_CENTER='Main - LSACPL';
-const COST_CENTERS={banjara:'Banjara Hills - LSACPL',chandanagar:'Chandanagar - LSACPL',dilsukh:'Dilsukhnagar - LSACPL',gachibowli:'Gachibowli - LSACPL',himay:'Himayathnagar - LSACPL',kukatpally:'Kukatpally - LSACPL',madhapur:'Madhapur - LSACPL',nellore:'Nellore - LSACPL','sr nagar':'SR Nagar - LSACPL',srnagar:'SR Nagar - LSACPL',vijayawada:'Vijayawada - LSACPL',vizag:'Vizag - LSACPL','head office':'Main - LSACPL',testing:'Testing Branch - LSACPL'};
-const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
-function cycleDates(now=new Date()){let y=now.getFullYear(),m=now.getMonth();if(now.getDate()<6){m-=1;if(m<0){m=11;y--;}}const start=new Date(y,m,6),end=new Date(y,m+1,5);return [iso(start),iso(end)];}
-function iso(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-function periodBefore(){const [from]=cycleDates();const d=new Date(`${from}T00:00:00`);d.setMonth(d.getMonth()-1);return [iso(new Date(d.getFullYear(),d.getMonth(),6)),iso(new Date(new Date(`${from}T00:00:00`).getTime()-86400000))];}
-const [cycleFrom,cycleTo]=cycleDates();
-const branches=ref([]),branch=ref(''),userBranch=ref(''),staff=ref([]),entries=ref([]),payments=ref([]),opening=ref(0),loading=ref(false),saving=ref(false),error=ref(''),success=ref(''),filterBranch=ref(''),from=ref(cycleFrom),to=ref(cycleTo),date=ref(today()),paidBy=ref(''),approvedBy=ref(''),paymentMode=ref(''),rows=ref([]),entryFiles=ref([]);
-const modes=['Petty Cash','Bank','UPI','Cheque','NEFT/RTGS'];
-const employees=computed(()=>staff.value.map(x=>String(x.employee_name||x.name||'').trim()).filter(Boolean));
-const managers=computed(()=>{const all=staff.value.filter(x=>/center manager|centre manager|\bcm\b|\bacm\b|assistant center manager|assistant centre manager|manager/i.test(x.designation||''));return (all.length?all:staff.value).map(x=>String(x.employee_name||x.name||'').trim()).filter(Boolean);});
-const itemTotal=computed(()=>rows.value.reduce((n,r)=>n+(Number(r.amount)||0),0));
-const visibleEntries=computed(()=>{let v=entries.value.filter(e=>!filterBranch.value||e.branch===filterBranch.value);if(from.value)v=v.filter(e=>e.date>=from.value);if(to.value)v=v.filter(e=>e.date<=to.value);return v;});
-const allItems=computed(()=>visibleEntries.value.flatMap(e=>e.items.map(i=>({...i,branch:e.branch,date:e.date,paidBy:e.paidBy,approvedBy:e.approvedBy,payMode:e.payMode,je:e.je}))));
-const cashInEntries=computed(()=>allItems.value.filter(i=>CASH_IN.includes(i.et)).reduce((n,i)=>n+Number(i.av||0),0));
-const cashToHo=computed(()=>allItems.value.filter(i=>CASH_TO_HO.includes(i.et)).reduce((n,i)=>n+Number(i.av||0),0));
-const cashOut=computed(()=>allItems.value.filter(i=>!CASH_IN.includes(i.et)&&!CASH_TO_HO.includes(i.et)).reduce((n,i)=>n+Number(i.av||0),0));
-const paymentCash=computed(()=>payments.value.filter(p=>normMode(p.mode_of_payment)==='CASH').reduce((n,p)=>n+Number(p.paid_amount||0),0));
-const balance=computed(()=>opening.value+paymentCash.value+cashInEntries.value-cashOut.value-cashToHo.value);
-const money=n=>'₹ '+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
-const displayDate=s=>s?new Date(`${s}T00:00:00`).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
-function normMode(x){const s=String(x||'').toLowerCase();if(s.includes('cash'))return'CASH';if(s.includes('upi'))return'UPI';if(s.includes('cheque'))return'CHEQUE';if(s.includes('debit'))return'DEBIT CARD';if(s.includes('credit'))return'CREDIT CARD';if(s.includes('net'))return'NET BANKING';if(s.includes('neft')||s.includes('rtgs'))return'NEFT/RTGS';return String(x||'').toUpperCase();}
-function costCenter(name){const b=String(name||'').toLowerCase();let found='';for(const [key,value] of Object.entries(COST_CENTERS))if(b.includes(key))found=value;return found;}
-async function call(method,args){return (await request(method,{args,csrfToken:session.csrf_token})).message;}
-async function getList(doctype,fields,filters=[],limit=500){const r=await call('frappe.client.get_list',{doctype,fields,filters,limit_page_length:limit,order_by:'posting_date desc'});return r||[];}
-function entryFrom(je,doc){const remark=je.user_remark||'';const match=(re)=>remark.match(re)?.[1]?.trim()||'';const items=(doc.accounts||[]).filter(a=>Number(a.debit_in_account_currency)>0).map(a=>{const raw=a.user_remark||'',bill=getBill(raw),rm=raw.replace(/\s*\[\[BILLURL:[^\]]+\]\]/g,'').trim(),parts=rm.split(' | '),main=parts[0]||'',dash=main.indexOf(' - ');return{et:dash>-1?main.slice(0,dash):main,dv:dash>-1?main.slice(dash+3):'',lv:a.account,av:Number(a.debit_in_account_currency)||0,rv:parts[1]||'',bill};});return{je:je.name,date:je.posting_date,branch:match(/Branch:([^|]+)/),payMode:match(/\|\s*([^|]+)\s*\|\s*By:/),paidBy:match(/By:([^|]+)/),approvedBy:match(/Approved:([^|]+)/),items};}
-function getBill(s){const value=s.match(/\[\[BILLURL:([^\]]+)\]\]/)?.[1]||'';try{return decodeURIComponent(value);}catch{return value;}}
-async function loadEntries(f=from.value,t=to.value,b=filterBranch.value){loading.value=true;error.value='';try{const filters=[['docstatus','=',1],['posting_date','>=',f],['posting_date','<=',t],['user_remark','like','Expenditure%'],['user_remark','not like','%Branch:Testing Branch%']];if(b)filters.push(['user_remark','like',`%Branch:${b}%`]);const list=await getList('Journal Entry',['name','posting_date','user_remark'],filters,500);entries.value=(await Promise.all(list.map(async je=>entryFrom(je,await call('frappe.client.get',{doctype:'Journal Entry',name:je.name}))))).filter(e=>e.items.length&&!/testing branch/i.test(e.branch));}catch(e){error.value=e.message;}finally{loading.value=false;}}
-async function loadEmployees(name){staff.value=[];paidBy.value='';approvedBy.value='';if(!name)return;try{const result=await call('life_get_expenditure_branch_employees',{branch:name,search_term:''});const list=Array.isArray(result)?result:result?.employees||[];const unique=[...new Map(list.filter(x=>x?.name).map(x=>[x.name,x])).values()];staff.value=unique.sort((a,b)=>String(a.employee_name||'').localeCompare(String(b.employee_name||'')));}catch(e){error.value=`Could not load branch staff: ${e.message}`;}}
-async function init(){try{const permissions=await getList('User Permission',['for_value','allow'],[['user','=',session.user],['allow','=','Branch']],100);const values=permissions.map(x=>x.for_value).filter(Boolean);if(session.user!=='Administrator'&&!session.roles.includes('System Manager')){if(values.length===1)userBranch.value=values[0];else{const emps=await getList('Employee',['branch'],[['user_id','=',session.user],['status','=','Active']],1);userBranch.value=(emps[0]?.branch&&(!values.length||values.includes(emps[0].branch)))?emps[0].branch:(values[0]||emps[0]?.branch||'');}}
-branches.value=(await getList('Branch',['name'],[],200)).filter(x=>x.name&&!/^testing branch$/i.test(x.name)).sort((a,b)=>a.name.localeCompare(b.name));branch.value=userBranch.value||'';filterBranch.value=userBranch.value||'';if(branch.value)await loadEmployees(branch.value);await loadEntries(cycleFrom,cycleTo,filterBranch.value);await loadSummary();}catch(e){error.value=e.message;}}
-async function loadSummary(){try{const prev=periodBefore();const prevFilters=[['docstatus','=',1],['posting_date','>=',prev[0]],['posting_date','<=',prev[1]],['user_remark','like','Expenditure%'],['user_remark','not like','%Branch:Testing Branch%']];if(filterBranch.value)prevFilters.push(['user_remark','like',`%Branch:${filterBranch.value}%`]);const [oldJEs,prevPayments]=await Promise.all([getList('Journal Entry',['name','posting_date','user_remark'],prevFilters,500),getList('Payment Entry',['branch','mode_of_payment','paid_amount'],[['docstatus','=',1],['posting_date','>=',prev[0]],['posting_date','<=',prev[1]],...(filterBranch.value?[['branch','=',filterBranch.value]]:[['branch','!=','Testing Branch']])],5000)]);let oldEntries=await Promise.all(oldJEs.map(async je=>entryFrom(je,await call('frappe.client.get',{doctype:'Journal Entry',name:je.name}))));const prevIn=oldEntries.flatMap(e=>e.items).filter(i=>CASH_IN.includes(i.et)).reduce((n,i)=>n+i.av,0),prevHo=oldEntries.flatMap(e=>e.items).filter(i=>CASH_TO_HO.includes(i.et)).reduce((n,i)=>n+i.av,0),prevOut=oldEntries.flatMap(e=>e.items).filter(i=>!CASH_IN.includes(i.et)&&!CASH_TO_HO.includes(i.et)).reduce((n,i)=>n+i.av,0),prevCash=prevPayments.filter(p=>normMode(p.mode_of_payment)==='CASH').reduce((n,p)=>n+Number(p.paid_amount||0),0);opening.value=prevCash+prevIn-prevHo-prevOut;
-const filters=[['docstatus','=',1],['posting_date','>=',from.value],['posting_date','<=',to.value],...(filterBranch.value?[['branch','=',filterBranch.value]]:[['branch','!=','Testing Branch']])];payments.value=await getList('Payment Entry',['branch','mode_of_payment','paid_amount'],filters,5000);}catch(e){error.value=e.message;}}
-function ledgerOptions(row){return LM_OPTIONS[row.et]||(LM[row.et]?[LM[row.et]]:[]);}
-function addRow(){rows.value.push({et:'',description:'',ledger:'',amount:'',remarks:'',bill:false});entryFiles.value.push(null);}
-function removeRow(index){rows.value.splice(index,1);entryFiles.value.splice(index,1);}
-function onType(row){const options=ledgerOptions(row);row.ledger=options.length===1?options[0]:'';}
-function onFile(i,e){const file=e.target.files?.[0]||null;if(file&&file.size>5*1024*1024){error.value='Each bill must be 5 MB or smaller.';e.target.value='';entryFiles.value[i]=null;return;}entryFiles.value[i]=file;}
-async function uploadFile(jeName,file,rowNo){const form=new FormData();const safe=file.name.replace(/[^A-Za-z0-9._-]+/g,'_');form.append('file',file,`EXP_ROW_${String(rowNo).padStart(2,'0')}_${Date.now()}_${safe}`);form.append('doctype','Journal Entry');form.append('docname',jeName);form.append('is_private','0');const data=await request('upload_file',{formData:form,csrfToken:session.csrf_token});return data.message?.file_url||data.message?.name||'';}
-async function submit(){error.value='';success.value='';if(saving.value)return;if(!branch.value||!date.value||date.value!==today()||!paidBy.value||!employees.value.some(x=>x.toLowerCase()===paidBy.value.toLowerCase())||!approvedBy.value||!managers.value.some(x=>x.toLowerCase()===approvedBy.value.toLowerCase())||!paymentMode.value){error.value='Choose today’s date, branch, valid staff and approver, and a payment mode.';return;}const items=[];for(let i=0;i<rows.value.length;i++){const r=rows.value[i];if(!r.et&&!r.description&&!Number(r.amount))continue;const opts=ledgerOptions(r);const ledger=r.et==='Petty Cash Received'?CASH_ACCOUNT:(r.ledger||opts[0]||'');if(!r.et||!(Number(r.amount)>0)||!ledger||(opts.length>1&&!r.ledger)){error.value=`Complete expenditure type, ledger and positive amount on row ${i+1}.`;return;}if(r.bill&&!entryFiles.value[i]){error.value=`Attach the bill for row ${i+1}.`;return;}items.push({et:r.et,dv:r.description.trim(),lv:ledger,av:Number(r.amount),rv:r.remarks.trim(),billFile:r.bill?entryFiles.value[i]:null});}if(!items.length){error.value='Add at least one expenditure row.';return;}const center=costCenter(branch.value);if(!center){error.value=`No cost center mapping exists for ${branch.value}.`;return;}saving.value=true;try{const names=[...new Set([...items.map(i=>i.lv),CASH_ACCOUNT])];const accounts=await getList('Account',['name','is_group'],[['name','in',names]],50);const bad=names.filter(n=>!accounts.some(a=>a.name===n)||accounts.some(a=>a.name===n&&a.is_group));if(bad.length)throw new Error(`Ledger account missing or is a group: ${bad.join(', ')}`);const total=items.reduce((n,i)=>n+i.av,0);const remark=`Expenditure | Branch:${branch.value} | ${paymentMode.value} | By:${paidBy.value} | Approved:${approvedBy.value}`;const je=await call('frappe.client.insert',{doc:{doctype:'Journal Entry',voucher_type:'Journal Entry',multi_currency:1,posting_date:date.value,user_remark:remark,accounts:[...items.map(i=>({doctype:'Journal Entry Account',account:i.lv,cost_center:CASH_TO_HO.includes(i.et)?HEAD_OFFICE_COST_CENTER:center,debit_in_account_currency:i.av,credit_in_account_currency:0,user_remark:`${i.et}${i.dv?' - '+i.dv:''}${i.rv?' | '+i.rv:''}`})),{doctype:'Journal Entry Account',account:CASH_ACCOUNT,cost_center:center,debit_in_account_currency:0,credit_in_account_currency:total,user_remark:remark}]}});const jeName=je.name;try{for(let i=0;i<items.length;i++)if(items[i].billFile){const url=await uploadFile(jeName,items[i].billFile,i+1);const acc=je.accounts?.[i];if(acc&&url)await call('frappe.client.set_value',{doctype:'Journal Entry Account',name:acc.name,fieldname:'user_remark',value:`${acc.user_remark||''} [[BILLURL:${encodeURIComponent(url)}]]`});}const doc=await call('frappe.client.get',{doctype:'Journal Entry',name:jeName});await call('frappe.client.submit',{doc});success.value=`Journal Entry ${jeName} submitted for ${money(total)}.`;}catch(e){throw new Error(`Journal Entry ${jeName} was created but bill upload or submit failed: ${e.message}`);}rows.value=[];entryFiles.value=[];addRow();addRow();addRow();paidBy.value='';approvedBy.value='';paymentMode.value='';await loadEntries(from.value,to.value,filterBranch.value);await loadSummary();}catch(e){error.value=e.message;}finally{saving.value=false;}}
-function exportCsv(){const data=allItems.value;const cols=['Date','Branch','Expenditure Type','Ledger','Description','Amount','Paid By','Approved By','Mode','Remarks','Journal Entry'];const escape=v=>{const s=String(v??'');return /[",\n]/.test(s)?`"${s.replaceAll('"','""')}"`:s;};const csv=[cols,...data.map(r=>[r.date,r.branch,r.et,r.lv,r.dv,r.av,r.paidBy,r.approvedBy,r.payMode,r.rv,r.je])].map(row=>row.map(escape).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download=`branch-expenditure-${from.value}-${to.value}.csv`;a.click();URL.revokeObjectURL(a.href);}
-async function applyFilter(){await loadEntries(from.value,to.value,filterBranch.value);await loadSummary();}
-function resetFilter(){[from.value,to.value]=cycleDates();filterBranch.value=userBranch.value||'';applyFilter();}
-onMounted(()=>{addRow();addRow();addRow();init();});onBeforeUnmount(()=>{});
+import {computed} from 'vue';
+import {useBranchExpenditure} from '../composables/useBranchExpenditure';
+import {billUrl,displayDate,money,rowFlow} from '../lib/expenditure-domain';
+import ExpenditureJournalDialog from '../components/native/ExpenditureJournalDialog.vue';
+const {ledgers,config,booting,staff,staffLoading,entries,summary,loading,busy,exporting,error,notice,hasMore,finished,unsaved,quick,clock,filters,applied,rows,form,total,grandTotal,accounts,disabled,journalOpen,journal,journalLoading,journalBusy,journalError,journalNotice,journalDate,initialize,addRow,clearForm,typeChanged,removeRow,billChanged,fileChanged,loadStaff,loadHistory,chooseRange,save,openDraft,exportCsv,viewJournal,changeJournalDate}=useBranchExpenditure();
+const dateText=computed(()=>clock.value.toLocaleDateString('en-GB',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',year:'2-digit'}).replace(/ /g,'-'));
+const timeText=computed(()=>clock.value.toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}));
+const options=row=>ledgers.LM_OPTIONS[row.type]||[ledgers.LM[row.type]].filter(Boolean);
+const partyRequired=row=>['Receivable','Payable'].includes(config.value?.accounts.find(a=>a.name===row.account)?.account_type);
+const historyRows=computed(()=>entries.value.flatMap(e=>e.items.map((item,index)=>({entry:e,item,first:index===0}))));
+const savedBill=item=>{let url=item.bill_url;if(item.legacy_bill_encoded)try{url=decodeURIComponent(url);}catch{}return billUrl(url);};
 </script>
+<template><section class="branch-expenditure-page"><div id="expApp" class="life-exp-shell"><p v-if="booting" role="status">Loading expenditure configuration…</p>
 
-<template>
-  <main class="be-page">
-    <header class="be-hero"><div><span class="be-mark">L</span><div><h1>LIFE SLIMMING &amp; COSMETIC PVT. LTD.</h1><p>BRANCH EXPENDITURE · CASH CONTROL · JOURNAL ENTRY</p></div></div><span class="be-branch-pill">{{userBranch?`Login branch: ${userBranch}`:'Branch cash control'}}</span></header>
-    <div v-if="error" class="be-alert be-error" role="alert">{{error}} <button @click="error=''">Dismiss</button></div><div v-if="success" class="be-alert be-success">{{success}}</div>
-    <section class="be-panel"><div class="be-heading"><div><small>BRANCH CASH POSITION</small><h2>Cash Overview</h2></div><span class="be-cycle">Business cycle: 6th to 5th</span></div><div class="be-filters"><label>Branch<select v-model="filterBranch" :disabled="!!userBranch"><option value="">All branches</option><option v-for="b in branches" :key="b.name" :value="b.name">{{b.name}}</option></select></label><label>From<input v-model="from" type="date"></label><label>To<input v-model="to" type="date"></label><div><button class="be-button" @click="applyFilter">Apply</button><button class="be-button be-light" @click="resetFilter">Reset</button></div></div><div class="be-kpis"><article><small>CASH COLLECTED</small><strong>{{money(paymentCash+cashInEntries)}}</strong><span>Cash payments + manual receipts</span></article><article><small>CASH SPENT</small><strong>{{money(cashOut)}}</strong><span>Submitted expenditure entries</span></article><article><small>AVAILABLE BALANCE</small><strong>{{money(Math.abs(balance))}}</strong><span>{{balance>=0?'Surplus':'Deficit'}} including opening</span></article><article><small>CARRY FORWARD</small><strong>{{money(Math.abs(opening))}}</strong><span>Previous period closing cash</span></article><article><small>GIVEN TO HEAD OFFICE</small><strong>{{money(cashToHo)}}</strong><span>Submitted transfers this period</span></article></div></section>
-    <section class="be-panel"><div class="be-heading"><div><small>BRANCH PAYMENT RECORD</small><h2>New Expenditure Entry</h2></div><span class="be-draft">● Draft</span></div><div class="be-entry-head"><label>Branch<select v-model="branch" :disabled="!!userBranch" @change="loadEmployees(branch)"><option value="">Select branch</option><option v-for="b in branches" :key="b.name" :value="b.name">{{b.name}}</option></select></label><label>Date<input v-model="date" type="date" :max="today()"></label><span>Series<br><b>EXP-YYYY-MM-####</b></span></div><div class="be-subhead"><div><h3>Expenditure items</h3><p>Add each bill or expense as a separate row</p></div><button class="be-button" @click="addRow">+ Add row</button></div><div class="be-table-wrap"><table class="be-form-table"><thead><tr><th>#</th><th>Expenditure type</th><th>Description</th><th>Ledger category</th><th>Amount (₹)</th><th>Remarks</th><th>Bill?</th><th>Attach bill</th><th></th></tr></thead><tbody><tr v-for="(row,i) in rows" :key="i"><td>{{i+1}}</td><td><select v-model="row.et" @change="onType(row)"><option value="">Select type</option><option v-for="et in Object.keys(LM).sort()" :key="et">{{et}}</option></select></td><td><input v-model="row.description" placeholder="Description"></td><td><select v-if="ledgerOptions(row).length>1" v-model="row.ledger"><option value="">Select ledger</option><option v-for="l in ledgerOptions(row)" :key="l">{{l}}</option></select><span v-else>{{ledgerOptions(row)[0]||'—'}}</span></td><td><input v-model="row.amount" type="number" min="0.01" step="0.01" placeholder="0.00"></td><td><input v-model="row.remarks" placeholder="Remarks"></td><td><input v-model="row.bill" type="checkbox"></td><td><input type="file" accept=".pdf,.jpg,.jpeg,.png" :disabled="!row.bill" @change="onFile(i,$event)"></td><td><button class="be-icon-button" aria-label="Remove row" @click="removeRow(i)">×</button></td></tr></tbody></table></div><div class="be-total"><span>Total expenditure</span><strong>{{money(itemTotal)}}</strong></div><div class="be-subhead"><div><h3>Payment details</h3><p>Select branch staff and an approver</p></div><span>{{staff.length?`${staff.length} staff loaded`:branch?'Loading staff…':'Select branch first'}}</span></div><div class="be-payment-grid"><label>Paid by — Branch staff<select v-model="paidBy" :disabled="!staff.length"><option value="">Select staff</option><option v-for="e in employees" :key="e">{{e}}</option></select></label><label>Approved by — Branch manager<select v-model="approvedBy" :disabled="!staff.length"><option value="">Select approver</option><option v-for="e in managers" :key="e">{{e}}</option></select></label><label>Payment mode<select v-model="paymentMode"><option value="">Select mode</option><option v-for="m in modes" :key="m">{{m}}</option></select></label></div><div class="be-form-actions"><button class="be-button be-submit" :disabled="saving" @click="submit">{{saving?'Posting…':'Submit & Create Journal Entry'}}</button></div></section>
-    <section class="be-panel"><div class="be-heading"><div><small>AUDIT &amp; REVIEW</small><h2>Submitted Entries</h2></div><button class="be-button be-light" @click="exportCsv">↓ Export CSV</button></div><div class="be-table-wrap"><table class="be-history-table"><thead><tr><th>Date</th><th>Branch</th><th>Type</th><th>Ledger</th><th>Description</th><th>Amount</th><th>Paid by</th><th>Approved by</th><th>Mode</th><th>Bill</th><th>Remarks</th><th>Journal entry</th></tr></thead><tbody><tr v-if="loading"><td colspan="12" class="be-empty">Loading submitted entries…</td></tr><tr v-else-if="!allItems.length"><td colspan="12" class="be-empty">No submitted entries found for this period.</td></tr><tr v-for="(r,i) in allItems" :key="`${r.je}-${i}`"><td>{{displayDate(r.date)}}</td><td>{{r.branch}}</td><td>{{r.et}}</td><td>{{r.lv}}</td><td>{{r.dv||'—'}}</td><td>{{money(r.av)}}</td><td>{{r.paidBy}}</td><td>{{r.approvedBy}}</td><td>{{r.payMode}}</td><td><a v-if="r.bill" :href="r.bill" target="_blank" rel="noopener">Open bill</a><span v-else>—</span></td><td>{{r.rv||'—'}}</td><td>{{r.je}}</td></tr></tbody></table></div><div class="be-total"><span>Grand total (shown)</span><strong>{{money(allItems.reduce((n,i)=>n+Number(i.av||0),0))}}</strong></div></section>
-    <footer>Branch Expenditure Control · ERPNext</footer>
-  </main>
-</template>
+
+  <header class="life-exp-hero">
+    <div class="life-exp-brand">
+      <div class="life-exp-logo" aria-label="LIFE">
+        <div class="life-exp-logo-letter">L</div>
+      </div>
+      <div class="life-exp-brand-copy">
+        <h1>LIFE SLIMMING &amp; COSMETIC PVT.LTD.</h1>
+        <p>BRANCH EXPENDITURE • CASH CONTROL • JOURNAL ENTRY • HO &amp; BRANCH</p>
+        <a class="life-exp-go-app-btn"
+           href="https://portal.lifescc.com/app/healthcare"
+           target="_self"
+           aria-label="Go to LIFE Healthcare App">
+          <span aria-hidden="true">↗</span> Go to App
+        </a>
+      </div>
+    </div>
+
+    <div class="life-exp-header-status">
+      <div class="life-exp-branch-pill">
+        <span class="life-exp-dot"></span>
+        <span id="lifeLoginBranch">{{config?config.branches.length===1?'Login Branch: '+config.branches[0]:'Branches: '+config.branches.length+' permitted':booting?'Loading…':'Unable to initialize'}}</span>
+      </div>
+      <div class="life-exp-clock-pill">
+        <span id="lifeExpDate">{{dateText}}</span>
+        <strong id="lifeExpTime">{{timeText}}</strong>
+      </div>
+    </div>
+  </header>
+
+
+
+  <section class="life-panel" id="expOverview">
+    <div class="life-section-head">
+      <div>
+        <div class="life-section-kicker">BRANCH CASH POSITION</div>
+        <h2>Cash Overview</h2>
+      </div>
+      <div class="life-cycle-badge">Business cycle: 6th to 5th</div>
+    </div>
+
+    <div class="topfilter">
+      <div class="filter-field filter-field-branch">
+        <label for="eFilterBranch">Branch</label>
+        <select id="eFilterBranch" v-model="filters.branch" :disabled="!config||loading" class="fsel">
+          <option value="">All Branches</option>
+        <option v-for="b in config?.branches||[]" :key="b">{{b}}</option></select>
+      </div>
+
+      <div class="filter-field">
+        <label for="eFilterFrom">From</label>
+        <input type="date" id="eFilterFrom" v-model="filters.from_date" :disabled="!config||loading" @input="quick=''" class="finput" />
+      </div>
+
+      <div class="filter-field">
+        <label for="eFilterTo">To</label>
+        <input type="date" id="eFilterTo" v-model="filters.to_date" :disabled="!config||loading" @input="quick=''" class="finput" />
+      </div>
+
+      <div class="filter-actions"><button v-for="[key,label] in [['today','Today'],['yesterday','Yesterday'],['month','This Month'],['lastmonth','Last Month'],['fy','This FY']]" :key="key" type="button" class="resetbtn exp-quick-date" :data-range="key" :aria-pressed="quick===key" :disabled="!config||loading" @click="chooseRange(key)">{{label}}</button>
+        <button class="filterbtn" id="eFilterBtn" @click="loadHistory()" :disabled="!config||loading">Apply</button>
+        <button class="resetbtn" id="eResetBtn" @click="chooseRange('month')" :disabled="!config||loading">Reset</button>
+      </div>
+    </div>
+
+
+    <div class="scards scards-all">
+      <article class="scard scard-in">
+        <div class="scard-topline">
+          <div class="scard-icon">💵</div>
+          <div class="scard-chip">CASH IN</div>
+        </div>
+        <div class="scard-amt" id="sCashIn">{{money(summary?.cash_in)}}</div>
+        <div class="scard-label">Cash Collected</div>
+        <div class="scard-sub">All posted cash debits for the selected cost centers</div>
+        <div class="scard-count" id="sCashInCount">Posted cash debits</div>
+        <div class="scard-detail" id="sCashInDetail">Includes cash receipts and incoming cash transfers.</div>
+      </article>
+
+      <article class="scard scard-exp">
+        <div class="scard-topline">
+          <div class="scard-icon">📤</div>
+          <div class="scard-chip">CASH OUT</div>
+        </div>
+        <div class="scard-amt" id="sCashOut">{{money(summary?.cash_out)}}</div>
+        <div class="scard-label">Cash Spent</div>
+        <div class="scard-sub">All posted cash credits, including HO transfers</div>
+        <div class="scard-count" id="sCashOutCount">Posted cash credits</div>
+        <div class="scard-detail" id="sCashOutDetail">Includes cash expenditure and outgoing cash transfers.</div>
+      </article>
+
+      <article class="scard scard-bal">
+        <div class="scard-topline">
+          <div class="scard-icon">🏦</div>
+          <div class="scard-chip">AVAILABLE</div>
+        </div>
+        <div class="scard-amt" id="sBalance">{{money(summary?.balance)}}</div>
+        <div class="scard-label" id="sBalanceLabel">{{summary?.balance<0?'Cash Deficit':'Closing Cash'}}</div>
+        <div class="scard-sub">Opening + cash debits − cash credits</div>
+        <div class="scard-count">Current available cash</div>
+        <div class="scard-detail" id="sBalanceDetail">{{applied?'As of '+displayDate(applied.to_date):''}}</div>
+      </article>
+
+
+      <article class="scard scard-opening" id="sOpeningCard">
+        <div class="scard-topline">
+          <div class="scard-icon">📅</div>
+          <div class="scard-chip">CARRY FORWARD</div>
+        </div>
+        <div class="scard-amt" id="sOpening">{{money(summary?.opening)}}</div>
+        <div class="scard-label" id="sOpeningLabel">Opening Cash</div>
+        <div class="scard-sub">Posted ledger balance before the selected From date</div>
+        <div class="scard-count">Previous period balance</div>
+        <div class="scard-detail" id="sOpeningDetail">{{applied?'Before '+displayDate(applied.from_date):''}}</div>
+      </article>
+
+      <article class="scard scard-ho" id="sHOCard">
+        <div class="scard-topline">
+          <div class="scard-icon">🏢</div>
+          <div class="scard-chip">HEAD OFFICE</div>
+        </div>
+        <div class="scard-amt" id="sHOCash">{{money(summary?.ho_sent)}}</div>
+        <div class="scard-label">Cash Sent to HO</div>
+        <div class="scard-sub">Branch cash credited; Main cash debited</div>
+        <div class="scard-count">Same cash account • different cost centers</div>
+        <div class="scard-detail" id="sHODetail">Cash received from branch → Main: {{money(summary?.ho_received)}}; transfers already included in cash debits/credits.</div>
+      </article>
+    </div>
+  </section>
+
+
+  <section class="expenditure-form" id="eForm">
+    <div class="life-panel" id="expEntry">
+      <div class="life-section-head life-entry-title">
+        <div>
+          <div class="life-section-kicker">BRANCH PAYMENT RECORD</div>
+          <h2>New Expenditure Entry</h2>
+        </div>
+        <div class="entry-status-wrap">
+          <span class="eno" id="edocno">{{form.name||'New Entry'}}</span>
+          <span class="esp" :class="finished?'posted':'draft'" id="estatus">{{finished?'● Submitted':form.name?'● Saved Draft':'● Draft'}}</span>
+        </div>
+      </div>
+
+      <div class="eh">
+        <div class="entry-head-fields">
+          <div class="entry-field entry-field-branch">
+            <label class="elbl" for="eBranch">Branch <span class="req">*</span></label>
+            <select id="eBranch" v-model="form.branch" :disabled="disabled" @change="loadStaff(form.branch)" class="hsel">
+              <option value="">— Select Branch —</option>
+            <option v-for="b in config?.branches||[]" :key="b">{{b}}</option></select>
+          </div>
+
+          <div class="entry-field">
+            <label class="elbl" for="eEntryDate">Date <span class="req">*</span></label>
+            <input type="date" id="eEntryDate" v-model="form.date" :min="config?.entry_min_date" :max="config?.today" :disabled="disabled" title="Today and the previous two days only" class="hdate" />
+          </div>
+
+          <div class="entry-field entry-series">
+            <label class="elbl">Series</label>
+            <span id="eSeriesDisp">EXP-YYYY-MM-####</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ec item-card">
+        <div class="ech">
+          <div>
+            <span class="echt">📋 Expenditure Items</span>
+            <span class="ech-sub">Add each bill or expense as a separate row</span>
+          </div>
+          <button class="addbtn" id="eAddBtn" @click="addRow()" :disabled="disabled">+ Add Row</button>
+        </div>
+
+        <div class="table-scroll table-scroll-items">
+          <table id="eItemTable">
+            <thead>
+              <tr>
+                <th class="c" style="width:38px">#</th>
+                <th style="min-width:205px">Expenditure Type</th>
+                <th style="min-width:175px">Description</th>
+                <th style="min-width:185px">Ledger Category (Auto)</th>
+                <th class="r" style="width:125px">Amount (₹)</th>
+                <th style="min-width:165px">Remarks</th>
+                <th class="c" style="width:58px">Bill?</th>
+                <th style="min-width:190px">Attach Bill</th>
+                <th style="width:42px"></th>
+              </tr>
+            </thead>
+            <tbody id="eTbody"><tr v-for="(r,i) in rows" :key="r.id" :data-row-id="r.id"><td class="rn">{{i+1}}</td><td><select v-model="r.type" class="etsel" aria-label="Expenditure type" :disabled="disabled" @change="typeChanged(r)"><option value="">Select expenditure</option><option v-for="type in Object.keys(ledgers.LM).sort()" :key="type">{{type}}</option></select><div class="exp-flow">{{rowFlow(r,form,config)}}</div></td><td><input v-model="r.description" class="edesc" type="text" maxlength="500" aria-label="Description" :disabled="disabled"></td><td><select v-model="r.account" class="eledger" aria-label="Ledger" :disabled="disabled"><option value="">Select ledger</option><option v-for="account in options(r)" :key="account">{{account}}</option></select><div v-if="partyRequired(r)" class="exp-item-extra"><select v-model="r.party_type" class="ePartyType" aria-label="Party type" :disabled="disabled"><option value="">Party type</option><option>Customer</option><option>Supplier</option><option>Employee</option></select><input v-model="r.party" class="eParty" placeholder="Exact party ID" aria-label="Party ID" :disabled="disabled"></div></td><td><input v-model="r.amount" class="eamt" type="number" min="0.01" max="1000000000" step="0.01" aria-label="Amount" :disabled="disabled"></td><td><input v-model="r.remarks" class="erm" type="text" maxlength="500" aria-label="Remarks" :disabled="disabled"></td><td class="c"><input v-model="r.bill_required" class="ebill" type="checkbox" aria-label="Bill available" :disabled="disabled" @change="billChanged(r)"></td><td><input class="efile" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" :disabled="disabled" @change="fileChanged(r,$event.target.files?.[0])"><div class="file-preview"><template v-if="r.file">{{r.file.name}} (uploads privately when saved)</template><a v-else-if="billUrl(r.bill_url)" :href="billUrl(r.bill_url)" target="_blank" rel="noopener noreferrer">Saved bill</a></div></td><td><button type="button" class="delbtn" aria-label="Remove row" :disabled="disabled" @click="removeRow(r)">✕</button></td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="totbar">
+          <span class="totlbl">Total Expenditure</span>
+          <span class="totamt" id="eTotal">{{money(total)}}</span>
+        </div>
+      </div>
+
+      <div class="ec payment-card">
+        <div class="ech">
+          <div>
+            <span class="echt">💳 Payment Details</span>
+            <span class="ech-sub">Select the branch to load permitted staff and managers</span>
+          </div>
+          <span id="eBranchHint" class="branch-hint">{{staffLoading?'Loading staff…':staff.length+' staff • '+staff.filter(e=>e.is_approver).length+' approvers'}}</span>
+        </div>
+
+        <div class="pgrid">
+          <div>
+            <label class="flbl" for="ePaidBy">Paid By — Branch Staff <span class="req">*</span></label>
+            <input type="text"
+                   id="ePaidBy" v-model="form.paid_by" :disabled="disabled||staffLoading||!staff.length"
+                   class="staff-combo-input"
+                   list="ePaidByOptions"
+                   placeholder="— Select Branch First —"
+                   autocomplete="off" />
+            <datalist id="ePaidByOptions"><option v-for="p in staff" :key="p.name" :value="p.employee_name+' ['+p.name+']'" :label="p.designation"/></datalist>
+            <div class="fhint" id="ePaidByHint"></div>
+          </div>
+
+          <div>
+            <label class="flbl" for="eApprovedBy">Approved By — Branch Manager <span class="req">*</span></label>
+            <input type="text"
+                   id="eApprovedBy" v-model="form.approved_by" :disabled="disabled||staffLoading||!staff.length"
+                   class="staff-combo-input"
+                   list="eApprovedByOptions"
+                   placeholder="— Select Branch First —"
+                   autocomplete="off" />
+            <datalist id="eApprovedByOptions"><option v-for="p in staff.filter(e=>e.is_approver)" :key="p.name" :value="p.employee_name+' ['+p.name+']'" :label="p.designation"/></datalist>
+            <div class="fhint" id="eApprovedByHint">{{staff.some(e=>e.is_approver)?'Select a manager from suggestions.':'No manager configured. Ask HR to update branch/designation.'}}</div>
+          </div>
+
+          <div>
+            <label class="flbl" for="ePayMode">Payment Mode <span class="req">*</span></label>
+            <select id="ePayMode" v-model="form.payment_mode" :disabled="disabled">
+              <option value="">— Select Mode —</option>
+              <option>Petty Cash</option>
+              <option>Bank</option>
+              <option>UPI</option>
+              <option>Cheque</option>
+              <option>NEFT/RTGS</option>
+            </select>
+          </div>
+        <div><label class="flbl" for="eFundingAccount">Payment Account *</label><select id="eFundingAccount" v-model="form.funding_account" :disabled="disabled||form.payment_mode==='Petty Cash'"><option value="">Select payment ledger</option><option v-for="account in accounts" :key="account">{{account}}</option></select><div class="fhint">Cash is separated by cost center. Select a bank ledger for Bank/UPI/Cheque/NEFT.</div><label class="flbl" for="eReference">Payment Reference</label><input id="eReference" v-model="form.reference" type="text" maxlength="140" placeholder="Bank/UPI/Cheque reference" :disabled="disabled"></div></div>
+
+        <div class="exp-page-actions"><button type="button" class="resetbtn" id="eFresh" :disabled="busy||!config" @click="clearForm()">+ New Entry</button><span id="eDraftHint">Drafts are saved in ERP and can be reopened from the history list.</span></div><div class="acts">
+          <button class="bdraft" id="eDraftBtn" @click="save('save')" :disabled="disabled||!config?.can_create">{{busy?'Saving…':'💾 Save Draft'}}</button>
+          <button class="bsubmit" id="eSubmitBtn" @click="save('submit')" :disabled="disabled||!config?.can_submit">{{busy?'Saving…':finished?'✓ Submitted':'✓ Submit & Create Journal Entry'}}</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="jebox" id="eJeBox" v-show="error||notice" :role="error?'alert':'status'" :style="{color:error?'#b91c1c':'#14532d'}">{{error||notice}} <button v-if="!config&&!booting" type="button" class="resetbtn" @click="initialize">Retry</button><a v-if="form.name" :href="'/app/journal-entry/'+encodeURIComponent(form.name)" target="_blank" rel="noopener">Open Journal Entry</a></div>
+
+
+  <section class="life-panel history-panel" id="eHistoryCard">
+    <div class="life-section-head history-heading">
+      <div>
+        <div class="life-section-kicker">AUDIT &amp; REVIEW</div>
+        <h2>Entries &amp; Saved Drafts</h2>
+      </div>
+      <div class="history-actions">
+        <span class="history-legend">
+          <span class="legend-in">↑</span> Cash In
+          <span class="legend-ho">→HO</span> To Head Office
+        </span>
+        <button class="exportbtn" id="eExportBtn" @click="exportCsv" :disabled="!config?.can_export||loading||exporting||!applied">{{exporting?'Exporting…':'↓ Export CSV'}}</button>
+      </div>
+    </div>
+
+    <div class="table-scroll history-scroll">
+      <table id="eHistoryTable">
+        <thead>
+          <tr>
+            <th style="width:38px">#</th>
+            <th>Date</th>
+            <th>Branch</th>
+            <th>Expenditure Type</th>
+            <th>Ledger Category</th>
+            <th>Description</th>
+            <th class="r">Amount (₹)</th>
+            <th>Paid By</th>
+            <th>Approved By</th>
+            <th>Mode</th>
+            <th class="c">Bill</th>
+            <th class="c">Attach</th>
+            <th>Remarks</th><th>Entry / Status</th>
+          </tr>
+        </thead>
+        <tbody id="eHistoryBody"><tr v-if="loading&&!entries.length"><td colspan="14" class="nodata">Loading entries…</td></tr><tr v-else-if="!historyRows.length"><td colspan="14" class="nodata">{{hasMore?'No matching entries in this page. Click Load more to continue.':'No entries in this date range.'}}</td></tr><tr v-for="({entry:e,item:i,first},index) in historyRows" :key="e.name+'|'+index"><td>{{index+1}}</td><td>{{displayDate(e.date)}}</td><td>{{e.branch}}</td><td>{{i.type}}</td><td>{{i.account}}</td><td>{{i.description}}</td><td class="r">{{money(i.amount)}}</td><td>{{first?e.paid_by:''}}</td><td>{{first?e.approved_by:''}}</td><td>{{first?e.payment_mode:''}}</td><td>{{i.bill_url?'Yes':'No'}}</td><td><a v-if="savedBill(i)" :href="savedBill(i)" target="_blank" rel="noopener noreferrer">View bill</a></td><td>{{i.remarks}}</td><td><template v-if="first"><a :href="'/app/journal-entry/'+encodeURIComponent(e.name)" @click.prevent="viewJournal(e.name)">{{e.name}}</a><button type="button" class="resetbtn" @click="viewJournal(e.name)">View JV</button><span class="exp-small">{{e.docstatus===1?e.legacy?'Submitted • legacy posting':'Submitted':'Saved Draft'}}</span><span v-if="billUrl(e.legacy_bill_url)" class="exp-small"><a :href="billUrl(e.legacy_bill_url)" target="_blank" rel="noopener noreferrer">Legacy parent bill</a></span><button v-if="e.docstatus===0&&e.payload" type="button" class="resetbtn" :disabled="busy" @click="openDraft(e)">Open Draft</button></template></td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="totbar history-total">
+      <span class="totlbl">Grand Total (shown)</span>
+      <span class="totamt" id="eGrandTotal">{{money(grandTotal)}}</span>
+    </div>
+  </section>
+
+  <div class="exp-page-actions"><button v-if="hasMore" type="button" class="filterbtn" id="eLoadMore" :disabled="loading" @click="loadHistory(true)">Load more</button><span id="ePageInfo">{{entries.length}} entries loaded • submitted row total shown (includes transfers and receipts)</span></div><ExpenditureJournalDialog v-model="journalOpen" v-model:date="journalDate" :journal="journal" :loading="journalLoading" :busy="journalBusy" :error="journalError" :notice="journalNotice" @save="changeJournalDate"/><footer class="life-exp-footer">
+    LIFE Branch Expenditure Control • ERPNext
+  </footer>
+
+</div></section></template>
+<style scoped src="../styles/branch-expenditure-source.css"></style>
+<style scoped>#expApp{width:100%;left:auto;transform:none;margin:0 auto 30px}.exp-page-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 0}button:disabled{opacity:.55;cursor:wait}.life-exp-shell{min-width:0}.jebox[role=alert]{display:block}@media(max-width:600px){#expApp{width:100%}}</style>

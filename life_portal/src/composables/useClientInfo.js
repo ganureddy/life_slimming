@@ -1,4 +1,5 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import {onBeforeRouteLeave} from 'vue-router';
 import { createClientInfoReader } from '../api/client-info';
 import { CFG, analyze, buildClientList, clientListTotals, clientNetworkSummary, addDays, billingMonth, TODAY, cleanMobile, d10, isExcluded, lc, lookupRule, qRange } from '../lib/client-info';
 
@@ -11,6 +12,7 @@ export function useClientInfo() {
   const root=ref(null), from=ref(''),to=ref(''),quick=ref('today'),query=ref(''),branch=ref(''),status=ref(''),mode=ref(''),unpaid=ref(false),page=ref(1);
   const rows=ref([]),collections=ref([]),modes=ref([]),loading=ref(false),error=ref(''),collectionError=ref(''),modeError=ref(''),notice=ref('');
   const lookupRows=ref([]),lookupOpen=ref(false),lookupLoading=ref(false),lookupError=ref('');
+  const profileBusy=ref(false);
   const profileId=ref(''),paymentsLoaded=ref(false);
   const drawer=ref(null),drawerFilter=ref('all'),modalOpen=ref(false),profile=ref(null),profileLoading=ref(false),profileError=ref(''),profileWarnings=ref([]),tab=ref('overview');
   const dashboard=ref(null),dashLoading=ref(false),dashError=ref(''),dashCollapsed=ref(false),dashUpdated=ref('');
@@ -139,7 +141,7 @@ export function useClientInfo() {
     finally{if(active&&controllers.get('payments')===controller)paymentLoading.value=false;}
   }
   watch(tab,value=>{if(value==='billing')loadPayments();});
-  function closeProfile(){controllers.get('profile')?.abort();controllers.get('profile-extra')?.abort();controllers.get('payments')?.abort();modalOpen.value=false;profile.value=null;returnFocus?.focus();}
+  function closeProfile(){if(profileBusy.value)return;controllers.get('profile')?.abort();controllers.get('profile-extra')?.abort();controllers.get('payments')?.abort();modalOpen.value=false;profile.value=null;returnFocus?.focus();}
   watch(modalOpen,async open=>{if(open){previousOverflow=document.body.style.overflow;document.body.style.overflow='hidden';await nextTick();root.value?.querySelector('#c3ModalClose')?.focus();}else document.body.style.overflow=previousOverflow??'';});
   function onKey(event){if(event.key==='Escape'){if(modalOpen.value)closeProfile();else if(drawer.value)closeDrawer();else lookupOpen.value=false;}}
   function exportCsv(){
@@ -148,11 +150,12 @@ export function useClientInfo() {
     const cell=value=>'"'+String(value??'').replaceAll('"','""')+'"';
     const blob=new Blob(['\ufeff'+[headers,...records].map(row=>row.map(cell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='LIFE_Clients.csv';link.click();URL.revokeObjectURL(url);
   }
+  onBeforeRouteLeave(()=>!profileBusy.value);
   onMounted(()=>{loadModes();preset('today');window.addEventListener('keydown',onKey);
     if(typeof IntersectionObserver!=='undefined'){observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){dashVisible=true;if(!dashCollapsed.value)loadDashboard();}},{rootMargin:'100px'});const element=root.value?.querySelector('#c3Dash');if(element)observer.observe(element);}
   });
   onBeforeUnmount(()=>{active=false;observer?.disconnect();controllers.forEach(controller=>controller.abort());clearTimeout(lookupTimer);window.removeEventListener('keydown',onKey);if(modalOpen.value)document.body.style.overflow=previousOverflow??'';});
   return{root,from,to,quick,query,branch,status,mode,unpaid,page,branches,modeNames,filtered,visible,pages,totals,loading,error,collectionError,modeError,notice,
-    lookupRows,lookupOpen,lookupLoading,lookupError,drawer,drawerFilter,modalOpen,profileId,profile,metrics,profileLoading,profileError,profileWarnings,tab,payments,paymentLoading,paymentError,photo,
+    lookupRows,lookupOpen,lookupLoading,lookupError,drawer,drawerFilter,modalOpen,profileId,profile,metrics,profileLoading,profileError,profileWarnings,profileBusy,tab,payments,paymentLoading,paymentError,photo,
     dashboard,dashLoading,dashError,dashCollapsed,dashUpdated,loadDashboard,toggleDashboard,loadModes,loadMain,preset,clear,searchChanged,selectLookup,openDrawer,closeDrawer,openProfile,closeProfile,loadPayments,exportCsv};
 }

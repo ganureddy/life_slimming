@@ -35,7 +35,7 @@ test('background document pool bounds concurrency and honors cancellation',async
 });
 test('Client Info preview owns its source and does not replace the incomplete main route',()=>{
  const files=['src/pages/ClientInfoPage.vue','src/api/client-info.js','src/composables/useClientInfo.js','src/composables/useClientMedical.js','src/lib/client-info.js',...fs.readdirSync(path.join(root,'src/components/client-info')).map(name=>'src/components/client-info/'+name)];for(const file of files){assert(!/portal_pages|PortalSourcePage|<iframe|v-html|innerHTML|\beval\s*\(|new Function\s*\(|window\.frappe/.test(fs.readFileSync(path.join(root,file),'utf8')),file);}
- const router=fs.readFileSync(path.join(root,'src/router/index.js'),'utf8');assert(router.includes('/native/client-info'));assert(!router.match(/const nativeModules = new Set\(\[([^\]]+)/)[1].includes('cliinfo'));
+ const router=fs.readFileSync(path.join(root,'src/router/index.js'),'utf8');assert(router.includes('/native/client-info'));assert(!router.match(/const nativeModules = new Set\(\[([^\]]*)/)[1].includes('cliinfo'));
 });
 
 const medicalSource=fs.readFileSync(path.join(root,'src/composables/useClientMedical.js'),'utf8').replace(/^import .*;$/gm,'').replace('export ','');

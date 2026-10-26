@@ -7,6 +7,16 @@ export const PRI_TODO={ VVIMP: 'High', IMP: 'High', HI: 'High', MED: 'Medium', L
 export const LEGACY_PRI={ High: 'HI', Medium: 'MED', Low: 'LOW' };
 export const STATUSES=['Open', 'In Progress', 'Review Pending', 'On Hold', 'Reopened', 'Completed', 'Cancelled'];
 export const ST_CLS={ 'Open': 's-open', 'In Progress': 's-prog', 'Review Pending': 's-rev', 'On Hold': 's-hold', 'Reopened': 's-reo', 'Completed': 's-done', 'Cancelled': 's-cxl', 'Resolved': 's-rev', 'Closed': 's-done' };
+
+export function ticketActionAllowed(ticket,kind,user,manager=false){
+ const resolver=ticket.tag===user,raiser=ticket.raiser===user||ticket.owner===user,active=!['Resolved','Closed','Cancelled'].includes(ticket.status);
+ if(kind==='resolve')return active&&(resolver||manager);
+ if(kind==='close')return ticket.status==='Resolved'&&(raiser||manager);
+ if(kind==='reopen')return ['Resolved','Closed'].includes(ticket.status)&&(raiser||manager);
+ if(kind==='retag'||kind==='remind')return active&&(raiser||manager);
+ if(['hold','unhold','tpri'].includes(kind))return active&&manager;
+ return false;
+}
 export const REPORT_DEF=[
     { k: 'EOD', label: 'EOD (Daily)', d: 'Report every day by the set time' },
     { k: 'WEEKLY', label: 'Weekly', d: 'Report on the chosen weekday' },

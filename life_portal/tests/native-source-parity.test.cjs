@@ -57,7 +57,7 @@ for (const [source, native] of pages) test(source + ' preserves original page st
 test('every default native conversion is included in the source-style contract', () => {
   const router = fs.readFileSync(path.join(root, 'src/router/index.js'), 'utf8');
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'src/data/portalPages.json'), 'utf8'));
-  const declaration = router.match(/const nativeModules = new Set\((\[[^;]+\])\);/);
+  const declaration = router.match(/const nativeModules = new Set\((\[[^;]*\])\);/);
   assert(declaration, 'default native modules must be explicitly listed');
   // Tasks owns its source and has a standalone dependency/workflow contract.
   const covered = new Set([...pages.map(([source]) => source), 'task-management']);

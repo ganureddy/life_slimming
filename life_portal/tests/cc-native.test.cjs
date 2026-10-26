@@ -11,9 +11,9 @@ test('India date and sales cycle boundaries do not depend on browser timezone',a
 });
 test('live status precedence, pending outcomes and overdue counts',async()=>{
  const {visitStatus,visitMetrics}=await lib;
- assert.equal(visitStatus({custom_appointment_status:'Scheduled',custom_visit_status:'Visited & Booked'}),'Visited-BKD');
+ assert.equal(visitStatus({custom_appointment_status:'Scheduled',custom_visit_status:'Visited & Booked'}),'Appt Fixed');
  assert.equal(visitStatus({custom_appointment_status:'Visited – Not Booked'}),'Visited-Not BKD');
- const rows=[{status:'Scheduled',custom_appointment_date_and_time:'2026-10-05 10:00:00'},{status:'Scheduled',custom_appointment_date_and_time:'2026-10-06 10:00:00'},{status:'Visited'},{status:'Visited & Booked'},{status:'Not Visited'}];
+ const rows=[{custom_appointment_status:'Scheduled',custom_appointment_date_and_time:'2026-10-05 10:00:00'},{custom_appointment_status:'Scheduled',custom_appointment_date_and_time:'2026-10-06 10:00:00'},{custom_appointment_status:'Visited'},{custom_appointment_status:'Visited & Booked'},{custom_appointment_status:'Not Visited'}];
  assert.deepEqual(visitMetrics(rows,'2026-10-05 11:00:00'),{appointments:5,visits:2,booked:1,pending:2,overdue:1});
 });
 test('CSV escapes quotes and formulas; exported phone values remain masked',async()=>{

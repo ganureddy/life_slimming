@@ -17,13 +17,13 @@ export function dateRange(period, today = indiaStamp().slice(0, 10)) {
 }
 const normalize = value => String(value || '').trim().toLowerCase().replace(/&/g, ' and ').replace(/[–—_\-/]+/g, ' ').replace(/\s+/g, ' ');
 export function visitStatus(row) {
-  const values = [row.custom_appointment_status, row.custom_visit_status, row.status].filter(Boolean);
+  const values = [row.custom_appointment_status].filter(Boolean);
   for (const value of values) {
     const n = normalize(value);
     if (['visited booked', 'visited and booked', 'booked visited', 'booked and visited'].includes(n)) return 'Visited-BKD';
     if (['visited not booked', 'visited and not booked', 'visited unbooked', 'not booked visited'].includes(n)) return 'Visited-Not BKD';
   }
-  const raw = values[0] || row.custom_cc_stage || 'Not set', n = normalize(raw);
+  const raw = values[0] || 'Not set', n = normalize(raw);
   if (['not visited', 'no show', 'no visit', 'did not visit'].includes(n)) return 'Not Visited';
   if (['booked', 'appointment booked', 'scheduled', 'appointment scheduled', 'confirmed', 're confirm', 'reconfirmed', 'awaiting visit', 'open', 'pending'].includes(n)) return 'Appt Fixed';
   if (n === 'visited') return 'Visited · Outcome pending';

@@ -44,6 +44,8 @@ const pageComponents = {
 };
 
 export const routes = [
+  { path: "/native/pending-balances", name: "receivables-native", component: () => import("../pages/PendingBalancesPage.vue"), meta: { title: "Pending Balances Vue preview", accessModule: "receivables" } },
+  { path: "/native/branch-expenditure", name: "bexp-native", component: () => import("../pages/BranchExpenditurePage.vue"), meta: { title: "Branch Expenditure Vue preview", accessModule: "bexp" } },
   { path: "/native/client-info", name: "cliinfo-native", component: () => import("../pages/ClientInfoPage.vue"), meta: { title: "Client Info Vue preview", accessModule: "cliinfo" } },
   { path: "/native/appointments", name: "appt-native", component: () => import("../pages/AppointmentSchedulerPage.vue"), meta: { title: "Client Appointment Scheduler", accessModule: "appt" } },
   { path: "/native/employee-sales", name: "empsale-native", component: () => import("../pages/EmployeeSaleMasterPage.vue"), meta: { title: "Employee Sale Master", accessModule: "empsale" } },

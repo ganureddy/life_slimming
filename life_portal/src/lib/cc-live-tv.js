@@ -5,8 +5,7 @@ export const kinds = {
   walkin: { icon: '🚶', title: 'VISITED!', color: '#4da3ff' },
   champ: { icon: '👑', title: 'CONGRATULATIONS!', color: '#f5c542' },
 };
-export const visitStatusCount = row => ['visit', 'visited', 'visited booked', 'visited not booked'].includes(String(row.custom_visit_status || '').trim().toLowerCase().replace(/[-_]+/g, ' ').replace(/\s+/g, ' '));
-// Appointment outcomes and the separate Visit Status must never feed each other's counters.
+// Appointment Status is the only source for appointment outcomes.
 const appointmentOutcome = row => visitStatus({custom_appointment_status:row.custom_appointment_status});
 export const visited = row => ['Visited-BKD', 'Visited-Not BKD', 'Visited · Outcome pending'].includes(appointmentOutcome(row));
 export const booked = row => !!row.custom_appointment_date_and_time && !['cancelled', 'canceled'].includes(String(row.custom_appointment_status || '').toLowerCase());
@@ -14,19 +13,10 @@ export function leaderboard(data) {
   const agents = new Map();
   for (const row of data.rows) {
     const id = row.lead_owner || 'unassigned';
-    if (!agents.has(id)) agents.set(id, { id, enabled: Object.hasOwn(data.agents, id), name: data.agents[id] || 'Unassigned', branch: '', visitStatuses: {today: {}, month: {}, week: {}}, today: {leads:0,booked:0,walkins:0,visitedBooked:0,visitStatus:0}, month: {leads:0,booked:0,walkins:0,visitedBooked:0,visitStatus:0}, week: {walkins:0,visitStatus:0} });
+    if (!agents.has(id)) agents.set(id, { id, enabled: Object.hasOwn(data.agents, id), name: data.agents[id] || 'Unassigned', branch: '', today: {leads:0,booked:0,walkins:0,visitedBooked:0}, month: {leads:0,booked:0,walkins:0,visitedBooked:0}, week: {walkins:0} });
     const agent = agents.get(id);
     const branch = row.branch || row.lead_assign_to_branch;
     if (branch) agent.branch = agent.branch && agent.branch !== branch ? 'Multiple branches' : branch;
-    const statusDay = String(row.custom_appointment_date_and_time || row.creation || '').slice(0,10);
-    if (data.week_start && statusDay >= data.week_start && statusDay < data.week_end && visitStatusCount(row)) agent.week.visitStatus++;
-    const status = String(row.custom_visit_status || '').trim() || 'Not set';
-    for (const [period, start, end] of [['today', data.today, data.today], ['month', data.month_start, data.month_end], ['week', data.week_start, data.week_end]]) {
-      if (start && (period === 'today' ? statusDay === start : statusDay >= start && statusDay < end)) {
-        const counts = agent.visitStatuses[period];
-        Object.defineProperty(counts, status, {value: (Object.hasOwn(counts, status) ? counts[status] : 0) + 1, writable: true, enumerable: true, configurable: true});
-      }
-    }
     const appointmentDay = String(row.custom_appointment_date_and_time || '').slice(0,10);
     if (data.week_start && appointmentDay >= data.week_start && appointmentDay < data.week_end && visited(row)) agent.week.walkins++;
     for (const period of ['today', 'month']) {
@@ -34,7 +24,6 @@ export function leaderboard(data) {
         const day = String(value || '').slice(0,10);
         return period === 'today' ? day === data.today : day >= data.month_start && day < data.month_end;
       };
-      if (inPeriod(row.custom_appointment_date_and_time || row.creation) && visitStatusCount(row)) agent[period].visitStatus++;
       if (inPeriod(row.creation)) agent[period].leads++;
       if (inPeriod(row.custom_appointment_date_and_time)) {
         if (booked(row)) agent[period].booked++;
@@ -69,9 +58,8 @@ export function hasRecordedActivity(row) {
   if (!untouched.has(normalize(row.custom_cc_sub_status))) return true;
   if (!untouched.has(normalize(row.custom_cc_stage))) return true;
   if (!untouched.has(normalize(row.status))) return true;
-  const visit = normalize(row.custom_visit_status);
-  if (visit && !['pending', 'not set'].includes(visit)) return true;
-  return booked(row) || visited(row);
+  const appointment = normalize(row.custom_appointment_status);
+  return !!appointment && !['pending', 'not set'].includes(appointment);
 }
 // Frappe timestamps are site-local: compare like-for-like without browser timezone conversion.
 export function waitingLeads(data, elapsedMs = 0) {
@@ -100,9 +88,7 @@ export function changes(previous, data) {
       if (booked(row)) types.push('booked');
       if (visited(row)) types.push('walkin');
     }
-    for (const type of types) events.push({id: `${row.name}:${type}:${row.modified}`, type, client: row.lead_name || row.name, agentId: row.lead_owner, agent: data.agents[row.lead_owner] || 'Unassigned', branch: row.branch || row.lead_assign_to_branch || '', source: row.source || '', treatment: row.enquired_for || '', visitStatus: row.custom_visit_status || '', time: row.modified});
+    for (const type of types) events.push({id: `${row.name}:${type}:${row.modified}`, type, client: row.lead_name || row.name, agentId: row.lead_owner, agent: data.agents[row.lead_owner] || 'Unassigned', branch: row.branch || row.lead_assign_to_branch || '', source: row.source || '', treatment: row.enquired_for || '', appointmentStatus: row.custom_appointment_status || '', time: row.modified});
   }
   return events.sort((a,b) => a.time.localeCompare(b.time));
 }
-
-export const formatVisitStatuses = counts => Object.entries(counts || {}).sort(([a],[b]) => a.localeCompare(b)).map(([status,count]) => `${status}: ${count}`).join(' · ') || 'No leads';

@@ -37,6 +37,8 @@ class LiveTVTests(unittest.TestCase):
         self.assertTrue(result['restricted_to_owner'])
         self.assertEqual(frappe.get_all.call_args.kwargs['filters'], {'lead_owner': 'agent'})
         self.assertEqual(frappe.get_all.call_args.kwargs['limit_page_length'], 0)
+        self.assertIn('custom_appointment_status', frappe.get_all.call_args.kwargs['fields'])
+        self.assertNotIn('custom_visit_status', frappe.get_all.call_args.kwargs['fields'])
         self.assertEqual(result['today'], '2026-10-09')
 
     def test_owner_photo_is_returned_with_name(self):

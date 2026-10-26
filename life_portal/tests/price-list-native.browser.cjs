@@ -30,7 +30,7 @@ const assert = require('node:assert/strict');
     await send('Page.enable');await send('Runtime.enable');await send('Fetch.enable',{patterns:[{urlPattern:'*/api/method/*'}]});
     for(const width of [1440,390]){
       await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});
-      await send('Page.navigate',{url:base+'/life_portal/'+(width===1440?'pricelist':'native/pricelist')});
+      await send('Page.navigate',{url:base+'/life_portal/'+'native/pricelist'});
       await wait("document.querySelector('.price-list-native tbody')?.textContent.includes('Laser')");
       await wait("document.querySelector('.tt-pill-offer-yes')?.textContent.includes('900')");
       assert.equal(await evaluate("document.querySelector('.price-list-native tbody').textContent.includes('Facial')"),true);

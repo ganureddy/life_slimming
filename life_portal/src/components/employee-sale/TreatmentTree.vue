@@ -1,9 +1,9 @@
 <script setup>
-import {ref} from 'vue';
-defineProps({nodes:Array,total:Number,level:{type:Number,default:0},expanded:Boolean});const opened=ref(new Set());
-const label=v=>v==='__NONE__'?'(Unmapped)':v;
-const money=v=>'₹'+Number(v||0).toLocaleString('en-IN',{maximumFractionDigits:2});
-function toggle(k){const next=new Set(opened.value);next.has(k)?next.delete(k):next.add(k);opened.value=next;}
+import {computed,reactive} from 'vue';
+const props=defineProps({nodes:Array,total:Number,calc:Object});
+const opened=reactive(new Map());
+const all=computed(()=>{const rows=[];function visit(nodes,level=0,parent='',visible=true){for(const n of nodes){const id=JSON.stringify([parent,n.k]),open=opened.has(id)?opened.get(id):level===0;rows.push({...n,id,parent,level,visible,open});visit(n.kids,level+1,id,visible&&open);}}visit(props.nodes);return rows;});
+function expandAll(open){for(const n of all.value)opened.set(n.id,open);}
+defineExpose({expandAll});
 </script>
-<template><div v-for="node in nodes" :key="node.k" class="treatment-node"><div class="treatment-line" :style="{paddingLeft:level*20+'px'}"><button v-if="node.kids.length" type="button" :aria-expanded="expanded||opened.has(node.k)" @click="toggle(node.k)">{{expanded||opened.has(node.k)?'▾':'▸'}}</button><strong>{{label(node.k)}}</strong><span>{{node.invoices}} invoices · {{node.clients}} clients · {{node.employees}} employees</span><b>{{money(node.share)}}</b><small>{{total?(node.share/total*100).toFixed(1):0}}% · Full invoice {{money(node.full)}}</small></div><TreatmentTree v-if="node.kids.length&&(expanded||opened.has(node.k))" :nodes="node.kids" :total="total" :level="level+1" :expanded="expanded"/></div></template>
-<style scoped>.treatment-line{display:flex;gap:12px;align-items:center;padding:10px;border-bottom:1px solid #dce9de;flex-wrap:wrap}.treatment-line b{margin-left:auto}.treatment-line span,.treatment-line small{color:#687d6e;font-size:12px}button{border:0;background:transparent}</style>
+<template><tbody id="esr-tree-body"><tr v-for="n in all" :key="n.id" :class="['lv'+n.level,{hide:!n.visible}]" :data-id="n.id" :data-p="n.parent"><td><button v-if="n.kids.length" type="button" class="tg" :aria-expanded="n.open" :aria-label="(n.open?'Collapse ':'Expand ')+calc.lbl(n.k)" @click="opened.set(n.id,!n.open)">{{n.open?'−':'+'}}</button><span v-if="n.k==='__NONE__'" class="esr-pill p-amber">{{calc.lbl(n.k)}}</span><template v-else>{{n.k}}</template> <span v-if="n.level<2" class="esr-c-mute">({{n.kids.length}})</span></td><td class="n">{{n.invoices.toLocaleString('en-IN')}}</td><td class="n">{{n.clients}}</td><td class="n">{{n.employees}}</td><td class="n esr-c-main">{{calc.fmt(n.share)}}</td><td class="n"><span class="esr-share"><i :style="{width:Math.min(100,calc.pct(n.share,total)).toFixed(1)+'%'}"></i></span>{{calc.pct(n.share,total).toFixed(1)}}%</td><td class="n esr-c-mute">{{calc.fmt(n.full)}}</td></tr></tbody></template>

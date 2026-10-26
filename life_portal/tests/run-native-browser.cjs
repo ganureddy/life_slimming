@@ -4,7 +4,7 @@ const { spawnSync } = require('node:child_process');
 const path = require('node:path');
 const suites = [
   'full-reactive-pages', 'client-registration-native', 'discount-audit-native', 'appointment-scheduler-native', 'client-info-native',
-  'unjoined-native', 'branch-target', 'price-list-native',
+  'branch-expenditure-native', 'recovery-reports', 'unjoined-native', 'branch-target', 'price-list-native',
   'documents-native', 'sales-master-native', 'weight-loss-native',
   'cc-dashboard-parity', 'billing-native', 'billing-workflows', 'native-performance',
 ];
