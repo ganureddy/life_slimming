@@ -1,0 +1,7 @@
+<script setup>
+import { INV_STATE, invClass, money, num, r0, fdate } from '../../lib/client-info';
+import { apiUrl } from '../../api/config';
+const props=defineProps({ invoice:{type:Object,required:true} });
+function print(){window.open(apiUrl('/printview?doctype=Sales%20Invoice&name='+encodeURIComponent(props.invoice.name)+'&format='+encodeURIComponent('Consultaion Patient Sales Invoice')+'&no_letterhead=0'),'_blank','noopener');}
+</script>
+<template><button type="button" class="c3-inv" :class="'tone-'+INV_STATE[invClass(invoice)][0]" @click="print" title="Open printable bill"><div class="c3-inv-top"><b>{{ invoice.name }}</b><span class="c3-pill" :class="Number(invoice.is_return)?'tone-mute':'tone-'+INV_STATE[invClass(invoice)][0]">{{ Number(invoice.is_return)?'↩ Return':INV_STATE[invClass(invoice)][1] }}</span></div><div class="c3-inv-grid"><div><small>Bill date</small><span>{{ fdate(invoice.posting_date) }}</span></div><div><small>Due date</small><span :class="{'tone-neg':invClass(invoice)==='overdue'}">{{ fdate(invoice.due_date) }}</span></div><div><small>Total</small><span>{{ money(invoice.base_grand_total) }}</span></div><div><small>Paid</small><span class="tone-ok">{{ money(num(invoice.base_grand_total)-num(invoice.outstanding_amount)) }}</span></div><div><small>Balance</small><span :class="r0(num(invoice.outstanding_amount))>0?'tone-neg':'tone-mute'">{{ money(invoice.outstanding_amount) }}</span></div><div><small>Branch</small><span>{{ invoice.branch||'—' }}</span></div></div></button></template>

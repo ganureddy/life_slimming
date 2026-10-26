@@ -1,220 +1,32 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue';
-import { request } from '../api/http';
-import endpoints from '../api/endpoints.json';
-import { session } from '../lib/session';
-import { indiaDate } from '../lib/unjoined';
-const today = indiaDate();
-const from = ref(today.slice(0, 8) + '01'), to = ref(today), cluster = ref(''), data = ref(null), loading = ref(false), error = ref('');
-let controller, alive = true;
-const money = value => '₹' + Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
-async function load() {
-  if (!from.value) from.value = today.slice(0, 8) + '01';
-  if (!to.value) to.value = today;
-  if (from.value > to.value) { error.value = 'Choose a valid date range.'; return; }
-  controller?.abort(); const current = new AbortController(); controller = current;
-  loading.value = true; error.value = '';
-  try {
-    const result = await request(endpoints.cluster_dashboard_api, { args: { from_date: from.value, to_date: to.value, ...(cluster.value ? { cluster: cluster.value } : {}) }, csrfToken: session.csrf_token, signal: current.signal });
-    if (!alive || controller !== current) return;
-    if (!result.message || !Array.isArray(result.message.rows)) throw new Error('The dashboard returned an invalid response.');
-    data.value = result.message;
-  } catch (failure) { if (alive && controller === current && failure.name !== 'AbortError') error.value = 'Failed to load data.'; }
-  finally { if (alive && controller === current) loading.value = false; }
-}
-onMounted(load);
-onBeforeUnmount(() => { alive = false; controller?.abort(); });
+import {computed,ref} from 'vue';
+import {useClusterDashboard} from '../composables/useClusterDashboard';
+import NativeTable from '../components/cluster/ClusterReportTable.vue';
+import ClusterRace from '../components/cluster/ClusterRace.vue';
+import NativePanel from '../components/native/NativePanel.vue';
+const vm=useClusterDashboard();
+const {S,data,selected,loading,error,canViewSales,racePeriod,raceMode,execBranch,execEmployee,execCategory,appointmentBranch,appointmentStaff,appointmentJourney,appointmentSearch,walkFrom,walkTo,walkBranch,comparisonLoading,collapsed,zoom,sections,money,period,sum,financialTotal,comparison,attendance,billingDues,recovery,recoveryTotals,recoveryEmployees,commitments,appointments,executions,executionEmployees,walk,walkEmployees,approvalRows,mediaRows,load,loadRace,compare,moveSection,exportSection}=vm;
+const titles={conversions:'Branch Walk-in Conversions',race:'Sales Race Board',comparison:'Branch Comparison',attendance:'Branch-wise Absent Staff',dues:'Pending Dues & Recovery',appointments:'Walk-in Appointments by HO-CC',executions:'Appointments & Executions',media:'Media / Source Mix',approvals:'Approvals'};
+const columns=(items)=>items.map(([k,l,t])=>({k,l,t}));
+const comparisonColumns=columns([['code','Branch'],['cluster','Cluster'],['package','Package billed today','amt'],['today','Collections','amt'],['dues','Pending dues','amt'],['count','Invoices','int'],['fresh','New receipts','amt'],['recovery','Recovery receipts','amt'],['target','Target','amt'],['cycle','Sales month net','amt'],['last','Last month net','amt'],['rank','Rank','int']]);
+const appointmentColumns=columns([['branch','Branch'],['client','Client'],['date','Appointment'],['agent','HO-CC Owner'],['consultant','Consultant'],['st','Status'],['journey','Journey'],['phone','Mobile'],['details','Client details'],['remarks','Remarks'],['firstVisit','First visit']]);
+const raceRows=computed(()=>raceMode.value==='cluster'?S.race?.clusters||[]:S.race?.branches||[]);
+const due=(a,b)=>S.dues===null?null:S.dues.filter(x=>x.due_date&&x.due_date>=a&&x.due_date<=b).reduce((s,x)=>s+(Number(x.outstanding_amount)||0),0);
+const weekly=computed(()=>[0,1,2,3].map(i=>{const from=new Date(Date.parse(period.value.from)+i*7*86400000).toISOString().slice(0,10),to=i===3?period.value.to:new Date(Date.parse(period.value.from)+(i*7+6)*86400000).toISOString().slice(0,10);return {from,to,i};}).filter(r=>r.from<=period.value.today).map(r=>'Week '+(r.i+1)+': '+money(S.invoices?S.invoices.filter(x=>!Number(x.is_return)&&x.posting_date>=r.from&&x.posting_date<=r.to).reduce((s,x)=>s+(Number(x.grand_total)||0),0)/1.05:null)+' ('+r.from+'–'+r.to+')').join('\n'));
+const cards=computed(()=>[['Cluster net sale · ex-GST',money(financialTotal('cycle')),S.rows.map(r=>r.code+' '+money(S.finance[r.branch]?.cycle)).join(' · '),'cl-comparison'],['Today’s collections',money(financialTotal('today')),(sum('bills')??'—')+' submitted invoices today · ex-GST','cl-comparison'],['Staff present',sum('present')==null?'—':sum('present')+' / '+sum('staff'),'Absent CM: '+(attendance.value.filter(e=>/cent(er|re) manager/i.test(e.designation||'')&&e.today==='Provisional absence').map(e=>e.employee_name).join(', ')||'None recorded'),'cl-att-panel'],['Pending dues',money(sum('dues')),'Today '+money(due(period.value.today,period.value.today))+' · Month '+money(due(period.value.from,period.value.to))+' · Overall above','cl-dues-panel'],['Walks / Booked',S.walkSummary?S.walkSummary.walks+' / '+S.walkSummary.booked:'—',S.walkSummary?'CC-W '+S.walkSummary.cc+' · Direct '+S.walkSummary.direct+' · Referral '+S.walkSummary.referral:'Verifying visited clients and sources','cl-ap-panel'],['Weekly net sales · ex-GST','',weekly.value,'cl-comparison']]);
+const duesTab=ref('today'),duesFrom=ref(''),duesTo=ref('');
+const sourceDues=computed(()=>S.cluster?.branches.map(([branch,code])=>{const d=period.value,balances=(S.dues||[]).filter(x=>x.branch===branch&&(duesTab.value!=='all'||(!duesFrom.value||x.posting_date>=duesFrom.value)&&(!duesTo.value||x.posting_date<=duesTo.value))),bills=duesTab.value==='all'?balances:(S.invoices||[]).filter(x=>x.branch===branch&&!Number(x.is_return)&&(duesTab.value!=='today'||x.posting_date===d.today)),scheduled=balances.filter(x=>duesTab.value==='all'||x.due_date&&(duesTab.value==='today'?x.due_date===d.today:x.due_date>=d.from&&x.due_date<=d.to));return {code,count:bills.length,billed:bills.reduce((s,x)=>s+(Number(x.grand_total)||0)/1.05,0),balance:bills.reduce((s,x)=>s+(Number(x.outstanding_amount)||0),0),collectable:scheduled.reduce((s,x)=>s+(Number(x.outstanding_amount)||0),0),overall:balances.reduce((s,x)=>s+(Number(x.outstanding_amount)||0),0),dates:[...new Set(scheduled.map(x=>x.due_date).filter(Boolean))].sort().join(', ')};})||[]);
+const absentRows=computed(()=>S.cluster?.branches.map(([branch,code])=>{const employees=attendance.value.filter(e=>e.branch===branch),known=S.punches&&S.attendance&&S.offs&&S.leaves;return {branch,code,known,people:employees.filter(e=>e.today==='Provisional absence'),count:known?employees.filter(e=>e.today==='Provisional absence').length:null};})||[]);
+const sourceComparisonColumns=computed(()=>columns([['code','Branch'],['cluster','Cluster'],['package','Package net','amt'],['today','Collected net','amt'],['dues','Pending dues','amt'],['count','# Inv','int'],['freshRecovery','Fresh net | Recovery net'],['target','Target','amt'],['cycle','Cycle net','amt'],['last','Last month net','amt'],['rank','Rank']]));
+const sourceComparison=computed(()=>comparison.value.map(r=>({...r,freshRecovery:money(r.fresh)+' | '+money(r.recovery)})));
+
+const walkBranches=computed(()=>S.cluster?.branches.map(([branch,code])=>({branch,code,...data.walkStats(walkFrom.value||period.value.from,walkTo.value||period.value.today,branch)}))||[]);
+const dateString=value=>new Date(value||Date.now()).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});
+function toggle(id){collapsed.has(id)?collapsed.delete(id):collapsed.add(id);}
+function jump(id){collapsed.delete(id);document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});}
+const print=()=>window.print();
 </script>
-
-<template>
-  <div class="cd">
-    <div class="cd-top">
-      <div><div id="cdTitle" class="cd-title">{{ data?.cluster || 'Cluster Dashboard' }}</div><div id="cdSub" class="cd-sub" role="status">{{ loading ? 'Loading…' : error || (data ? (data.from_date || '') + ' → ' + (data.to_date || '') + ' · ' + (data.branches?.length || 0) + ' branches' : 'Loading…') }}</div></div>
-      <form class="cd-controls" @submit.prevent="load">
-        <select v-if="data?.available_clusters?.length > 1" id="cdClusterSel" v-model="cluster" class="cd-select" aria-label="Cluster"><option value="">My Cluster</option><option value="ALL">All Branches</option><option v-for="name in data.available_clusters" :key="name">{{ name }}</option></select>
-        <input id="cdFrom" v-model="from" class="cd-date" type="date" aria-label="From date"><input id="cdTo" v-model="to" class="cd-date" type="date" aria-label="To date"><button class="cd-btn" :disabled="loading">Apply</button>
-      </form>
-    </div>
-    <div v-if="data" id="cdCards" class="cd-cards"><div class="cd-card"><div class="k">Sales</div><div class="v">{{ money(data.totals?.sales_amt) }}</div></div><div class="cd-card"><div class="k">Invoices</div><div class="v">{{ data.totals?.sales_count || 0 }}</div></div><div class="cd-card"><div class="k">Collections</div><div class="v">{{ money(data.totals?.collections) }}</div></div><div class="cd-card"><div class="k">Outstanding</div><div class="v">{{ money(data.totals?.outstanding) }}</div></div></div>
-    <div class="cd-table-wrap"><table id="cdTable" class="cd-table"><thead><tr><th>Branch</th><th>Sales</th><th>Invoices</th><th>Collections</th><th>Outstanding</th></tr></thead><tbody id="cdTbody"><tr v-for="row in data?.rows || []" :key="row.branch"><td>{{ row.branch }}</td><td>{{ money(row.sales_amt) }}</td><td>{{ row.sales_count }}</td><td>{{ money(row.collections) }}</td><td>{{ money(row.outstanding) }}</td></tr><tr v-if="!data?.rows.length"><td colspan="5" class="cd-empty">{{ loading ? 'Loading…' : error || 'No branches configured for this cluster yet.' }}</td></tr></tbody></table></div>
-  </div>
-</template>
-
-<style scoped>
-.cd{
-  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
-  padding: 16px;
-  max-width: 1200px;
-  margin: 0 auto;
-  color: #14311d;
-}
-.navbar{display:none;}
-.web-footer{display:none;}
-.cd-top{
-  display:flex;
-  flex-wrap:wrap;
-  gap:14px;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:18px;
-}
-
-.cd-title{
-  font-size:20px;
-  font-weight:700;
-}
-
-.cd-sub{
-  font-size:13px;
-  color:#5c7a68;
-  margin-top:2px;
-}
-
-.cd-controls{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  align-items:center;
-}
-
-.cd-select,
-.cd-date{
-  border:1px solid #d3e3d8;
-  border-radius:10px;
-  padding:7px 10px;
-  font-size:13px;
-  background:#fff;
-}
-
-.cd-btn{
-  background:linear-gradient(135deg,#1b5e20,#2e7d32);
-  color:#fff;
-  border:none;
-  border-radius:10px;
-  padding:8px 16px;
-  font-size:13px;
-  font-weight:600;
-  cursor:pointer;
-}
-
-.cd-btn:hover{
-  filter:brightness(1.08);
-}
-
-.cd-cards{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:12px;
-  margin-bottom:20px;
-}
-
-.cd-card{
-  background:linear-gradient(165deg,rgba(255,255,255,.95),rgba(236,248,238,.85));
-  border:1px solid rgba(27,94,32,.12);
-  border-radius:14px;
-  padding:14px 16px;
-  box-shadow:0 6px 18px rgba(15,61,30,.08);
-}
-
-.cd-card .k{
-  font-size:12px;
-  color:#5c7a68;
-  margin-bottom:6px;
-}
-
-.cd-card .v{
-  font-size:20px;
-  font-weight:700;
-  color:#14311d;
-}
-
-.cd-table-wrap{
-  overflow-x:auto;
-  border-radius:14px;
-  border:1px solid rgba(27,94,32,.12);
-  background:#fff;
-}
-
-.cd-table{
-  width:100%;
-  border-collapse:collapse;
-  font-size:13px;
-  min-width:520px;
-}
-
-.cd-table th{
-  text-align:left;
-  padding:11px 14px;
-  background:#eef6f0;
-  color:#1b5e20;
-  font-weight:700;
-  position:sticky;
-  top:0;
-}
-
-.cd-table td{
-  padding:10px 14px;
-  border-top:1px solid #eef2ee;
-}
-
-.cd-table tr:hover td{
-  background:#f7fbf8;
-}
-
-.cd-empty{
-  text-align:center;
-  color:#8aa596;
-  padding:26px !important;
-}
-
-/* ================= RESPONSIVE ================= */
-
-@media(max-width:900px){
-  .cd-cards{
-    grid-template-columns:repeat(2,1fr);
-  }
-}
-
-@media(max-width:640px){
-  .cd{
-    padding:10px;
-  }
-
-  .cd-top{
-    flex-direction:column;
-    align-items:stretch;
-  }
-
-  .cd-controls{
-    flex-direction:column;
-    align-items:stretch;
-  }
-
-  .cd-controls > *{
-    width:100%;
-  }
-
-  .cd-cards{
-    grid-template-columns:1fr 1fr;
-    gap:8px;
-  }
-
-  .cd-card{
-    padding:11px 12px;
-  }
-
-  .cd-card .v{
-    font-size:17px;
-  }
-
-  .cd-table{
-    min-width:0;
-    font-size:12px;
-  }
-
-  .cd-table th,
-  .cd-table td{
-    padding:8px 8px;
-  }
-}
-</style>
+<template><section class="cluster-dashboard-page"><div id="clusterApp"><header class="cl-header"><div class="cl-brand"><a href="/life-home" aria-label="LIFE home">L</a><div><small>LIFE · CLUSTER OPERATIONS</small><h1>Cluster Command Center</h1><span id="cl-grand" class="cl-grand">All clusters · cycle net {{money(S.race?.clusters.reduce((n,c)=>n+c.net,0))}}</span></div></div><div class="cl-controls"><label>CLUSTER<select id="cl-select" aria-label="Cluster" v-model="selected" :disabled="loading||S.clusters.length===1" @change="load"><option v-for="c in S.clusters" :key="c.id" :value="c.id">{{c.name}} · {{c.branches.map(b=>b[1]).join(', ')}}</option></select></label><span id="cl-profile" class="cl-profile"></span><button id="cl-refresh" :disabled="loading" @click="load">↻ Refresh</button></div></header><nav class="cl-tabs" aria-label="Cluster dashboard views"><button data-jump="cl-overview" @click="jump('cl-overview')">Overview</button><button data-jump="cl-conversions" @click="jump('cl-conversions')">Conversions</button><button data-jump="cl-comparison" @click="jump('cl-comparison')">Branch comparison</button><button data-jump="bcc-race" @click="jump('bcc-race')">Sales Race</button><button data-jump="cl-att-panel" @click="jump('cl-att-panel')">Absent Staff</button><button data-jump="cl-dues-panel" @click="jump('cl-dues-panel')">Dues & Recovery</button><button data-jump="cl-ap-panel" @click="jump('cl-ap-panel')">HO-CC Appointments</button><button data-jump="cl-exec-panel" @click="jump('cl-exec-panel')">Appointments & Executions</button><button data-jump="cl-stock-panel" @click="jump('cl-stock-panel')">Approvals</button><button data-jump="cl-media-panel" @click="jump('cl-media-panel')">Media / Source Mix</button><span id="cl-period">{{period.from}} → {{period.to}}</span></nav><div class="cl-score"><div>Today <b id="cl-today">{{money(financialTotal('today'))}}</b></div><div>Invoices <b id="cl-bills">{{sum('bills')??'—'}}</b></div><div>Cycle net <b id="cl-month">{{money(financialTotal('cycle'))}}</b></div><div>Staff <b id="cl-att">{{'P '+(sum('present')??'—')+' · A '+(sum('absent')??'—')}}</b></div><div class="cl-score-ticker"><span id="cl-ticker"><span v-for="(e,i) in S.ranking" :key="e.branch+e.name" class="cl-ticker-item"><em>{{i===0?'🥇':i===1?'🥈':'✦'}}</em><b>{{e.name}}</b><small>{{S.cluster?.branches.find(b=>b[0]===e.branch)?.[1]}}</small><strong>{{money(e.sale)}}</strong></span><span v-if="!S.ranking.length">No employee sales recorded</span></span></div></div><main><div id="cl-status" role="status">{{loading?'Refreshing cluster sources…':S.last?'Updated '+dateString(S.last):'Checking your available branches…'}} <span v-if="Object.keys(S.errors).length">Some sources unavailable; their totals are withheld.</span><span v-if="error" role="alert">{{error}} <button @click="vm.initialize">Retry</button></span></div><section id="cl-overview"><div class="cl-intro"><div><small>YOUR CLUSTER AT A GLANCE</small><h2 id="cl-heading">{{S.cluster?.name||'Branch performance'}}’s cluster</h2><p id="cl-subtitle">Collections after GST · completed paid bills · today’s attendance</p></div><div class="cl-legend"><i></i> Live records <span>·</span> Auto-refresh 5 min</div></div><div id="cl-cards" class="cl-cards"><button v-for="([label,value,note,target],i) in cards" :key="label" class="cl-card" :class="{gold:i===0}" @click="jump(target)"><small>{{label}}</small><strong>{{value}}</strong><p>{{note}}</p></button></div><section class="cl-panel" id="cl-conversions" :style="{order:sections.indexOf('conversions')}" :class="{'cluster-collapsed':collapsed.has('conversions'),'panel-zoom':zoom==='conversions'}"><nav class="cluster-panel-tools"><button type="button" @click="toggle('conversions')">{{collapsed.has('conversions')?'Expand':'Collapse'}}</button><button type="button" aria-label="Move panel up" @click="moveSection('conversions',-1)">↑</button><button type="button" aria-label="Move panel down" @click="moveSection('conversions',1)">↓</button><button type="button" @click="zoom=zoom==='conversions'?'':'conversions'">{{zoom==='conversions'?'Exit fullscreen':'Expand panel'}}</button></nav><div class="cl-panel-title"><div><h2>Branch walk-in conversions</h2><p>Current sales cycle · booked ÷ visited clients</p></div></div><div id="cl-conversion-cards" class="cl-conversions"><div class="filters"><label>From<input v-model="walkFrom" type="date"></label><label>To<input v-model="walkTo" type="date"></label><select v-model="walkBranch"><option value="">All cluster branches</option><option v-for="[branch] in S.cluster?.branches||[]" :key="branch">{{branch}}</option></select></div><p v-if="S.errors.walkins" role="alert">{{S.errors.walkins}}</p><div class="cl-summary"><article><small>Visited clients</small><strong>{{S.walkRaw?walk.walks:'—'}}</strong></article><article><small>Booked</small><strong>{{S.walkRaw?walk.booked:'—'}}</strong></article><article><small>Conversion</small><strong>{{S.walkRaw?(walk.walks?Math.round(walk.booked/walk.walks*100):0)+'%':'—'}}</strong></article><article><small>Call Center / Direct / Referral</small><strong>{{S.walkRaw?[walk.cc,walk.direct,walk.referral].join(' / '):'—'}}</strong></article></div><NativeTable :rows="walkBranches" :columns="columns([['code','Branch'],['walks','Walks','int'],['booked','Booked','int'],['cc','Call Center','int'],['direct','Direct','int'],['referral','Referral','int']])"/><h3>Employee conversions</h3><NativeTable :rows="walkEmployees" :columns="columns([['name','Employee'],['walks','Walks','int'],['booked','Booked','int'],['ratio','Conversion','pct']])"/></div></section><ClusterRace v-model:period="racePeriod" :race="S.race" :clusters="S.raceClusters" :money="money" :can-view-sales="canViewSales" :error="S.errors.race" @refresh="loadRace"/>
+<section class="cl-panel" id="cl-comparison" :style="{order:sections.indexOf('comparison')}" :class="{'cluster-collapsed':collapsed.has('comparison'),'panel-zoom':zoom==='comparison'}"><nav class="cluster-panel-tools"><button type="button" @click="toggle('comparison')">{{collapsed.has('comparison')?'Expand':'Collapse'}}</button><button type="button" aria-label="Move panel up" @click="moveSection('comparison',-1)">↑</button><button type="button" aria-label="Move panel down" @click="moveSection('comparison',1)">↓</button><button type="button" @click="zoom=zoom==='comparison'?'':'comparison'">{{zoom==='comparison'?'Exit fullscreen':'Expand panel'}}</button></nav><div class="cl-panel-title"><div><h2>Branch comparison</h2><p>Live comparison across assigned cluster branches</p></div><div class="cl-compare-controls"><select id="cl-compare-mode" v-model="S.compareMode" aria-label="Branch comparison period"><option value="today">Today</option><option value="yesterday">Yesterday</option><option value="range">Date range</option></select><input type="date" id="cl-compare-from" v-model="S.compareFrom" :disabled="S.compareMode!=='range'" aria-label="Comparison start"><input type="date" id="cl-compare-to" v-model="S.compareTo" :disabled="S.compareMode!=='range'" aria-label="Comparison end"><button id="cl-compare-apply" :disabled="comparisonLoading" @click="compare">Apply</button></div></div><p v-if="S.errors.comparison" role="alert">{{S.errors.comparison}}</p><NativeTable id="cl-branches" :rows="sourceComparison" :columns="sourceComparisonColumns"/></section><section class="cl-panel" id="cl-att-panel" :style="{order:sections.indexOf('attendance')}" :class="{'cluster-collapsed':collapsed.has('attendance'),'panel-zoom':zoom==='attendance'}"><nav class="cluster-panel-tools"><button type="button" @click="toggle('attendance')">{{collapsed.has('attendance')?'Expand':'Collapse'}}</button><button type="button" aria-label="Move panel up" @click="moveSection('attendance',-1)">↑</button><button type="button" aria-label="Move panel down" @click="moveSection('attendance',1)">↓</button><button type="button" @click="zoom=zoom==='attendance'?'':'attendance'">{{zoom==='attendance'?'Exit fullscreen':'Expand panel'}}</button></nav><div class="cl-panel-title"><div><h2>Branch-wise Absent Staff</h2><p>Today’s absent names · calendar-month present / absent counts</p></div></div><div id="cl-absence"><p v-if="S.errors.attendance" role="alert">{{S.errors.attendance}}</p><NativeTable :rows="absentRows" :columns="columns([['code','Branch'],['people','Absent today · employee (month P | A)'],['count','Count','int']])" :total="false"><template #cell="{row,column,value}"><template v-if="column.k==='people'"><span v-if="!row.known">Attendance unavailable</span><span v-for="e in row.people" :key="e.name" class="cl-absence"><b>{{e.employee_name}}</b><small><em class="cl-p">P {{e.presentDays??'—'}}</em> <em class="cl-a">A {{e.absentDays??'—'}}</em><template v-if="e.halfDays"> | HD {{e.halfDays}}</template></small></span><span v-if="row.known&&!row.people.length">No provisional absences</span></template><template v-else>{{value??'—'}}</template></template></NativeTable><p class="cl-footnote">Month {{period.today.slice(0,7)}}-01 → {{period.today}}. P and A count recorded attendance days; HD is shown separately. Today’s absence is provisional. Missing historical records are not counted as absent; approved leave and weekly off are excluded.</p></div></section><section class="cl-panel" id="cl-dues-panel" :style="{order:sections.indexOf('dues')}" :class="{'cluster-collapsed':collapsed.has('dues'),'panel-zoom':zoom==='dues'}"><nav class="cluster-panel-tools"><button type="button" @click="toggle('dues')">{{collapsed.has('dues')?'Expand':'Collapse'}}</button><button type="button" aria-label="Move panel up" @click="moveSection('dues',-1)">↑</button><button type="button" aria-label="Move panel down" @click="moveSection('dues',1)">↓</button><button type="button" @click="zoom=zoom==='dues'?'':'dues'">{{zoom==='dues'?'Exit fullscreen':'Expand panel'}}</button></nav><div class="cl-panel-title"><div><h2>Pending Dues & Recovery</h2><p>Cluster totals · branch and employee recovery status</p></div></div><div class="cl-filters" id="cl-dues-tabs"><button data-dues="today" :class="{on:duesTab==='today'}" @click="duesTab='today'">Today</button><button data-dues="month" :class="{on:duesTab==='month'}" @click="duesTab='month'">This Month</button><button data-dues="all" :class="{on:duesTab==='all'}" @click="duesTab='all'">Overall</button><div class="cl-due-range"><label>Start <input type="date" id="cl-dues-from" v-model="duesFrom" :disabled="duesTab!=='all'" aria-label="Pending dues start date"></label><label>End <input type="date" id="cl-dues-to" v-model="duesTo" :disabled="duesTab!=='all'" aria-label="Pending dues end date"></label><span>Invoice dates</span></div></div><div id="cl-billing-dues"><p v-if="S.dues===null" class="cl-empty">This source is unavailable. Refresh to retry; no zero values have been assumed.</p><NativeTable v-else :rows="sourceDues" :columns="columns([['code','Branch'],['count','Invoices','int'],['billed','Bills · net ex-GST','amt'],['balance','Invoice balance','amt'],['collectable','Collectable · invoice due date','amt'],['overall','Overall pending','amt']])"><template #cell="{row,column,value}"><template v-if="column.k==='collectable'">{{money(value)}}<small>{{row.dates}}</small></template><template v-else>{{column.t==='amt'?money(value):value??'—'}}</template></template></NativeTable><p class="cl-footnote">Bills are net (÷ 1.05). Balances are actual payable amounts. Collectable uses Sales Invoice due dates. Overall Start / End filters invoice posting dates; blank includes all. This Month follows {{period.from}}–{{period.to}}.</p></div><details><summary>Recovery commitments & employee follow-ups</summary><div id="cl-recovery"><h3>Recovery sheet</h3><p v-if="S.errors.recovery" role="alert">{{S.errors.recovery}}</p><div class="cl-summary"><article v-for="[key,label] in [['real','Net pending'],['collected','Collected updates'],['committed','Confirmed commitments'],['writeoff','Not collectable']]" :key="key"><small>{{label}}</small><strong>{{money(recoveryTotals?.[key])}}</strong></article></div><NativeTable :rows="recovery" :columns="columns([['branch','Branch'],['count','Loaded invoices','int'],['expected','Expected','int'],['complete','Complete'],['gross','ERP dues','amt'],['collected','Collected updates','amt'],['committed','Confirmed','amt'],['writeoff','Not collectable','amt'],['real','Net pending','amt']])"/><h3>Commitments</h3><NativeTable :rows="commitments" :columns="columns([['label','Period'],['scheduled','Scheduled','amt'],['confirmed','Confirmed','amt']])"/><details><summary>Employee-wise recovery</summary><NativeTable :rows="recoveryEmployees" :columns="columns([['name','Branch / Owner'],['count','Invoices','int'],['gross','ERP dues','amt'],['collected','Collected','amt'],['committed','Confirmed','amt'],['real','Net pending','amt']])"/></details><p>Net pending = ERP dues − collected updates − not collectable. Commitments are not receipts. Scheduled and confirmed amounts overlap. Cluster totals are withheld when any recovery source is partial.</p></div></details></section><section class="cl-panel" id="cl-ap-panel" :style="{order:sections.indexOf('appointments')}" :class="{'cluster-collapsed':collapsed.has('appointments'),'panel-zoom':zoom==='appointments'}"><nav class="cluster-panel-tools"><button type="button" @click="toggle('appointments')">{{collapsed.has('appointments')?'Expand':'Collapse'}}</button><button type="button" aria-label="Move panel up" @click="moveSection('appointments',-1)">↑</button><button type="button" aria-label="Move panel down" @click="moveSection('appointments',1)">↓</button><button type="button" @click="zoom=zoom==='appointments'?'':'appointments'">{{zoom==='appointments'?'Exit fullscreen':'Expand panel'}}</button></nav><div class="cl-panel-title"><div><h2>Walk In Appointments By HO-CC</h2><p>Cluster appointments · client details · lead journey · current 6th–5th cycle</p></div></div><div class="cl-filters cl-ap-toolbar"><input id="cl-ap-search" v-model="appointmentSearch" aria-label="Search appointments" placeholder="Search client, owner or status"><select id="cl-ap-branch" v-model="appointmentBranch" aria-label="Appointment branch"><option value="">All branches</option><option v-for="[b] in S.cluster?.branches||[]" :key="b">{{b}}</option></select><select id="cl-ap-consultant" v-model="appointmentStaff" aria-label="Consultant"><option value="">All consultants</option><option v-for="n in [...new Set(S.appointments.map(a=>a.staff||'Unassigned'))]" :key="n">{{n}}</option></select><select id="cl-ap-journey" v-model="appointmentJourney" aria-label="Visit or journey"><option value="">All visits / journeys</option><option value="first">First visit</option><option value="repeat">Repeat visit</option><option value="visited">Visited</option><option value="pending">Not yet visited</option></select></div><div id="cl-ap-content"><p>{{S.apNote||'Loading appointments…'}}</p><p v-if="S.errors.appointments" role="alert">{{S.errors.appointments}}</p><NativeTable :rows="appointments" :columns="appointmentColumns" :total="false"/></div></section><section class="cl-panel" id="cl-exec-panel" :style="{order:sections.indexOf('executions')}" :class="{'cluster-collapsed':collapsed.has('executions'),'panel-zoom':zoom==='executions'}"><nav class="cluster-panel-tools"><button type="button" @click="toggle('executions')">{{collapsed.has('executions')?'Expand':'Collapse'}}</button><button type="button" aria-label="Move panel up" @click="moveSection('executions',-1)">↑</button><button type="button" aria-label="Move panel down" @click="moveSection('executions',1)">↓</button><button type="button" @click="zoom=zoom==='executions'?'':'executions'">{{zoom==='executions'?'Exit fullscreen':'Expand panel'}}</button></nav><div class="cl-panel-title"><div><h2>Appointments & Executions</h2><p>Today · service appointments, visits and session entries</p></div><a href="/operations-&-service-module" target="_blank">Open Operations ↗</a></div><div class="cl-filters cl-ex-toolbar"><select id="cl-ex-branch" v-model="execBranch" aria-label="Execution branch"><option value="">All branches</option><option v-for="[b] in S.cluster?.branches||[]" :key="b">{{b}}</option></select><select id="cl-ex-employee" v-model="execEmployee" aria-label="Execution employee"><option value="">All employees</option><option v-for="n in [...new Set((S.execData?.sessions||[]).map(s=>s.owner))]" :key="n">{{n}}</option></select><select id="cl-ex-service" v-model="execCategory" aria-label="Execution service"><option value="">All services</option><option>Slimming</option><option>Skin</option><option>Hair</option><option>Life Rise</option><option>Unmapped service</option></select><span id="cl-ex-periods"></span></div><div id="cl-execution"><p v-if="S.errors.executions" role="alert">{{S.errors.executions}}</p><NativeTable :rows="executions" :columns="columns([['code','Branch'],['appointments','Today appointments','int'],['visited','Visited / executed','int'],['today','Today executions','int'],['month','This sales month','int'],['last','Last sales month','int']])"/><h3>Employee-wise submitted sessions</h3><NativeTable :rows="executionEmployees" :columns="columns([['category','Service'],['branch','Branch'],['employee','Employee / Practitioner'],['today','Today','int'],['month','This sales month','int'],['last','Last sales month','int']])"/><p>Execution counts use submitted Therapy Sessions by creation date. Service appointments remain branch totals.</p></div></section><section class="cl-panel" id="cl-media-panel" :style="{order:sections.indexOf('media')}" :class="{'cluster-collapsed':collapsed.has('media'),'panel-zoom':zoom==='media'}"><nav class="cluster-panel-tools"><button type="button" @click="toggle('media')">{{collapsed.has('media')?'Expand':'Collapse'}}</button><button type="button" aria-label="Move panel up" @click="moveSection('media',-1)">↑</button><button type="button" aria-label="Move panel down" @click="moveSection('media',1)">↓</button><button type="button" @click="zoom=zoom==='media'?'':'media'">{{zoom==='media'?'Exit fullscreen':'Expand panel'}}</button></nav><div class="cl-panel-title"><div><h2>Media / Source Mix</h2><p>Selected cluster · current sales cycle to today · collections</p></div></div><div id="cl-media"><p v-if="S.errors.media" role="alert">{{S.errors.media}}</p><NativeTable :rows="mediaRows" :columns="columns([['m','Source'],['c','Plans','int'],['inv_count','Invoices','int'],['billed','Billed net','amt'],['collected','Collected net','amt'],['share','Share','pct']])"/><p>Collections follow receipt dates; billing follows invoice dates.</p></div></section><section class="cl-panel" id="cl-stock-panel" :style="{order:sections.indexOf('approvals')}" :class="{'cluster-collapsed':collapsed.has('approvals'),'panel-zoom':zoom==='approvals'}"><nav class="cluster-panel-tools"><button type="button" @click="toggle('approvals')">{{collapsed.has('approvals')?'Expand':'Collapse'}}</button><button type="button" aria-label="Move panel up" @click="moveSection('approvals',-1)">↑</button><button type="button" aria-label="Move panel down" @click="moveSection('approvals',1)">↓</button><button type="button" @click="zoom=zoom==='approvals'?'':'approvals'">{{zoom==='approvals'?'Exit fullscreen':'Expand panel'}}</button></nav><div class="cl-panel-title"><div><h2>Approvals</h2><p>Branch-wise pending approvals & stock request progress</p></div></div><div id="cl-approvals"><p v-if="S.errors.approvals" role="alert">{{S.errors.approvals}}</p><NativeTable :rows="approvalRows" :columns="columns([['code','Branch'],['discount','Discount pending','int'],['p2p','P2P pending','int'],['c2c','C2C pending','int'],['b2b','B2B pending','int'],['requested','Stock requested','int'],['approved','Stock approved','int'],['sent','Stock sent','int']])"/><p>Approval and stock statuses are independent. Missing sources are shown as unavailable.</p></div></section><p class="cl-footnote">Business uses submitted non-return invoice final payable, including partly paid bills, converted to net sales. Collections use the Billing collections report. Sales and collections are ex-GST (inclusive amount ÷ 1.05). Dues remain actual payable balances. Collectable balances follow invoice due dates; undated balances remain in Overall. Race ranks Billing report collections in the selected period. Employee attribution uses submitted Payment Entry allocations, split 50/50 where shared; Hi Ticket uses collected money on one invoice, with joint owners shown together. Attendance P uses punch records or recorded attendance; A is provisional until the day closes. Leave and weekly off are excluded. Unavailable sources show —.</p></section></main></div></section></template>
+<style scoped src="../styles/cluster-dashboard.css"></style>
+<style scoped>#cl-overview{display:flex;flex-direction:column;gap:14px}#cl-overview>.cl-intro,#cl-overview>.cl-cards{order:-1}.cluster-panel-tools{display:flex;gap:5px;justify-content:flex-end}.cluster-collapsed>:not(.cl-panel-title):not(.cluster-panel-tools){display:none}.panel-zoom{position:fixed;inset:20px;z-index:200;overflow:auto;background:white;box-shadow:0 0 0 30px #001b14b0}.cl-card p{white-space:pre-line}.cl-panel,.bcc-panel{min-width:0;max-width:100%}@media(max-width:500px){.panel-zoom{inset:5px}}</style>

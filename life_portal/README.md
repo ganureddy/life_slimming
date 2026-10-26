@@ -2,6 +2,8 @@
 
 Separate Vue 3 SPA inside `life_slimming`. Angular remains in `frontend/`.
 
+Current conversion status is tracked page by page in [MIGRATION_PROGRESS.md](MIGRATION_PROGRESS.md). My Tasks / Ticket System now uses a Vue-owned page at `/life_portal/tasks`, preserving its reviewed controller and original markup/styles.
+
 The 2026-09-20 page migration connects 36 additional menu entries to 35 original
 ERP Web Page sources, plus local client-registration and conversion forms.
 See [PAGE_MIGRATION.md](PAGE_MIGRATION.md) for source routes, branch-selection

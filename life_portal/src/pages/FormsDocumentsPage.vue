@@ -14,7 +14,7 @@ const tabs = [
   { key: 'consent', label: 'Consent Form', icon: '📋', doctype: 'Consent Form', dateField: 'posting_date', childTable: 'forms_and_document', filters: [['docstatus', '=', 1]] },
 ];
 const activeTab = ref('forms'), selectedDoc = ref(null), alive = ref(true);
-const state = reactive(Object.fromEntries(tabs.map(tab => [tab.key, { loaded: false, loading: false, error: '', count: 0, files: [], emptyMessage: 'No documents attached.' }])));
+const state = reactive(Object.fromEntries(tabs.map(tab => [tab.key, { loaded: false, loading: false, error: '', transportError: false, count: 0, files: [], emptyMessage: 'No documents attached.' }])));
 const currentTab = computed(() => tabs.find(tab => tab.key === activeTab.value));
 const currentState = computed(() => state[activeTab.value]);
 const controllers = Object.fromEntries(tabs.map(tab => [tab.key, null]));
@@ -64,7 +64,7 @@ async function fullDocsInBatches(items, tab, signal) {
   for (let start = 0; start < items.length; start += 8) {
     const batch = await Promise.all(items.slice(start, start + 8).map(async item => {
       try { return await frappeCall('frappe.client.get', { doctype: tab.doctype, name: item.name }, signal); }
-      catch (error) { if (error.name === 'AbortError') throw error; return null; }
+      catch (error) { if (error.name === 'AbortError' || ['TimeoutError','NetworkError'].includes(error.code)) throw error; return null; }
     }));
     documents.push(...batch);
   }
@@ -75,7 +75,7 @@ async function loadTab(key, retry = false) {
   if (!tab || target.loading || (target.loaded && !retry)) return;
   controllers[key]?.abort();
   const controller = new AbortController(); controllers[key] = controller;
-  target.loading = true; target.error = ''; target.count = 0; target.files = [];
+  target.loading = true; target.error = ''; target.transportError = false; target.count = 0; target.files = [];
   try {
     const response = await frappeCall(tab.reportView ? 'frappe.desk.reportview.get' : 'frappe.client.get_list', listArgs(tab), controller.signal);
     const items = tab.reportView ? reportRows(response) : (response || []);
@@ -96,7 +96,7 @@ async function loadTab(key, retry = false) {
     });
     target.files = files; target.count = parents.size; target.loaded = true;
   } catch (error) {
-    if (alive.value && controllers[key] === controller && error.name !== 'AbortError') { target.error = error.message || 'Unable to load documents.'; target.loaded = true; }
+    if (alive.value && controllers[key] === controller && error.name !== 'AbortError') { target.error = error.message || 'Unable to load documents.'; target.transportError = ['TimeoutError','NetworkError'].includes(error.code); target.loaded = true; controller.abort(); }
   } finally { if (alive.value && controllers[key] === controller) target.loading = false; }
 }
 function selectTab(key) { activeTab.value = key; loadTab(key); }
@@ -116,7 +116,20 @@ function downloadFile() {
   const link = document.createElement('a'); link.href = url; link.download = filename; link.rel = 'noopener'; document.body.appendChild(link); link.click(); link.remove();
 }
 function onKeydown(event) { if (event.key === 'Escape') closeDoc(); }
-onMounted(() => { window.addEventListener('keydown', onKeydown); Promise.allSettled(tabs.map(tab => loadTab(tab.key))); });
+async function initializeTabs() {
+  // Render the visible category first, then warm the remaining categories in
+  // one queue rather than competing with seven batches of attachment reads.
+  const initialTab = activeTab.value;
+  await loadTab(initialTab);
+  if (state[initialTab].transportError) return;
+  for (const tab of tabs) {
+    if (!alive.value) return;
+    if (tab.key === initialTab) continue;
+    await loadTab(tab.key);
+    if (state[tab.key].transportError) return;
+  }
+}
+onMounted(() => { window.addEventListener('keydown', onKeydown); initializeTabs(); });
 onBeforeUnmount(() => { alive.value = false; Object.values(controllers).forEach(controller => controller?.abort()); window.removeEventListener('keydown', onKeydown); });
 </script>
 

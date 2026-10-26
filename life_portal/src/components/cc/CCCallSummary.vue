@@ -1,6 +1,10 @@
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
+import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { convoxApi } from '../../api/convox';
+import reference from '../../data/cc-reference.json';
+import { portalDisposition } from '../../lib/convox-disposition';
+const emit = defineEmits(['apply-disposition']);
+const suggestion = computed(() => portalDisposition(latest.value, reference.WF));
 const props = defineProps({ lead: { type: Object, required: true } });
 const latest = ref(null), count = ref(0), error = ref('');
 let controller;
@@ -29,6 +33,7 @@ onBeforeUnmount(() => { controller?.abort(); window.removeEventListener('life-co
     <template v-else-if="latest">
       <p>{{ latest.call_status || latest.event_type }} · {{ latest.call_datetime || latest.received_on }} · {{ latest.call_duration ?? 0 }} seconds</p>
       <p v-if="latest.disposition || latest.disposition_2 || latest.disposition_3">{{ [latest.disposition, latest.disposition_2, latest.disposition_3].filter(Boolean).join(' · ') }}</p>
+      <p v-if="suggestion">Portal status: {{ suggestion }} <button type="button" @click="emit('apply-disposition', suggestion)">Use this disposition</button></p>
       <p v-if="latest.remarks">{{ latest.remarks }}</p>
     </template>
     <p v-else>No call events received yet.</p>

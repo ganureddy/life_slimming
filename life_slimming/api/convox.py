@@ -169,6 +169,7 @@ def config():
             "sso_ready": enabled and sso_ready,
             "click_to_call_ready": enabled and unique_agent and token_ready and prefix_ready
                 and (not sso_enabled or sso_ready),
+            "history_ready": enabled and unique_agent and bool(frappe.db.exists("DocType", "ConVox Call Event")),
             "callbacks_ready": enabled and bool(settings.get("custom_convox_callbacks_enabled"))
                 and unique_agent and bool(frappe.db.exists("DocType", "ConVox Call Event"))
                 and bool(settings.get("custom_convox_callback_user") or _secret(settings, "custom_convox_callback_token")),
@@ -231,12 +232,11 @@ def normalize_phone(raw):
     return number
 
 
-def _lead(lead_id):
+def _lead(lead_id, global_lookup=False):
     if not isinstance(lead_id, str) or not lead_id or len(lead_id) > 140:
         raise frappe.ValidationError("Select a lead before calling.")
     lead = frappe.get_doc("Lead", lead_id)
-    # Same owner/manager policy as cc_get_leads; agents may have SELECT-only Lead permissions.
-    if lead.get("lead_owner") != frappe.session.user and not MANAGERS.intersection(frappe.get_roles()):
+    if not global_lookup and lead.get("lead_owner") != frappe.session.user and not MANAGERS.intersection(frappe.get_roles()):
         raise frappe.PermissionError("You may only call leads assigned to you.")
     return lead
 
@@ -308,7 +308,7 @@ def click_to_call(lead_id, request_id):
 def poll(after=None):
     user, settings = _require_enabled()
     agent = user.get("custom_convox_agent_id")
-    if not agent or not settings.get("custom_convox_callbacks_enabled") or not frappe.db.exists("DocType", "ConVox Call Event"):
+    if not agent or not frappe.db.exists("DocType", "ConVox Call Event"):
         return {"events": [], "cursor": str(now_datetime())}
     now = now_datetime()
     try:
@@ -361,13 +361,9 @@ def find_leads(mobile_number):
     """Exact phone lookup, including unanswered calls and alternate phones."""
     _identity()
     number = normalize_phone(mobile_number)
-    manager = bool(MANAGERS.intersection(frappe.get_roles()))
     where = """(REGEXP_REPLACE(COALESCE(mobile_no, ''), '[[:space:]()+.-]', '') IN %(numbers)s
         OR REGEXP_REPLACE(COALESCE(phone, ''), '[[:space:]()+.-]', '') IN %(numbers)s)"""
     args = {"numbers": (number, "91" + number, "0" + number)}
-    if not manager:
-        where += " AND lead_owner=%(owner)s"
-        args["owner"] = frappe.session.user
     rows = frappe.db.sql("SELECT name, lead_name, mobile_no, phone, status, custom_cc_sub_status, lead_owner "
                          "FROM `tabLead` WHERE " + where + " ORDER BY modified DESC LIMIT 101", args, as_dict=True)
     return {"rows": rows[:100], "truncated": len(rows) > 100}
@@ -391,7 +387,7 @@ HISTORY_FIELDS = EVENT_FIELDS + [
 def lead_history(lead_id, start=0):
     """Read saved call events for an authorized lead, matched by its mobile."""
     user, _ = _identity()
-    lead = _lead(lead_id)
+    lead = _lead(lead_id, global_lookup=True)
     number = _lead_number(lead)
     manager = bool(MANAGERS.intersection(frappe.get_roles()))
     agent = user.get("custom_convox_agent_id")

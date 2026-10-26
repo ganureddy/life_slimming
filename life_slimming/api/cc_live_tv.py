@@ -32,7 +32,9 @@ def snapshot():
     fields = ['name', 'lead_name', 'lead_owner', 'creation', 'modified',
               'branch', 'lead_assign_to_branch', 'source', 'enquired_for',
               'custom_appointment_date_and_time', 'custom_appointment_status',
-              'custom_visit_status', 'status', 'custom_call_count', 'custom_last_call_time']
+              'status', 'custom_call_count', 'custom_last_call_time',
+              'custom_cc_first_touched_at', 'custom_convox_call_count', 'custom_convox_last_call_time',
+              'custom_cc_sub_status', 'custom_cc_stage', 'custom_next_followup_date']
     meta = frappe.get_meta('Lead')
     fields = [field for field in fields if field in {'name', 'creation', 'modified'} or meta.has_field(field)]
     if 'custom_appointment_date_and_time' not in fields:

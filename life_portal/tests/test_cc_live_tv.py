@@ -37,6 +37,8 @@ class LiveTVTests(unittest.TestCase):
         self.assertTrue(result['restricted_to_owner'])
         self.assertEqual(frappe.get_all.call_args.kwargs['filters'], {'lead_owner': 'agent'})
         self.assertEqual(frappe.get_all.call_args.kwargs['limit_page_length'], 0)
+        self.assertIn('custom_appointment_status', frappe.get_all.call_args.kwargs['fields'])
+        self.assertNotIn('custom_visit_status', frappe.get_all.call_args.kwargs['fields'])
         self.assertEqual(result['today'], '2026-10-09')
 
     def test_owner_photo_is_returned_with_name(self):
@@ -81,6 +83,8 @@ class LiveTVTests(unittest.TestCase):
         self.assertEqual(result['week_end'], '2026-11-02')
         self.assertTrue(all(item[2] == '2026-10-06' for item in frappe.get_all.call_args.kwargs['or_filters']))
         self.assertIn('custom_call_count', frappe.get_all.call_args.kwargs['fields'])
+        for field in ['custom_cc_first_touched_at', 'custom_convox_call_count', 'custom_convox_last_call_time', 'custom_cc_sub_status', 'custom_cc_stage', 'custom_next_followup_date']:
+            self.assertIn(field, frappe.get_all.call_args.kwargs['fields'])
 
     def test_manager_scope(self):
         module, frappe, _ = self.load(roles=('Sales Manager',))

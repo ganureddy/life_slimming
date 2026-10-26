@@ -34,7 +34,7 @@ const assert=require('node:assert/strict'),WebSocket=require('ws');
  try{
   await send('Runtime.enable');await send('Page.enable');await send('Fetch.enable',{patterns:[{urlPattern:'*/api/method/*'}]});
   for(const width of[1440,390]){
-   calls.length=0;denyCircular=true;await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<600});await send('Page.navigate',{url:base+'/life_portal/documents'});
+   calls.length=0;denyCircular=true;await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<600});await send('Page.navigate',{url:base+'/life_portal/native/documents'});
    await wait('document.querySelectorAll("#fad-forms-grid .fad-card").length === 3 && document.querySelectorAll(".fad-loading").length === 0');
    assert.equal(await evaluate('!!document.querySelector("iframe")'),false);assert.equal(await evaluate('document.querySelectorAll(".fad-tab").length'),7);assert.equal(await evaluate('document.querySelector("#fad-count-badge").textContent.trim()'),'2 Documents');assert.equal(await evaluate('document.querySelector("#fad-pill-forms").textContent'),'2');
    assert.equal(await evaluate('document.querySelector(".fad-card-icon").textContent'),'📄');assert.equal(await evaluate('document.querySelector(".fad-card-title").textContent'),'Client <form> & Photo');assert.equal(await evaluate('document.querySelector(".fad-card-sub").textContent'),'13-Oct-2026');assert.equal(await evaluate('!!document.querySelector(".fad-card form")'),false);

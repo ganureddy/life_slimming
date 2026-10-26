@@ -1,14 +1,15 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { apiCredentials, apiUrl } from "../api/config";
 import { request } from "../api/http";
 import { session } from "../lib/session";
 import { dateText } from "../lib/unjoined";
 
 export function useSalesMaster() {
-  const reportName = "REFERRAL REPORT \u2013 FIXED", pageSize = 20;
-  const cols = [["invoice", "Invoice"], ["posting_date", "Posting Date"], ["branch", "Branch"], ["customer", "Customer"], ["booking_type", "Booking Type"], ["sales_people", "Sales Person"], ["mode_of_payment", "Mode of Payment"], ["paid_amount", "Paid w/ GST"], ["tax_amount", "GST Amt"], ["paid_amount_without_tax", "Paid w/o GST"], ["grand_total", "Grand Total"], ["outstanding_amount", "Outstanding"]];
+  const reportName = "Sales Master Billing", pageSize = 20;
+  const cols = [['invoice','Invoice'],['posting_date','Invoice Date'],['branch','Branch'],['customer','Customer'],['booking_type','Booking Type'],['sales_people','Sales Person'],['main_category','Main Category'],['therapy_group','Therapy Group'],['therapy_type','Therapy Type'],['mode_of_payment','Mode of Payment'],['paid_amount_without_tax','Paid w/o GST'],['outstanding_amount','Outstanding']];
   const presets = [["today", "Today"], ["yesterday", "Yesterday"], ["thismonth", "This Month"], ["lastmonth", "Last Month"], ["thisquarter", "This Quarter"], ["thisfy", "This Financial Year"]];
   const from = ref(""), to = ref(""), quick = ref("thismonth"), branch = ref(""), salesPerson = ref(""), bookingType = ref(""), modeOfPayment = ref(""), customer = ref(""), paidFrom = ref(""), paidTo = ref(""), outstandingOperator = ref(""), outstandingValue = ref(""), format = ref("xlsx");
+  const mainCategory=ref(''), therapyGroup=ref(''), therapyType=ref('');
+  const therapyOptions=computed(()=>Object.fromEntries([['mainCategory','category'],['therapyGroup','group'],['therapyType','type']].map(([id,key])=>[id,[...new Set([...(id==='mainCategory'?['Administrative Services','Aesthetic Medicine','Diagnostics & Assessments','Hair Patches (NSHR)','Hair Transplant (HT)','Hair Treatment','LIFE RISE','Physiotherapy & PM','Skin (Dermatology)','Slimming']:[]),...rows.value.flatMap(row=>row.therapy_details.map(detail=>detail[key])).filter(Boolean)])].sort()])));
   const permittedBranches = ref([]), allBranchAccess = ref(false), branchRestricted = ref(false), branchReady = ref(false), branchError = ref("");
   const rows = ref([]), filteredRows = ref([]), employees = ref([]), loading = ref(false), error = ref(""), notice = ref(""), page = ref(1), reportLoaded = ref(false);
   let controller, alive = true;
@@ -67,7 +68,11 @@ export function useSalesMaster() {
     if (gst === null) gst = parseAmount(row.tax_amount);
     if (without === null && paid > 0) without = paid / 1.05;
     if (gst === null && paid > 0) gst = paid - Number(without || 0);
-    return { ...row, posting_date: row.invoice_date || row.posting_date || "", referring_employee: String(row.referring_employee || row.custom_referring_name || row.referring_name || "").trim(), incentive_employee: String(row.incentive_employee || row.custom_incentive_employee_name || row.incentive_employee_name || "").trim(), paid_amount: round(paid), tax_amount: round(gst), gst_amount: round(gst), paid_amount_without_tax: round(without), paid_amount_without_gst: round(without) };
+    let therapyDetails = row.therapy_details || [];
+    if (typeof therapyDetails === 'string') therapyDetails = JSON.parse(therapyDetails);
+    if (!Array.isArray(therapyDetails)) throw new Error('Invalid therapy details in report.');
+    const joined = key => [...new Set(therapyDetails.map(detail=>detail[key]).filter(Boolean))].sort().join('; ');
+    return { ...row, therapy_details:therapyDetails,main_category:joined('category'),therapy_group:joined('group'),therapy_type:joined('type'), posting_date: row.invoice_date || row.posting_date || "", referring_employee: String(row.referring_employee || row.custom_referring_name || row.referring_name || "").trim(), incentive_employee: String(row.incentive_employee || row.custom_incentive_employee_name || row.incentive_employee_name || "").trim(), paid_amount: round(paid), tax_amount: round(gst), gst_amount: round(gst), paid_amount_without_tax: round(without), paid_amount_without_gst: round(without) };
   }
   function rowKey(row) {
     if (row.invoice) return `invoice|${String(row.branch || "").trim()}|${String(row.invoice).trim()}`;
@@ -92,24 +97,10 @@ export function useSalesMaster() {
   }
   async function runOneBranch(state, requestedBranch, signal) {
     const filters = { from_date: state.fromDate, to_date: state.toDate, branch: requestedBranch || "" };
-    const params = new URLSearchParams({ report_name: reportName, filters: JSON.stringify(filters), ignore_prepared_report: "1", are_default_filters: "false" });
-    let response;
-    try {
-      response = await fetch(apiUrl("/api/method/frappe.desk.query_report.run?" + params.toString()), { method: "GET", credentials: apiCredentials(), signal, headers: { Accept: "application/json" } });
-    } catch (e) {
-      if (e.name === "AbortError") throw e;
-      throw new Error("Could not reach the report server. Check your connection and retry.");
-    }
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok || body.exc_type) {
-      let message = body.message || body.exception || "Sales Master Data report failed.";
-      try {
-        const messages = JSON.parse(body._server_messages || "[]");
-        if (messages[0]) message = JSON.parse(messages[0]).message || message;
-      } catch {
-      }
-      throw new Error(String(message).replace(/<[^>]*>/g, "").split("\n").pop());
-    }
+    const body = await request('frappe.desk.query_report.run', {
+      args: { report_name: reportName, filters: JSON.stringify(filters), ignore_prepared_report: 1, are_default_filters: false },
+      signal, csrfToken: session.csrf_token,
+    });
     const result = Array.isArray(body.message?.result) ? body.message.result : [];
     totalSourceIndex.value = result.findIndex(row => row && typeof row === 'object' && !Array.isArray(row) && (row.is_total_row === true || row.is_total_row === 1 || row.invoice === 'Total'));
     return result.map((row, index) => {
@@ -155,17 +146,20 @@ export function useSalesMaster() {
     return true;
   }
   function stateSnapshot() {
-    return { fromDate: from.value, toDate: to.value, branch: branch.value, salesPerson: salesPerson.value, bookingType: bookingType.value, modeOfPayment: modeOfPayment.value, customer: customer.value.trim().toLowerCase(), paidFrom: parseAmount(paidFrom.value), paidTo: parseAmount(paidTo.value), outstandingOperator: outstandingOperator.value, outstandingValue: parseAmount(outstandingValue.value) };
+    return { fromDate: from.value, toDate: to.value, branch: branch.value, mainCategory:mainCategory.value,therapyGroup:therapyGroup.value,therapyType:therapyType.value, salesPerson: salesPerson.value, bookingType: bookingType.value, modeOfPayment: modeOfPayment.value, customer: customer.value.trim().toLowerCase(), paidFrom: parseAmount(paidFrom.value), paidTo: parseAmount(paidTo.value), outstandingOperator: outstandingOperator.value, outstandingValue: parseAmount(outstandingValue.value) };
   }
   function applyLocalFilters(source, state) {
     return source.filter((row) => {
+      const stamp=String(row.posting_date||'').slice(0,10);
+      if (!stamp || stamp<state.fromDate || stamp>state.toDate) return false;
+      if ((state.mainCategory||state.therapyGroup||state.therapyType) && !row.therapy_details.some(detail=>(!state.mainCategory||detail.category===state.mainCategory)&&(!state.therapyGroup||detail.group===state.therapyGroup)&&(!state.therapyType||detail.type===state.therapyType))) return false;
       if (branchRestricted.value && permittedBranches.value.length && !permittedBranches.value.includes(String(row.branch || ""))) return false;
       if (state.branch && row.branch !== state.branch) return false;
       if (state.salesPerson && ![row.referring_employee, row.incentive_employee].some((name) => String(name || "").trim().toLowerCase() === state.salesPerson.toLowerCase())) return false;
       if (state.bookingType && row.booking_type !== state.bookingType) return false;
       if (state.modeOfPayment && !String(row.mode_of_payment || "").includes(state.modeOfPayment)) return false;
       if (state.customer && ![row.customer, row.invoice, row.mobile_no, row.customer_id, row.patient, row.patient_name, row.client_name].map(value => String(value || "")).join(" ").toLowerCase().includes(state.customer)) return false;
-      const paid = parseAmount(row.paid_amount) || 0;
+      const paid = parseAmount(row.paid_amount_without_tax) || 0;
       if (state.paidFrom !== null && paid < state.paidFrom) return false;
       if (state.paidTo !== null && paid > state.paidTo) return false;
       const outstanding = parseAmount(row.outstanding_amount) || 0;
@@ -259,7 +253,7 @@ export function useSalesMaster() {
       return;
     }
     const header = cols.map(([, label]) => label), numericKeys = new Set(["paid_amount", "tax_amount", "paid_amount_without_tax", "grand_total", "outstanding_amount"]), values = filteredRows.value.map((row) => cols.map(([key]) => key === "posting_date" ? formatDate(row.posting_date) : key === "sales_people" ? salesPeople(row) : numericKeys.has(key) ? parseAmount(row[key]) ?? 0 : row[key] ?? ""));
-    const base = `Life_Sales_Master_All_Permitted_Branches_${appliedState.value.fromDate}_to_${appliedState.value.toDate}`;
+    const base = `Life_Sales_Master_${(appliedState.value.branch||'All-Branches').replace(/[^a-zA-Z0-9-]/g,'_')}_${appliedState.value.fromDate}_to_${appliedState.value.toDate}`;
     if (format.value === "csv") {
       const lines = [header, ...values].map((row) => row.map(csvCell).join(",")).join("\r\n");
       downloadBlob(base + ".csv", new Blob(["\uFEFF" + lines], { type: "text/csv;charset=utf-8" }));
@@ -274,7 +268,7 @@ export function useSalesMaster() {
   }
   function appliedLabels(state) {
     const labels = { 'From Date': state.fromDate, 'To Date': state.toDate };
-    for (const [key, field] of [['Branch','branch'],['Sales Person','salesPerson'],['Booking Type','bookingType'],['Mode of Payment','modeOfPayment'],['Customer','customer'],['Paid Amount From','paidFrom'],['Paid Amount To','paidTo']]) if (state[field] !== '' && state[field] !== null) labels[key] = state[field];
+    for (const [key, field] of [['Branch','branch'],['Main Category','mainCategory'],['Therapy Group','therapyGroup'],['Therapy Type','therapyType'],['Sales Person','salesPerson'],['Booking Type','bookingType'],['Mode of Payment','modeOfPayment'],['Customer','customer'],['Paid Amount From','paidFrom'],['Paid Amount To','paidTo']]) if (state[field] !== '' && state[field] !== null) labels[key] = state[field];
     if (state.outstandingOperator) labels['Outstanding Amount Condition'] = state.outstandingOperator + ' ' + state.outstandingValue;
     return labels;
   }
@@ -284,20 +278,8 @@ export function useSalesMaster() {
     try {
       if (!reportLoaded.value || JSON.stringify(stateSnapshot()) !== JSON.stringify(appliedState.value)) await applyFilters();
       if (!reportLoaded.value || !filteredRows.value.length) throw new Error(error.value || 'There are no filtered rows to download.');
-      const state = appliedState.value;
-      if (branchRestricted.value && !state.branch && permittedBranches.value.length > 1) { exportRows(); return; }
-      const indices = filteredRows.value.map(row => row.__sourceIndex).filter(Number.isInteger);
-      if (filteredRows.value.length === rows.value.length && totalSourceIndex.value >= 0) indices.push(totalSourceIndex.value);
-      const args = { report_name: reportName, custom_columns: [], file_format_type: format.value === 'csv' ? 'CSV' : 'Excel', filters: { from_date: state.fromDate, to_date: state.toDate, branch: state.branch || '' }, applied_filters: appliedLabels(state), visible_idx: indices, include_filters: 1, include_indentation: 0, include_hidden_columns: 0, export_in_background: 0, csv_delimiter: ',', csv_quoting: 0 };
-      controller?.abort(); controller = new AbortController();
-      const response = await fetch(apiUrl('/api/method/frappe.desk.query_report.export_query'), { method: 'POST', credentials: apiCredentials(), signal: controller.signal, headers: { 'Content-Type': 'application/json', 'X-Frappe-CSRF-Token': session.csrf_token }, body: JSON.stringify(args) });
-      if (!response.ok || /json|text\/html/.test(response.headers.get('Content-Type') || '')) throw new Error('Unable to download the report. Please retry.');
-      const header = response.headers.get('Content-Disposition') || '';
-      const encoded = header.match(/filename\*=UTF-8''([^;]+)/i), plain = header.match(/filename="?([^";]+)"?/i);
-      let filename = 'Life_Sales_Master_' + state.fromDate + '_to_' + state.toDate + (format.value === 'csv' ? '.csv' : '.xlsx');
-      try { if (encoded) filename = decodeURIComponent(encoded[1]); else if (plain) filename = plain[1]; } catch { /* Use the local fallback filename. */ }
-      const blob = await response.blob(); if (!alive) return;
-      downloadBlob(filename, blob); notice.value = (format.value === 'csv' ? 'CSV' : 'Excel') + ' download started for ' + filteredRows.value.length + ' filtered records.';
+      exportRows();
+      notice.value = 'Download started for ' + filteredRows.value.length + ' filtered records.';
     } catch (failure) { if (alive && failure.name !== 'AbortError') error.value = failure.message; }
     finally { if (alive) downloading.value = false; }
   }
@@ -316,6 +298,7 @@ export function useSalesMaster() {
     to.value = range.to;
     quick.value = "thismonth";
     branch.value = branchRestricted.value && permittedBranches.value.length === 1 ? permittedBranches.value[0] : "";
+    mainCategory.value=therapyGroup.value=therapyType.value="";
     salesPerson.value = "";
     bookingType.value = "";
     modeOfPayment.value = "";
@@ -327,7 +310,7 @@ export function useSalesMaster() {
     applyFilters();
   }
   watch(outstandingOperator, value => { if (!value) outstandingValue.value = ''; });
-  watch([from, to, branch, salesPerson, bookingType, modeOfPayment, customer, paidFrom, paidTo, outstandingOperator, outstandingValue], () => { if (reportLoaded.value && !loading.value) notice.value = 'Filter changed. Click Apply Filters.'; });
+  watch([from, to, branch, mainCategory,therapyGroup,therapyType,salesPerson, bookingType, modeOfPayment, customer, paidFrom, paidTo, outstandingOperator, outstandingValue], () => { if (reportLoaded.value && !loading.value) notice.value = 'Filter changed. Click Apply Filters.'; });
   onMounted(() => {
     const range = dateRange("thismonth");
     from.value = range.from;
@@ -340,5 +323,5 @@ export function useSalesMaster() {
     alive = false;
     controller?.abort();
   });
-  return { cols, presets, from, to, quick, branch, salesPerson, bookingType, modeOfPayment, customer, paidFrom, paidTo, outstandingOperator, outstandingValue, format, permittedBranches, allBranchAccess, branchRestricted, branchReady, branchError, rows, filteredRows, employees, loading, error, notice, page, reportLoaded, pageCount, visibleRows, money, recordCount, totals, rowValue, formatDate, getBranches, applyFilters, setPreset, resetFilters, downloadReport, downloading, appliedState };
+  return { mainCategory,therapyGroup,therapyType,therapyOptions, cols, presets, from, to, quick, branch, salesPerson, bookingType, modeOfPayment, customer, paidFrom, paidTo, outstandingOperator, outstandingValue, format, permittedBranches, allBranchAccess, branchRestricted, branchReady, branchError, rows, filteredRows, employees, loading, error, notice, page, reportLoaded, pageCount, visibleRows, money, recordCount, totals, rowValue, formatDate, getBranches, applyFilters, setPreset, resetFilters, downloadReport, downloading, appliedState };
 }

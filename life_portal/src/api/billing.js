@@ -1,5 +1,5 @@
 import { request } from './http';
-import { apiUrl, apiCredentials } from './config';
+import { apiUrl } from './config';
 import endpoints from './endpoints.json';
 import { session } from '../lib/session';
 
@@ -33,9 +33,8 @@ export async function uploadBillingFile(file, doctype) {
   form.append('file', file); form.append('is_private', '1');
   if (!file || file.size > 10 * 1024 * 1024) throw new Error('Choose a file no larger than 10 MB.');
   form.append('folder', 'Home/Attachments');
-  const response = await fetch(apiUrl('/api/method/upload_file'), { method: 'POST', credentials: apiCredentials(), headers: { 'X-Frappe-CSRF-Token': session.csrf_token || '' }, body: form });
-  const body = await response.json();
-  if (!response.ok || !body.message?.file_url) throw new Error('File upload failed. Please retry.');
+  const body = await request('upload_file',{formData:form,csrfToken:session.csrf_token || ''});
+  if (!body.message?.file_url) throw new Error('File upload failed. Please retry.');
   return body.message.file_url;
 }
 export function invoicePdfUrl(name, printFormat = 'Consultaion Patient Sales Invoice') {

@@ -51,27 +51,29 @@ async function loadTypes() {
   controllers.types?.abort(); const current = new AbortController(); controllers.types = current; const signal = current.signal;
   loading.types = true; errors.types = ''; offerWarning.value = ''; rules.value = [];
   try {
-    const rows = await listAll('Therapy Type', [['is_billable', '=', 1]], ['therapy_type', 'healthcare_service_unit', 'item_code', 'rate', 'minimum_price', 'maximum_price'], signal);
+    const rows = await listAll('Therapy Type', [['is_billable', '=', 1], ['disabled', '=', 0], ['custom_show_in_billing', '=', 1]], ['therapy_type', 'healthcare_service_unit', 'item_code', 'rate', 'minimum_price', 'maximum_price', 'custom_show_in_billing'], signal);
     if (!alive || signal.aborted) return;
-    therapies.value = rows.filter(row => row.rate && Number(row.rate) !== 0); loaded.types = true; loading.types = false;
+    therapies.value = rows.filter(row => Number(row.rate) > 0 && Number(row.custom_show_in_billing) === 1); loaded.types = true; loading.types = false;
     try {
       const names = [];
       for (let start = 0; ; start += 1000) {
-        const batch = await nativeCall('frappe.client.get_list', { doctype: 'Pricing Rule', filters: { disable: 0 }, fields: ['name'], limit_start: start, limit_page_length: 1000, order_by: 'modified desc, name desc' }, signal);
+        const batch = await nativeCall('frappe.client.get_list', { doctype: 'Pricing Rule', filters: { disable: 0, selling: 1, apply_on: 'Item Code' }, fields: ['name'], limit_start: start, limit_page_length: 1000, order_by: 'modified desc, name desc' }, signal);
         names.push(...batch); if (batch.length < 1000) break;
       }
       let next = 0; const offers = [];
+      const priorities = new Map(names.map((row,index)=>[row.name,index]));
       async function readRule() {
         while (next < names.length && !signal.aborted) {
           const name = names[next++].name;
           try {
             const doc = await nativeCall('frappe.client.get', { doctype: 'Pricing Rule', name }, signal);
-            if (doc?.items && (!doc.valid_from || today >= doc.valid_from) && (!doc.valid_upto || today <= doc.valid_upto)) for (const item of doc.items) if (item.item_code) offers.push({ ...doc, item_code: item.item_code });
+            if (doc?.items && !Number(doc.disable) && Number(doc.selling) && (!doc.valid_from || today >= doc.valid_from) && (!doc.valid_upto || today <= doc.valid_upto)) for (const item of doc.items) if (item.item_code) offers.push({ ...doc, item_code: item.item_code });
+            if (alive && !signal.aborted) rules.value = [...offers].sort((a,b)=>priorities.get(a.name)-priorities.get(b.name));
           } catch (error) { if (signal.aborted) throw error; offerWarning.value = 'Some current offers could not be loaded.'; }
         }
       }
-      await Promise.all(Array.from({ length: Math.min(4, names.length) }, readRule));
-      if (alive && !signal.aborted) rules.value = offers;
+      await Promise.all(Array.from({ length: Math.min(5, names.length) }, readRule));
+      if (alive && !signal.aborted) rules.value = [...offers].sort((a,b)=>priorities.get(a.name)-priorities.get(b.name));
     } catch (error) { if (alive && !signal.aborted) offerWarning.value = 'Current offers could not be loaded: ' + error.message; }
   } catch (error) { if (alive && !signal.aborted) errors.types = error.message; }
   finally { if (alive && controllers.types === current) loading.types = false; }

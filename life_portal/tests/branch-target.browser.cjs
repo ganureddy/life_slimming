@@ -26,7 +26,7 @@ const assert = require('node:assert/strict');
     await send('Page.enable');await send('Runtime.enable');await send('Fetch.enable',{patterns:[{urlPattern:'*/api/method/*'}]});
     for(const width of [1440,390]){
       await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});
-      await send('Page.navigate',{url:base+'/life_portal/'+(width===1440?'conv':'native/branch-target')});
+      await send('Page.navigate',{url:base+'/life_portal/'+'native/branch-target'});
       await wait("document.querySelector('.target-kpis')?.textContent.includes('Cycle Realisation')");
       assert.equal(await evaluate("document.querySelectorAll('.target-table-wrap tbody tr.tgt-hit, .target-table-wrap tbody tr.tgt-miss').length"),2);
       assert.equal(await evaluate("document.querySelectorAll('.target-bar').length"),2);

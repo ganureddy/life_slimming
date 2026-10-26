@@ -32,10 +32,10 @@ test('therapy search includes category and offer filter', async () => {
 });
 
 
-test('legacy page offers preserve percentage/amount/rate precedence and last applicable item rule', async () => {
+test('legacy page offers preserve percentage/amount/rate precedence and first enabled selling item rule', async () => {
   const { legacyPageOffer } = await lib;
   const therapy = { item_code: 'T-1', rate: 1000 };
-  assert.deepEqual(legacyPageOffer(therapy, [{name:'one', item_code:'T-1', rate:1, discount_percentage:10, discount_amount:200}], '2026-10-13'), {name:'one', rate:900});
-  assert.deepEqual(legacyPageOffer(therapy, [{name:'one',item_code:'T-1',discount_percentage:10},{name:'two',item_code:'T-1',discount_amount:125},{name:'expired',item_code:'T-1',rate:1,valid_upto:'2026-10-12'}], '2026-10-13'), {name:'two',rate:875});
-  assert.deepEqual(legacyPageOffer(therapy, [{name:'low',item_code:'T-1',discount_amount:5000}], '2026-10-13'), {name:'low',rate:0});
+  assert.deepEqual(legacyPageOffer(therapy, [{name:'one', selling:1,item_code:'T-1', rate:1, discount_percentage:10, discount_amount:200}], '2026-10-13'), {name:'one', rate:900});
+  assert.deepEqual(legacyPageOffer(therapy, [{name:'one',selling:1,item_code:'T-1',discount_percentage:10},{name:'two',selling:1,item_code:'T-1',discount_amount:125},{name:'expired',selling:1,item_code:'T-1',rate:1,valid_upto:'2026-10-12'}], '2026-10-13'), {name:'one',rate:900});
+  assert.deepEqual(legacyPageOffer(therapy, [{name:'low',selling:1,item_code:'T-1',discount_amount:5000}], '2026-10-13'), {name:'low',rate:0});
 });

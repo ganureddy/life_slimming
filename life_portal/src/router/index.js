@@ -6,13 +6,15 @@ const menu = access.menu;
 import portalPages from "../data/portalPages.json";
 import PortalSourcePage from "../pages/PortalSourcePage.vue";
 
-// Keep remaining source screens active while their native Vue parity work is pending.
-const nativeModules = new Set(["unjoined", "wlres", "clusterhome", "conv", "pricelist", "documents", "salemaster"]);
+// User approval is required before promoting Vue previews to main module URLs.
+// Keep all mapped legacy modules active; native components are preview routes only.
+const nativeModules = new Set([]);
 const keepLegacyModule = (id) => Boolean(portalPages[id]) && !nativeModules.has(id);
 
 export const routeLoading = ref(false);
 
 const pageComponents = {
+  tasks: () => import("../pages/TaskManagerPage.vue"),
   unjoined: () => import("../pages/UnjoinedClientsPage.vue"),
   clusterhome: () => import("../pages/ClusterDashboardPage.vue"),
   control: () => import("../pages/ControlPage.vue"),
@@ -42,6 +44,22 @@ const pageComponents = {
 };
 
 export const routes = [
+  { path: "/native/pending-balances", name: "receivables-native", component: () => import("../pages/PendingBalancesPage.vue"), meta: { title: "Pending Balances Vue preview", accessModule: "receivables" } },
+  { path: "/native/branch-expenditure", name: "bexp-native", component: () => import("../pages/BranchExpenditurePage.vue"), meta: { title: "Branch Expenditure Vue preview", accessModule: "bexp" } },
+  { path: "/native/client-info", name: "cliinfo-native", component: () => import("../pages/ClientInfoPage.vue"), meta: { title: "Client Info Vue preview", accessModule: "cliinfo" } },
+  { path: "/native/appointments", name: "appt-native", component: () => import("../pages/AppointmentSchedulerPage.vue"), meta: { title: "Client Appointment Scheduler", accessModule: "appt" } },
+  { path: "/native/employee-sales", name: "empsale-native", component: () => import("../pages/EmployeeSaleMasterPage.vue"), meta: { title: "Employee Sale Master", accessModule: "empsale" } },
+  { path: "/native/discount-audit", name: "discountaudit-native", component: () => import("../pages/DiscountAuditPage.vue"), meta: { title: "Discount Invoice & Collection Report", accessModule: "discountaudit" } },
+  {
+    path: "/native/client-registration", name: "clireg-native",
+    component: () => import("../pages/ClientRegistrationPage.vue"),
+    meta: { title: "New Client Registration", accessModule: "clireg" },
+  },
+  {
+    path: "/native/tasks", name: "tasks-native",
+    component: () => import("../pages/TaskManagerPage.vue"),
+    meta: { title: "Task Manager & Ticket System preview", accessModule: "tasks" },
+  },
   {
     path: "/native/sales-master", name: "salemaster-native",
     component: () => import("../pages/SalesMasterDataPage.vue"),

@@ -1,7 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { request } from '../api/http';
-import { apiCredentials, apiUrl } from '../api/config';
 import { session } from '../lib/session';
 import { indiaStamp } from '../lib/cc';
 import AppointmentSchedulerPage from './AppointmentSchedulerPage.vue';
@@ -141,7 +140,7 @@ function matchesAppointmentStatus(row) {
   if (status.value === 'Postponed') return /postponed/.test(value);
   return value.includes(status.value.toLowerCase());
 }
-function selectTab(id) { status.value = 'all'; tab.value = id; if (id !== 'scheduler' && id !== 'entry') load(); }
+function selectTab(id) { const unchanged = tab.value === id && status.value === 'all'; status.value = 'all'; tab.value = id; if (unchanged && id !== 'scheduler' && id !== 'entry') load(); }
 function clearSessionDates(){sessionFrom.value='';sessionTo.value='';}
 function queueClientSearch() { clearTimeout(timers.search); timers.search = setTimeout(searchClients, 220); }
 async function loadKpis() {
@@ -196,10 +195,7 @@ async function loadPractitioners() {
 }
 async function loadSessionMetadata() {
   try {
-    const url = apiUrl('/api/method/frappe.desk.form.load.getdoctype?doctype=Therapy%20Session&with_parent=0');
-    const response = await fetch(url, { credentials: apiCredentials(), headers: { Accept: 'application/json' } });
-    const data = await response.json();
-    if (!response.ok) throw new Error('Could not load Therapy Session fields.');
+    const data = await request('frappe.desk.form.load.getdoctype', {args:{doctype:'Therapy Session',with_parent:0},csrfToken:session.csrf_token});
     const docs = data.docs || [];
     sessionMeta.value = docs.find(item => item?.doctype === 'DocType' && item.name === 'Therapy Session') || docs.find(item => item?.name === 'Therapy Session' && Array.isArray(item.fields)) || null;
     const standard = new Set(['custom_doctor','custom_doctor_name','custom_physiotherapist','custom_physiotherapist_name','custom_dietitian_id','custom_dietitian_name','patient','patient_name','therapy_plan','therapy_type','branch','service_unit','company','duration','start_date','start_time','end_time','practitioner','remarks','before_weight','after_weight','weight_loss','bmi','custom_before_weight','custom_after_weight','custom_upload_images','custom_after_photo','docstatus','name']);
@@ -402,18 +398,16 @@ async function uploadAttachment(sessionName, file, fieldname, slot) {
   const form = new FormData();
   const taggedFile = new File([file], safeName, { type: file.type, lastModified: file.lastModified });
   form.append('file', taggedFile, taggedFile.name); form.append('is_private', '1'); form.append('doctype', 'Therapy Session'); form.append('docname', sessionName); form.append('fieldname', '');
-  const response = await fetch(apiUrl('/api/method/upload_file'), { method: 'POST', credentials: apiCredentials(), headers: { 'X-Frappe-CSRF-Token': session.csrf_token || '' }, body: form });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok || !body.message?.file_url) throw new Error(`The draft was saved, but ${fieldname} photo upload failed.`);
+  const body = await request('upload_file',{formData:form,csrfToken:session.csrf_token});
+  if (!body.message?.file_url) throw new Error(`The draft was saved, but ${fieldname} photo upload failed.`);
 }
 async function uploadConsent(sessionName) {
   try { const files=(await call('frappe.client.get_list',{doctype:'File',fields:['file_name'],filters:[['File','attached_to_doctype','=','Therapy Session'],['File','attached_to_name','=',sessionName]],limit_page_length:100})).message||[];if(files.some(file=>String(file.file_name||'').toLowerCase().includes('consent')))return; } catch {}
   const form = new FormData();
   form.append('file', consentFile.value, `CONSENT_FORM_${consentFile.value.name.replace(/[^a-zA-Z0-9._-]+/g, '_')}`);
   form.append('is_private', '1'); form.append('doctype', 'Therapy Session'); form.append('docname', sessionName);
-  const response = await fetch(apiUrl('/api/method/upload_file'), { method: 'POST', credentials: apiCredentials(), headers: { 'X-Frappe-CSRF-Token': session.csrf_token || '' }, body: form });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok || !body.message?.file_url) throw new Error('The draft was saved, but the consent form upload failed. Reopen the draft and attach the consent before submission.');
+  const body = await request('upload_file',{formData:form,csrfToken:session.csrf_token});
+  if (!body.message?.file_url) throw new Error('The draft was saved, but the consent form upload failed. Reopen the draft and attach the consent before submission.');
 }
 async function openRooms() {
   roomOpen.value = true; roomBranch.value = branch.value || roomBranch.value || branches.value[0] || ''; await loadRooms();
@@ -529,12 +523,17 @@ function sessionRecordUrl(name) { return `/app/therapy-session/${encodeURICompon
 watch(plan, async value => { if (value?.branch) sessionBranch.value = value.branch; else if (!sessionBranch.value) sessionBranch.value = client.value?.branch_name || client.value?.custom_branch || ''; nextRoom.value=''; repeatCryoToday.value=false; loadNextRooms(); if (value && client.value && /4\s*d.*cryo|cryo.*4\s*d/i.test(`${value.therapy} ${value.category||''}`)) { try { const count=await call('frappe.client.get_count',{doctype:'Therapy Session',filters:[['Therapy Session','patient','=',client.value.name],['Therapy Session','therapy_plan','=',value.plan],['Therapy Session','therapy_type','=',value.therapy],['Therapy Session','docstatus','=',1],['Therapy Session','start_date','=',today]]}); repeatCryoToday.value=Number(count.message||0)>0; } catch { repeatCryoToday.value=false; } } });
 watch(sessionBranch, () => { nextRoom.value=''; loadNextRooms(); });
 watch([tab, reportFrom, reportTo, sessionFrom, sessionTo, executionFrom, executionTo, branch, status], () => { if (!['scheduler', 'entry'].includes(tab.value)) { if(page.value!==1)page.value=1;else load(); } });
-watch([query, executionQuery], () => { if(page.value!==1)page.value=1;else if(isPagedList.value)load(); });
+watch([query, executionQuery], () => {
+  clearTimeout(timers.report);
+  if (!isPagedList.value) { page.value=1; return; }
+  controller?.abort();
+  timers.report=setTimeout(() => { if(page.value!==1)page.value=1;else load(); },250);
+});
 watch(page, () => { if(isPagedList.value) load(); });
 watch(executionPreset, () => { if(isSessionList.value) load(); });
 watch(branch, () => loadKpis());
-onMounted(async () => { await loadSessionMetadata(); loadTherapyCategoryMap(); loadBranches(); loadPractitioners(); loadKpis(); load(); });
-onBeforeUnmount(() => { alive = false; controller?.abort(); clearTimeout(timers.search); });
+onMounted(() => { loadSessionMetadata(); loadTherapyCategoryMap(); loadBranches(); loadPractitioners(); loadKpis(); load(); });
+onBeforeUnmount(() => { alive = false; controller?.abort(); clearTimeout(timers.search); clearTimeout(timers.report); });
 </script>
 
 <template>

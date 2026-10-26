@@ -66,6 +66,11 @@ function loaded() {
     setLoading(false);
     return;
   }
+  if (route.name === 'leads' && typeof route.query.caller === 'string') {
+    frame.value?.contentWindow?.postMessage({
+      type: 'life-convox-find', mobile: route.query.caller,
+    }, window.location.origin);
+  }
   // Frappe error/login responses do not run the module bridge.
   if (!receivedActivity) {
     setLoading(false);

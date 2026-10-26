@@ -1,61 +1,242 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-import { apiUrl } from '../api/config';
-import { session } from '../lib/session';
-import '../styles/employee-sale-master.css';
-
-const pageSize=50;
-const from=ref(''),to=ref(''),branch=ref(''),booking=ref(''),employee=ref(''),mode=ref(''),paidFrom=ref(''),paidTo=ref(''),outFrom=ref(''),outTo=ref('');
-const permittedBranches=ref([]),branchRestricted=ref(false),branchReady=ref(false),activeTab=ref('overview'),quick=ref('month');
-const rawRows=ref([]),invoices=ref([]),credits=ref([]),loading=ref(false),error=ref(''),notice=ref(''),employeeSearch=ref(''),employeeModeSearch=ref(''),transactionPage=ref(1);
-let controller,alive=true;
-const tabs=[['overview','📊 Overview'],['employee','👤 Employee Wise'],['branch','🏢 Branch Wise'],['transactions','📋 Transaction Detail']];
-const money=v=>'₹'+Number(v||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
-const amount=v=>{if(v===null||v===undefined||String(v).trim()==='')return 0;const n=Number(String(v).replace(/[₹,\s]/g,''));return Number.isFinite(n)?n:0;};
-const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-const dateText=v=>v?String(v).slice(0,10).split('-').reverse().join('-'):'—';
-const displayBranch=computed(()=>branch.value||(branchRestricted.value?'All Permitted Branches':'All Branches'));
-const pageCount=computed(()=>Math.max(1,Math.ceil(invoices.value.length/pageSize)));
-const transactionRows=computed(()=>invoices.value.slice((transactionPage.value-1)*pageSize,transactionPage.value*pageSize));
-const summary=computed(()=>credits.value.reduce((s,r)=>{s.paid+=r.paid_amount;s.gst+=r.gst_amount;s.exgst+=r.paid_amount_without_gst;s.total+=r.grand_total;s.out+=r.outstanding_amount;s.invoices.add(r.invoice);return s;},{paid:0,gst:0,exgst:0,total:0,out:0,invoices:new Set()}));
-function cycle(offset=0){const now=new Date();let month=now.getMonth()+(now.getDate()<6?-1:0)+offset;const start=new Date(now.getFullYear(),month,6);return[iso(start),iso(new Date(start.getFullYear(),start.getMonth()+1,5))];}
-function preset(key){quick.value=key;if(key==='today'||key==='yesterday'){const d=new Date();if(key==='yesterday')d.setDate(d.getDate()-1);from.value=to.value=iso(d);}else if(key==='fy'){const now=new Date(),y=now.getMonth()>=3?now.getFullYear():now.getFullYear()-1;from.value=`${y}-04-01`;to.value=`${y+1}-03-31`;}else[from.value,to.value]=cycle(key==='last'?-1:0);}
-function normalize(row){const old=String(row.credit_type||'').toLowerCase(),ref=row.referring_employee||row.custom_referring_name||(old==='ref'?row.sales_person_name:'')||'',inc=row.incentive_employee||row.custom_incentive_employee_name||(old==='incentive'?row.sales_person_name:'')||'',paid=amount(row.paid_amount);let ex=amount(row.paid_amount_without_gst)||amount(row.paid_amount_without_tax),gst=amount(row.gst_amount)||amount(row.tax_amount);if(!ex&&paid)ex=paid/1.05;if(!gst&&paid)gst=paid-ex;let refShare=amount(row.referring_employee_share),incShare=amount(row.incentive_employee_share);if(!refShare&&!incShare&&ex){if(old==='ref')refShare=ex;else if(old==='incentive')incShare=ex;else if(ref&&inc){refShare=ex/2;incShare=ex-refShare;}else if(ref)refShare=ex;else if(inc)incShare=ex;}
-  let employeeCount=amount(row.employee_count);const refId=row.referring_employee_id||(old==='ref'?row.employee_id:'')||'',incId=row.incentive_employee_id||(old==='incentive'?row.employee_id:'')||'';if(refId&&incId&&String(refId).trim().toLowerCase()===String(incId).trim().toLowerCase())employeeCount=1;else if(!employeeCount)employeeCount=(ref?1:0)+(inc?1:0);
-  return{invoice:row.invoice||'',invoice_date:row.invoice_date||row.posting_date||'',branch:row.branch||'',customer:row.customer||'',booking_type:row.booking_type||row.media||'',mode_of_payment:row.mode_of_payment||'',referring_employee:ref,incentive_employee:inc,referring_employee_id:refId,incentive_employee_id:incId,referring_practitioner_id:row.referring_practitioner_id||row.sales_person_id||row.ref_practitioner||'',employee_count:employeeCount,paid_amount:paid,gst_amount:gst,paid_amount_without_gst:ex,referring_employee_share:refShare,incentive_employee_share:incShare,total_distributed_amount:amount(row.total_distributed_amount)||ex,grand_total:amount(row.grand_total),outstanding_amount:amount(row.outstanding_amount),payment_ids:row.payment_ids||'',payment_dates:row.payment_dates||''};}
-async function loadBranches(){branchReady.value=false;try{const params=new URLSearchParams({doctype:'Branch',fields:JSON.stringify(['name']),limit_page_length:'200',order_by:'name asc'});const response=await fetch(apiUrl('/api/method/frappe.client.get_list?'+params),{credentials:'include',headers:{Accept:'application/json','X-Frappe-CSRF-Token':session.csrf_token||''}});const body=await response.json();if(!response.ok)throw Error(body.exception||body.message||'Could not verify branch access.');const names=[...new Set((body.message||[]).map(x=>String(x.name||'').trim()).filter(n=>n&&!['head office','testing branch'].includes(n.toLowerCase())))].sort((a,b)=>a.localeCompare(b));const all=session.user==='Administrator'||session.roles.includes('System Manager');permittedBranches.value=names;branchRestricted.value=!all;if(!all&&!names.length)throw Error('No permitted Branch was returned for this login.');if(!all&&names.length===1)branch.value=names[0];branchReady.value=true;}catch(e){error.value=e.message;}}
-async function reportBranch(fromDate,toDate,target,signal){const params=new URLSearchParams({report_name:'REFERRAL REPORT – FIXED',filters:JSON.stringify({from_date:fromDate,to_date:toDate,branch:target||''}),ignore_prepared_report:'1',are_default_filters:'false'});const response=await fetch(apiUrl('/api/method/frappe.desk.query_report.run?'+params),{credentials:'include',signal,headers:{Accept:'application/json','X-Frappe-CSRF-Token':session.csrf_token||''}});const body=await response.json().catch(()=>({}));if(!response.ok||body.exc_type||body.exc){let message=body.message||body.exception||'Referral report could not be loaded.';try{const msgs=JSON.parse(body._server_messages||'[]');if(msgs[0])message=JSON.parse(msgs[0]).message||message;}catch{}throw Error(String(message).replace(/<[^>]*>/g,'').split('\n').pop());}const rows=Array.isArray(body.message?.result)?body.message.result:[];const normalized=rows.filter(r=>r&&typeof r==='object'&&!Array.isArray(r)).map(normalize).filter(r=>r.invoice);if(rows.length&&!normalized.length)throw Error('Referral report returned data without Invoice fields; this dashboard requires invoice-wise results.');return target?normalized.filter(r=>String(r.branch)===String(target)):normalized;}
-function normName(v){return String(v||'').normalize('NFKC').replace(/\u00A0/g,' ').replace(/\s+/g,' ').trim();}
-function employeeFilter(row){const q=employee.value.trim().toLowerCase();return!q||[row.referring_employee,row.incentive_employee,row.referring_employee_id,row.incentive_employee_id,row.referring_practitioner_id].some(x=>String(x||'').toLowerCase().includes(q));}
-function applyLocal(rows){const pmin=paidFrom.value===''?null:Number(paidFrom.value),pmax=paidTo.value===''?null:Number(paidTo.value),omin=outFrom.value===''?null:Number(outFrom.value),omax=outTo.value===''?null:Number(outTo.value);return rows.filter(r=>{if(branchRestricted.value&&permittedBranches.value.length&&!permittedBranches.value.includes(r.branch))return false;if(branch.value&&r.branch.toLowerCase()!==branch.value.toLowerCase())return false;if(booking.value&&r.booking_type.toLowerCase()!==booking.value.toLowerCase())return false;if(!employeeFilter(r))return false;if(mode.value&&!r.mode_of_payment.split(',').some(m=>m.trim().toLowerCase().includes(mode.value.trim().toLowerCase())))return false;if(pmin!==null&&r.paid_amount_without_gst<pmin)return false;if(pmax!==null&&r.paid_amount_without_gst>pmax)return false;if(omin!==null&&r.outstanding_amount<omin)return false;if(omax!==null&&r.outstanding_amount>omax)return false;return true;});}
-function buildCredits(rows){const credits=[];for(const r of rows){const total=r.total_distributed_amount||r.paid_amount_without_gst,refId=String(r.referring_employee_id||'').trim().toLowerCase(),incId=String(r.incentive_employee_id||'').trim().toLowerCase(),same=refId&&incId&&refId===incId;const specs=same?[[r.referring_employee||r.incentive_employee,r.referring_employee_id||r.incentive_employee_id,r.referring_practitioner_id,r.referring_employee_share+r.incentive_employee_share,'ref']]:[[r.referring_employee,r.referring_employee_id,r.referring_practitioner_id,r.referring_employee_share,'ref'],[r.incentive_employee,r.incentive_employee_id,'',r.incentive_employee_share,'incentive']];for(const[name,id,pid,share,type]of specs){share=amount(share);if(!name||share<=0)continue;const ratio=total>0?Math.min(1,Math.max(0,share/total)):1;credits.push({...r,sales_person_name:normName(name),employee_id:id||'',sales_person_id:pid||'',credit_type:type,paid_amount_without_gst:share,paid_amount:r.paid_amount*ratio,gst_amount:r.gst_amount*ratio,grand_total:r.grand_total*ratio,outstanding_amount:r.outstanding_amount*ratio});}}return credits;}
-function groupsByEmployee(){const aliases=new Map();for(const r of credits.value){const name=normName(r.sales_person_name).toLowerCase(),id=String(r.employee_id||'').trim().toLowerCase();if(!name||!id)continue;if(!aliases.has(name))aliases.set(name,new Set());aliases.get(name).add(id);}const map=new Map();for(const r of credits.value){const name=normName(r.sales_person_name),id=String(r.employee_id||'').trim().toLowerCase(),ids=aliases.get(name.toLowerCase()),alias=!id&&ids?.size===1?[...ids][0]:'',key=id?'employee|'+id:alias?'employee|'+alias:'name|'+name.toLowerCase();if(!map.has(key))map.set(key,{key,name,employee_id:r.employee_id||r.sales_person_id||alias||'',branches:new Set(),invoices:new Set(),booking:{},modes:new Set(),ref:0,inc:0,paid:0,gst:0,ex:0,total:0,out:0});const e=map.get(key);e.branches.add(r.branch);e.invoices.add(r.invoice);e.booking[r.booking_type||'Unknown']=(e.booking[r.booking_type||'Unknown']||0)+1;String(r.mode_of_payment||'').split(',').forEach(m=>m.trim()&&e.modes.add(m.trim()));e.paid+=r.paid_amount;e.gst+=r.gst_amount;e.ex+=r.paid_amount_without_gst;e.total+=r.grand_total;e.out+=r.outstanding_amount;if(r.credit_type==='incentive')e.inc+=r.paid_amount_without_gst;else e.ref+=r.paid_amount_without_gst;}return[...map.values()].sort((a,b)=>b.ex-a.ex);}
-function groupsByBranch(){const map=new Map();for(const r of credits.value){const key=r.branch||'Unknown';if(!map.has(key))map.set(key,{name:key,invoices:new Set(),employees:new Set(),booking:{},paid:0,gst:0,ex:0,total:0,out:0});const b=map.get(key);b.invoices.add(r.invoice);b.employees.add(r.employee_id||r.sales_person_name);b.booking[r.booking_type||'Unknown']=(b.booking[r.booking_type||'Unknown']||0)+1;b.paid+=r.paid_amount;b.gst+=r.gst_amount;b.ex+=r.paid_amount_without_gst;b.total+=r.grand_total;b.out+=r.outstanding_amount;}return[...map.values()].sort((a,b)=>b.ex-a.ex);}
-const employeeRows=computed(()=>groupsByEmployee().filter(r=>{const s=employeeSearch.value.trim().toLowerCase(),m=employeeModeSearch.value.trim().toLowerCase();return(!s||r.name.toLowerCase().includes(s)||r.employee_id.toLowerCase().includes(s))&&(!m||[...r.modes].some(x=>x.toLowerCase().includes(m)));}));
-const branchRows=computed(()=>groupsByBranch()),topEmployees=computed(()=>groupsByEmployee().slice(0,10)),topBranches=computed(()=>groupsByBranch());
-const bookings=computed(()=>{const map=new Map();for(const r of credits.value){const k=r.booking_type||'Unknown',v=map.get(k)||{name:k,invoices:new Set(),ex:0,paid:0,gst:0,out:0};v.invoices.add(r.invoice);v.ex+=r.paid_amount_without_gst;v.paid+=r.paid_amount;v.gst+=r.gst_amount;v.out+=r.outstanding_amount;map.set(k,v);}return[...map.values()].sort((a,b)=>b.ex-a.ex);});
-async function generate(){if(!from.value||!to.value){error.value='Select From and To dates.';return;}if(from.value>to.value){error.value='From Date cannot be after To Date.';return;}for(const[a,b,label]of[[paidFrom.value,paidTo.value,'Paid'],[outFrom.value,outTo.value,'Outstanding']])if(a!==''&&b!==''&&Number(a)>Number(b)){error.value=`${label} From cannot exceed ${label} To.`;return;}if(branchRestricted.value&&branch.value&&!permittedBranches.value.includes(branch.value)){error.value='You do not have access to this branch.';return;}controller?.abort();const current=new AbortController();controller=current;loading.value=true;error.value='';notice.value='';invoices.value=[];credits.value=[];transactionPage.value=1;try{const branchList=branchRestricted.value&&!branch.value&&permittedBranches.value.length>1?permittedBranches.value:[branch.value||''];const groups=await Promise.all(branchList.map(b=>reportBranch(from.value,to.value,b,current.signal)));if(!alive||controller!==current)return;const seen=new Set();rawRows.value=[];for(const list of groups)for(const r of list){const key=`${r.branch}|${r.invoice}`;if(!seen.has(key)){seen.add(key);rawRows.value.push(r);}}invoices.value=applyLocal(rawRows.value);const q=employee.value.trim().toLowerCase();credits.value=buildCredits(invoices.value).filter(c=>!q||[c.sales_person_name,c.employee_id,c.sales_person_id].some(v=>String(v||'').toLowerCase().includes(q)));notice.value=`Loaded ${invoices.value.length.toLocaleString('en-IN')} invoices and ${credits.value.length.toLocaleString('en-IN')} employee credits for ${displayBranch.value}.`;}catch(e){if(alive&&controller===current&&e.name!=='AbortError'){error.value=e.message;rawRows.value=[];invoices.value=[];credits.value=[];}}finally{if(alive&&controller===current)loading.value=false;}}
-function reset(){preset('month');branch.value=branchRestricted.value&&permittedBranches.value.length===1?permittedBranches.value[0]:'';booking.value=employee.value=mode.value=paidFrom.value=paidTo.value=outFrom.value=outTo.value='';employeeSearch.value=employeeModeSearch.value='';generate();}
-function csvCell(v){const text=String(v??'');return/[",\r\n]/.test(text)?`"${text.replace(/"/g,'""')}"`:text;}
-function exportEmployee(){const headers=['Employee','Employee ID','Branches','Invoices','Employee Sale ex-GST','Referring Share','Incentive Share','GST Allocated','Paid Allocated','Grand Total','Outstanding','Top Booking Type','Modes of Payment'],rows=employeeRows.value.map(e=>[e.name,e.employee_id,[...e.branches].join(', '),e.invoices.size,e.ex,e.ref,e.inc,e.gst,e.paid,e.total,e.out,Object.entries(e.booking).sort((a,b)=>b[1]-a[1])[0]?.[0]||'',[...e.modes].join(', ')]),blob=new Blob(['\ufeff'+[headers,...rows].map(row=>row.map(csvCell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`Employee_Sale_${from.value}_to_${to.value}.csv`;a.click();URL.revokeObjectURL(url);}
-onMounted(()=>{preset('month');loadBranches().then(()=>{if(alive&&branchReady.value)generate();});});
-onBeforeUnmount(()=>{alive=false;controller?.abort();});
+import {computed,onBeforeUnmount,onMounted,ref,watch,nextTick} from 'vue';
+import {useEmployeeAnalytics} from '../composables/useEmployeeAnalytics';
+import EmployeeReportTable from '../components/employee-sale/EmployeeReportTable.vue';
+import EmployeeReportSelect from '../components/employee-sale/EmployeeReportSelect.vue';
+import EmployeeReportKpis from '../components/employee-sale/EmployeeReportKpis.vue';
+import EmployeeReportBars from '../components/employee-sale/EmployeeReportBars.vue';
+import TreatmentTree from '../components/employee-sale/TreatmentTree.vue';
+const {S,calc,from,to,period,setPeriod,filters,options,tab,branches,locked,loading,error,amountError,loaded,view,matrix,matrixColumns,bookingRows,load,reset,modal,drill,openEmployee,openBranch,exportExcel}=useEmployeeAnalytics();
+const collapsed=ref(false),tree=ref(null),print=()=>window.print();
+const overviewKpis=computed(()=>{const t=view.value.totals;return [['Invoices',t.invoices,t.clients+' clients'],['Employees Credited',t.employees,calc.keys(t.shared)+' shared invoices','k-grey'],['Paid ex-GST',calc.fmt(t.ex),calc.compact(t.ex),'k-mint'],['Referrer Share',calc.fmt(t.ref),calc.pct(t.ref,t.ex).toFixed(1)+'% of ex-GST','k-blue'],['Incentive Share',calc.fmt(t.inc),calc.pct(t.inc,t.ex).toFixed(1)+'% of ex-GST','k-orange'],['GST',calc.fmt(t.gst),calc.compact(t.gst),'k-teal'],['Paid w/ GST',calc.fmt(t.paid),calc.compact(t.paid)],['Avg per Invoice',calc.fmt(t.invoices?t.ex/t.invoices:0),'ex-GST','k-grey'],['Current Outstanding',calc.fmt(t.out),'on credited invoices','k-red']];});
+const branchKpis=computed(()=>{const t=view.value.totals,b=view.value.br[0];return [['Active Branches',view.value.br.length],['Paid ex-GST',calc.fmt(t.ex),calc.compact(t.ex),'k-mint'],['Top Branch',b?.name||'—',b?calc.fmt(b.ex)+' · '+b.share.toFixed(1)+'%':'','k-teal'],['Current Outstanding',calc.fmt(t.out),calc.compact(t.out),'k-red']];});
+const treatmentKpis=computed(()=>{const tr=view.value.tr,mapped=tr.tree.filter(n=>n.k!=='__NONE__'),top=mapped[0];return [['Main Categories',mapped.length,tr.tree.reduce((s,n)=>s+n.kids.length,0)+' therapy groups'],['Treatment Share ex-GST',calc.fmt(tr.total),calc.compact(tr.total),'k-mint'],['Leading Category',top?calc.lbl(top.k):'—',top?calc.fmt(top.share)+' · '+calc.pct(top.share,tr.total).toFixed(1)+'%':'','k-teal'],['Unmapped Treatments',tr.unmapped.length,calc.fmt(tr.unmapped.reduce((s,n)=>s+n.share,0))+' missing category / group',tr.unmapped.length?'k-orange':'k-grey']];});
+const employeeBars=computed(()=>view.value.emp.slice(0,10).map(e=>({label:e.name,sub:e.branches,value:e.ex,note:e.invoices+' inv'})));
+const branchBars=computed(()=>view.value.br.map(b=>({label:b.name,value:b.ex,note:b.share.toFixed(1)+'%'})));
+const categoryBars=computed(()=>view.value.tr.tree.map(n=>({label:calc.lbl(n.k),value:n.share,note:calc.pct(n.share,view.value.tr.total).toFixed(1)+'% · '+n.invoices+' inv'})));
+const modeBars=computed(()=>{const m=new Map();for(const c of view.value.credits){const k=c.inv.mop||'(Unmapped)',r=m.get(k)||{label:k,value:0,inv:new Set()};r.value+=c.ex;r.inv.add(c.inv.invoice);m.set(k,r);}return [...m.values()].sort((a,b)=>b.value-a.value).slice(0,10).map(r=>({...r,note:r.inv.size+' inv'}));});
+const drillKpis=computed(()=>{const e=drill.value?.summary;if(!e)return [];return [['Invoices',e.invoices,e.clients+' clients'],['Paid ex-GST',calc.fmt(e.ex),calc.compact(e.ex),'k-mint'],['Referrer Share',calc.fmt(e.ref),'','k-blue'],['Incentive Share',calc.fmt(e.inc),'','k-orange'],['Outstanding',calc.fmt(e.out),'allocated','k-red']];});
+const chips=computed(()=>Object.entries(filters).flatMap(([key,value])=>Array.isArray(value)?value.map(v=>({key,value:v,label:(options.value[key]?.find(o=>o.value===v)?.label||v)})):value&&key!=='branch'||value&&key==='branch'&&!locked.value?[{key,value,label:key+': '+value}]:[]));
+function removeChip(c){if(Array.isArray(filters[c.key]))filters[c.key]=filters[c.key].filter(v=>v!==c.value);else filters[c.key]=typeof c.value==='boolean'?false:'';}
+let returnFocus,previousOverflow;
+watch(modal,async open=>{if(open){returnFocus=document.activeElement;previousOverflow=document.body.style.overflow;document.body.style.overflow='hidden';await nextTick();document.getElementById('esr-modal-x')?.focus();}else{document.body.style.overflow=previousOverflow??'';returnFocus?.focus();}});
+function keydown(e){if(!modal.value)return;if(e.key==='Escape')modal.value=false;if(e.key==='Tab'){const items=[...document.querySelectorAll('#esr-modal button,#esr-modal input,#esr-modal a')].filter(el=>el.getClientRects().length);const first=items[0],last=items.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}}}
+onMounted(()=>document.addEventListener('keydown',keydown));onBeforeUnmount(()=>{document.removeEventListener('keydown',keydown);if(modal.value)document.body.style.overflow=previousOverflow??'';});
 </script>
+<template><section class="employee-sale-master-page">
+<div class="esr" id="esr-root">
 
-<template>
-  <main class="employee-sale">
-    <header class="es-header"><div><span class="es-kicker">SALES &amp; COLLECTION ANALYTICS</span><h1>Employee-wise · Branch-wise · Payment-wise</h1><p>LIFE SLIMMING AND COSMETIC PVT. LTD. <span>·</span> {{ displayBranch }}</p></div><aside><small>REPORT SOURCE</small><strong>REFERRAL REPORT – FIXED</strong></aside></header>
-    <nav class="es-tabs" aria-label="Dashboard views"><button v-for="[key,label] in tabs" :key="key" :class="{active:activeTab===key}" @click="activeTab=key">{{ label }}</button></nav>
-    <section class="es-filter"><div class="es-filter-title"><div><h2>Report Filters</h2><p>Select the required filters, then generate the dashboard.</p></div><span v-if="branchReady" class="es-branch-chip">{{ displayBranch }}</span></div>
-      <div class="es-dates"><label>From Date<input v-model="from" type="date" @change="quick=''"></label><label>To Date<input v-model="to" type="date" @change="quick=''"></label><label>Branch<select v-model="branch" :disabled="!branchReady||branchRestricted&&permittedBranches.length===1"><option value="">{{ branchRestricted?'All Permitted Branches':'All Branches' }}</option><option v-for="name in permittedBranches" :key="name" :value="name">{{ name }}</option></select></label><label>Booking Type<select v-model="booking"><option value="">All Booking Types</option><option v-for="name in [...new Set(rawRows.map(r=>r.booking_type).filter(Boolean))].sort()" :key="name">{{ name }}</option></select></label><label>Employee Name / ID<input v-model="employee" placeholder="Type name or employee ID…"></label><label>Mode of Payment<input v-model="mode" placeholder="e.g. Cash, UPI…"></label></div>
-      <div class="es-quick"><button v-for="[key,label] in [['today','Today'],['yesterday','Yesterday'],['month','Current Cycle'],['last','Previous Cycle'],['fy','Financial Year']]" :key="key" :class="{active:quick===key}" @click="preset(key)">{{ label }}</button></div>
-      <div class="es-amounts"><label>Paid From (₹)<input v-model="paidFrom" type="number" min="0" placeholder="Min"></label><label>Paid To (₹)<input v-model="paidTo" type="number" min="0" placeholder="Max"></label><label>Outstanding From (₹)<input v-model="outFrom" type="number" min="0" placeholder="Min"></label><label>Outstanding To (₹)<input v-model="outTo" type="number" min="0" placeholder="Max"></label><div class="es-actions"><button @click="reset">Reset</button><button class="es-primary" :disabled="loading||!branchReady" @click="generate">{{ loading?'Loading…':'Generate Dashboard' }}</button></div></div>
+
+  <header class="esr-head">
+    <div class="esr-head-main">
+      <div class="esr-kicker">Sales &amp; Collection Analytics</div>
+      <h1 class="esr-title">Sales Master Report</h1>
+      <div class="esr-sub">Collections credited to referring &amp; incentive employees — by employee, branch, treatment category and payment mode</div>
+    </div>
+    <div class="esr-head-side">
+      <div class="esr-meta">
+        <span class="esr-meta-chip"><em>Source</em> REFERRAL REPORT – FIXED</span>
+        <span class="esr-meta-chip"><em>Period</em> <b id="esr-meta-period">{{loaded?calc.dmy(loaded.from)+' to '+calc.dmy(loaded.to):'—'}}</b></span>
+        <span class="esr-meta-chip"><em>Loaded</em> <b id="esr-meta-loaded">{{loaded?.at||'—'}}</b></span>
+      </div>
+      <div class="esr-head-actions">
+        <button type="button" class="esr-btn esr-btn-ghost" id="esr-btn-export" @click="exportExcel" :disabled="loading||!loaded||!!amountError">&#11015; Export Excel</button>
+        <button type="button" class="esr-btn esr-btn-ghost" id="esr-btn-print" @click="print">&#128424; Print</button>
+      </div>
+    </div>
+  </header>
+
+
+  <section class="esr-filters" id="esr-filters">
+    <div class="esr-fhead">
+      <div class="esr-fhead-l">
+        <button type="button" class="esr-collapse" id="esr-fcollapse" @click="collapsed=!collapsed" :aria-expanded="!collapsed" title="Show / hide filters">&#9662;</button>
+        <div>
+          <div class="esr-ftitle">Report Filters</div>
+          <div class="esr-fhint">Period loads data from the server. Every other filter applies instantly.</div>
+        </div>
+      </div>
+      <div class="esr-fhead-r">
+        <button type="button" class="esr-btn esr-btn-outline" id="esr-btn-reset" @click="reset">&#8634; Reset</button>
+        <button type="button" class="esr-btn esr-btn-primary" id="esr-btn-load" @click="load" :disabled="loading">&#9654; Load Data</button>
+      </div>
+    </div>
+
+    <div class="esr-fbody" id="esr-fbody" v-show="!collapsed">
+      <div class="esr-fgrid">
+
+
+        <div class="esr-fgroup esr-g-period">
+          <div class="esr-fg-hdr"><span class="esr-fg-ico">&#128197;</span>Period <small>Payment date</small></div>
+          <div class="esr-fg-body">
+            <div class="esr-frow2">
+              <label class="esr-field"><span class="esr-lbl">From</span><input type="date" class="esr-input" id="esr-f-from" v-model="from" @input="period=''"></label>
+              <label class="esr-field"><span class="esr-lbl">To</span><input type="date" class="esr-input" id="esr-f-to" v-model="to" @input="period=''"></label>
+            </div>
+            <div class="esr-quick" id="esr-quick">
+              <button type="button" class="esr-q" data-range="today" :class="{on:period==='today'}" @click="period='today';setPeriod()">Today</button>
+              <button type="button" class="esr-q" data-range="yesterday" :class="{on:period==='yesterday'}" @click="period='yesterday';setPeriod()">Yesterday</button>
+              <button type="button" class="esr-q on" data-range="cycle" :class="{on:period==='cycle'}" @click="period='cycle';setPeriod()">This Cycle</button>
+              <button type="button" class="esr-q" data-range="lastcycle" :class="{on:period==='lastcycle'}" @click="period='lastcycle';setPeriod()">Last Cycle</button>
+              <button type="button" class="esr-q" data-range="calmonth" :class="{on:period==='calmonth'}" @click="period='calmonth';setPeriod()">Calendar Month</button>
+              <button type="button" class="esr-q" data-range="fy" :class="{on:period==='fy'}" @click="period='fy';setPeriod()">This FY</button>
+            </div>
+            <div class="esr-fnote">Cycle = 6th to 5th of next month</div>
+          </div>
+        </div>
+
+
+        <div class="esr-fgroup">
+          <div class="esr-fg-hdr"><span class="esr-fg-ico">&#128101;</span>People &amp; Place</div>
+          <div class="esr-fg-body">
+            <label class="esr-field"><span class="esr-lbl">Branch</span>
+              <select class="esr-input" id="esr-f-branch" v-model="filters.branch" :disabled="!!locked"><option value="">All Branches</option><option v-for="b in branches" :key="b">{{b}}</option></select>
+            </label>
+            <div class="esr-field"><span class="esr-lbl">Employee</span><EmployeeReportSelect v-model="filters.emp" :options="options.emp||[]" label="emp" all-label="All Employees"/></div>
+            <div class="esr-frow2">
+              <div class="esr-field"><span class="esr-lbl">Credit Role</span><EmployeeReportSelect v-model="filters.role" :options="options.role||[]" label="role" all-label="Both Roles"/></div>
+              <div class="esr-field"><span class="esr-lbl">Sharing Type</span><EmployeeReportSelect v-model="filters.sharing" :options="options.sharing||[]" label="sharing" all-label="All Types"/></div>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="esr-fgroup esr-g-treat">
+          <div class="esr-fg-hdr"><span class="esr-fg-ico">&#10022;</span>Treatment</div>
+          <div class="esr-fg-body">
+            <div class="esr-field"><span class="esr-lbl">Main Category</span><EmployeeReportSelect v-model="filters.category" :options="options.category||[]" label="category" all-label="All Main Categories"/></div>
+            <div class="esr-field"><span class="esr-lbl">Therapy Group</span><EmployeeReportSelect v-model="filters.group" :options="options.group||[]" label="group" all-label="All Therapy Groups"/></div>
+            <div class="esr-field"><span class="esr-lbl">Therapy Type</span><EmployeeReportSelect v-model="filters.type" :options="options.type||[]" label="type" all-label="All Therapy Types"/></div>
+            <div class="esr-field">
+              <span class="esr-lbl">Amount Basis <i class="esr-tip" title="Full Invoice: the whole collected amount of every invoice whose plan contains the selected treatment. Treatment Share: only the part of the collection that belongs to the selected treatment lines (split across the plan's therapy lines).">?</i></span>
+              <div class="esr-seg" id="esr-basis">
+                <button type="button" data-basis="full" :class="{on:S.basis==='full'}" @click="S.basis='full'">Full Invoice</button>
+                <button type="button" data-basis="share" :class="{on:S.basis==='share'}" @click="S.basis='share'">Treatment Share</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="esr-fgroup">
+          <div class="esr-fg-hdr"><span class="esr-fg-ico">&#8377;</span>Payment &amp; Amount</div>
+          <div class="esr-fg-body">
+            <div class="esr-frow2">
+              <div class="esr-field"><span class="esr-lbl">Booking Type</span><EmployeeReportSelect v-model="filters.booking" :options="options.booking||[]" label="booking" all-label="All Booking Types"/></div>
+              <div class="esr-field"><span class="esr-lbl">Mode of Payment</span><EmployeeReportSelect v-model="filters.mop" :options="options.mop||[]" label="mop" all-label="All Modes"/></div>
+            </div>
+            <div class="esr-frow2">
+              <label class="esr-field"><span class="esr-lbl">Paid ex-GST from</span><input type="text" inputmode="decimal" class="esr-input esr-amt" id="esr-f-paid-min" v-model="filters.paidMin" placeholder="Min ₹"></label>
+              <label class="esr-field"><span class="esr-lbl">to</span><input type="text" inputmode="decimal" class="esr-input esr-amt" id="esr-f-paid-max" v-model="filters.paidMax" placeholder="Max ₹"></label>
+            </div>
+            <div class="esr-frow2">
+              <label class="esr-field"><span class="esr-lbl">Outstanding from</span><input type="text" inputmode="decimal" class="esr-input esr-amt" id="esr-f-out-min" v-model="filters.outMin" placeholder="Min ₹"></label>
+              <label class="esr-field"><span class="esr-lbl">to</span><input type="text" inputmode="decimal" class="esr-input esr-amt" id="esr-f-out-max" v-model="filters.outMax" placeholder="Max ₹"></label>
+            </div>
+            <label class="esr-check"><input type="checkbox" id="esr-f-onlyout" v-model="filters.onlyOut"> Only invoices with outstanding</label>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="esr-chips" id="esr-chips"><button v-for="chip in chips" :key="chip.key+chip.value" type="button" class="esr-chip" @click="removeChip(chip)">{{chip.label}} ×</button></div>
+  </section>
+
+  <div id="esr-status" class="esr-status-wrap"><div v-if="error||amountError" class="esr-msg esr-msg-err" role="alert">{{error||amountError}} <button @click="load">Retry</button></div><div v-else-if="loading" class="esr-msg esr-msg-info" role="status">Loading report…</div></div>
+
+
+  <nav class="esr-tabs" id="esr-tabs">
+    <button type="button" class="esr-tab" :class="{on:tab==='overview'}" @click="tab='overview'" data-tab="overview">&#128202; Overview</button>
+    <button type="button" class="esr-tab" :class="{on:tab==='employee'}" @click="tab='employee'" data-tab="employee">&#128100; Employee Wise <b class="esr-tc" id="esr-tc-employee">{{view.emp.length}}</b></button>
+    <button type="button" class="esr-tab" :class="{on:tab==='branch'}" @click="tab='branch'" data-tab="branch">&#127970; Branch Wise <b class="esr-tc" id="esr-tc-branch">{{view.br.length}}</b></button>
+    <button type="button" class="esr-tab" :class="{on:tab==='treatment'}" @click="tab='treatment'" data-tab="treatment">&#10022; Treatment Category <b class="esr-tc" id="esr-tc-treatment">{{view.tr.tree.length}}</b></button>
+    <button type="button" class="esr-tab" :class="{on:tab==='txn'}" @click="tab='txn'" data-tab="txn">&#128203; Transaction Detail <b class="esr-tc" id="esr-tc-txn">{{view.invs.length}}</b></button>
+  </nav>
+
+  <main class="esr-main">
+
+
+    <section class="esr-pane" :class="{on:tab==='overview'}" data-pane="overview">
+      <div class="esr-basis-note" id="esr-basis-note"><div v-if="view.f.treat" class="esr-msg esr-msg-info">Treatment filter is on · {{S.basis==='share'?'Treatment Share — only the selected therapy portion is counted.':'Full Invoice — whole collections for invoices containing the selected treatment.'}}</div><div v-if="view.empOn" class="esr-msg esr-msg-info">Employee / role filter is on — amounts are the selected employees’ credited share only.</div></div>
+      <EmployeeReportKpis id="esr-kpis" :items="overviewKpis"/>
+      <div class="esr-grid2">
+        <div class="esr-card"><div class="esr-card-hdr"><span>Top Employees</span><span class="esr-badge">Paid ex-GST</span></div><EmployeeReportBars class="esr-card-body" id="esr-ov-emp" :calc="calc" :items="employeeBars" tone=""/></div>
+        <div class="esr-card"><div class="esr-card-hdr"><span>Branches</span><span class="esr-badge">Paid ex-GST</span></div><EmployeeReportBars class="esr-card-body" id="esr-ov-branch" :calc="calc" :items="branchBars" tone=""/></div>
+      </div>
+      <div class="esr-grid2">
+        <div class="esr-card"><div class="esr-card-hdr"><span>Main Category Mix</span><span class="esr-badge esr-badge-alt">Treatment share</span></div><EmployeeReportBars class="esr-card-body" id="esr-ov-cat" :calc="calc" :items="categoryBars" tone="teal"/></div>
+        <div class="esr-card"><div class="esr-card-hdr"><span>Mode of Payment Mix</span><span class="esr-badge">Invoices · Paid ex-GST</span></div><EmployeeReportBars class="esr-card-body" id="esr-ov-mop" :calc="calc" :items="modeBars" tone=""/></div>
+      </div>
+      <div class="esr-card">
+        <div class="esr-card-hdr"><span>Booking Type Breakdown</span><span class="esr-hsub">Invoices &amp; amounts by booking type</span></div>
+        <EmployeeReportTable class="esr-tblbox" data-tbl="booking" :rows="bookingRows" :columns="calc.columns.booking" :calc="calc" :searchable="false" sort-by="ex"/>
+      </div>
     </section>
-    <p v-if="error" class="es-alert" role="alert">{{ error }}</p><p v-else-if="loading" class="es-status" role="status">Fetching referral report for {{ displayBranch }}…</p><p v-else-if="notice" class="es-status" role="status">{{ notice }}</p>
-    <section v-if="!error&&activeTab==='overview'" class="es-view"><div class="es-kpis"><article><span>Total Invoices</span><strong>{{ summary.invoices.size.toLocaleString('en-IN') }}</strong></article><article><span>Employee Sale (ex-GST)</span><strong>{{ money(summary.exgst) }}</strong></article><article><span>Allocated GST</span><strong>{{ money(summary.gst) }}</strong></article><article><span>Employee Sale (with GST)</span><strong>{{ money(summary.paid) }}</strong></article><article><span>Allocated Grand Total</span><strong>{{ money(summary.total) }}</strong></article><article><span>Allocated Outstanding</span><strong>{{ money(summary.out) }}</strong></article></div>
-      <div class="es-overview-grid"><article class="es-card"><h2>Top Employees · Employee Sale ex-GST</h2><div v-for="e in topEmployees" :key="e.key" class="es-bar-row"><span :title="e.name">{{ e.name }}</span><div><i :style="{width:`${Math.max(1,100*e.ex/Math.max(1,topEmployees[0]?.ex||1))}%`}"></i></div><b>{{ money(e.ex) }}</b></div><p v-if="!topEmployees.length" class="es-empty">No employee credits for these filters.</p></article><article class="es-card"><h2>Branch-wise Employee Sale ex-GST</h2><div v-for="b in topBranches" :key="b.name" class="es-bar-row"><span :title="b.name">{{ b.name }}</span><div><i class="branch" :style="{width:`${Math.max(1,100*b.ex/Math.max(1,topBranches[0]?.ex||1))}%`}"></i></div><b>{{ money(b.ex) }}</b></div><p v-if="!topBranches.length" class="es-empty">No branch credits for these filters.</p></article><article class="es-card es-booking-card"><h2>Booking Type Summary</h2><div class="es-table-scroll"><table><thead><tr><th>Booking Type</th><th>Invoices</th><th>Sale ex-GST</th><th>Paid</th><th>Outstanding</th></tr></thead><tbody><tr v-for="b in bookings" :key="b.name"><td>{{ b.name }}</td><td>{{ b.invoices.size }}</td><td>{{ money(b.ex) }}</td><td>{{ money(b.paid) }}</td><td>{{ money(b.out) }}</td></tr><tr v-if="!bookings.length"><td colspan="5" class="es-empty">No booking data</td></tr></tbody></table></div></article></div></section>
-    <section v-else-if="!error&&activeTab==='employee'" class="es-view es-card"><div class="es-table-head"><div><h2>Employee Wise Sales</h2><p>Employee shares are allocated from invoice payments.</p></div><button @click="exportEmployee">↓ Export CSV</button></div><div class="es-searches"><input v-model="employeeSearch" placeholder="Search employee name or ID…"><input v-model="employeeModeSearch" placeholder="Search mode of payment…"></div><div class="es-table-scroll"><table><thead><tr><th>#</th><th>Employee</th><th>Employee ID</th><th>Branches</th><th>Invoices</th><th>Sale ex-GST</th><th>Referring Share</th><th>Incentive Share</th><th>GST</th><th>Paid</th><th>Grand Total</th><th>Outstanding</th><th>Top Booking</th><th>Modes</th></tr></thead><tbody><tr v-for="(e,i) in employeeRows" :key="e.key"><td>{{ i+1 }}</td><td><strong>{{ e.name }}</strong></td><td>{{ e.employee_id||'—' }}</td><td>{{ [...e.branches].join(', ') }}</td><td>{{ e.invoices.size }}</td><td>{{ money(e.ex) }}</td><td>{{ money(e.ref) }}</td><td>{{ money(e.inc) }}</td><td>{{ money(e.gst) }}</td><td>{{ money(e.paid) }}</td><td>{{ money(e.total) }}</td><td>{{ money(e.out) }}</td><td>{{ Object.entries(e.booking).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—' }}</td><td>{{ [...e.modes].join(', ') }}</td></tr><tr v-if="!employeeRows.length"><td colspan="14" class="es-empty">No employee rows match.</td></tr></tbody></table></div></section>
-    <section v-else-if="!error&&activeTab==='branch'" class="es-view es-card"><div class="es-table-head"><div><h2>Branch Wise Sales</h2><p>Employee allocations rolled up by branch.</p></div></div><div class="es-table-scroll"><table><thead><tr><th>#</th><th>Branch</th><th>Invoices</th><th>Sale ex-GST</th><th>GST</th><th>Paid</th><th>Grand Total</th><th>Outstanding</th><th>Employees</th><th>Top Booking</th></tr></thead><tbody><tr v-for="(b,i) in branchRows" :key="b.name"><td>{{ i+1 }}</td><td><strong>{{ b.name }}</strong></td><td>{{ b.invoices.size }}</td><td>{{ money(b.ex) }}</td><td>{{ money(b.gst) }}</td><td>{{ money(b.paid) }}</td><td>{{ money(b.total) }}</td><td>{{ money(b.out) }}</td><td>{{ b.employees.size }}</td><td>{{ Object.entries(b.booking).sort((a,c)=>c[1]-a[1])[0]?.[0]||'—' }}</td></tr><tr v-if="!branchRows.length"><td colspan="10" class="es-empty">No branch rows.</td></tr></tbody></table></div></section>
-    <section v-else-if="!error&&activeTab==='transactions'" class="es-view es-card"><div class="es-table-head"><div><h2>Transaction Detail</h2><p>{{ invoices.length.toLocaleString('en-IN') }} invoices · referring and incentive employees</p></div></div><div class="es-table-scroll"><table><thead><tr><th>Invoice</th><th>Date</th><th>Branch</th><th>Customer</th><th>Booking Type</th><th>Referring Employee</th><th>Ref. Employee ID</th><th>Ref. Share</th><th>Incentive Employee</th><th>Incentive ID</th><th>Incentive Share</th><th>Mode of Payment</th><th>Paid ex-GST</th><th>GST</th><th>Paid</th><th>Grand Total</th><th>Outstanding</th></tr></thead><tbody><tr v-for="r in transactionRows" :key="r.branch+'|'+r.invoice"><td>{{ r.invoice }}</td><td>{{ dateText(r.invoice_date) }}</td><td>{{ r.branch }}</td><td>{{ r.customer||'—' }}</td><td>{{ r.booking_type||'—' }}</td><td>{{ r.referring_employee||'—' }}</td><td>{{ r.referring_employee_id||r.referring_practitioner_id||'—' }}</td><td>{{ money(r.referring_employee_share) }}</td><td>{{ r.incentive_employee||'—' }}</td><td>{{ r.incentive_employee_id||'—' }}</td><td>{{ money(r.incentive_employee_share) }}</td><td>{{ r.mode_of_payment||'—' }}</td><td>{{ money(r.paid_amount_without_gst) }}</td><td>{{ money(r.gst_amount) }}</td><td>{{ money(r.paid_amount) }}</td><td>{{ money(r.grand_total) }}</td><td>{{ money(r.outstanding_amount) }}</td></tr><tr v-if="!transactionRows.length"><td colspan="17" class="es-empty">No invoice rows.</td></tr></tbody></table></div><footer class="es-pager"><button :disabled="transactionPage<=1" @click="transactionPage=1">First</button><button :disabled="transactionPage<=1" @click="transactionPage--">Previous</button><span>Page {{ transactionPage }} of {{ pageCount }}</span><button :disabled="transactionPage>=pageCount" @click="transactionPage++">Next</button><button :disabled="transactionPage>=pageCount" @click="transactionPage=pageCount">Last</button></footer></section>
+
+
+    <section class="esr-pane" :class="{on:tab==='employee'}" data-pane="employee">
+      <div class="esr-card">
+        <div class="esr-card-hdr"><span>Employee Wise Summary</span><span class="esr-hsub">Click a row for invoice-level drill-down</span></div>
+        <EmployeeReportTable class="esr-tblbox" data-tbl="employee" :rows="view.emp" :columns="calc.columns.employee" :calc="calc" what="employees" sort-by="ex" clickable @open="openEmployee"/>
+      </div>
+    </section>
+
+
+    <section class="esr-pane" :class="{on:tab==='branch'}" data-pane="branch">
+      <EmployeeReportKpis id="esr-br-kpis" :items="branchKpis"/>
+      <div class="esr-card">
+        <div class="esr-card-hdr"><span>Branch Wise Summary</span><span class="esr-hsub">Click a row to see that branch's employees</span></div>
+        <EmployeeReportTable class="esr-tblbox" data-tbl="branch" :rows="view.br" :columns="calc.columns.branch" :calc="calc" what="branches" sort-by="ex" clickable @open="openBranch"/>
+      </div>
+      <div class="esr-card">
+        <div class="esr-card-hdr"><span>Branch × Main Category</span><span class="esr-badge esr-badge-alt">Treatment share · ex-GST</span></div>
+        <EmployeeReportTable class="esr-tblbox" data-tbl="matrix" :rows="matrix" :columns="matrixColumns" :calc="calc" :searchable="false" sort-by="total"/>
+      </div>
+    </section>
+
+
+    <section class="esr-pane" :class="{on:tab==='treatment'}" data-pane="treatment">
+      <EmployeeReportKpis id="esr-tr-kpis" :items="treatmentKpis"/>
+      <div class="esr-card">
+        <div class="esr-card-hdr">
+          <span>Main Category › Therapy Group › Therapy Type</span>
+          <span class="esr-hdr-actions">
+            <button type="button" class="esr-btn esr-btn-xs" id="esr-tr-expand" @click="tree?.expandAll(true)">Expand all</button>
+            <button type="button" class="esr-btn esr-btn-xs" id="esr-tr-collapse" @click="tree?.expandAll(false)">Collapse all</button>
+          </span>
+        </div>
+        <div class="esr-tree-note">Amounts are the collected ex-GST value split across the therapy lines of each plan. Invoice count = invoices whose plan contains that treatment.</div>
+        <div class="esr-tblwrap"><table class="esr-table esr-tree"><thead><tr>
+          <th>Treatment</th><th class="n">Invoices</th><th class="n">Clients</th><th class="n">Employees</th><th class="n">Treatment Share ex-GST</th><th class="n">Share %</th><th class="n">Full-Invoice ex-GST</th>
+        </tr></thead><TreatmentTree ref="tree" :nodes="view.tr.tree" :total="view.tr.total" :calc="calc"/></table></div>
+      </div>
+      <div class="esr-card esr-card-warn" id="esr-unmapped-card" v-show="view.tr.unmapped.length">
+        <div class="esr-card-hdr"><span>Unmapped Therapy Types</span><span class="esr-hsub">No Main Category / Therapy Group in the Therapy Type master — fix these to complete category reporting</span></div>
+        <EmployeeReportTable class="esr-tblbox" data-tbl="unmapped" :rows="view.tr.unmapped" :columns="calc.columns.unmapped" :calc="calc" what="therapy types" sort-by="invoices"/>
+      </div>
+    </section>
+
+
+    <section class="esr-pane" :class="{on:tab==='txn'}" data-pane="txn">
+      <div class="esr-card">
+        <div class="esr-card-hdr"><span>Transaction Detail</span><span class="esr-hsub">One row per invoice · click invoice no. to open in ERP</span></div>
+        <EmployeeReportTable class="esr-tblbox" data-tbl="txn" :rows="view.invs" :columns="calc.columns.txn" :calc="calc" what="invoices" sort-by="invoice_date" :limit="200"/>
+      </div>
+    </section>
+
   </main>
-</template>
+
+
+  <div class="esr-modal" id="esr-modal" :class="{open:modal}" :aria-hidden="!modal" role="dialog" aria-modal="true" :aria-label="drill?.title" @mousedown.self="modal=false">
+    <div class="esr-modal-box">
+      <div class="esr-modal-hdr">
+        <div><div class="esr-modal-title" id="esr-modal-title">{{drill?.title}}</div><div class="esr-modal-sub" id="esr-modal-sub">{{drill?.subtitle}}</div></div>
+        <button type="button" class="esr-modal-x" id="esr-modal-x" @click="modal=false">&times;</button>
+      </div>
+      <div class="esr-modal-body" id="esr-modal-body"><template v-if="drill"><EmployeeReportKpis v-if="drill.summary" :items="drillKpis"/><div class="esr-card"><EmployeeReportTable :key="drill.title+drill.kind" id="esr-drill-box" class="esr-tblbox" :rows="drill.rows" :columns="drill.columns" :calc="calc" :sort-by="drill.kind==='branch'?'ex':'invoice_date'" :clickable="drill.kind==='branch'" @open="openEmployee"/></div></template></div>
+    </div>
+  </div>
+
+</div></section></template>
+<style scoped src="../styles/employee-sale-master.css"></style>

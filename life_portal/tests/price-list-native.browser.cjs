@@ -16,12 +16,12 @@ const assert = require('node:assert/strict');
     calls.push({url:request.url,args});let result={};
     if(request.url.includes('portal.bootstrap'))result={user:'Administrator',session_id:'price-fixture-'+target.id,full_name:'Tester',roles:['System Manager'],csrf_token:'test'};
     if(request.url.includes('frappe.client.get_list')){
-      if(args.doctype==='Therapy Type')result=[{therapy_type:'Laser',healthcare_service_unit:'Hair - LSACPL',item_code:'T-1',rate:1000,minimum_price:800,maximum_price:1200},{therapy_type:'Facial',healthcare_service_unit:'Skin - LSACPL',item_code:'T-2',rate:500}];
+      if(args.doctype==='Therapy Type')result=[{therapy_type:'Laser',custom_show_in_billing:1,healthcare_service_unit:'Hair - LSACPL',item_code:'T-1',rate:1000,minimum_price:800,maximum_price:1200},{therapy_type:'Facial',custom_show_in_billing:1,healthcare_service_unit:'Skin - LSACPL',item_code:'T-2',rate:500}];
       else if(args.doctype==='Pricing Rule')result=[{name:'OFFER-1'}];
       else if(args.doctype==='Therapy Plan Template')result=[{name:'PKG-1',plan_name:'Hair Package',item_code:'P-1',total_sessions:4,total_amount:4000,offer_price:3500,custom_including_gst:3675,is_active:1},{name:'PKG-2',plan_name:'LIFErise Starter',item_code:'P-2',total_sessions:2,total_amount:2000,offer_price:1800,custom_including_gst:1890,is_active:1}];
     }
     if(request.url.includes('price_list_api.active_offers'))result={offers:[{name:'OFFER-1',item_code:'T-1',apply_on:'Item Code',price_or_product_discount:'Price',discount_percentage:10,priority:1}]};
-    if(request.url.includes('frappe.client.get')&&!request.url.includes('get_list'))result=args.doctype==='Pricing Rule'?{name:'OFFER-1',discount_percentage:10,items:[{item_code:'T-1'}]}:{name:'PKG-1',plan_name:'Hair Package',item_code:'P-1',is_active:1,total_sessions:4,total_amount:4000,offer_price:3500,custom_including_gst:3675,description:'<p><strong>Formatted package</strong></p><script>window.descriptionExecuted=true</script><img src=x onerror=window.descriptionExecuted=true>',therapy_types:[{therapy_type:'Laser',no_of_sessions:4,rate:1000,amount:4000}]};
+    if(request.url.includes('frappe.client.get')&&!request.url.includes('get_list'))result=args.doctype==='Pricing Rule'?{name:'OFFER-1',selling:1,disable:0,discount_percentage:10,items:[{item_code:'T-1'}]}:{name:'PKG-1',plan_name:'Hair Package',item_code:'P-1',is_active:1,total_sessions:4,total_amount:4000,offer_price:3500,custom_including_gst:3675,description:'<p><strong>Formatted package</strong></p><script>window.descriptionExecuted=true</script><img src=x onerror=window.descriptionExecuted=true>',therapy_types:[{therapy_type:'Laser',no_of_sessions:4,rate:1000,amount:4000}]};
     await send('Fetch.fulfillRequest',{requestId,responseCode:200,responseHeaders:[{name:'Content-Type',value:'application/json'}],body:Buffer.from(JSON.stringify({message:result})).toString('base64')}).catch(error=>{if(!closing)errors.push(error.message);});
   });
   const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(result.exceptionDetails)throw Error(result.exceptionDetails.exception?.description || result.exceptionDetails.text);return result.result.value;};
@@ -30,7 +30,7 @@ const assert = require('node:assert/strict');
     await send('Page.enable');await send('Runtime.enable');await send('Fetch.enable',{patterns:[{urlPattern:'*/api/method/*'}]});
     for(const width of [1440,390]){
       await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});
-      await send('Page.navigate',{url:base+'/life_portal/'+(width===1440?'pricelist':'native/pricelist')});
+      await send('Page.navigate',{url:base+'/life_portal/'+'native/pricelist'});
       await wait("document.querySelector('.price-list-native tbody')?.textContent.includes('Laser')");
       await wait("document.querySelector('.tt-pill-offer-yes')?.textContent.includes('900')");
       assert.equal(await evaluate("document.querySelector('.price-list-native tbody').textContent.includes('Facial')"),true);
@@ -50,6 +50,7 @@ const assert = require('node:assert/strict');
       assert.equal(await evaluate("document.documentElement.scrollWidth<=innerWidth"),true);
     }
     assert.equal(calls.some(call=>call.args.doctype==='Pricing Rule'),true);
+    assert(calls.some(call=>call.args.doctype==='Therapy Type' && call.args.filters.some(filter=>filter[0]==='custom_show_in_billing' && filter[2]===1)));
     assert.deepEqual(errors,[]);
     console.log('Price-List browser checks passed on desktop and mobile.');
   }catch(error){console.error({errors,calls:calls.slice(-8),body:await evaluate('document.body?.innerText').catch(()=>null)});throw error;}finally{closing=true;await send('Page.close');ws.close();}

@@ -1,0 +1,1876 @@
+/* ==========================================================================
+   LIFE · CLIENT - 360 · v8.0 — paste into Web Page › Style › CSS
+   Replaces all previous CSS layers (V1…V22). Scoped to #c360App.
+   ========================================================================== */
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+
+/* ---------- page shell ---------- */
+
+#c360App {
+  --g950: #0B2E1C; --g900: #0E3B24; --g800: #134B2E; --g700: #17603A; --g600: #1F7A49; --g500: #2E9460;
+  --teal: #0F766E; --mint: #EEF6F0; --mint2: #E1EEE5; --paper: #FFFFFF; --canvas: #F3F6F3;
+  --ink: #1C2821; --ink2: #44544A; --mute: #76847B; --line: #DCE6DE; --line2: #EBF1EC;
+  --ok: #15803D;  --ok-bg: #E6F4EA;  --ok-line: #B9DEC5;
+  --warn: #B45309; --warn-bg: #FDF1E0; --warn-line: #F2D2A8;
+  --neg: #B42318; --neg-bg: #FDEBE9; --neg-line: #F2C1BB;
+  --info: #1D4ED8; --info-bg: #E9EFFD; --info-line: #C5D4F7;
+  --purple: #6D28D9; --purple-bg: #F1EAFD; --purple-line: #D7C6F5;
+  --amber: #A16207; --amber-bg: #FDF6DB; --amber-line: #EEDC9C;
+  --slate: #475569; --slate-bg: #EFF2F5; --slate-line: #D3DAE2;
+  --r-lg: 18px; --r: 12px; --r-sm: 8px; --r-xs: 6px;
+  --shadow: 0 1px 2px rgba(14,59,36,.05), 0 6px 18px rgba(14,59,36,.05);
+  --shadow-lg: 0 30px 80px rgba(6,40,22,.28);
+  box-sizing: border-box;
+  width: calc(100vw - 28px); max-width: 1780px; margin: 14px auto 40px;
+  font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+  font-size: 14px; line-height: 1.45; color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+#c360App *, #c360App *::before, #c360App *::after { box-sizing: border-box; }
+#c360App button, #c360App input, #c360App select, #c360App textarea { font: inherit; color: inherit; }
+#c360App h1, #c360App h2, #c360App h3, #c360App h4, #c360App h5, #c360App p { margin: 0; }
+#c360App a { color: var(--g700); }
+#c360App [hidden] { display: none !important; }
+#c360App :focus-visible { outline: 2px solid var(--g500); outline-offset: 2px; }
+#c360App .t-r { text-align: right; } #c360App .t-c { text-align: center; }
+
+/* semantic text colours (zero specificity; containers override) */
+#c360App :where(.tone-ok) { color: var(--ok); }
+#c360App :where(.tone-warn) { color: var(--warn); }
+#c360App :where(.tone-neg) { color: var(--neg); }
+#c360App :where(.tone-info) { color: var(--info); }
+#c360App :where(.tone-mute) { color: var(--mute); }
+#c360App :where(.tone-purple) { color: var(--purple); }
+#c360App :where(.tone-amber) { color: var(--amber); }
+#c360App :where(.tone-blue) { color: var(--info); }
+
+/* ---------- buttons ---------- */
+#c360App .c3-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 38px; padding: 0 14px; border: 1px solid var(--line); border-radius: var(--r-sm);
+  background: var(--paper); color: var(--ink2); font-size: 13px; font-weight: 700; white-space: nowrap;
+  cursor: pointer; text-decoration: none; transition: background .15s, border-color .15s, box-shadow .15s;
+}
+#c360App .c3-btn:hover { border-color: #B8CFBF; background: var(--mint); color: var(--g800); text-decoration: none; }
+#c360App .c3-btn:disabled { opacity: .45; cursor: not-allowed; }
+#c360App .c3-btn-sm { min-height: 32px; padding: 0 10px; font-size: 12px; }
+#c360App .c3-btn-primary { background: var(--g700); border-color: var(--g700); color: #fff; }
+#c360App .c3-btn-primary:hover { background: var(--g800); border-color: var(--g800); color: #fff; }
+#c360App .c3-btn-danger { color: var(--neg); border-color: var(--neg-line); background: #FFF8F7; }
+#c360App .c3-btn-danger.is-on { background: var(--neg); border-color: var(--neg); color: #fff; }
+#c360App .c3-btn-light { background: #fff; border-color: rgba(255,255,255,.6); color: var(--g800); }
+#c360App .c3-btn-ghost { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.35); color: #fff; }
+#c360App .c3-btn-ghost:hover { background: rgba(255,255,255,.2); color: #fff; }
+#c360App .c3-btn-wa { background: #128C4B; border-color: #128C4B; color: #fff; }
+#c360App .c3-btn-wa:hover { background: #0E7340; color: #fff; }
+#c360App .c3-close {
+  width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(255,255,255,.35);
+  background: rgba(255,255,255,.12); color: #fff; font-size: 15px; cursor: pointer; flex: none;
+}
+#c360App .c3-drawer .c3-close { border-color: var(--line); background: var(--mint); color: var(--ink2); }
+
+/* ---------- masthead ---------- */
+#c360App .c3-mast {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  padding: 18px 24px; border-radius: var(--r-lg) var(--r-lg) 0 0;
+  background: var(--g900); color: #fff;
+  background-image: radial-gradient(circle at 92% -40%, rgba(46,148,96,.45), transparent 55%);
+}
+#c360App .c3-mast-brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+#c360App .c3-brand {
+  display: inline-flex; align-items: center; padding: 6px 10px; border-radius: 9px;
+  background: #D9F2E1; color: var(--g800); font-weight: 800; font-size: 13px; letter-spacing: 1.5px;
+}
+#c360App .c3-mast h1 { font-size: 26px; font-weight: 800; letter-spacing: .5px; line-height: 1.1; }
+#c360App .c3-mast p { margin-top: 3px; color: #B9D8C4; font-size: 13px; }
+#c360App .c3-mast-actions { display: flex; align-items: center; gap: 10px; }
+#c360App .c3-count-pill { padding: 8px 14px; border-radius: 999px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); font-size: 13px; }
+#c360App .c3-count-pill b { font-size: 16px; }
+
+/* ---------- filters ---------- */
+#c360App .c3-filters-panel {
+  position: sticky; top: 0; z-index: 40;
+  display: grid; gap: 10px; padding: 14px 24px 12px;
+  background: rgba(255,255,255,.97); backdrop-filter: blur(8px);
+  border: 1px solid var(--line); border-top: 0; border-radius: 0 0 var(--r-lg) var(--r-lg);
+  box-shadow: var(--shadow);
+}
+#c360App .c3-frow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+#c360App .c3-search, #c360App .c3-sel {
+  position: relative; display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 10px;
+  border: 1px solid var(--line); border-radius: var(--r-sm); background: #FBFCFB;
+}
+#c360App .c3-search { flex: 1 1 320px; min-width: 240px; }
+#c360App .c3-sel { flex: 0 1 200px; }
+#c360App .c3-search:focus-within, #c360App .c3-sel:focus-within { border-color: var(--g500); background: #fff; box-shadow: 0 0 0 3px rgba(46,148,96,.12); }
+#c360App .c3-search input, #c360App .c3-sel select {
+  flex: 1; min-width: 0; height: 38px; border: 0 !important; outline: 0; background: transparent !important; box-shadow: none !important; padding: 0; font-size: 14px;
+}
+#c360App .c3-x { border: 0; background: var(--mint); width: 26px; height: 26px; border-radius: 50%; cursor: pointer; color: var(--mute); }
+#c360App .c3-flabel { font-size: 13px; font-weight: 700; color: var(--ink2); }
+#c360App .c3-date, #c360App .c3-input {
+  min-height: 38px; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--r-sm); background: #fff; font-size: 13px; outline: 0; box-shadow: none;
+}
+#c360App .c3-input:focus, #c360App .c3-date:focus { border-color: var(--g500); box-shadow: 0 0 0 3px rgba(46,148,96,.12); }
+#c360App .c3-arrow { color: var(--mute); }
+#c360App .c3-quick { display: flex; gap: 4px; flex-wrap: wrap; padding: 3px; background: var(--mint); border-radius: 10px; }
+#c360App .c3-q { border: 0; background: transparent; padding: 7px 12px; border-radius: 7px; font-size: 13px; font-weight: 600; color: var(--ink2); cursor: pointer; }
+#c360App .c3-q:hover { background: #fff; }
+#c360App .c3-q.is-on { background: var(--g700); color: #fff; box-shadow: 0 2px 6px rgba(23,96,58,.25); }
+#c360App .c3-statusbar { font-size: 13px; color: var(--mute); }
+#c360App .c3-statusbar b { color: var(--g700); }
+
+/* lookup */
+#c360App .c3-lookup {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 60; width: min(720px, calc(100vw - 40px));
+  max-height: 440px; overflow: auto; padding: 8px; background: #fff;
+  border: 1px solid var(--line); border-radius: var(--r); box-shadow: 0 20px 50px rgba(14,59,36,.2);
+}
+#c360App .c3-look-h { padding: 4px 8px 8px; font-size: 12px; font-weight: 700; color: var(--mute); }
+#c360App .c3-look-state { padding: 18px; text-align: center; color: var(--mute); font-size: 13px; }
+#c360App .c3-look-item { display: grid; grid-template-columns: 30px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 10px; border-radius: var(--r-sm); }
+#c360App .c3-look-item + .c3-look-item { border-top: 1px solid var(--line2); }
+#c360App .c3-look-item:hover { background: var(--mint); }
+#c360App .c3-look-main b { display: block; font-size: 14px; color: var(--g900); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#c360App .c3-look-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 3px; }
+#c360App .c3-look-act { display: flex; gap: 6px; }
+
+/* ---------- phone masking ---------- */
+#c360App .c3-phone {
+  position: relative; display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px;
+  border-radius: 999px; background: var(--mint); border: 1px solid var(--line2);
+  font-size: 12px; font-weight: 600; color: var(--ink2); cursor: default; white-space: nowrap;
+}
+#c360App .c3-phone em { font-style: normal; color: var(--mute); font-weight: 500; }
+#c360App .c3-phone-f { display: none; }
+#c360App .c3-phone:hover .c3-phone-m, #c360App .c3-phone:focus .c3-phone-m { display: none; }
+#c360App .c3-phone:hover .c3-phone-f, #c360App .c3-phone:focus .c3-phone-f { display: inline; color: var(--g800); }
+#c360App .c3-phone:hover, #c360App .c3-phone:focus { background: #fff; border-color: var(--ok-line); }
+#c360App .c3-hero .c3-phone { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.25); color: #E6F3EA; }
+#c360App .c3-hero .c3-phone:hover .c3-phone-f, #c360App .c3-hero .c3-phone:focus .c3-phone-f { color: var(--g900); }
+
+/* ---------- pills & chips ---------- */
+#c360App .c3-pill {
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 999px;
+  font-size: 12px; font-weight: 700; line-height: 1.35; white-space: nowrap;
+  background: var(--slate-bg); color: var(--slate); border: 1px solid var(--slate-line);
+}
+#c360App .c3-pill.tone-ok { background: var(--ok-bg); color: var(--ok); border-color: var(--ok-line); }
+#c360App .c3-pill.tone-warn { background: var(--warn-bg); color: var(--warn); border-color: var(--warn-line); }
+#c360App .c3-pill.tone-neg { background: var(--neg-bg); color: var(--neg); border-color: var(--neg-line); }
+#c360App .c3-pill.tone-info, #c360App .c3-pill.tone-blue { background: var(--info-bg); color: var(--info); border-color: var(--info-line); }
+#c360App .c3-pill.tone-purple { background: var(--purple-bg); color: var(--purple); border-color: var(--purple-line); }
+#c360App .c3-pill.tone-amber { background: var(--amber-bg); color: var(--amber); border-color: var(--amber-line); }
+#c360App .c3-pill.tone-mute { background: var(--slate-bg); color: var(--slate); border-color: var(--slate-line); }
+#c360App .c3-chip {
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: var(--r-xs);
+  background: var(--mint); border: 1px solid var(--line2); font-size: 12px; font-weight: 600; color: var(--ink2); white-space: nowrap;
+}
+#c360App .c3-chip.tone-warn { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn); }
+#c360App .c3-chip.tone-neg { background: var(--neg-bg); border-color: var(--neg-line); color: var(--neg); }
+#c360App .c3-chip-btn { cursor: pointer; }
+#c360App .c3-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+#c360App .c3-g { font-size: 18px; line-height: 1; }
+#c360App .c3-mini { font-size: 12px; font-weight: 600; color: var(--ink2); margin-top: 4px; }
+#c360App .c3-note { font-size: 12px; color: var(--mute); }
+#c360App .c3-blink { animation: c3pulse 2.2s ease-in-out infinite; }
+@keyframes c3pulse { 50% { box-shadow: 0 0 0 5px rgba(180,35,24,.18); } }
+
+/* ---------- KPI strip ---------- */
+#c360App .c3-kpi-strip { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 12px; margin: 14px 0; }
+#c360App .c3-kpi-card {
+  display: grid; gap: 4px; padding: 14px 16px; background: var(--paper); border: 1px solid var(--line);
+  border-radius: var(--r); box-shadow: var(--shadow); color: var(--ink); min-width: 0;
+}
+#c360App .c3-kpi-card small { font-size: 12px; font-weight: 700; color: var(--mute); }
+#c360App .c3-kpi-v { font-size: 26px; font-weight: 800; letter-spacing: -.5px; line-height: 1.15; color: var(--g900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#c360App .c3-kpi-v.tone-ok { color: var(--ok); } #c360App .c3-kpi-v.tone-warn { color: var(--warn); }
+#c360App .c3-kpi-v.tone-neg { color: var(--neg); } #c360App .c3-kpi-v.tone-info { color: var(--info); }
+#c360App .c3-kpi-hint { font-size: 12px; color: var(--mute); }
+#c360App .c3-kpi-hint.tone-neg { color: var(--neg); font-weight: 600; } #c360App .c3-kpi-hint.tone-ok { color: var(--ok); }
+#c360App .c3-kpi-out { border-color: var(--neg-line); background: linear-gradient(180deg, #FFF9F8, #fff 60%); }
+
+/* ---------- table ---------- */
+#c360App .c3-table-card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); overflow: hidden; }
+#c360App .c3-table-scroll { overflow-x: auto; }
+#c360App .c3-table { width: 100%; min-width: 1200px; border-collapse: collapse; }
+#c360App .c3-table th {
+  position: sticky; top: 0; padding: 11px 12px; background: #F4F8F5; border-bottom: 1px solid var(--line);
+  font-size: 12px; font-weight: 700; color: var(--ink2); text-align: left; white-space: nowrap;
+}
+#c360App .c3-table td { padding: 11px 12px; border-bottom: 1px solid var(--line2); font-size: 13px; vertical-align: middle; white-space: nowrap; }
+#c360App .c3-row { cursor: pointer; transition: background .12s; }
+#c360App .c3-row:hover td { background: #F5FAF6; }
+#c360App .c3-row.is-overdue td:first-child { box-shadow: inset 3px 0 0 var(--neg); }
+#c360App .c3-row.is-due td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
+#c360App .c3-num-cell { color: var(--mute); width: 40px; }
+#c360App .c3-client-cell { display: flex; align-items: center; gap: 10px; }
+#c360App .c3-client-name { display: block; padding: 0; border: 0; background: none; font-size: 14px; font-weight: 700; color: var(--g800); cursor: pointer; margin-bottom: 3px; text-align: left; }
+#c360App .c3-client-name:hover { text-decoration: underline; }
+#c360App .c3-count { display: inline-flex; min-width: 32px; justify-content: center; padding: 3px 8px; border-radius: 999px; background: var(--mint); font-weight: 700; color: var(--g700); }
+#c360App .c3-money { font-weight: 700; }
+#c360App .c3-sticky { position: sticky; right: 0; background: var(--paper); box-shadow: -6px 0 10px -8px rgba(14,59,36,.2); }
+#c360App thead .c3-sticky { background: #F4F8F5; }
+#c360App .c3-row:hover .c3-sticky { background: #F5FAF6; }
+#c360App .c3-inv-btn { display: inline-flex; gap: 6px; align-items: center; padding: 5px 11px; border-radius: var(--r-sm); border: 1px solid var(--info-line); background: var(--info-bg); color: var(--info); cursor: pointer; font-size: 13px; }
+#c360App .c3-inv-btn.has-due { border-color: var(--neg-line); background: var(--neg-bg); color: var(--neg); }
+#c360App .c3-state { padding: 60px 20px !important; text-align: center; color: var(--mute); white-space: normal !important; }
+#c360App .c3-state p { margin-top: 10px; font-size: 14px; color: var(--ink2); font-weight: 600; }
+#c360App .c3-state small { color: var(--mute); }
+#c360App .c3-state-ic { font-size: 34px; }
+#c360App .c3-pager { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border-top: 1px solid var(--line2); font-size: 13px; color: var(--mute); }
+#c360App .c3-pager-btns, #c360App .c3-pagenums { display: flex; align-items: center; gap: 4px; }
+#c360App .c3-pg { min-width: 32px; height: 32px; border-radius: var(--r-sm); border: 1px solid var(--line); background: #fff; cursor: pointer; font-size: 13px; }
+#c360App .c3-pg.is-on { background: var(--g700); border-color: var(--g700); color: #fff; }
+#c360App .c3-dots { color: var(--mute); padding: 0 3px; }
+#c360App .c3-hint-line { margin: 10px 4px 18px; font-size: 12px; color: var(--mute); }
+
+/* LIFE loader */
+#c360App .c3-loader { display: inline-grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: conic-gradient(var(--g500) 0 25%, var(--mint2) 25% 100%); animation: c3spin 1s linear infinite; }
+#c360App .c3-loader span { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: #fff; font-size: 10px; font-weight: 800; letter-spacing: 1px; color: var(--g700); animation: c3spin 1s linear infinite reverse; }
+#c360App .c3-spin { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--mint2); border-top-color: var(--g600); border-radius: 50%; animation: c3spin .7s linear infinite; vertical-align: -2px; }
+@keyframes c3spin { to { transform: rotate(360deg); } }
+
+/* ---------- network dashboard ---------- */
+#c360App .c3-dash { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); }
+#c360App .c3-dash-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line2); }
+#c360App .c3-dash-toggle { display: flex; align-items: center; gap: 10px; border: 0; background: none; font-size: 16px; font-weight: 800; color: var(--g900); cursor: pointer; }
+#c360App .c3-dash-tools { display: flex; align-items: center; gap: 10px; }
+#c360App .c3-chev { display: inline-block; transition: transform .2s; }
+#c360App .c3-dash.is-collapsed .c3-dash-b { display: none; }
+#c360App .c3-dash.is-collapsed .c3-chev { transform: rotate(180deg); }
+#c360App .c3-dash-b { padding: 14px; }
+#c360App .c3-dgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+#c360App .c3-dcard {
+  display: flex; align-items: center; gap: 12px; padding: 12px; text-align: left; border: 1px solid var(--line2);
+  border-left: 4px solid var(--g500); border-radius: var(--r-sm); background: #FBFCFB; color: var(--ink); cursor: default;
+}
+#c360App button.c3-dcard { cursor: pointer; }
+#c360App button.c3-dcard:hover { background: var(--mint); }
+#c360App .c3-dcard.tone-ok { border-left-color: var(--ok); } #c360App .c3-dcard.tone-warn { border-left-color: var(--warn); }
+#c360App .c3-dcard.tone-neg { border-left-color: var(--neg); } #c360App .c3-dcard.tone-info { border-left-color: var(--info); }
+#c360App .c3-dc-ic { font-size: 22px; }
+#c360App .c3-dcard b { display: block; font-size: 22px; font-weight: 800; color: var(--g900); line-height: 1.1; }
+#c360App .c3-dcard b.c3-sm { font-size: 15px; }
+#c360App .c3-dcard small { display: block; font-size: 13px; font-weight: 700; color: var(--ink2); }
+#c360App .c3-dcard em { display: block; font-style: normal; font-size: 12px; color: var(--mute); }
+#c360App .c3-dlists { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; margin-top: 12px; }
+#c360App .c3-dlist { padding: 12px; border: 1px solid var(--line2); border-radius: var(--r-sm); }
+#c360App .c3-dlist h4 { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+#c360App .c3-bars { display: grid; gap: 7px; }
+#c360App .c3-bar { display: grid; grid-template-columns: minmax(90px, 36%) 1fr auto; gap: 8px; align-items: center; font-size: 13px; }
+#c360App .c3-bar-l { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink2); }
+#c360App .c3-bar-t { height: 8px; border-radius: 999px; background: var(--mint2); overflow: hidden; }
+#c360App .c3-bar-t i { display: block; height: 100%; border-radius: inherit; background: var(--g500); }
+#c360App .c3-bar b { font-size: 12px; color: var(--g800); }
+#c360App .c3-empty-sm { padding: 14px; border: 1px dashed var(--line); border-radius: var(--r-sm); text-align: center; color: var(--mute); font-size: 13px; background: #FBFCFB; }
+
+/* ---------- drawer ---------- */
+#c360App .c3-overlay { position: fixed; inset: 0; z-index: 900; background: rgba(8,32,19,.45); backdrop-filter: blur(2px); opacity: 0; visibility: hidden; transition: opacity .2s; }
+#c360App .c3-overlay.is-open { opacity: 1; visibility: visible; }
+#c360App .c3-drawer { position: fixed; top: 0; right: 0; z-index: 901; width: min(560px, 100vw); height: 100vh; display: flex; flex-direction: column; background: var(--canvas); box-shadow: -20px 0 60px rgba(6,40,22,.2); transform: translateX(105%); transition: transform .25s ease; }
+#c360App .c3-drawer.is-open { transform: none; }
+#c360App .c3-drawer-h { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; padding: 16px 18px; background: #fff; border-bottom: 1px solid var(--line); }
+#c360App .c3-drawer-name { font-size: 18px; font-weight: 800; color: var(--g900); }
+#c360App .c3-drawer-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+#c360App .c3-drawer-tools { display: flex; gap: 8px; align-items: center; }
+#c360App .c3-drawer-tools .c3-btn-light { border-color: var(--line); }
+#c360App .c3-drawer-sum { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px 18px; }
+#c360App .c3-drawer-sum > div { padding: 10px; background: #fff; border: 1px solid var(--line); border-radius: var(--r-sm); }
+#c360App .c3-drawer-sum small { display: block; font-size: 12px; color: var(--mute); }
+#c360App .c3-drawer-sum b { font-size: 16px; font-weight: 800; color: var(--ink); }
+#c360App .c3-drawer-sum b.tone-ok { color: var(--ok); } #c360App .c3-drawer-sum b.tone-neg { color: var(--neg); }
+#c360App .c3-drawer-f { display: flex; gap: 6px; padding: 0 18px 10px; flex-wrap: wrap; }
+#c360App .c3-drawer-list { flex: 1; overflow-y: auto; padding: 0 18px 20px; display: grid; gap: 8px; align-content: start; }
+
+/* invoice card */
+#c360App .c3-inv { display: block; width: 100%; text-align: left; padding: 12px 14px; background: #fff; border: 1px solid var(--line); border-left: 4px solid var(--ok); border-radius: var(--r-sm); cursor: pointer; color: var(--ink); }
+#c360App .c3-inv:hover { box-shadow: var(--shadow); border-color: #BFD4C5; }
+#c360App .c3-inv.tone-warn { border-left-color: var(--warn); } #c360App .c3-inv.tone-neg { border-left-color: var(--neg); background: #FFFBFA; }
+#c360App .c3-inv-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+#c360App .c3-inv-top b { font-size: 14px; color: var(--info); }
+#c360App .c3-inv-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 6px 12px; }
+#c360App .c3-inv-grid small { display: block; font-size: 11px; color: var(--mute); }
+#c360App .c3-inv-grid span { font-size: 13px; font-weight: 700; }
+#c360App .c3-inv-grid-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; }
+
+/* filter buttons */
+#c360App .c3-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 12px; }
+#c360App .c3-fbtn { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: #fff; font-size: 13px; font-weight: 600; color: var(--ink2); cursor: pointer; }
+#c360App .c3-fbtn:hover { border-color: #B8CFBF; }
+#c360App .c3-fbtn.is-on { background: var(--g800); border-color: var(--g800); color: #fff; }
+#c360App .c3-select-l { display: inline-flex; align-items: center; gap: 6px; padding: 0 8px; border: 1px solid var(--line); border-radius: var(--r-sm); background: #fff; }
+#c360App .c3-select-l select { border: 0; height: 34px; background: transparent; outline: 0; font-size: 13px; }
+
+/* ==========================================================================
+   CLIENT - 360 MODAL
+   ========================================================================== */
+#c360App .c3-modal-overlay { z-index: 950; }
+#c360App .c3-modal {
+  position: fixed; top: 50%; left: 50%; z-index: 951;
+  width: min(1680px, 97vw); height: min(95vh, 1000px);
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--canvas); border-radius: 20px; box-shadow: var(--shadow-lg);
+  opacity: 0; visibility: hidden; transform: translate(-50%, -48%) scale(.985); transition: opacity .18s, transform .18s;
+}
+#c360App .c3-modal.is-open { opacity: 1; visibility: visible; transform: translate(-50%, -50%); }
+
+/* hero */
+#c360App .c3-hero { flex: none; background: var(--g900); color: #fff; background-image: radial-gradient(circle at 100% 0, rgba(46,148,96,.4), transparent 45%), radial-gradient(circle at 0 120%, rgba(15,118,110,.35), transparent 40%); }
+#c360App .c3-hero-main { position: relative; display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 20px; align-items: center; padding: 18px 22px 14px; }
+#c360App .c3-avatar {
+  --score: 0; --ring: #6EE7A0; position: relative; width: 104px; height: 104px; border-radius: 50%; padding: 5px;
+  background: conic-gradient(var(--ring) calc(var(--score) * 1%), rgba(255,255,255,.14) 0);
+}
+#c360App .c3-avatar.tone-warn { --ring: #FBBF5B; } #c360App .c3-avatar.tone-neg { --ring: #F87171; }
+#c360App .c3-avatar-in { position: relative; width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--g900); overflow: hidden; display: grid; place-items: center; background: linear-gradient(145deg, #2E9460, #0F766E); }
+#c360App .c3-avatar-in span { font-size: 30px; font-weight: 800; letter-spacing: 1px; color: #fff; }
+#c360App .c3-avatar-in img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+#c360App .c3-avatar-score { position: absolute; bottom: -4px; right: -4px; min-width: 34px; height: 34px; padding: 0 6px; display: grid; place-items: center; border-radius: 999px; background: #fff; color: var(--g900); font-size: 13px; font-weight: 800; border: 3px solid var(--g900); }
+#c360App .c3-hero-id { min-width: 0; }
+#c360App .c3-brandline { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: 1px; color: #A7D3B6; margin-bottom: 4px; }
+#c360App .c3-brandline .c3-brand { padding: 3px 7px; font-size: 11px; }
+#c360App .c3-hero h2 { font-size: 28px; font-weight: 800; letter-spacing: -.4px; line-height: 1.15; color: #fff; overflow: hidden; text-overflow: ellipsis; }
+#c360App .c3-hero-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+#c360App .c3-hero-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+#c360App .c3-hero .c3-chip { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.2); color: #E6F3EA; }
+#c360App .c3-hero .c3-chip.tone-warn { background: rgba(251,191,91,.18); border-color: rgba(251,191,91,.5); color: #FDE7BC; }
+#c360App .c3-more-phones { position: relative; cursor: pointer; }
+#c360App .c3-pop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 5; display: none; flex-direction: column; gap: 6px; padding: 10px; background: #fff; border-radius: var(--r-sm); box-shadow: 0 12px 30px rgba(0,0,0,.2); }
+#c360App .c3-more-phones:hover .c3-pop, #c360App .c3-more-phones:focus-within .c3-pop, #c360App .c3-more-phones:focus .c3-pop { display: flex; }
+#c360App .c3-pop .c3-phone { background: var(--mint); border-color: var(--line2); color: var(--ink2); }
+#c360App .c3-hero-actions { display: flex; align-items: center; gap: 8px; align-self: start; flex-wrap: wrap; justify-content: flex-end; }
+#c360App .c3-hero-kpis { display: grid; grid-template-columns: 1.4fr repeat(5, minmax(0,1fr)); border-top: 1px solid rgba(255,255,255,.12); }
+#c360App .c3-hk { display: grid; align-content: start; gap: 2px; padding: 12px 18px; border-right: 1px solid rgba(255,255,255,.1); min-width: 0; color: #fff; }
+#c360App .c3-hk:last-child { border-right: 0; }
+#c360App .c3-hk small { font-size: 12px; font-weight: 600; color: #A7D3B6; }
+#c360App .c3-hk b { font-size: 22px; font-weight: 800; letter-spacing: -.3px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#c360App .c3-hk b.tone-ok { color: #86EFAC; }
+#c360App .c3-hk .c3-hk-sm { font-size: 18px; }
+#c360App .c3-hk em { font-style: normal; font-size: 12px; color: #CFE6D7; }
+#c360App .c3-hk em.tone-neg { color: #FCA5A5; } #c360App .c3-hk em.tone-warn { color: #FCD34D; }
+#c360App .c3-hk-due b { font-size: 34px; line-height: 1.05; }
+#c360App .c3-hk-due.tone-neg { background: rgba(248,113,113,.16); box-shadow: inset 4px 0 0 #F87171; }
+#c360App .c3-hk-due.tone-neg b { color: #FECACA; }
+#c360App .c3-hk-due.tone-warn { background: rgba(251,191,91,.12); box-shadow: inset 4px 0 0 #FBBF5B; }
+#c360App .c3-hk-due.tone-warn b { color: #FDE68A; }
+#c360App .c3-hk-due.tone-ok b { color: #86EFAC; }
+#c360App .c3-meter { display: block; height: 7px; margin: 5px 0 2px; border-radius: 999px; background: var(--mint2); overflow: hidden; }
+#c360App .c3-hero .c3-meter { background: rgba(255,255,255,.15); }
+#c360App .c3-meter i { display: block; height: 100%; border-radius: inherit; background: var(--ok); }
+#c360App .c3-meter i.tone-warn { background: #E8A33D; } #c360App .c3-meter i.tone-neg { background: #E5534B; }
+#c360App .c3-meter i.tone-info { background: #4F7FE8; } #c360App .c3-meter i.tone-mute { background: #A3B0A8; }
+
+/* tabs */
+#c360App .c3-tabs { flex: none; display: flex; gap: 2px; padding: 0 14px; overflow-x: auto; background: #fff; border-bottom: 1px solid var(--line); scrollbar-width: thin; }
+#c360App .c3-tab { position: relative; flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 13px 12px; border: 0; background: none; font-size: 14px; font-weight: 600; color: var(--ink2); cursor: pointer; white-space: nowrap; }
+#c360App .c3-tab:hover { color: var(--g800); }
+#c360App .c3-tab.is-on { color: var(--g800); font-weight: 800; }
+#c360App .c3-tab.is-on::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--g600); }
+#c360App .c3-tab-n { min-width: 22px; height: 20px; padding: 0 6px; display: inline-grid; place-items: center; border-radius: 999px; background: var(--mint2); color: var(--g800); font-size: 11px; font-weight: 800; }
+#c360App .c3-tab-n.tone-neg { background: var(--neg); color: #fff; }
+#c360App .c3-tab-n.tone-warn { background: #E8A33D; color: #fff; }
+#c360App .c3-tab-n.tone-ok { background: var(--ok); color: #fff; }
+
+/* body */
+#c360App .c3-mbody { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 20px 28px; }
+#c360App .c3-tabbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; padding: 8px 8px 8px 14px; background: #fff; border: 1px solid var(--line); border-radius: var(--r-sm); font-size: 13px; font-weight: 600; color: var(--ink2); }
+#c360App .c3-center { min-height: 360px; display: grid; place-items: center; align-content: center; gap: 10px; text-align: center; color: var(--mute); }
+#c360App .c3-center p { font-size: 14px; }
+#c360App .c3-empty { padding: 30px; background: #fff; border: 1px dashed var(--line); border-radius: var(--r); }
+#c360App .c3-empty h3 { font-size: 18px; font-weight: 800; color: var(--g900); }
+#c360App .c3-empty p { max-width: 460px; }
+#c360App .c3-h4 { margin: 18px 0 10px; font-size: 15px; font-weight: 800; color: var(--g900); }
+
+/* sections */
+#c360App .c3-secs { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; align-items: start; }
+#c360App .c3-sec { background: #fff; border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); min-width: 0; transition: box-shadow .3s; }
+#c360App .c3-sec.is-wide { grid-column: 1 / -1; }
+#c360App .c3-sec.is-moved { box-shadow: 0 0 0 3px rgba(46,148,96,.35); }
+#c360App .c3-sec-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px 6px 6px; border-bottom: 1px solid var(--line2); }
+#c360App .c3-sec.is-collapsed .c3-sec-h { border-bottom: 0; }
+#c360App .c3-sec-title { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 6px 8px; border: 0; background: none; font-size: 16px; font-weight: 800; color: var(--g900); cursor: pointer; text-align: left; }
+#c360App .c3-sec-ic { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--mint); font-size: 17px; flex: none; }
+#c360App .c3-sec-badge { padding: 2px 9px; border-radius: 999px; background: var(--slate-bg); color: var(--slate); font-size: 12px; font-weight: 800; white-space: nowrap; }
+#c360App .c3-sec-badge.tone-ok { background: var(--ok-bg); color: var(--ok); } #c360App .c3-sec-badge.tone-warn { background: var(--warn-bg); color: var(--warn); }
+#c360App .c3-sec-badge.tone-neg { background: var(--neg); color: #fff; } #c360App .c3-sec-badge.tone-info { background: var(--info-bg); color: var(--info); }
+#c360App .c3-sec-tools { display: flex; gap: 2px; opacity: .55; transition: opacity .15s; }
+#c360App .c3-sec:hover .c3-sec-tools, #c360App .c3-sec-tools:focus-within { opacity: 1; }
+#c360App .c3-sec-tools button { width: 30px; height: 30px; border: 1px solid transparent; border-radius: 7px; background: none; cursor: pointer; color: var(--ink2); font-size: 14px; }
+#c360App .c3-sec-tools button:hover { background: var(--mint); border-color: var(--line2); }
+#c360App .c3-sec.is-collapsed .c3-sec-b { display: none; }
+#c360App .c3-sec.is-collapsed .c3-chev { transform: rotate(180deg); }
+#c360App .c3-sec-b { padding: 14px; }
+
+/* grids and key values */
+#c360App .c3-grid { display: grid; gap: 8px; }
+#c360App .c3-g2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+#c360App .c3-g3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+#c360App .c3-g4 { grid-template-columns: repeat(4, minmax(0,1fr)); }
+#c360App .c3-g5 { grid-template-columns: 1.5fr repeat(4, minmax(0,1fr)); }
+#c360App .c3-kv { min-width: 0; padding: 9px 11px; background: #F8FAF8; border: 1px solid var(--line2); border-radius: var(--r-sm); color: var(--ink); }
+#c360App .c3-kv small { display: block; font-size: 12px; font-weight: 600; color: var(--mute); margin-bottom: 2px; }
+#c360App .c3-kv b { display: block; font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
+#c360App .c3-kv.is-neg { background: var(--neg-bg); border-color: var(--neg-line); }
+#c360App .c3-kv.is-neg b { color: var(--neg); }
+
+/* alerts */
+#c360App .c3-alerts { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 8px; }
+#c360App .c3-alert { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: var(--r-sm); border: 1px solid var(--line2); background: #F8FAF8; color: var(--ink); }
+#c360App .c3-alert > span { font-size: 18px; line-height: 1.2; }
+#c360App .c3-alert p { font-size: 14px; font-weight: 600; }
+#c360App .c3-alert.tone-neg { background: var(--neg-bg); border-color: var(--neg-line); color: #7A1B12; }
+#c360App .c3-alert.tone-warn { background: var(--warn-bg); border-color: var(--warn-line); color: #7A3E06; }
+#c360App .c3-alert.tone-ok { background: var(--ok-bg); border-color: var(--ok-line); color: #155E30; }
+#c360App .c3-alert.tone-info { background: var(--info-bg); border-color: var(--info-line); color: #1E3A8A; margin-bottom: 10px; }
+
+/* money hero */
+#c360App .c3-money-hero { display: grid; gap: 2px; padding: 12px 14px; margin-bottom: 10px; border-radius: var(--r-sm); background: var(--ok-bg); border: 1px solid var(--ok-line); color: var(--ink); }
+#c360App .c3-g5 .c3-money-hero { margin-bottom: 0; }
+#c360App .c3-money-hero small { font-size: 12px; font-weight: 700; color: var(--mute); }
+#c360App .c3-money-hero b { font-size: 34px; font-weight: 800; letter-spacing: -.8px; line-height: 1.1; color: var(--ok); }
+#c360App .c3-money-hero span { font-size: 13px; font-weight: 600; color: var(--ink2); }
+#c360App .c3-money-hero.tone-warn { background: var(--warn-bg); border-color: var(--warn-line); }
+#c360App .c3-money-hero.tone-warn b { color: var(--warn); }
+#c360App .c3-money-hero.tone-neg { background: var(--neg-bg); border-color: var(--neg-line); }
+#c360App .c3-money-hero.tone-neg b { color: var(--neg); }
+
+/* plan mini */
+#c360App .c3-plan-mini { display: grid; gap: 8px; margin-top: 10px; }
+#c360App .c3-pm { padding: 9px 11px; border: 1px solid var(--line2); border-left: 4px solid var(--ok); border-radius: var(--r-sm); background: #FBFCFB; color: var(--ink); }
+#c360App .c3-pm.tone-warn { border-left-color: #E8A33D; } #c360App .c3-pm.tone-neg { border-left-color: var(--neg); background: #FFFBFA; }
+#c360App .c3-pm.tone-info { border-left-color: var(--info); } #c360App .c3-pm.tone-mute { border-left-color: #A3B0A8; }
+#c360App .c3-pm-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+#c360App .c3-pm-top b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#c360App .c3-pm-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--mute); margin-top: 3px; }
+
+/* upcoming */
+#c360App .c3-up { display: flex; gap: 10px; padding: 11px; border-radius: var(--r-sm); border: 1px solid var(--line2); background: #F8FAF8; color: var(--ink); }
+#c360App .c3-up > span { font-size: 22px; }
+#c360App .c3-up small { display: block; font-size: 12px; color: var(--mute); font-weight: 600; }
+#c360App .c3-up b { display: block; font-size: 15px; font-weight: 800; }
+#c360App .c3-up em { display: block; font-style: normal; font-size: 12px; color: var(--ink2); }
+#c360App .c3-up.tone-info { border-left: 4px solid var(--info); } #c360App .c3-up.tone-ok { border-left: 4px solid var(--ok); }
+#c360App .c3-up.tone-warn { border-left: 4px solid #E8A33D; } #c360App .c3-up.tone-neg { border-left: 4px solid var(--neg); background: var(--neg-bg); }
+
+/* phones list */
+#c360App .c3-phones { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+#c360App .c3-phones .c3-phone { font-size: 14px; padding: 6px 12px; }
+
+/* journey */
+#c360App .c3-journey { list-style: none; margin: 0; padding: 0 0 0 18px; position: relative; display: grid; gap: 8px; }
+#c360App .c3-journey::before { content: ""; position: absolute; left: 5px; top: 10px; bottom: 10px; width: 2px; background: var(--mint2); }
+#c360App .c3-journey li { position: relative; display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 9px 11px; border: 1px solid var(--line2); border-radius: var(--r-sm); background: #FBFCFB; }
+#c360App .c3-journey li::before { content: ""; position: absolute; left: -18px; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%; background: #fff; border: 3px solid #9CC9AA; }
+#c360App .c3-journey li.is-home { border-color: var(--ok-line); background: var(--ok-bg); }
+#c360App .c3-journey li.is-home::before { border-color: var(--g700); background: var(--g700); }
+#c360App .c3-journey li b { font-size: 14px; margin-right: 6px; }
+#c360App .c3-journey li span:not(.c3-pill) { display: block; font-size: 12px; color: var(--mute); }
+#c360App .c3-journey li em { font-style: normal; font-size: 12px; color: var(--ink2); white-space: nowrap; }
+
+/* timeline */
+#c360App .c3-timeline { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 6px 14px; }
+#c360App .c3-timeline li { display: grid; grid-template-columns: 72px 26px minmax(0,1fr); gap: 6px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line2); }
+#c360App .c3-tl-d { font-size: 12px; color: var(--mute); font-weight: 600; }
+#c360App .c3-tl-e { font-size: 16px; }
+#c360App .c3-timeline b { display: block; font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#c360App .c3-timeline em { font-style: normal; font-size: 12px; color: var(--mute); }
+#c360App .c3-ref-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+
+/* KPI rows inside tabs */
+#c360App .c3-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 14px; }
+#c360App .c3-kpi { display: flex; align-items: center; gap: 10px; padding: 11px 13px; background: #fff; border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--ink); }
+#c360App .c3-kpi-ic { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--mint); font-size: 18px; flex: none; }
+#c360App .c3-kpi small { display: block; font-size: 12px; font-weight: 600; color: var(--mute); }
+#c360App .c3-kpi b { font-size: 20px; font-weight: 800; color: var(--g900); }
+#c360App .c3-kpi b.tone-ok { color: var(--ok); } #c360App .c3-kpi b.tone-warn { color: var(--warn); }
+#c360App .c3-kpi b.tone-neg { color: var(--neg); } #c360App .c3-kpi b.tone-info { color: var(--info); }
+
+/* cards */
+#c360App .c3-cards { display: grid; gap: 12px; align-items: start; }
+#c360App .c3-c1 { grid-template-columns: 1fr; }
+#c360App .c3-c2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+#c360App .c3-c4 { grid-template-columns: repeat(4, minmax(0,1fr)); }
+#c360App .c3-card { display: grid; gap: 8px; min-width: 0; padding: 13px; background: #fff; border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); color: var(--ink); }
+#c360App .c3-accent { border-top: 4px solid var(--ok); }
+#c360App .c3-accent.tone-warn { border-top-color: #E8A33D; } #c360App .c3-accent.tone-neg { border-top-color: var(--neg); }
+#c360App .c3-accent.tone-info { border-top-color: var(--info); } #c360App .c3-accent.tone-mute { border-top-color: #A3B0A8; }
+#c360App .c3-card-h { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+#c360App .c3-card-h > div { min-width: 0; }
+#c360App .c3-card-h b { display: block; font-size: 15px; font-weight: 800; color: var(--g900); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#c360App .c3-card-h small { display: block; font-size: 12px; color: var(--mute); margin-top: 2px; }
+#c360App .c3-therapies { display: grid; gap: 6px; }
+#c360App .c3-th { display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 4px 12px; align-items: center; padding: 8px 10px; background: #F8FAF8; border-radius: var(--r-sm); font-size: 13px; }
+#c360App .c3-th b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#c360App .c3-th .c3-meter { grid-column: 1 / -1; margin: 0; height: 5px; }
+
+/* coloured fields (sessions / appointments) */
+#c360App .c3-field { min-width: 0; padding: 8px 10px; border-radius: var(--r-sm); background: #F8FAF8; border: 1px solid var(--line2); border-left: 4px solid #C6D3CA; }
+#c360App .c3-field small { display: block; font-size: 11px; font-weight: 700; color: var(--mute); }
+#c360App .c3-field b { display: block; font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#c360App .f-green { border-left-color: #2E9460; background: #EFF8F2; } #c360App .f-green b { color: #14633A; }
+#c360App .f-blue { border-left-color: #3B82F6; background: #EFF5FF; } #c360App .f-blue b { color: #1E4FA8; }
+#c360App .f-amber { border-left-color: #D99B17; background: #FFF8E6; } #c360App .f-amber b { color: #7C560A; }
+#c360App .f-purple { border-left-color: #8B5CC7; background: #F5EFFF; } #c360App .f-purple b { color: #5B2E99; }
+#c360App .f-teal { border-left-color: #14908A; background: #EAF8F6; } #c360App .f-teal b { color: #0E6560; }
+#c360App .f-rose { border-left-color: #D75858; background: #FFF2F2; }
+
+/* followups */
+#c360App .c3-fu { border-left: 5px solid #94A3B8; }
+#c360App .c3-fu.f-blue { border-left-color: #3B82F6; } #c360App .c3-fu.f-green { border-left-color: #22A447; }
+#c360App .c3-fu.f-orange { border-left-color: #F59E0B; } #c360App .c3-fu.f-amber { border-left-color: #EAB308; }
+#c360App .c3-fu.f-red { border-left-color: #DC2626; } #c360App .c3-fu.f-teal { border-left-color: #0D9488; }
+#c360App .c3-fu.f-purple { border-left-color: #7C3AED; } #c360App .c3-fu.f-slate { border-left-color: #64748B; }
+#c360App .c3-fu { background: #fff; }
+#c360App .c3-fu.is-late { box-shadow: 0 0 0 1px var(--neg-line), var(--shadow); }
+#c360App .c3-fu-type { background: var(--mint) !important; color: var(--g800) !important; border-color: var(--line2) !important; margin-bottom: 3px; }
+#c360App .c3-fu-remark { padding: 9px 11px; border-radius: var(--r-sm); background: #F4F8F5; border-left: 3px solid var(--g500); font-size: 14px; line-height: 1.55; white-space: pre-wrap; }
+#c360App .c3-fu-resp { padding: 8px 11px; border-radius: var(--r-sm); background: var(--info-bg); font-size: 13px; color: #1E3A8A; }
+#c360App .c3-fbtn.f-blue { border-left: 3px solid #3B82F6; } #c360App .c3-fbtn.f-green { border-left: 3px solid #22A447; }
+#c360App .c3-fbtn.f-orange { border-left: 3px solid #F59E0B; } #c360App .c3-fbtn.f-red { border-left: 3px solid #DC2626; }
+#c360App .c3-fbtn.f-purple { border-left: 3px solid #7C3AED; } #c360App .c3-fbtn.f-teal { border-left: 3px solid #0D9488; }
+#c360App .c3-fbtn.f-amber { border-left: 3px solid #EAB308; } #c360App .c3-fbtn.f-slate { border-left: 3px solid #64748B; }
+
+/* mini tables */
+#c360App .c3-table-wrap { overflow-x: auto; margin-top: 10px; }
+#c360App .c3-mini-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+#c360App .c3-mini-table th { text-align: left; padding: 8px 10px; background: #F4F8F5; font-size: 12px; color: var(--ink2); border-bottom: 1px solid var(--line); white-space: nowrap; }
+#c360App .c3-mini-table td { padding: 8px 10px; border-bottom: 1px solid var(--line2); }
+#c360App .c3-spark { width: 100%; height: 64px; margin-top: 10px; background: #F8FAF8; border-radius: var(--r-sm); }
+#c360App .c3-spark polyline { fill: none; stroke: var(--g600); stroke-width: 2.5; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+
+/* documents */
+#c360App .c3-doc-search { margin-left: auto; min-width: 220px; }
+#c360App .c3-docs { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+#c360App .c3-doc { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; box-shadow: var(--shadow); }
+#c360App .c3-doc-prev { position: relative; display: grid; place-items: center; height: 160px; background: #EAF2EC; text-decoration: none; overflow: hidden; }
+#c360App .c3-doc-prev img, #c360App .c3-doc-prev video { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+#c360App .c3-doc-ic { font-size: 46px; }
+#c360App .c3-play { position: absolute; width: 50px; height: 50px; display: grid; place-items: center; border-radius: 50%; background: rgba(23,96,58,.9); color: #fff; font-size: 20px; border: 3px solid #fff; }
+#c360App .c3-doc-b { display: grid; gap: 4px; padding: 10px 12px; flex: 1; justify-items: start; }
+#c360App .c3-doc-b b { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+#c360App .c3-doc-b small { font-size: 12px; color: var(--mute); }
+#c360App .c3-doc-act { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line2); }
+#c360App .c3-doc-act a { padding: 9px; text-align: center; font-size: 13px; font-weight: 700; text-decoration: none; color: var(--g700); }
+#c360App .c3-doc-act a + a { border-left: 1px solid var(--line2); }
+#c360App .c3-doc-act a:hover { background: var(--mint); }
+
+/* stock / conversions */
+#c360App .c3-split { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; align-items: start; }
+#c360App .c3-split > section { display: grid; gap: 10px; min-width: 0; }
+#c360App .c3-split .c3-h4 { margin-top: 0; }
+#c360App .c3-stock-item { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 2px 10px; padding: 8px 10px; background: #F8FAF8; border-radius: var(--r-sm); font-size: 13px; }
+#c360App .c3-stock-item small { grid-column: 1 / -1; color: var(--mute); font-size: 12px; }
+#c360App .c3-conv { display: grid; grid-template-columns: minmax(0,1fr) 44px minmax(0,1fr); gap: 10px; align-items: center; }
+#c360App .c3-conv h5 { font-size: 13px; font-weight: 800; margin-bottom: 6px; }
+#c360App .c3-conv-row { padding: 8px 10px; margin-bottom: 6px; border-radius: var(--r-sm); background: var(--warn-bg); border: 1px solid var(--warn-line); }
+#c360App .c3-conv-row.is-to { background: var(--ok-bg); border-color: var(--ok-line); }
+#c360App .c3-conv-row b { display: block; font-size: 13px; }
+#c360App .c3-conv-row span { font-size: 12px; color: var(--ink2); }
+#c360App .c3-conv-arrow { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--mint); font-size: 20px; color: var(--g700); }
+
+/* remarks */
+#c360App .c3-note-row { display: grid; grid-template-columns: 170px minmax(0,1fr); gap: 8px; }
+#c360App .c3-note-row textarea { resize: vertical; min-height: 84px; width: 100%; }
+#c360App .c3-note-foot { display: flex; justify-content: space-between; align-items: center; }
+#c360App .c3-remarks { display: grid; gap: 8px; }
+#c360App .c3-remark { padding: 11px 13px; background: #fff; border: 1px solid var(--line); border-radius: var(--r-sm); }
+#c360App .c3-remark-h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 5px; }
+#c360App .c3-remark-h b { font-size: 13px; } #c360App .c3-remark-h small { font-size: 12px; color: var(--mute); }
+#c360App .c3-remark p { font-size: 14px; white-space: pre-wrap; }
+
+/* messages */
+#c360App .c3-split-msg { grid-template-columns: minmax(0,1.2fr) minmax(0,1fr); }
+#c360App .c3-lbl { display: grid; gap: 4px; font-size: 12px; font-weight: 700; color: var(--mute); }
+#c360App .c3-lbl .c3-input { width: 100%; font-weight: 500; color: var(--ink); }
+#c360App .c3-tpls { display: flex; flex-wrap: wrap; gap: 6px; }
+#c360App .c3-tpl { padding: 7px 11px; border: 1px solid var(--line); border-radius: var(--r-sm); background: #fff; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--ink2); }
+#c360App .c3-tpl.is-on { background: var(--g800); border-color: var(--g800); color: #fff; }
+#c360App .c3-tpl.is-on .c3-pill { background: rgba(255,255,255,.2); color: #fff; border-color: transparent; }
+#c360App .c3-msg-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+#c360App .c3-rules { display: grid; gap: 6px; }
+#c360App .c3-rule { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 9px 10px; border: 1px solid var(--line2); border-radius: var(--r-sm); background: #FBFCFB; }
+#c360App .c3-rule-ic { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--mint); font-size: 17px; }
+#c360App .c3-rule b { display: block; font-size: 13px; } #c360App .c3-rule small { font-size: 12px; color: var(--mute); }
+#c360App .c3-switch { padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--slate-bg); color: var(--slate); }
+
+#c360App .c3-more-wrap { display: flex; justify-content: center; margin-top: 14px; }
+#c360App .c3-pager-sm { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 14px; font-size: 13px; color: var(--mute); }
+
+/* toasts */
+#c360App .c3-toasts { position: fixed; right: 18px; bottom: 18px; z-index: 1000; display: grid; gap: 8px; }
+#c360App .c3-toast { padding: 11px 16px; border-radius: var(--r-sm); background: var(--g900); color: #fff; font-size: 14px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,.2); animation: c3in .2s ease; }
+#c360App .c3-toast.tone-warn { background: #8A4B05; } #c360App .c3-toast.tone-neg { background: #9B1C13; }
+@keyframes c3in { from { opacity: 0; transform: translateY(8px); } }
+
+/* ---------- responsive ---------- */
+@media (max-width: 1400px) {
+  #c360App .c3-c4 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  #c360App .c3-hero-kpis { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  #c360App .c3-hk:nth-child(3) { border-right: 0; }
+  #c360App .c3-hk:nth-child(-n+3) { border-bottom: 1px solid rgba(255,255,255,.1); }
+}
+@media (max-width: 1100px) {
+  #c360App .c3-kpi-strip { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  #c360App .c3-secs, #c360App .c3-c2, #c360App .c3-split, #c360App .c3-split-msg, #c360App .c3-dlists { grid-template-columns: 1fr; }
+  #c360App .c3-c4 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  #c360App .c3-g4, #c360App .c3-g5 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  #c360App .c3-hero-main { grid-template-columns: auto minmax(0,1fr); }
+  #c360App .c3-hero-actions { grid-column: 1 / -1; justify-content: flex-start; }
+  #c360App .c3-hero-actions .c3-close { position: absolute; top: 14px; right: 14px; }
+}
+@media (max-width: 720px) {
+  #c360App { width: 100%; margin: 0; }
+  #c360App .c3-mast, #c360App .c3-filters-panel { border-radius: 0; padding-left: 14px; padding-right: 14px; }
+  #c360App .c3-filters-panel { position: static; }
+  #c360App .c3-kpi-strip { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  #c360App .c3-sel, #c360App .c3-search { flex: 1 1 100%; }
+  #c360App .c3-modal { width: 100vw; height: 100dvh; border-radius: 0; }
+  #c360App .c3-avatar { width: 76px; height: 76px; }
+  #c360App .c3-avatar-in span { font-size: 22px; }
+  #c360App .c3-hero h2 { font-size: 21px; }
+  #c360App .c3-hero-kpis, #c360App .c3-c4, #c360App .c3-g3, #c360App .c3-g2, #c360App .c3-g4, #c360App .c3-g5, #c360App .c3-note-row, #c360App .c3-conv { grid-template-columns: 1fr; }
+  #c360App .c3-hk { border-right: 0; border-bottom: 1px solid rgba(255,255,255,.1); }
+  #c360App .c3-mbody { padding: 12px; }
+  #c360App .c3-alerts, #c360App .c3-timeline { grid-template-columns: 1fr; }
+  #c360App .c3-drawer-sum { grid-template-columns: repeat(2, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #c360App *, #c360App *::before, #c360App *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+@media print {
+  #c360App .c3-filters-panel, #c360App .c3-dash, #c360App .c3-overlay { display: none !important; }
+}
+/* Client 360 · cream, forest and fine gold UI · presentation only */
+#c360App{--g950:#102e23;--g900:#173e2e;--g800:#20513a;--g700:#286343;--g600:#347a50;--g500:#52956b;--mint:#edf5e9;--mint2:#dfecd9;--canvas:#f7f5ed;--paper:#fffefa;--ink:#203329;--ink2:#405348;--mute:#5e6b60;--line:#d9d7c5;--line2:#eae8dc;--gold:#aa8741;--gold-soft:#eee3c4;--r-lg:16px;--r:11px;--shadow:0 3px 14px rgba(31,55,39,.055);--shadow-lg:0 14px 48px rgba(19,45,31,.18);font-size:13px;line-height:1.5;margin-top:12px}
+#c360App :is(button,a,input,select,textarea):focus-visible{outline:2px solid #aa8741;outline-offset:3px}
+#c360App .c3-mast{padding:16px 22px;background:radial-gradient(ellipse at 100% 0,rgba(166,137,66,.15),transparent 58%),linear-gradient(110deg,#102e23,#20513a);border:1px solid #a68c50;border-bottom:0;box-shadow:0 8px 28px rgba(20,49,32,.1)}
+#c360App .c3-brand{background:#f3ecd8;color:#173e2e;border:1px solid #cfba80;letter-spacing:1.4px}
+#c360App .c3-mast h1{font-size:clamp(22px,2vw,29px);letter-spacing:-.7px;font-weight:800;line-height:1.2;color:#fffdf5}
+#c360App .c3-mast p{color:#e2eadb;font-size:12px;max-width:720px;margin-top:5px}
+#c360App .c3-count-pill{border-color:#a68c50;background:rgba(248,244,226,.09);color:#fff9e8;font-size:12px}
+#c360App .c3-mast .c3-btn-light{background:#f6edd6;border-color:#d2bb7b;color:#173e2e}
+#c360App .c3-filters-panel{padding:12px 20px;gap:8px;background:rgba(255,254,249,.98);border:1px solid #c8ba94;border-top:2px solid #b89951;box-shadow:0 5px 16px rgba(32,48,28,.045)}
+#c360App .c3-btn{min-height:35px;border-radius:8px;padding:7px 12px;font-size:12px;border-color:#d6d8c9;background:#fffefa;color:#243d2e}
+#c360App .c3-btn-primary{background:linear-gradient(110deg,#173e2e,#286343);color:#fffef5;border-color:#20513a;box-shadow:0 2px 5px rgba(19,61,37,.1)}
+#c360App .c3-btn-primary:hover{background:#102e23}
+#c360App .c3-btn-sm{min-height:30px;padding:5px 10px}
+#c360App .c3-btn-danger{color:var(--neg);background:var(--neg-bg);border-color:var(--neg-line)}
+#c360App .c3-btn-danger.is-on{background:var(--neg);color:white}
+#c360App .c3-btn-wa{background:#168544;color:white;border-color:#168544}
+#c360App :is(.c3-search,.c3-sel,.c3-date,.c3-input,.c3-select-l select){border-color:#d3d6c6;background:#fffefa;color:#24392b;font-size:13px;border-radius:8px}
+#c360App :is(.c3-search,.c3-sel,.c3-date){min-height:36px}
+#c360App .c3-search input{color:#24392b;font-size:13px}
+#c360App input::placeholder,#c360App textarea::placeholder{color:#667064;opacity:1}
+#c360App .c3-sel{flex-basis:180px}
+#c360App .c3-q{border-color:#ddd8c4;background:#faf8ef;color:#44533f;font-size:12px}
+#c360App :is(.c3-q,.c3-fbtn,.c3-pg).is-on{background:#173e2e;color:#fff9e7;border-color:#173e2e}
+#c360App .c3-statusbar{font-size:12px;color:#53604f;border-top:1px solid #ece6d4;padding-top:6px}
+#c360App .c3-kpi-strip{gap:10px;margin:12px 0}
+#c360App .c3-kpi-card{position:relative;padding:13px 15px;background:linear-gradient(125deg,#fffefa 48%,#eef4e8);border:1px solid #d7cfb8;border-top:2px solid #b69b60;box-shadow:var(--shadow);min-width:0}
+#c360App .c3-kpi-card:nth-child(2),#c360App .c3-kpi-card:nth-child(3){border-top-color:#3c7c50;background:linear-gradient(125deg,#fffefa 48%,#e5f0df)}
+#c360App .c3-kpi-out{border-top-color:#b28e47;background:linear-gradient(125deg,#fffefa 48%,#f5ecd7)}
+#c360App .c3-kpi-card small{color:#415641;font-weight:700;font-size:12px}
+#c360App .c3-kpi-v{font-size:clamp(20px,1.8vw,27px);line-height:1.3;margin:5px 0;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;letter-spacing:-.5px}
+#c360App .c3-kpi-hint{font-size:11px;color:#56654f;line-height:1.45}
+#c360App :is(.c3-table-card,.c3-dash,.c3-sec,.c3-card,.c3-doc,.c3-dlist){background:#fffefa;border-color:#d8d2bb;box-shadow:var(--shadow)}
+#c360App .c3-table{min-width:1180px;table-layout:auto}
+#c360App .c3-table th{background:#e8efdf;color:#264c34;font-size:11px;letter-spacing:.3px;padding:10px 11px;border-bottom:1px solid #baa77b}
+#c360App .c3-table td{padding:10px 11px;border-bottom-color:#eee9d9;font-size:12px}
+#c360App .c3-table tbody tr:nth-child(even) td{background:#fcfbf5}
+#c360App .c3-table tbody tr:hover td{background:#edf4e7}
+#c360App .c3-table :is(th,td):nth-child(2){min-width:210px;max-width:310px;white-space:normal}
+#c360App .c3-client-name{font-size:13px;line-height:1.4;white-space:normal;text-align:left;overflow-wrap:anywhere;color:#173e2e;font-weight:800}
+#c360App .c3-table :is(th,td):nth-child(11){min-width:125px;max-width:210px;white-space:normal}
+#c360App .c3-chip{background:#f2f4e9;color:#3c503b;border-color:#dadbc6;white-space:normal}
+#c360App .c3-pill{font-size:11px;padding:3px 7px;line-height:1.4;max-width:100%;white-space:normal}
+#c360App .c3-inv-btn{border-radius:8px;background:#eaf2e5;color:#245337;border-color:#b8cbaa}
+#c360App .c3-inv-btn.has-due{color:var(--neg);background:var(--neg-bg);border-color:var(--neg-line)}
+#c360App .c3-table th.c3-sticky{background:#e8efdf}
+#c360App .c3-table td.c3-sticky{background:#fffefa;box-shadow:-3px 0 7px rgba(53,56,29,.04)}
+#c360App .c3-pager{padding:10px 14px;background:#f8f7ee;border-top-color:#e0dac6;color:#4b5945;font-size:12px;gap:10px;flex-wrap:wrap}
+#c360App .c3-hint-line{color:#5c6653;font-size:11px;margin:9px 3px 14px}
+#c360App .c3-dash-h{background:linear-gradient(100deg,#edf3e6,#fbf7e9);border-bottom-color:#d9ceaf;padding:8px 12px}
+#c360App .c3-dash-toggle{font-size:15px;color:#214a32}
+#c360App .c3-dash-b{padding:12px}
+#c360App .c3-dcard{background:linear-gradient(120deg,#fffefa,#f4f7ee);border-color:#dcd7bf;border-left-width:3px;border-left-color:#a68a48;padding:11px;min-width:0}
+#c360App .c3-dcard b{font-size:23px;color:#234a32}
+#c360App .c3-dcard small{color:#344c36;font-size:12px}
+#c360App .c3-dcard em{color:#5b6652;font-size:11px}
+#c360App .c3-dlist{padding:12px;background:#fafbf5}
+#c360App .c3-dlist h4{font-size:13px;color:#264b32;border-bottom:1px solid #ddd6bf;padding-bottom:9px;margin-bottom:10px}
+#c360App .c3-bar{font-size:12px;gap:9px}
+#c360App .c3-bar-l{color:#4c5b44}
+#c360App .c3-bar-t{background:#e7ecdd;height:6px}
+#c360App .c3-bar-t i{background:linear-gradient(90deg,#285b3e,#89ac71)}
+#c360App .c3-modal{background:#f7f5ed;border:1px solid #b29a60;border-radius:16px;box-shadow:0 22px 80px rgba(12,40,24,.3)}
+#c360App .c3-hero{background:radial-gradient(ellipse at 100% 0,rgba(180,155,78,.13),transparent 60%),linear-gradient(105deg,#102e23,#24563c);border-bottom:1px solid #b49a5c}
+#c360App .c3-hero-main{padding:15px 20px;gap:17px;grid-template-columns:90px minmax(0,1fr) auto}
+#c360App .c3-avatar{width:90px;height:90px}
+#c360App .c3-hero h2{font-size:clamp(21px,2vw,29px);line-height:1.2;color:#fffdf3;letter-spacing:-.5px;overflow-wrap:anywhere}
+#c360App .c3-brandline{color:#e1e8d6;font-size:11px;letter-spacing:1px}
+#c360App .c3-hero .c3-chip{background:rgba(255,252,235,.09);color:#eef3e3;border-color:rgba(206,185,122,.34);font-size:11px}
+#c360App .c3-hero .c3-btn-light{background:#f7efd9;color:#193e2b;border-color:#d0b674}
+#c360App .c3-hero .c3-btn-ghost{background:rgba(255,253,234,.08);color:#fff9e6;border-color:#8c9d71}
+#c360App .c3-hero-kpis{border-top:1px solid rgba(206,185,122,.23)}
+#c360App .c3-hk{padding:10px 15px;min-width:0;border-color:rgba(208,191,131,.18)}
+#c360App .c3-hk small,#c360App .c3-hk em{color:#e0e9d4;font-size:11px}
+#c360App .c3-hk b{font-size:22px;overflow-wrap:anywhere;white-space:normal;line-height:1.3}
+#c360App .c3-hk-due b{font-size:29px}
+#c360App .c3-hk-due.tone-neg{background:rgba(219,146,102,.13);border-left:3px solid #e6ab8b}
+#c360App .c3-hk-sm{font-size:17px!important}
+#c360App .c3-tabs{background:#fffefa;padding:0 10px;border-bottom:1px solid #c5b17b;scrollbar-width:thin;scrollbar-color:#b6ba99 #f6f3e8}
+#c360App .c3-tab{padding:11px 10px;font-size:12px;color:#4b5c43;white-space:nowrap}
+#c360App .c3-tab.is-on{color:#183f2b;background:#edf4e6;box-shadow:inset 0 -2px #ac8b41}
+#c360App .c3-mbody{background:#f7f5ed;padding:14px 17px 24px;scrollbar-width:thin;scrollbar-color:#b6ba99 #f6f3e8}
+#c360App .c3-secs,#c360App .c3-cards{gap:12px}
+#c360App .c3-sec-h{background:linear-gradient(100deg,#edf4e7,#fbf8ee);padding:5px 8px;border-bottom:1px solid #dfd6bd;min-height:43px}
+#c360App .c3-sec-title{font-size:14px;line-height:1.4;color:#204b31;min-width:0}
+#c360App .c3-sec-ic{width:27px;height:27px;border-radius:7px;background:#fffefa;border:1px solid #dfd4b5;font-size:15px}
+#c360App .c3-sec-tools{opacity:1;gap:3px}
+#c360App .c3-sec-tools button{width:27px;height:27px;color:#4d6347;border:1px solid #ded8c1;background:#fffdf5;border-radius:6px}
+#c360App .c3-sec-tools button:hover{background:#dfeccf;color:#173e2e}
+#c360App .c3-sec-b{padding:12px}
+#c360App .c3-kv{background:#f9faf3;border:1px solid #e4e1ce;padding:8px 10px;min-width:0}
+#c360App .c3-kv small{color:#58674f;font-size:11px;font-weight:600}
+#c360App .c3-kv b{color:#253b29;font-size:13px;line-height:1.5}
+#c360App .c3-card{padding:12px}
+#c360App .c3-card-h{gap:8px;border-bottom:1px solid #e9e1cb;padding-bottom:9px;margin-bottom:10px;flex-wrap:wrap}
+#c360App .c3-card-h>div{min-width:0;flex:1}
+#c360App .c3-card-h b{font-size:13px;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;color:#24492f}
+#c360App .c3-card-h small{font-size:11px;color:#5c6653;overflow-wrap:anywhere}
+#c360App .c3-kpi{background:linear-gradient(120deg,#fffefa,#edf3e5);border-color:#d8cfb5;padding:11px;min-width:0}
+#c360App .c3-kpi b{overflow-wrap:anywhere;font-size:22px}
+#c360App .c3-kpi small{color:#526347}
+#c360App .c3-tabbar{background:#eef4e6;border:1px solid #d7cfb4;padding:7px 10px;color:#325336;font-size:12px;gap:8px;flex-wrap:wrap}
+#c360App .c3-h4{font-size:14px;color:#264e34;border-bottom:1px solid #d8c99f;padding-bottom:8px;margin-bottom:10px}
+#c360App .c3-field{border-left-width:2px;font-size:12px;min-width:0}
+#c360App .c3-field small{color:#51634b;font-size:11px}
+#c360App .c3-field b{font-size:13px;overflow-wrap:anywhere}
+#c360App .c3-mini-table th{background:#eaf1e2;color:#294e35;font-size:11px;border-bottom:1px solid #cabc95}
+#c360App .c3-mini-table td{font-size:12px;border-color:#eae4d3}
+#c360App .c3-mini-table tbody tr:nth-child(even){background:#fbfaf3}
+#c360App .c3-drawer{background:#f7f5ed;border-left:1px solid #ac8b41}
+#c360App .c3-drawer-h{background:linear-gradient(120deg,#eef4e6,#fff9e9);border-bottom:1px solid #c7b57e;padding:13px 16px}
+#c360App .c3-drawer-name{font-size:18px;color:#214b31;overflow-wrap:anywhere}
+#c360App .c3-drawer-sum{padding:11px 15px;background:#fffefa;border-bottom:1px solid #dcd3b8;gap:8px}
+#c360App .c3-drawer-sum small{font-size:11px;color:#58674f}
+#c360App .c3-drawer-sum b{font-size:19px;overflow-wrap:anywhere}
+#c360App .c3-inv{background:#fffefa;border-radius:10px;border-left-width:3px;min-width:0}
+#c360App .c3-inv-top{gap:8px;flex-wrap:wrap}
+#c360App .c3-inv-top>b{font-size:13px;overflow-wrap:anywhere}
+#c360App .c3-inv-grid small{font-size:11px;color:#5a6651}
+#c360App .c3-inv-grid span{font-size:13px;overflow-wrap:anywhere}
+#c360App .c3-note,#c360App .c3-empty-sm{color:#58664f;font-size:12px}
+#c360App .c3-doc-prev{background:#f0f2e5}
+#c360App .c3-doc-act{background:#f5f7eb;border-color:#e0d7bd}
+#c360App .c3-doc-act a{color:#285538}
+#c360App .c3-tpl{background:#fffefa;border-color:#ddd6bd;color:#415c3f}
+#c360App .c3-tpl.is-on{background:#e6efda;border-color:#a9bb8e;color:#214a31}
+@media(max-width:1100px){#c360App .c3-hero-main{grid-template-columns:90px minmax(0,1fr)}#c360App .c3-hero-actions{grid-column:1/-1}#c360App .c3-kpi-strip{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:720px){#c360App{width:100%;margin:0 auto 24px}#c360App .c3-mast{padding:15px 13px;border-radius:0}#c360App .c3-mast-brand{gap:10px}#c360App .c3-mast p{font-size:11px}#c360App .c3-filters-panel{padding:10px 12px;border-radius:0;position:static}#c360App .c3-kpi-strip{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:0 10px}#c360App .c3-kpi-card{padding:10px}#c360App .c3-kpi-v{font-size:22px}#c360App .c3-kpi-hint{font-size:10px}#c360App .c3-table-card,#c360App .c3-dash{margin:0 10px}#c360App .c3-hint-line{margin:9px 12px}#c360App .c3-modal{width:100vw;height:100dvh;border-radius:0;border:0}#c360App .c3-hero-main{padding:11px 12px;gap:10px;grid-template-columns:66px minmax(0,1fr)}#c360App .c3-avatar{width:66px;height:66px}#c360App .c3-avatar-in{font-size:22px}#c360App .c3-hero h2{font-size:21px}#c360App .c3-hero-meta{gap:4px}#c360App .c3-hero-actions{gap:6px}#c360App .c3-hero-actions .c3-btn{font-size:11px;min-height:29px;padding:5px 8px}#c360App .c3-hero-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}#c360App .c3-hk{padding:7px 9px}#c360App .c3-hk b{font-size:17px}#c360App .c3-hk-due b{font-size:21px}#c360App .c3-hk small,#c360App .c3-hk em{font-size:9px}#c360App .c3-hk-sm{font-size:13px!important}#c360App .c3-mbody{padding:10px}#c360App .c3-sec-title{font-size:13px}#c360App .c3-sec-tools{flex-shrink:0}#c360App .c3-sec-b{padding:10px}#c360App .c3-alerts{grid-template-columns:minmax(0,1fr)}#c360App .c3-timeline{grid-template-columns:minmax(0,1fr)}#c360App .c3-inv-grid-list{grid-template-columns:minmax(0,1fr)}#c360App .c3-dash-h{flex-wrap:wrap;gap:6px}#c360App .c3-pager-btns{gap:5px;flex-wrap:wrap}}
+@media(max-width:380px){#c360App .c3-hero-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}#c360App .c3-hk em{display:none}}
+@media print{#c360App .c3-mast,#c360App .c3-hero{background:white;color:#173e2e}#c360App .c3-mast h1,#c360App .c3-hero h2{color:#173e2e}}
+
+/* Complete client profile · unified cream / forest / fine gold design */
+#c360App .c3-modal{width:min(1680px,98vw);height:min(96vh,1100px);border:1px solid #b79b59;background:#f8f6ee}
+#c360App .c3-hero-main{background:linear-gradient(115deg,#102e23,#214e36);padding:17px 20px;border-bottom:1px solid #b69b60}
+#c360App .c3-hero-kpis{background:#fffdf6;color:#243e2b;border:0;gap:0}
+#c360App .c3-hk{background:linear-gradient(120deg,#fffdf6,#edf3e5);border-right:1px solid #dcd4b9;padding:12px 15px;border-bottom:1px solid #e1d7bb}
+#c360App .c3-hk:nth-child(even){background:linear-gradient(120deg,#fffefa,#f5eedc)}
+#c360App .c3-hk small{color:#4d6345;font-size:11px;font-weight:700;letter-spacing:.15px}
+#c360App .c3-hk b{color:#1d4930;font-size:25px;letter-spacing:-.45px;margin:4px 0}
+#c360App .c3-hk em{color:#56674d;font-size:11px;line-height:1.45}
+#c360App .c3-hk-due{border-left:3px solid #b49348}
+#c360App .c3-hk-due.tone-neg{background:linear-gradient(120deg,#fffdfa,#f7eddc);border-left-color:#ba5140}
+#c360App .c3-hk-due.tone-neg b,#c360App .c3-hk em.tone-neg{color:#a32b21}
+#c360App .c3-hk-due.tone-warn b,#c360App .c3-hk em.tone-warn{color:#855b17}
+#c360App .c3-hk b.tone-ok{color:#257143}
+#c360App .c3-hk-due b{font-size:30px}
+#c360App .c3-tabs{padding:4px 8px;gap:3px;background:#fffefa;border-top:0;border-bottom:1px solid #bda56b}
+#c360App .c3-tab{border-radius:7px;padding:9px 10px;color:#4a5c40;font-weight:600;font-size:12px;border:1px solid transparent}
+#c360App .c3-tab:hover{background:#f1f4e6;border-color:#ded7bc}
+#c360App .c3-tab.is-on{background:#173e2e;color:#fff8e2;border-color:#b79a55;box-shadow:inset 0 -2px #b79a55}
+#c360App .c3-tab.is-on .c3-tab-n{background:#f3ecd6;color:#244b30}
+#c360App .c3-mbody{background:linear-gradient(145deg,#f7f5eb,#f9f8f2);padding:14px 16px 24px}
+#c360App .c3-secs{align-items:start;grid-auto-flow:row}
+#c360App .c3-sec{border:1px solid #d9cead;border-radius:12px;overflow:hidden;background:#fffefa;box-shadow:0 3px 11px rgba(44,57,30,.05)}
+#c360App .c3-sec-h{min-height:42px;background:linear-gradient(100deg,#eaf2df,#faf6e8);border-bottom:1px solid #d6c79c;border-left:3px solid #9e843f;padding:5px 8px}
+#c360App .c3-sec.is-collapsed .c3-sec-h{border-bottom:0}
+#c360App .c3-sec-title{font-size:14px;font-weight:800;gap:8px;padding:3px 4px;color:#254b31}
+#c360App .c3-sec-title>span:nth-child(2){white-space:normal;text-align:left;line-height:1.35}
+#c360App .c3-sec-b{padding:13px}
+#c360App .c3-sec-badge{padding:2px 7px;border-radius:6px;font-size:11px}
+#c360App .c3-grid{gap:8px}
+#c360App .c3-kv{border:1px solid #e1dcc6;background:linear-gradient(110deg,#fffefa,#f5f7ed);border-radius:8px;padding:9px 11px;box-shadow:none}
+#c360App .c3-kv:nth-child(even){background:linear-gradient(110deg,#fffefa,#faf5e8)}
+#c360App .c3-kv small{color:#55664b;font-size:11px;font-weight:600;line-height:1.4;margin-bottom:3px}
+#c360App .c3-kv b{font-size:13px;color:#243d29;font-weight:700;line-height:1.5;overflow-wrap:anywhere}
+#c360App .c3-kv.is-neg{background:#fff5ef;border-color:#e5c2b3}
+#c360App .c3-kv .tone-neg{color:#a42c23}
+#c360App .c3-money-hero{border:1px solid #d3c497;border-left:3px solid #b59445;background:linear-gradient(120deg,#fffdf5,#f4ecd5);border-radius:9px;padding:13px;min-width:0}
+#c360App .c3-money-hero small{color:#5b6148;font-size:12px;font-weight:600}
+#c360App .c3-money-hero b{font-size:clamp(26px,2.3vw,35px);line-height:1.3;overflow-wrap:anywhere}
+#c360App .c3-money-hero span{font-size:12px;line-height:1.5}
+#c360App .c3-money-hero.tone-neg{color:#a32b21;border-left-color:#b54d38}
+#c360App .c3-money-hero.tone-ok{color:#256d3f;background:linear-gradient(120deg,#fffefa,#e8f0de);border-left-color:#488351}
+#c360App .c3-alert{border-width:1px;border-left-width:3px;border-radius:8px;padding:10px;gap:8px;font-size:12px;line-height:1.55}
+#c360App .c3-alert p{margin:0;overflow-wrap:anywhere}
+#c360App .c3-alert.tone-neg{background:#fff2eb;border-color:#e6c3b3;color:#94372a}
+#c360App .c3-alert.tone-warn{background:#fbf5e2;border-color:#dfcd98;color:#7c5b1e}
+#c360App .c3-alert.tone-ok{background:#edf4e5;border-color:#bdcfad;color:#2b5935}
+#c360App .c3-up{padding:10px;border-radius:9px;border:1px solid #ded5b8;border-left:3px solid #9b8746;background:#f9faf3;min-width:0}
+#c360App .c3-up.tone-neg{background:#fbf3e8;border-left-color:#b14d3b}
+#c360App .c3-up.tone-info{background:#edf3e6;border-left-color:#3f7051}
+#c360App .c3-up small{font-size:11px;color:#5b674e}
+#c360App .c3-up b{font-size:14px;line-height:1.4;color:#28462f}
+#c360App .c3-up em{font-size:12px;color:#54634a;line-height:1.5}
+#c360App .c3-pm{background:#fafbf4;border-radius:8px;border-width:1px;border-left-width:3px;padding:10px}
+#c360App .c3-pm-top{flex-wrap:wrap;gap:6px}
+#c360App .c3-pm-top>b{font-size:13px;color:#2c5035;overflow-wrap:anywhere}
+#c360App .c3-pm-meta{font-size:11px;color:#5d674f;gap:7px;line-height:1.6}
+#c360App .c3-meter{background:#e3e9d9;height:5px;border-radius:8px}
+#c360App .c3-meter i.tone-ok{background:linear-gradient(90deg,#28603e,#82a86e)}
+#c360App .c3-journey li{background:#fafbf3;border:1px solid #e1dac1;border-radius:8px;padding:10px 12px;margin-bottom:8px}
+#c360App .c3-journey li.is-home{background:#edf4e5;border-color:#c0cfae}
+#c360App .c3-journey b{color:#285135;font-size:13px}
+#c360App .c3-journey :is(span,em){font-size:12px;color:#52644b;line-height:1.5}
+#c360App .c3-timeline{gap:8px}
+#c360App .c3-timeline li{border:1px solid #e0d8bd;background:#fffefa;border-radius:8px;padding:10px;min-width:0}
+#c360App .c3-timeline b{font-size:12px;line-height:1.5;color:#2d4b32;overflow-wrap:anywhere}
+#c360App .c3-timeline em,#c360App .c3-tl-d{font-size:11px;color:#607054}
+#c360App .c3-phone{border:1px solid #d7d7bf;background:#eef3e5;border-radius:7px;padding:4px 7px;color:#3b563c;font-size:12px}
+#c360App .c3-hero .c3-phone{background:rgba(255,250,225,.09);border-color:rgba(205,184,121,.32);color:#f1f3df}
+#c360App .c3-phones{gap:8px;flex-wrap:wrap}
+#c360App .c3-card{border:1px solid #d8ceae;border-radius:11px;background:#fffefa;padding:12px;min-width:0;box-shadow:0 3px 11px rgba(44,57,30,.04)}
+#c360App .c3-card.c3-accent{border-left-width:3px}
+#c360App .c3-card-h{padding:0 0 9px;border-bottom:1px solid #e4d9ba;align-items:start}
+#c360App .c3-card-h b{color:#254d31;font-size:14px}
+#c360App .c3-card-h small{color:#59684f;line-height:1.6}
+#c360App .c3-field{background:#f7f8ef;border:1px solid #e0dcc6;border-left:2px solid #81985e;border-radius:7px;padding:8px 10px;margin-bottom:7px}
+#c360App .c3-field:is(.f-blue,.f-teal){background:#edf4e7;border-left-color:#427453}
+#c360App .c3-field:is(.f-amber,.f-orange){background:#faf5e5;border-left-color:#ae8c40}
+#c360App .c3-field:is(.f-purple,.f-slate){background:#f5f6ec;border-left-color:#838c61}
+#c360App .c3-field.f-rose{background:#fcf4ea;border-left-color:#ab7c52}
+#c360App .c3-field small{font-size:11px;color:#56664d}
+#c360App .c3-field b{font-size:13px;color:#28432e;line-height:1.5}
+#c360App .c3-therapies{border:1px solid #ddd4b9;border-radius:8px;background:#fafbf3;padding:7px 10px}
+#c360App .c3-th{font-size:12px;padding:8px 0;border-color:#e4ddc7;gap:7px}
+#c360App .c3-th>b{color:#2d5235;overflow-wrap:anywhere}
+#c360App .c3-fu-remark{background:#f8f9f1;border:1px solid #e2ddc8;border-radius:7px;padding:10px;font-size:13px;line-height:1.65;color:#3e523b;overflow-wrap:anywhere}
+#c360App .c3-fu-resp{background:#eef4e5;color:#3d603e;padding:10px;border-radius:7px;font-size:12px;line-height:1.6}
+#c360App .c3-fu-type{border-color:#d3c593;background:#f5efd9;color:#5c4b24}
+#c360App .c3-kpis{gap:9px;margin-bottom:12px}
+#c360App .c3-kpi{border-top:2px solid #ad914e;border-radius:9px}
+#c360App .c3-kpi-ic{background:#eef3e3;border:1px solid #d8d9bd;border-radius:8px}
+#c360App .c3-filters{gap:6px;margin:10px 0 12px}
+#c360App .c3-fbtn{padding:6px 10px;font-size:11px;border:1px solid #d8d0b4;border-radius:7px;background:#fffdf6;color:#4a613f}
+#c360App .c3-fbtn.is-on{background:#214b32;color:#fff8df;border-color:#b3964e}
+#c360App .c3-inv{border-color:#d8d0b4;background:#fffefa;padding:11px;box-shadow:0 2px 6px rgba(38,56,28,.04)}
+#c360App .c3-inv-top>b{color:#2b5539}
+#c360App .c3-inv-grid{gap:9px;background:#f8f9f1;border:1px solid #e9e2ca;border-radius:7px;padding:9px;margin-top:8px}
+#c360App .c3-doc{border-radius:11px;border:1px solid #d8ceae;overflow:hidden;background:#fffefa}
+#c360App .c3-doc-b{padding:11px}
+#c360App .c3-doc-b>b{font-size:13px;color:#294d32}
+#c360App .c3-doc-b small{font-size:11px;color:#60704f;line-height:1.6}
+#c360App .c3-doc-act a{padding:9px;font-size:12px;font-weight:700}
+#c360App .c3-stock-item{padding:10px;border:1px solid #e2d9bd;background:#f7f9ef;border-radius:7px;margin:7px 0;gap:5px}
+#c360App .c3-stock-item>b{color:#2b5134;font-size:13px}
+#c360App .c3-stock-item small{color:#5d6b50;font-size:11px;line-height:1.6;overflow-wrap:anywhere}
+#c360App .c3-conv>div:not(.c3-conv-arrow){background:#faf8ee;border:1px solid #ded0a7;border-radius:9px;padding:11px}
+#c360App .c3-conv-row{background:#fffefa;border:1px solid #e5ddc4;border-radius:7px;padding:9px;font-size:12px}
+#c360App .c3-conv-row.is-to{background:#edf4e5;border-color:#c4d3b2}
+#c360App .c3-conv-row b{color:#335536}
+#c360App .c3-remark{background:#fffefa;border:1px solid #d8ceae;border-left:3px solid #ae914c;border-radius:9px;padding:12px;margin-bottom:9px}
+#c360App .c3-remark-h{gap:7px;flex-wrap:wrap}
+#c360App .c3-remark-h>b{color:#2f5135;font-size:12px}
+#c360App .c3-remark-h small{font-size:11px;color:#627151}
+#c360App .c3-remark p{font-size:13px;line-height:1.65;color:#41583d}
+#c360App .c3-input{background:#fffefa;border-color:#d7ceb0;font-size:13px;line-height:1.5}
+#c360App .c3-lbl{font-size:12px;color:#47603f;font-weight:600}
+#c360App .c3-rule{border:1px solid #e0d7b9;border-radius:8px;background:#f9faf2;padding:10px;margin-bottom:7px;gap:8px}
+#c360App .c3-rule b{color:#345638;font-size:12px;line-height:1.5}
+#c360App .c3-rule small{font-size:11px;color:#5a6d4d;line-height:1.5}
+#c360App .c3-rule-ic{background:#edf3df;border:1px solid #d5d8b9;border-radius:7px}
+#c360App .c3-tpl{padding:9px 10px;border-radius:8px;font-size:12px;line-height:1.5}
+#c360App .c3-center.c3-empty{background:#fffefa;border:1px dashed #cdbb89;border-radius:11px;padding:35px 20px;margin-top:10px}
+#c360App .c3-empty h3{color:#2e5033;font-size:17px}
+#c360App .c3-empty p{color:#627052;font-size:13px;max-width:600px;margin:8px auto}
+@media(max-width:1100px){#c360App .c3-hk{padding:10px 12px}#c360App .c3-hk b{font-size:22px}}
+@media(max-width:720px){#c360App .c3-modal{width:100vw;height:100dvh;border:0;border-radius:0}#c360App .c3-hero-main{padding:12px;gap:10px}#c360App .c3-hk{padding:8px}#c360App .c3-hk small{font-size:10px}#c360App .c3-hk b{font-size:17px}#c360App .c3-hk-due b{font-size:21px}#c360App .c3-hk em{font-size:10px}#c360App .c3-tabs{padding:4px}#c360App .c3-tab{font-size:11px;padding:8px}#c360App .c3-mbody{padding:10px}#c360App .c3-sec-h{padding:4px;gap:4px}#c360App .c3-sec-title{font-size:13px;gap:5px}#c360App .c3-sec-ic{width:24px;height:24px;flex-shrink:0}#c360App .c3-sec-tools button{width:25px;height:25px}#c360App .c3-sec-b{padding:10px}#c360App .c3-sec-badge{max-width:105px;overflow-wrap:anywhere}#c360App .c3-money-hero b{font-size:27px}#c360App .c3-card{padding:10px}#c360App .c3-kv{padding:8px}#c360App .c3-kv b{font-size:12px}#c360App .c3-th{grid-template-columns:minmax(0,1fr) auto auto}#c360App .c3-th .c3-meter{grid-column:1/-1}#c360App .c3-timeline li{flex-wrap:wrap}#c360App .c3-conv{grid-template-columns:minmax(0,1fr)}#c360App .c3-conv-arrow{transform:rotate(90deg)}#c360App .c3-msg-actions{flex-wrap:wrap}}
+
+#c360App .c3-tpl.is-on .c3-pill{background:#fff8e3!important;color:#285136!important;border:1px solid #b9bd92}
+
+/* Ordered full-width profile sections and compact plan rows */
+#c360App [data-secs="overview"],#c360App [data-secs="medical"],#c360App [data-secs="billing"]{grid-template-columns:minmax(0,1fr);gap:11px}
+#c360App .c3-secs>.c3-sec{grid-column:1/-1}
+#c360App [data-sec="progress"] .c3-plan-mini{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+#c360App [data-sec="progress"] .c3-pm{margin:0}
+#c360App [data-sec="money"]>.c3-sec-b{display:grid;grid-template-columns:minmax(230px,.7fr) minmax(0,2fr);gap:12px;align-items:stretch}
+#c360App [data-sec="money"] .c3-money-hero{margin:0;display:flex;flex-direction:column;justify-content:center}
+#c360App [data-sec="profile"] .c3-g3{grid-template-columns:repeat(4,minmax(0,1fr))}
+#c360App .c3-plan-rows{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+#c360App .c3-plan-rows>.c3-card{display:grid;grid-template-columns:minmax(210px,.8fr) minmax(0,2.4fr);gap:10px 16px;padding:12px 14px;align-items:start}
+#c360App .c3-plan-rows .c3-card-h{margin:0;padding:2px 12px 8px 0;border-bottom:0;border-right:1px solid #dfd4b7;min-height:65px;display:flex;flex-direction:column;gap:8px}
+#c360App .c3-plan-rows .c3-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+#c360App .c3-plan-rows>.c3-card>.c3-meter{grid-column:1/-1;margin:0}
+#c360App .c3-plan-rows .c3-therapies{grid-column:1/-1;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}
+#c360App .c3-plan-rows .c3-kv{padding:7px 9px}
+#c360App .c3-hero-main{padding:11px 17px;gap:13px;grid-template-columns:72px minmax(0,1fr) auto;background:radial-gradient(ellipse at 100% 0,rgba(184,156,79,.14),transparent 65%),linear-gradient(110deg,#0e3022,#25543a)}
+#c360App .c3-avatar{width:72px;height:72px}
+#c360App .c3-avatar-in{font-size:25px}
+#c360App .c3-avatar-in img{object-fit:cover;object-position:50% 30%}
+#c360App .c3-hero h2{font-size:clamp(20px,1.65vw,26px);margin:3px 0 6px}
+#c360App .c3-brandline{font-size:10px;letter-spacing:1.3px}
+#c360App .c3-hero-badges{gap:5px;margin-bottom:6px}
+#c360App .c3-hero-meta{gap:5px}
+#c360App .c3-hero .c3-chip{padding:3px 6px;font-size:10px}
+#c360App .c3-hk{padding:8px 12px}
+#c360App .c3-hk b{font-size:22px;margin:3px 0}
+#c360App .c3-hk-due b{font-size:27px}
+#c360App .c3-hk small,#c360App .c3-hk em{font-size:10px}
+#c360App .c3-tab{padding:7px 9px}
+#c360App .c3-phone:hover,#c360App .c3-phone:focus,#c360App .c3-phone:focus-visible{background:#143f2b!important;border-color:#bfa458!important;color:#f7e684!important;box-shadow:0 0 0 2px rgba(194,164,71,.2)}
+#c360App .c3-phone:hover .c3-phone-f,#c360App .c3-phone:focus .c3-phone-f{color:#ffe784!important;font-weight:800;text-shadow:0 0 8px rgba(247,210,84,.22)}
+@media(max-width:1100px){#c360App .c3-hero-main{grid-template-columns:72px minmax(0,1fr)}#c360App .c3-hero-actions{grid-column:1/-1}#c360App .c3-plan-rows>.c3-card{grid-template-columns:minmax(190px,.8fr) minmax(0,2fr)}#c360App .c3-plan-rows .c3-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:720px){#c360App [data-sec="money"]>.c3-sec-b,#c360App [data-sec="progress"] .c3-plan-mini,#c360App .c3-plan-rows>.c3-card,#c360App .c3-plan-rows .c3-therapies{grid-template-columns:minmax(0,1fr)}#c360App [data-sec="profile"] .c3-g3,#c360App .c3-plan-rows .c3-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#c360App .c3-plan-rows .c3-card-h{border-right:0;border-bottom:1px solid #dfd4b7;min-height:0;padding:0 0 8px}#c360App .c3-hero-main{padding:10px;grid-template-columns:58px minmax(0,1fr);gap:9px}#c360App .c3-avatar{width:58px;height:58px}#c360App .c3-hero h2{font-size:20px}#c360App .c3-hk{padding:7px 8px}#c360App .c3-hk b{font-size:17px}#c360App .c3-hk-due b{font-size:20px}#c360App .c3-hk em{font-size:9px}#c360App .c3-plan-rows>.c3-card{padding:10px}}
+
+
+    #c360App .c3-branch-route{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+    #c360App .c3-branch-route .c3-br-old{color:#F59E0B!important;font-weight:800;opacity:1}
+    #c360App .c3-branch-route .c3-br-sep{color:#83958A!important;font-weight:700}
+    #c360App .c3-branch-route .c3-br-current{color:#F1FFF5!important;font-weight:800}
+  
+
+    #c360App .c3-hero-meta .c3-ref-hero-chip{
+      border-color:rgba(245,158,11,.55);
+      background:rgba(245,158,11,.14);
+      color:#FFE9B0;
+      font-weight:700;
+    }
+    #c360App .c3-hero-meta button.c3-ref-hero-chip{
+      cursor:pointer;
+      font:inherit;
+    }
+    #c360App .c3-hero-meta button.c3-ref-hero-chip:hover{
+      background:rgba(245,158,11,.24);
+      border-color:#F59E0B;
+    }
+    #c360App .c3-hero-meta .c3-ref-hero-chip.tone-ok{
+      border-color:rgba(74,222,128,.45);
+      background:rgba(74,222,128,.12);
+      color:#D9FFE5;
+    }
+  
+
+      #c360App .c3-avatar.c3-avatar-click{cursor:zoom-in}
+      #c360App .c3-avatar.c3-avatar-click:hover{filter:brightness(1.06)}
+      #c360App #c3ProfilePhotoViewer{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(5,24,14,.82);backdrop-filter:blur(5px)}
+      #c360App #c3ProfilePhotoViewer.is-open{display:flex}
+      #c360App #c3ProfilePhotoViewer .c3-photo-view-card{position:relative;max-width:min(92vw,760px);max-height:92vh;padding:12px;border-radius:18px;background:#fff;box-shadow:0 28px 90px rgba(0,0,0,.42)}
+      #c360App #c3ProfilePhotoViewer .c3-photo-view-img{display:block;max-width:100%;max-height:calc(92vh - 90px);width:auto;height:auto;object-fit:contain;border-radius:12px;background:#eef4ef}
+      #c360App #c3ProfilePhotoViewer .c3-photo-view-name{padding:10px 42px 2px 4px;color:#0E3B24;font-size:16px;font-weight:800;text-align:center}
+      #c360App #c3ProfilePhotoViewer .c3-photo-view-close{position:absolute;top:16px;right:16px;width:38px;height:38px;border:1px solid rgba(255,255,255,.5);border-radius:50%;background:rgba(10,35,22,.78);color:#fff;font-size:22px;line-height:1;cursor:pointer;z-index:2}
+      #c360App #c3ProfilePhotoViewer .c3-photo-view-close:hover{background:#0E3B24}
+    
+
+      #c360App .c3-avatar.c3-avatar-upload{cursor:pointer}
+      #c360App .c3-avatar.c3-avatar-upload:hover{filter:brightness(1.08)}
+      #c360App .c3-avatar-add{position:absolute;left:-2px;bottom:-5px;z-index:4;min-width:30px;height:30px;padding:0 6px;border-radius:999px;display:grid;place-items:center;background:#F59E0B;color:#fff;border:3px solid #0E3B24;font-size:14px;box-shadow:0 3px 9px rgba(0,0,0,.22)}
+      #c360App #c3ProfilePhotoUploader{position:fixed;inset:0;z-index:100005;display:none;align-items:center;justify-content:center;padding:22px;background:rgba(5,24,14,.82);backdrop-filter:blur(5px)}
+      #c360App #c3ProfilePhotoUploader.is-open{display:flex}
+      #c360App #c3ProfilePhotoUploader .c3-profile-upload-card{width:min(94vw,560px);max-height:92vh;overflow:auto;background:#fff;border-radius:18px;box-shadow:0 28px 90px rgba(0,0,0,.42);padding:20px}
+      #c360App #c3ProfilePhotoUploader .c3-profile-upload-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
+      #c360App #c3ProfilePhotoUploader .c3-profile-upload-head h3{margin:0;color:#0E3B24;font-size:20px;font-weight:800}
+      #c360App #c3ProfilePhotoUploader .c3-profile-upload-head p{margin:4px 0 0;color:#667085;font-size:13px;line-height:1.45}
+      #c360App #c3ProfilePhotoUploader .c3-profile-upload-close{width:36px;height:36px;border:0;border-radius:50%;background:#edf4ef;color:#0E3B24;font-size:20px;cursor:pointer;flex:none}
+      #c360App #c3ProfilePhotoUploader .c3-profile-preview{height:250px;border:2px dashed #b6cdbd;border-radius:14px;background:#f4f8f5;display:grid;place-items:center;overflow:hidden;margin-bottom:14px;color:#667085;font-weight:700;text-align:center;padding:12px}
+      #c360App #c3ProfilePhotoUploader .c3-profile-preview img{width:100%;height:100%;object-fit:contain;display:none}
+      #c360App #c3ProfilePhotoUploader .c3-profile-upload-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      #c360App #c3ProfilePhotoUploader .c3-profile-upload-btn{height:44px;border-radius:10px;border:1px solid #cbdccc;background:#fff;color:#14532D;font-size:14px;font-weight:800;cursor:pointer}
+      #c360App #c3ProfilePhotoUploader .c3-profile-upload-btn.primary{background:#1B6B3A;color:#fff;border-color:#1B6B3A}
+      #c360App #c3ProfilePhotoUploader .c3-profile-upload-btn.camera{background:#F7F1DF;border-color:#E3C879;color:#7A5410}
+      #c360App #c3ProfilePhotoUploader .c3-profile-camera-wrap{margin-top:14px;padding:12px;background:#f4f8f5;border:1px solid #d7e4da;border-radius:12px}
+      #c360App #c3ProfilePhotoUploader .c3-profile-video{display:block;width:100%;max-height:300px;object-fit:cover;border-radius:10px;background:#111}
+      #c360App #c3ProfilePhotoUploader .c3-profile-camera-actions{display:flex;gap:8px;margin-top:10px}
+      #c360App #c3ProfilePhotoUploader .c3-profile-status{min-height:22px;margin-top:10px;font-size:13px;font-weight:700;color:#667085}
+      #c360App #c3ProfilePhotoUploader .c3-profile-status.ok{color:#14833B}
+      #c360App #c3ProfilePhotoUploader .c3-profile-status.err{color:#C62828}
+      #c360App #c3ProfilePhotoUploader .c3-profile-save{width:100%;height:46px;margin-top:12px;border:0;border-radius:10px;background:#1B6B3A;color:#fff;font-size:14px;font-weight:800;cursor:pointer}
+      #c360App #c3ProfilePhotoUploader .c3-profile-save:disabled{opacity:.45;cursor:not-allowed}
+      @media(max-width:560px){#c360App #c3ProfilePhotoUploader .c3-profile-upload-actions{grid-template-columns:1fr}}
+    
+
+    #c360App .c3-search{
+      position:relative !important;
+      display:flex !important;
+      align-items:center !important;
+      gap:8px !important;
+      min-height:44px !important;
+      padding:0 12px !important;
+
+      background:#fff !important;
+      border:1.5px solid #CFE0D2 !important;
+      border-radius:10px !important;
+
+      box-shadow:none !important;
+      outline:none !important;
+      overflow:visible !important;
+    }
+
+    #c360App .c3-search:focus-within{
+      border-color:#2F9E44 !important;
+      box-shadow:0 0 0 3px rgba(47,158,68,.12) !important;
+      outline:none !important;
+    }
+
+    #c360App .c3-search > span{
+      flex:0 0 auto !important;
+      display:flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+      margin:0 !important;
+      padding:0 !important;
+      line-height:1 !important;
+    }
+
+    #c360App #c3Search{
+      flex:1 1 auto !important;
+      width:100% !important;
+      min-width:0 !important;
+      height:42px !important;
+
+      margin:0 !important;
+      padding:0 !important;
+
+      border:0 !important;
+      border-width:0 !important;
+      border-style:none !important;
+      border-color:transparent !important;
+      border-radius:0 !important;
+
+      outline:0 !important;
+      outline-offset:0 !important;
+      box-shadow:none !important;
+
+      background:transparent !important;
+      background-color:transparent !important;
+
+      color:#26392D !important;
+      font:500 14px/1.35 inherit !important;
+
+      appearance:none !important;
+      -webkit-appearance:none !important;
+    }
+
+    #c360App #c3Search:hover,
+    #c360App #c3Search:focus,
+    #c360App #c3Search:focus-visible,
+    #c360App #c3Search:active{
+      border:0 !important;
+      outline:0 !important;
+      box-shadow:none !important;
+      background:transparent !important;
+    }
+
+    #c360App #c3Search::placeholder{
+      color:#7B8780 !important;
+      opacity:1 !important;
+      font-weight:500 !important;
+    }
+
+    #c360App #c3SearchClear{
+      flex:0 0 auto !important;
+      border:0 !important;
+      outline:0 !important;
+      box-shadow:none !important;
+      background:transparent !important;
+    }
+
+    /* Search suggestion popup remains aligned exactly to the field. */
+    #c360App .c3-search .c3-lookup{
+      left:0 !important;
+      right:0 !important;
+      width:100% !important;
+      margin-top:6px !important;
+      z-index:1200 !important;
+    }
+  
+
+    /* lookup box */
+    #c360App .c3-search .c3-lookup{
+      box-sizing:border-box !important;
+      padding:0 !important;
+      overflow:hidden !important;
+      border-radius:12px !important;
+    }
+
+    #c360App .c3-look-h{
+      padding:13px 16px !important;
+      border-bottom:1px solid #E4ECE6 !important;
+      background:#F8FBF8 !important;
+      color:#526259 !important;
+      font-size:12px !important;
+      font-weight:800 !important;
+      line-height:1.3 !important;
+    }
+
+    /* each client suggestion */
+    #c360App .c3-look-item{
+      display:grid !important;
+      grid-template-columns:34px minmax(0,1fr) !important;
+      grid-template-areas:
+        "avatar main"
+        "avatar actions" !important;
+      column-gap:11px !important;
+      row-gap:9px !important;
+      align-items:start !important;
+
+      width:100% !important;
+      box-sizing:border-box !important;
+      padding:13px 14px !important;
+      margin:0 !important;
+
+      background:#fff !important;
+      border:0 !important;
+      border-bottom:1px solid #EDF2EE !important;
+    }
+
+    #c360App .c3-look-item:last-child{
+      border-bottom:0 !important;
+    }
+
+    #c360App .c3-look-item > .c3-g{
+      grid-area:avatar !important;
+      width:34px !important;
+      height:34px !important;
+      min-width:34px !important;
+      display:flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+      margin:1px 0 0 !important;
+
+      border-radius:50% !important;
+      background:#F2F7F3 !important;
+      font-size:18px !important;
+      line-height:1 !important;
+    }
+
+    #c360App .c3-look-main{
+      grid-area:main !important;
+      min-width:0 !important;
+      width:100% !important;
+      overflow:hidden !important;
+    }
+
+    #c360App .c3-look-main > b{
+      display:block !important;
+      width:100% !important;
+      margin:0 0 7px !important;
+
+      color:#174A2B !important;
+      font-size:14px !important;
+      font-weight:800 !important;
+      line-height:1.3 !important;
+
+      white-space:nowrap !important;
+      overflow:hidden !important;
+      text-overflow:ellipsis !important;
+    }
+
+    #c360App .c3-look-meta{
+      display:flex !important;
+      align-items:center !important;
+      flex-wrap:wrap !important;
+      gap:6px !important;
+      min-width:0 !important;
+    }
+
+    #c360App .c3-look-meta .c3-chip,
+    #c360App .c3-look-meta .c3-phone,
+    #c360App .c3-look-meta [class*="phone"]{
+      display:inline-flex !important;
+      align-items:center !important;
+      min-height:28px !important;
+      max-width:100% !important;
+      padding:5px 9px !important;
+      margin:0 !important;
+
+      border:1px solid #D6DFC6 !important;
+      border-radius:8px !important;
+      background:#F8F7EA !important;
+
+      color:#4E5D52 !important;
+      font-size:11.5px !important;
+      font-weight:700 !important;
+      line-height:1.2 !important;
+
+      white-space:nowrap !important;
+      overflow:hidden !important;
+      text-overflow:ellipsis !important;
+      box-sizing:border-box !important;
+    }
+
+    #c360App .c3-look-act{
+      grid-area:actions !important;
+      display:flex !important;
+      align-items:center !important;
+      flex-wrap:wrap !important;
+      gap:7px !important;
+      min-width:0 !important;
+      margin:0 !important;
+    }
+
+    #c360App .c3-look-act .c3-btn{
+      min-height:32px !important;
+      padding:6px 12px !important;
+      margin:0 !important;
+      border-radius:8px !important;
+      font-size:11.5px !important;
+      font-weight:800 !important;
+      line-height:1.2 !important;
+      white-space:nowrap !important;
+    }
+
+    #c360App .c3-look-act .c3-btn-primary{
+      background:#176433 !important;
+      border-color:#176433 !important;
+      color:#fff !important;
+    }
+
+    @media (max-width:640px){
+      #c360App .c3-look-item{
+        grid-template-columns:30px minmax(0,1fr) !important;
+        column-gap:8px !important;
+        padding:11px !important;
+      }
+
+      #c360App .c3-look-item > .c3-g{
+        width:30px !important;
+        height:30px !important;
+        min-width:30px !important;
+        font-size:16px !important;
+      }
+    }
+  
+
+    /* ---------- HERO MAIN AREA ---------- */
+    #c360App .c3-hero-main{
+      display:grid !important;
+      grid-template-columns:auto minmax(0,1fr) auto !important;
+      align-items:center !important;
+      column-gap:14px !important;
+      row-gap:0 !important;
+
+      min-height:0 !important;
+      padding:12px 16px !important;
+      box-sizing:border-box !important;
+    }
+
+    #c360App .c3-avatar{
+      align-self:center !important;
+      margin:0 !important;
+      flex:0 0 auto !important;
+    }
+
+    #c360App .c3-hero-id{
+      min-width:0 !important;
+      width:100% !important;
+      align-self:center !important;
+    }
+
+    #c360App .c3-brandline{
+      margin:0 0 5px !important;
+      min-height:0 !important;
+    }
+
+    #c360App .c3-hero-id h2{
+      margin:0 0 7px !important;
+      line-height:1.05 !important;
+      white-space:nowrap !important;
+      overflow:hidden !important;
+      text-overflow:ellipsis !important;
+    }
+
+    /* All client identity chips remain on ONE line on desktop. */
+    #c360App .c3-hero-meta{
+      display:flex !important;
+      flex-wrap:nowrap !important;
+      align-items:center !important;
+      gap:6px !important;
+
+      width:100% !important;
+      min-width:0 !important;
+      max-width:100% !important;
+
+      overflow-x:auto !important;
+      overflow-y:hidden !important;
+      padding:0 0 2px !important;
+      margin:0 !important;
+
+      scrollbar-width:thin !important;
+      scrollbar-color:rgba(255,255,255,.20) transparent !important;
+      -webkit-overflow-scrolling:touch !important;
+    }
+
+    #c360App .c3-hero-meta::-webkit-scrollbar{
+      height:3px !important;
+    }
+
+    #c360App .c3-hero-meta::-webkit-scrollbar-track{
+      background:transparent !important;
+    }
+
+    #c360App .c3-hero-meta::-webkit-scrollbar-thumb{
+      background:rgba(255,255,255,.20) !important;
+      border-radius:8px !important;
+    }
+
+    #c360App .c3-hero-meta > .c3-chip,
+    #c360App .c3-hero-meta > .c3-phone,
+    #c360App .c3-hero-meta > button{
+      flex:0 0 auto !important;
+      width:auto !important;
+      max-width:none !important;
+
+      min-height:30px !important;
+      padding:5px 9px !important;
+      margin:0 !important;
+
+      white-space:nowrap !important;
+      line-height:1.15 !important;
+      box-sizing:border-box !important;
+    }
+
+    /* Prevent Joined / referral chips from dropping to another line. */
+    #c360App .c3-hero-meta .c3-ref-hero-chip{
+      flex:0 0 auto !important;
+      white-space:nowrap !important;
+    }
+
+    /* ---------- HERO ACTIONS ---------- */
+    #c360App .c3-hero-actions{
+      display:flex !important;
+      flex-wrap:nowrap !important;
+      align-items:center !important;
+      justify-content:flex-end !important;
+      gap:8px !important;
+
+      min-width:max-content !important;
+      margin:0 !important;
+      align-self:start !important;
+    }
+
+    #c360App .c3-hero-actions .c3-btn,
+    #c360App .c3-hero-actions .c3-close{
+      flex:0 0 auto !important;
+      white-space:nowrap !important;
+      margin:0 !important;
+    }
+
+    #c360App .c3-hero-actions .c3-btn{
+      min-height:36px !important;
+      padding:7px 12px !important;
+    }
+
+    /* ---------- SIX KPI CARDS: EXACTLY ONE ROW ---------- */
+    #c360App .c3-hero-kpis{
+      display:grid !important;
+      grid-template-columns:repeat(6,minmax(0,1fr)) !important;
+      grid-auto-flow:column !important;
+      grid-auto-columns:minmax(0,1fr) !important;
+
+      width:100% !important;
+      min-width:0 !important;
+      gap:0 !important;
+      margin:0 !important;
+      padding:0 !important;
+
+      overflow:visible !important;
+    }
+
+    #c360App .c3-hero-kpis > .c3-hk{
+      min-width:0 !important;
+      width:auto !important;
+      min-height:105px !important;
+      height:auto !important;
+
+      padding:11px 14px !important;
+      margin:0 !important;
+
+      display:flex !important;
+      flex-direction:column !important;
+      justify-content:center !important;
+      align-items:flex-start !important;
+
+      border-radius:0 !important;
+      box-sizing:border-box !important;
+    }
+
+    #c360App .c3-hero-kpis > .c3-hk small{
+      display:block !important;
+      width:100% !important;
+      margin:0 0 5px !important;
+
+      font-size:11px !important;
+      line-height:1.2 !important;
+      white-space:nowrap !important;
+      overflow:hidden !important;
+      text-overflow:ellipsis !important;
+    }
+
+    #c360App .c3-hero-kpis > .c3-hk b{
+      display:block !important;
+      width:100% !important;
+      margin:0 0 5px !important;
+
+      font-size:23px !important;
+      line-height:1.05 !important;
+      white-space:nowrap !important;
+      overflow:hidden !important;
+      text-overflow:ellipsis !important;
+    }
+
+    #c360App .c3-hero-kpis > .c3-hk .c3-hk-sm{
+      font-size:18px !important;
+    }
+
+    #c360App .c3-hero-kpis > .c3-hk em{
+      display:block !important;
+      width:100% !important;
+      margin:0 !important;
+
+      font-size:10.5px !important;
+      line-height:1.2 !important;
+      white-space:nowrap !important;
+      overflow:hidden !important;
+      text-overflow:ellipsis !important;
+    }
+
+    #c360App .c3-hero-kpis .c3-meter{
+      width:100% !important;
+      max-width:120px !important;
+      margin:1px 0 5px !important;
+    }
+
+    /* ---------- TABS: COMPACT, NO WASTED HEIGHT ---------- */
+    #c360App .c3-tabs{
+      min-height:43px !important;
+      padding-top:0 !important;
+      padding-bottom:0 !important;
+      margin:0 !important;
+    }
+
+    #c360App .c3-tabs > *{
+      white-space:nowrap !important;
+    }
+
+    /* ---------- LARGE DESKTOP ---------- */
+    @media (min-width:1400px){
+      #c360App .c3-hero-main{
+        grid-template-columns:82px minmax(0,1fr) auto !important;
+      }
+
+      #c360App .c3-hero-id h2{
+        font-size:27px !important;
+      }
+
+      #c360App .c3-hero-meta{
+        overflow-x:hidden !important;
+      }
+    }
+
+    /* ---------- MEDIUM DESKTOP / LAPTOP ---------- */
+    @media (max-width:1399px) and (min-width:1051px){
+      #c360App .c3-hero-main{
+        grid-template-columns:76px minmax(0,1fr) auto !important;
+        column-gap:10px !important;
+        padding:10px 12px !important;
+      }
+
+      #c360App .c3-hero-actions{
+        gap:5px !important;
+      }
+
+      #c360App .c3-hero-actions .c3-btn{
+        padding:6px 9px !important;
+        font-size:11px !important;
+      }
+
+      #c360App .c3-hero-kpis > .c3-hk{
+        padding:9px 10px !important;
+      }
+
+      #c360App .c3-hero-kpis > .c3-hk b{
+        font-size:20px !important;
+      }
+    }
+
+    /* ---------- SMALLER SCREENS ----------
+       Allow sensible wrapping only when there is genuinely not enough width. */
+    @media (max-width:1050px){
+      #c360App .c3-hero-main{
+        grid-template-columns:auto minmax(0,1fr) !important;
+        grid-template-areas:
+          "avatar identity"
+          "actions actions" !important;
+        row-gap:9px !important;
+      }
+
+      #c360App .c3-avatar{ grid-area:avatar !important; }
+      #c360App .c3-hero-id{ grid-area:identity !important; }
+      #c360App .c3-hero-actions{
+        grid-area:actions !important;
+        justify-content:flex-start !important;
+        width:100% !important;
+        min-width:0 !important;
+        overflow-x:auto !important;
+      }
+
+      #c360App .c3-hero-kpis{
+        grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+        grid-auto-flow:row !important;
+      }
+    }
+
+    @media (max-width:680px){
+      #c360App .c3-hero-kpis{
+        grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+      }
+    }
+  
+
+    /* Make the suggestion panel wide enough for a real one-line result. */
+    #c360App .c3-search{
+      overflow:visible !important;
+    }
+
+    #c360App .c3-search .c3-lookup{
+      left:0 !important;
+      right:auto !important;
+      width:min(860px, calc(100vw - 80px)) !important;
+      min-width:720px !important;
+      max-width:860px !important;
+      box-sizing:border-box !important;
+      overflow:hidden !important;
+    }
+
+    #c360App .c3-look-h{
+      padding:10px 14px !important;
+      min-height:38px !important;
+      display:flex !important;
+      align-items:center !important;
+      white-space:nowrap !important;
+    }
+
+    /* ONE CLIENT = ONE HORIZONTAL ROW */
+    #c360App .c3-look-item{
+      display:flex !important;
+      flex-direction:row !important;
+      flex-wrap:nowrap !important;
+      align-items:center !important;
+      gap:10px !important;
+
+      width:100% !important;
+      min-width:0 !important;
+      min-height:58px !important;
+      padding:10px 12px !important;
+      margin:0 !important;
+
+      box-sizing:border-box !important;
+      background:#fff !important;
+      border:0 !important;
+      border-bottom:1px solid #EDF2EE !important;
+    }
+
+    #c360App .c3-look-item:last-child{
+      border-bottom:0 !important;
+    }
+
+    #c360App .c3-look-item > .c3-g{
+      flex:0 0 34px !important;
+      width:34px !important;
+      height:34px !important;
+      min-width:34px !important;
+      min-height:34px !important;
+
+      display:flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+
+      margin:0 !important;
+      border-radius:50% !important;
+      background:#F2F7F3 !important;
+      font-size:18px !important;
+      line-height:1 !important;
+    }
+
+    /* Name + phone + branch stay on the SAME line. */
+    #c360App .c3-look-main{
+      flex:1 1 auto !important;
+      min-width:0 !important;
+      width:auto !important;
+
+      display:flex !important;
+      flex-direction:row !important;
+      flex-wrap:nowrap !important;
+      align-items:center !important;
+      gap:8px !important;
+
+      overflow:hidden !important;
+      margin:0 !important;
+    }
+
+    #c360App .c3-look-main > b{
+      flex:0 1 190px !important;
+      min-width:110px !important;
+      max-width:190px !important;
+
+      display:block !important;
+      margin:0 !important;
+
+      color:#174A2B !important;
+      font-size:13px !important;
+      font-weight:800 !important;
+      line-height:1.2 !important;
+
+      white-space:nowrap !important;
+      overflow:hidden !important;
+      text-overflow:ellipsis !important;
+    }
+
+    #c360App .c3-look-meta{
+      flex:1 1 auto !important;
+      min-width:0 !important;
+
+      display:flex !important;
+      flex-direction:row !important;
+      flex-wrap:nowrap !important;
+      align-items:center !important;
+      gap:7px !important;
+
+      margin:0 !important;
+      overflow:hidden !important;
+      white-space:nowrap !important;
+    }
+
+    #c360App .c3-look-meta > .c3-phone,
+    #c360App .c3-look-meta > .c3-chip{
+      flex:0 0 auto !important;
+      display:inline-flex !important;
+      align-items:center !important;
+
+      min-height:30px !important;
+      max-width:210px !important;
+      padding:5px 9px !important;
+      margin:0 !important;
+
+      border:1px solid #D6DFC6 !important;
+      border-radius:8px !important;
+      background:#F8F7EA !important;
+
+      color:#4E5D52 !important;
+      font-size:11.5px !important;
+      font-weight:700 !important;
+      line-height:1.15 !important;
+
+      white-space:nowrap !important;
+      overflow:hidden !important;
+      text-overflow:ellipsis !important;
+      box-sizing:border-box !important;
+    }
+
+    /* IMPORTANT:
+       The previous lookup CSS accidentally made BOTH masked and full numbers
+       visible because it matched every class containing "phone".
+       Restore the intended behavior here. */
+    #c360App .c3-look-meta .c3-phone .c3-phone-m{
+      display:inline !important;
+    }
+
+    #c360App .c3-look-meta .c3-phone .c3-phone-f{
+      display:none !important;
+    }
+
+    #c360App .c3-look-meta .c3-phone:hover .c3-phone-m,
+    #c360App .c3-look-meta .c3-phone:focus .c3-phone-m,
+    #c360App .c3-look-meta .c3-phone:focus-within .c3-phone-m{
+      display:none !important;
+    }
+
+    #c360App .c3-look-meta .c3-phone:hover .c3-phone-f,
+    #c360App .c3-look-meta .c3-phone:focus .c3-phone-f,
+    #c360App .c3-look-meta .c3-phone:focus-within .c3-phone-f{
+      display:inline !important;
+    }
+
+    /* Buttons stay at the right in the SAME line. */
+    #c360App .c3-look-act{
+      flex:0 0 auto !important;
+      min-width:max-content !important;
+
+      display:flex !important;
+      flex-direction:row !important;
+      flex-wrap:nowrap !important;
+      align-items:center !important;
+      gap:7px !important;
+
+      margin:0 0 0 auto !important;
+      white-space:nowrap !important;
+    }
+
+    #c360App .c3-look-act .c3-btn{
+      flex:0 0 auto !important;
+      min-height:32px !important;
+      padding:6px 11px !important;
+      margin:0 !important;
+
+      border-radius:8px !important;
+      font-size:11.5px !important;
+      font-weight:800 !important;
+      line-height:1.15 !important;
+      white-space:nowrap !important;
+    }
+
+    /*
+     * Only on genuinely narrow screens should the result stack.
+     * Desktop/laptop remains one row.
+     */
+    @media (max-width:760px){
+      #c360App .c3-search .c3-lookup{
+        width:calc(100vw - 32px) !important;
+        min-width:0 !important;
+        max-width:none !important;
+      }
+
+      #c360App .c3-look-item{
+        flex-wrap:wrap !important;
+      }
+
+      #c360App .c3-look-main{
+        flex:1 1 calc(100% - 44px) !important;
+        flex-wrap:wrap !important;
+      }
+
+      #c360App .c3-look-act{
+        margin-left:44px !important;
+      }
+    }
+  
+
+    #c360App .c3-hero-one-line-strip{
+      scrollbar-width:none !important;
+      -ms-overflow-style:none !important;
+    }
+
+    #c360App .c3-hero-one-line-strip::-webkit-scrollbar,
+    #c360App .c3-hero-meta::-webkit-scrollbar{
+      display:none !important;
+      width:0 !important;
+      height:0 !important;
+    }
+
+    #c360App .c3-hero-one-line-strip,
+    #c360App .c3-hero-meta{
+      overflow-x:hidden !important;
+      overflow-y:hidden !important;
+    }
+
+    #c360App .c3-hero-one-line-strip .c3-pill,
+    #c360App .c3-hero-one-line-strip .c3-chip,
+    #c360App .c3-hero-one-line-strip .c3-phone{
+      min-height:28px !important;
+      padding:4px 8px !important;
+      font-size:11px !important;
+      line-height:1.15 !important;
+      border-radius:7px !important;
+    }
+
+    #c360App .c3-hero-actions .c3-btn{
+      min-height:34px !important;
+      padding:6px 10px !important;
+      font-size:11.5px !important;
+    }
+
+    #c360App .c3-hero-actions .c3-close{
+      width:36px !important;
+      height:36px !important;
+      min-width:36px !important;
+    }
+
+    @media (max-width:1100px){
+      #c360App .c3-hero-main{
+        grid-template-columns:70px minmax(0,1fr) !important;
+        grid-template-rows:auto auto auto !important;
+      }
+
+      #c360App .c3-avatar{
+        grid-column:1 !important;
+        grid-row:1 / span 2 !important;
+      }
+
+      #c360App .c3-hero-id{
+        grid-column:2 !important;
+        grid-row:1 !important;
+      }
+
+      #c360App .c3-hero-actions{
+        grid-column:2 !important;
+        grid-row:2 !important;
+        justify-content:flex-start !important;
+        overflow:hidden !important;
+      }
+
+      #c360App .c3-hero-one-line-strip{
+        grid-column:1 / 3 !important;
+        grid-row:3 !important;
+      }
+    }
+  
+#c360App #c3Hero{position:relative}#c360App #c3Hero .c3-hero-main{grid-template-columns:64px minmax(0,1fr) 370px!important;padding:10px 48px 10px 16px!important;gap:5px 14px!important}#c360App #c3Hero .c3-avatar{width:60px!important;height:84px!important;padding:2px!important;border-radius:9px!important;box-shadow:0 0 0 2px #f8e6af55,0 3px 9px #0003!important}#c360App #c3Hero .c3-avatar-in,#c360App #c3Hero .c3-avatar-in img{border-radius:6px!important}#c360App #c3Hero .c3-hero-id h2{font-size:24px!important;margin:2px 0!important;gap:7px!important}#c360App #c3Hero .c3-brandline{margin:0 0 2px!important}#c360App #c3Hero .c3-hero-actions{gap:4px!important}#c360App #c3Hero .c3-profile-status-grid{gap:5px;margin:0 0 3px}#c360App #c3Hero .c3-profile-status-grid>div{padding:4px 7px}#c360App #c3Hero .c3-profile-status-grid small{font-size:10px;margin:0}#c360App #c3ModalClose{z-index:5!important;background:#174b35!important;color:#fff!important;position:absolute!important;right:10px!important;top:9px!important;width:28px!important;height:28px!important;padding:0!important;margin:0!important}#c360App #c3Hero .c3-hero-meta .c3-chip{padding:2px 6px!important;font-size:11px!important}#c360App #c3Hero .c3-hero-meta .c3-chip,#c360App #c3Hero .c3-hero-meta .c3-chip *{color:#fff!important}#c360App #c3Tabs{display:flex!important;flex-wrap:wrap!important;gap:4px!important;padding:6px 12px!important;overflow:visible!important;justify-content:space-between!important}#c360App #c3Tabs [data-tab]{flex:1 1 auto!important;text-align:center!important;justify-content:center!important;margin:0!important;padding:8px 7px!important;min-width:0!important;font-size:12px!important}#c360App .c3-conversion-row{display:grid;grid-template-columns:1.2fr 1.5fr 1fr auto;gap:12px;align-items:center;border:1px solid #cfb775;border-radius:8px;padding:12px;background:#fffdf5;margin-bottom:8px;color:#164730;text-decoration:none}#c360App .c3-conversion-row small{display:block;color:#647764;margin-top:4px}#c360App .c3-approval-frame{width:100%;height:70vh;border:1px solid #cbb579;border-radius:8px;background:#fff} @media(max-width:900px){#c360App #c3Hero .c3-hero-main{grid-template-columns:60px minmax(0,1fr)!important}#c360App #c3Hero .c3-hero-actions{grid-column:2!important;grid-row:auto!important}#c360App #c3Hero .c3-hero-one-line-strip{grid-column:1/-1!important;grid-row:auto!important}#c360App .c3-conversion-row{grid-template-columns:1fr 1fr}}
+
+#c360App #c3Hero{position:relative;background:linear-gradient(112deg,#0b3024 0%,#204a36 65%,#2d523b 100%)}
+#c360App #c3Hero .c3-profile-titlebar{position:relative;display:flex;align-items:center;justify-content:center;min-height:30px;padding:4px 48px;box-sizing:border-box;border-bottom:1px solid #d7bc701f}
+#c360App #c3Hero .c3-brandline.c3-profile-title{position:static!important;transform:none!important;display:block!important;width:auto!important;margin:0!important;color:#e6ca7f!important;font-size:12px!important;font-weight:750!important;line-height:20px!important;letter-spacing:1.5px!important;text-align:center!important}
+#c360App #c3Hero .c3-hero-main{position:relative!important;display:grid!important;grid-template-columns:72px minmax(0,1fr) 330px!important;grid-template-rows:auto!important;grid-template-areas:none!important;align-items:center!important;gap:12px 18px!important;padding:10px 20px 12px!important;height:auto!important;min-height:0!important;box-sizing:border-box!important;overflow:visible!important}
+#c360App #c3Hero .c3-avatar{grid-area:auto!important;grid-column:1!important;grid-row:1!important;position:relative!important;align-self:center!important;width:72px!important;height:100.8px!important;min-width:72px!important;padding:0!important;margin:0!important;border:1px solid #d9bd72!important;border-radius:9px!important;background:#edf0df!important;box-shadow:0 4px 12px #001e1926!important;box-sizing:border-box!important;overflow:visible!important;cursor:default!important}
+#c360App #c3Hero .c3-avatar::before,#c360App #c3Hero .c3-avatar::after{display:none!important}
+#c360App #c3Hero .c3-avatar-in{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:100%!important;border:0!important;padding:0!important;border-radius:8px!important;box-shadow:none!important;overflow:hidden!important}
+#c360App #c3Hero .c3-avatar-in img{width:100%!important;height:100%!important;object-fit:cover!important;border-radius:8px!important}
+#c360App #c3Hero .c3-avatar-in:has(img)>span{display:none!important}
+#c360App #c3Hero .c3-avatar-add,#c360App #c3Hero #c3AddProfilePhoto{display:none!important}
+#c360App #c3Hero .c3-hero-id{grid-area:auto!important;grid-column:2!important;grid-row:1!important;min-width:0!important;width:auto!important;padding:0!important;align-self:center!important}
+#c360App #c3Hero .c3-hero-id h2{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:8px!important;margin:0 0 12px!important;color:#fffdf3!important;font-size:25px!important;line-height:1.25!important;white-space:normal!important;overflow:visible!important}
+#c360App #c3Hero .c3-person-demographic{font-size:14px!important;color:#e6d69e!important}
+#c360App #c3Hero .c3-hero-meta{display:flex!important;flex-wrap:wrap!important;align-items:center!important;width:auto!important;max-width:100%!important;min-width:0!important;gap:6px!important;margin:0!important;padding:0!important;overflow:visible!important}
+#c360App #c3Hero .c3-hero-meta>.c3-chip,#c360App #c3Hero .c3-hero-meta>.c3-phone{display:inline-flex!important;align-items:center!important;gap:4px!important;min-height:26px!important;padding:4px 7px!important;box-sizing:border-box!important;font-size:10.5px!important;line-height:1.3!important;color:#f9f4e3!important;background:#ffffff0d!important;border:1px solid #d2bd772e!important;border-radius:5px!important;white-space:normal!important;max-width:100%!important;overflow-wrap:anywhere!important}
+#c360App #c3Hero .c3-hero-actions{grid-area:auto!important;grid-column:3!important;grid-row:1!important;display:flex!important;flex-wrap:wrap!important;align-items:center!important;justify-content:flex-end!important;align-self:center!important;gap:9px 6px!important;min-width:0!important;width:100%!important;padding:0!important;margin:0!important;overflow:visible!important}
+#c360App #c3Hero .c3-hero-actions>.c3-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:30px!important;padding:6px 9px!important;font-size:10.5px!important;line-height:1.3!important;border-radius:6px!important;white-space:nowrap!important;background:#fff9e9!important;color:#214a34!important;border:1px solid #d7bf78!important}
+#c360App #c3Hero .c3-profile-status-grid{display:flex!important;flex-wrap:nowrap!important;justify-content:flex-end!important;gap:5px!important;margin:0!important;flex-basis:100%!important;width:100%!important;white-space:nowrap!important}
+#c360App #c3Hero .c3-profile-status-grid>div{display:inline-flex!important;align-items:center!important;gap:4px!important;padding:4px 7px!important;background:#f8f5e8!important;border:1px solid #d2b97180!important;border-radius:5px!important}
+#c360App #c3Hero .c3-profile-status-grid small{display:inline!important;font-size:9px!important;margin:0!important}
+#c360App #c3Hero .c3-profile-status-grid b{font-size:10px!important;line-height:1.3!important}
+#c360App #c3Hero #c3ModalClose{position:absolute!important;top:3px!important;right:10px!important;width:24px!important;height:24px!important;min-width:24px!important;padding:0!important;border:1px solid #dfcc9259!important;background:#ffffff09!important;color:#f9f1d7!important;line-height:22px!important;font-size:13px!important}
+#c360App #c3Hero .c3-photo-options{position:absolute;top:3px;right:3px;z-index:20}
+#c360App #c3Hero .c3-photo-options>summary{display:flex;align-items:center;justify-content:center;width:20px;height:20px;list-style:none;border-radius:5px;border:1px solid #d8c383;background:#fff9e8f5;color:#254735;cursor:pointer;font-size:19px;line-height:1;box-shadow:0 1px 4px #123b2533}
+#c360App #c3Hero .c3-photo-options>summary::-webkit-details-marker{display:none}
+#c360App #c3Hero .c3-photo-options>summary:focus-visible{outline:2px solid #ebc86a;outline-offset:2px}
+#c360App #c3Hero .c3-photo-menu{position:absolute;top:25px;left:0;min-width:145px;padding:5px;background:#fffdf5;border:1px solid #ccb774;border-radius:7px;box-shadow:0 8px 24px #08261d40}
+#c360App #c3Hero .c3-photo-menu button{display:block;width:100%;border:0;border-radius:4px;background:transparent;color:#173f2d;text-align:left;padding:8px 10px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+#c360App #c3Hero .c3-photo-menu button:hover,#c360App #c3Hero .c3-photo-menu button:focus-visible{background:#eee9d3}
+#c360App #c3Hero .c3-hero-kpis{position:relative;margin:0!important;clear:both;border-top:1px solid #d2bd77!important;display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;grid-auto-flow:row!important}
+#c360App #c3Hero .c3-hero-kpis>.c3-hk{min-height:94px!important;padding:11px 13px!important}
+@media(max-width:1050px){#c360App #c3Hero .c3-hero-main{grid-template-columns:72px minmax(0,1fr)!important;grid-template-rows:auto!important;gap:12px 16px!important}#c360App #c3Hero .c3-hero-actions{grid-column:2!important;grid-row:2!important;justify-content:flex-start!important}#c360App #c3Hero .c3-profile-status-grid{flex-basis:100%!important;justify-content:flex-start!important}#c360App #c3Hero .c3-avatar{align-self:start!important}#c360App #c3Hero .c3-hero-kpis{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+@media(max-width:600px){#c360App #c3Hero .c3-hero-main{padding:12px!important;gap:12px!important}#c360App #c3Hero .c3-hero-id h2{font-size:21px!important;margin-bottom:9px!important}#c360App #c3Hero .c3-hero-actions{grid-column:1/-1!important;justify-content:flex-start!important}#c360App #c3Hero .c3-hero-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+#c360App .c3-conversion-signature{display:block;max-width:120px;height:32px;object-fit:contain;object-position:left center;background:#fff;border:1px solid #eee9d9;border-radius:3px}
+#c360App .c3-conversion-summary{display:block;width:100%;box-sizing:border-box;border:1px solid #cfb775;border-radius:8px;padding:12px 14px;background:#fffdf5;margin:0 0 10px;color:#164730}
+#c360App .c3-conversion-summary>header{display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;border-bottom:1px solid #d5c796;padding-bottom:7px;margin-bottom:8px;font-size:12px}
+#c360App .c3-conversion-summary>header strong{margin-left:auto}
+#c360App .c3-conversion-fields{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:11px;line-height:1.45}
+#c360App .c3-conversion-field{display:inline-flex;flex-direction:column;max-width:100%;overflow-wrap:anywhere;min-width:100px}
+#c360App .c3-conversion-field>small{color:#647764;font-size:10px}
+#c360App .c3-conversion-item{display:flex;flex-wrap:wrap;gap:6px 12px;margin:3px 0;padding:4px 0;border-top:1px solid #ddd7c5}
+
+/* Vue preview layout and photo viewer. */
+#c360App{width:100%;max-width:1780px;min-width:0}#c360App .client-info-preview-note{padding:10px 14px;background:#fff7dc;color:#55441b;border-radius:8px}#c360App .client-photo-preview{position:fixed;inset:0;z-index:1400;background:#000d;display:flex;align-items:center;justify-content:center;padding:30px}#c360App .client-photo-preview img{max-width:95%;max-height:90vh;object-fit:contain}#c360App .client-photo-preview button{position:absolute;right:20px;top:20px;background:white;border:0;border-radius:8px;padding:12px}#c360App .c3-lookup-item{display:flex;width:100%;gap:8px;padding:12px;border:0;background:white;text-align:left}#c360App .c3-lookup-item:hover{background:#eef6f0}#c360App .c3-bar-row{display:flex;justify-content:space-between;gap:12px;padding:6px 0}

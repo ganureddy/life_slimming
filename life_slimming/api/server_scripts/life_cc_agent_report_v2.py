@@ -21,7 +21,7 @@ def run(**kwargs):
         # A confirmed visit takes precedence over stale cancelled/no-show fields.
         if has_visit:
             return 'walkins'
-        if status == 'Cancelled' or visit_status == 'Cancelled':
+        if status == 'Cancelled':
             return 'cancelled'
         if not appointment_day:
             return 'unclassified'
@@ -282,7 +282,7 @@ def run(**kwargs):
                         visit_candidates.append({'date':str(patient.custom_joining_date),'source':'PD form and patient joining date','patient':patient})
                 visit_candidates = sorted(visit_candidates,key=lambda x:x['date'])
                 evidence = visit_candidates[0] if visit_candidates else None
-                legacy_visit = lead.custom_appointment_status in ['Visited','Visited Booked','Visited Not Booked'] or lead.custom_visit_status == 'Visited'
+                legacy_visit = lead.custom_appointment_status in ['Visited','Visited Booked','Visited Not Booked']
                 visit_date = evidence['date'] if evidence else appointment_day if legacy_visit else ''
                 patient = evidence['patient'] if evidence else linked[0] if len(linked) == 1 else None
                 row_invoices = [i for i in invoice_by_patient.get(patient.name,[]) if str(i.posting_date) == visit_date and not i.is_return] if patient else []

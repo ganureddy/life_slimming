@@ -1,7 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { request } from '../api/http';
-import { apiCredentials, apiUrl } from '../api/config';
 import { session } from '../lib/session';
 import Stores360NativePage from './Stores360NativePage.vue';
 import '../styles/stock-native.css';
@@ -464,8 +463,7 @@ function initRelease(row){selectedRelease.value=selectedRelease.value===row.name
 function setReleaseFiles(name,event){releaseFiles.value[name]=[...(event.target.files||[])].slice(0,3);}
 async function uploadPrivateFile(file,label){
   const form=new FormData();form.append('action','upload_file');form.append('payload',JSON.stringify({file_name:file.name,is_private:1}));form.append('file',file,file.name||'upload.bin');
-  const response=await fetch(apiUrl('/api/method/life_stock_fast_requests'),{method:'POST',credentials:apiCredentials(),headers:session.csrf_token?{'X-Frappe-CSRF-Token':session.csrf_token}:{},body:form});
-  const body=await response.json().catch(()=>({}));if(!response.ok||!body.message?.ok||!body.message?.file_url)throw new Error(body.message?.message||`Could not upload ${label}.`);return {file_url:body.message.file_url,label,slot_number:1};
+  const body=await request('life_stock_fast_requests',{formData:form,csrfToken:session.csrf_token});if(!body.message?.ok||!body.message?.file_url)throw new Error(body.message?.message||`Could not upload ${label}.`);return {file_url:body.message.file_url,label,slot_number:1};
 }
 async function releaseRequest(row){
   const draft=releaseDrafts.value[row.name]||{},files=releaseFiles.value[row.name]||[];

@@ -4,12 +4,12 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 const source = fs.readFileSync(path.join(__dirname, '../src/components/ConvoxPhone.vue'), 'utf8');
-function setup() {
+function setup(settingsValue = {callbacks_ready:true}) {
   let resolvePoll, polls = 0, scheduled = 0;
   const context = { convoxApi: { poll: () => { polls++; return new Promise(resolve => { resolvePoll = resolve; }); } }, setTimeout: () => ++scheduled };
   vm.createContext(context);
   vm.runInContext(`let sessionGeneration = 1, pollingGeneration = null, stopped = false, timer, cursor = '';
-    const settings = {value: {callbacks_ready: true}}, controller = {signal: null}, events = {value: []}, incoming = {value:null}, pollError = {value:''}, seen = new Set(), route = {name:'home'};
+    const settings = {value: ${JSON.stringify(settingsValue)}}, controller = {signal: null}, events = {value: []}, incoming = {value:null}, pollError = {value:''}, seen = new Set(), route = {name:'home'};
     ${source.slice(source.indexOf('async function pollEvents()'), source.indexOf('async function showPhone()'))}
     this.poll = pollEvents; this.switchUser = () => {sessionGeneration++}; this.eventCount = () => events.value.length;`, context);
   return { context, resolve: value => resolvePoll(value), stats: () => ({ polls, scheduled }) };
@@ -56,4 +56,12 @@ test('logout clears the phone and rejects an in-flight session response', async 
   assert.equal(context.state().events, 0);
   assert.equal(context.state().starting, false);
   await context.connect();
+});
+
+test('saved history polls even when callback ingestion is not configured', async () => {
+ const s = setup({history_ready:true,callbacks_ready:false});
+ const pending=s.context.poll();
+ assert.equal(s.stats().polls,1);
+ s.resolve({cursor:'next',events:[]}); await pending;
+ assert.equal(s.stats().scheduled,1);
 });

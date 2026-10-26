@@ -40,10 +40,10 @@ export function filterPriceRows(rows, query, offerOnly = false) {
   });
 }
 
-// The legacy price page uses the last applicable item rule and applies its
-// percentage, amount, then fixed rate in that order.
+// The price page selects the first enabled selling rule in query order,
+// applying percentage, amount, then fixed rate.
 export function legacyPageOffer(therapy, rules, today) {
-  const rule = [...rules].reverse().find(rule => rule.item_code === therapy.item_code && therapy.item_code && (!rule.valid_from || today >= rule.valid_from) && (!rule.valid_upto || today <= rule.valid_upto));
+  const rule = rules.find(rule => !Number(rule.disable) && Number(rule.selling) && (Number(rule.discount_percentage) || Number(rule.discount_amount) || Number(rule.rate)) && rule.item_code === therapy.item_code && therapy.item_code && (!rule.valid_from || today >= rule.valid_from) && (!rule.valid_upto || today <= rule.valid_upto));
   if (!rule) return null;
   const base = Number(therapy.rate || 0);
   const final = Number(rule.discount_percentage) ? base - base * Number(rule.discount_percentage) / 100 : Number(rule.discount_amount) ? base - Number(rule.discount_amount) : Number(rule.rate) ? Number(rule.rate) : base;

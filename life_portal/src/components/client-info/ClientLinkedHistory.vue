@@ -1,0 +1,21 @@
+<script setup>
+import {computed} from 'vue';
+import {CFG,d10,fdate} from '../../lib/client-info';
+import {linkedClientRecords,safeFileUrl} from '../../lib/client-profile-sections';
+import {useClientSectionData} from '../../composables/useClientSectionData';
+import ClientRecordCard from './ClientRecordCard.vue';
+import ClientFollowups from './ClientFollowups.vue';
+const props=defineProps({bundle:Object,metrics:Object,kind:String});
+const diet=computed(()=>props.kind==='diet');
+const followups=computed(()=>props.bundle.followups.filter(f=>diet.value?/diet|^DIE$/i.test(f.followup_type||'')||f.diet_chart:/complaint|concern|grievance|feedback/i.test(f.followup_type||'')||/complain/i.test(f.remarks||'')));
+const {data,loading,error,warnings,load}=useClientSectionData(()=>props.bundle,props.kind,async(reader,b)=>{
+ const result=await linkedClientRecords(reader,diet.value?CFG.DIET_DOCTYPES:CFG.CONCERN_DOCTYPES,b);const charts=[];
+ if(diet.value)for(const name of [...new Set(followups.value.map(f=>f.diet_chart).filter(Boolean))]){try{charts.push(await reader.doc('Diet',name));}catch(e){if(e.name==='AbortError')throw e;result.warnings.push('Diet '+name+': '+e.message);}}
+ return {...result,charts};
+});
+const records=computed(()=>data.value?.records||[]);
+const stats=computed(()=>{if(diet.value){const next=followups.value.map(f=>d10(f.next_followup_date)).filter(d=>d>=props.metrics.t).sort()[0];return [['🥗','Diet followups',followups.value.length],['🕒','Last diet call',followups.value[0]?fdate(followups.value[0].followup_date||followups.value[0].creation):'—'],['⏭️','Next diet call',next?fdate(next):'—'],['📄','Diet plans / charts',records.value.length]];}const open=records.value.filter(x=>!/closed|resolved|completed|done/i.test(x.row.status||x.row.workflow_state||'')).length;return [['🗣️','Tickets',records.value.length],['🔴','Open',open],['✅','Resolved',records.value.length-open],['📞','Related followups',followups.value.length]];});
+const attachments=chart=>(chart.document||[]).map(r=>safeFileUrl(r.files||r.file_url||r.attachment)).filter(Boolean);
+</script>
+<template><div class="c3-tab-body"><p v-if="loading" role="status">Loading {{diet?'diet charts':'concerns'}}…</p><p v-if="error" role="alert">{{error}} <button type="button" class="c3-btn" @click="load(true)">Retry</button></p><p v-for="w in warnings" :key="w" role="alert">{{w}}</p><button v-if="warnings.length" type="button" class="c3-btn" @click="load(true)">Retry unavailable sources</button><template v-if="data"><div v-if="!records.length&&!followups.length&&!data.charts.length" class="c3-center c3-empty"><div class="c3-state-ic">{{diet?'🥗':'🗣️'}}</div><h3>{{diet?'No diet followups':'No concerns or complaints'}}</h3><p>{{diet?'Diet charts and diet followups for this client will appear here.':'Complaints, concerns and grievance tickets for this client will appear here.'}}</p></div><template v-else><div class="c3-kpis"><div v-for="[icon,label,value] in stats" :key="label" class="c3-kpi"><span class="c3-kpi-ic">{{icon}}</span><div><small>{{label}}</small><b>{{value}}</b></div></div></div><template v-if="data.charts.length"><h4 class="c3-h4">Saved diet charts</h4><div class="c3-cards c3-c2"><article v-for="chart in data.charts" :key="chart.name" class="c3-card"><h4>{{chart.name1||chart.name}}</h4><details v-for="url in attachments(chart)" :key="url"><summary>View document</summary><object :data="url" class="client-diet-document"><a :href="url" target="_blank" rel="noopener">View document</a></object></details><p v-if="!attachments(chart).length">No attachment stored on this Diet record.</p></article></div></template><template v-if="records.length"><h4 class="c3-h4">{{diet?'📄 Diet plans':'🎫 Concern & complaint tickets'}}</h4><div class="c3-cards c3-c2"><ClientRecordCard v-for="r in records" :key="r.doctype+r.row.name" :record="r"/></div></template><template v-if="followups.length"><h4 class="c3-h4">{{diet?'📞 Diet followup history':'📞 Feedback & complaint followups'}}</h4><ClientFollowups :bundle="{...bundle,followups}" :metrics="{...metrics,openFu:metrics.openFu.filter(f=>followups.includes(f)),overdueFu:metrics.overdueFu.filter(f=>followups.includes(f))}"/></template></template></template></div></template>
+<style scoped>.client-diet-document{width:100%;height:60vh;border:1px solid #ddd}</style>

@@ -1,0 +1,513 @@
+{
+  "audited_at": "2026-10-23",
+  "excluded_modules": [
+    "leads",
+    "ccvisit"
+  ],
+  "excluded_web_pages": [
+    "cc-dashboard",
+    "cc-new-dash",
+    "cc-new-dashboard-bhuvan-oct2",
+    "call-center-new-report-bhuvan",
+    "branch-visit-report"
+  ],
+  "pages": [
+    {
+      "source": "accounts-command-center",
+      "target": "accounts-command-center",
+      "modules": [
+        "accounts"
+      ],
+      "portalModified": "2026-08-20 23:57:51.482100",
+      "erpModified": "2026-08-20 23:57:51.482100",
+      "erpNewer": false,
+      "changed": [
+        "html"
+      ]
+    },
+    {
+      "source": "appointment-shedular",
+      "target": "appointment-shedular",
+      "modules": [
+        "appt"
+      ],
+      "portalModified": "2026-10-09 17:10:18.338279",
+      "erpModified": "2026-10-21 03:15:36.579857",
+      "erpNewer": true,
+      "changed": [
+        "javascript"
+      ]
+    },
+    {
+      "source": "approvals-report",
+      "target": "approvals-report",
+      "modules": [
+        "approvals",
+        "approvalsreport"
+      ],
+      "portalModified": "2026-10-03 13:30:07.502255",
+      "erpModified": "2026-10-23 00:30:09.456859",
+      "erpNewer": true,
+      "changed": [
+        "html",
+        "javascript"
+      ]
+    },
+    {
+      "source": "asset-master",
+      "target": "asset-master",
+      "modules": [
+        "assets"
+      ],
+      "portalModified": "2026-09-28 14:59:18.451262",
+      "erpModified": "2026-09-28 14:59:18.451262",
+      "erpNewer": false,
+      "changed": [
+        "javascript"
+      ]
+    },
+    {
+      "source": "audit",
+      "target": "audit",
+      "modules": [
+        "audit"
+      ],
+      "portalModified": "2026-08-18 14:40:04.103719",
+      "erpModified": "2026-08-18 14:40:04.103719",
+      "erpNewer": false,
+      "changed": [
+        "html"
+      ]
+    },
+    {
+      "source": "b2b-testing",
+      "target": "b2b-testing",
+      "modules": [
+        "b2b"
+      ],
+      "portalModified": "2026-10-02 11:17:27.377758",
+      "erpModified": "2026-10-02 11:17:27.377758",
+      "erpNewer": false,
+      "changed": []
+    },
+    {
+      "source": "branch-command-center",
+      "target": "branch-command-center",
+      "modules": [
+        "bdash"
+      ],
+      "portalModified": "2026-10-12 16:02:40.354073",
+      "erpModified": "2026-10-17 02:40:06.293653",
+      "erpNewer": true,
+      "changed": [
+        "html",
+        "css",
+        "javascript"
+      ]
+    },
+    {
+      "source": "branch-expenditure-entry",
+      "target": "branch-expenditure-entry",
+      "modules": [
+        "bexp"
+      ],
+      "portalModified": "2026-09-26 19:24:56.495013",
+      "erpModified": "2026-09-26 19:24:56.495013",
+      "erpNewer": false,
+      "changed": [
+        "javascript"
+      ]
+    },
+    {
+      "source": "branch-home-target",
+      "target": "branch-home-target",
+      "modules": [
+        "conv"
+      ],
+      "portalModified": "2026-08-18 19:42:50.920730",
+      "erpModified": "2026-08-18 19:42:50.920730",
+      "erpNewer": false,
+      "changed": [
+        "javascript"
+      ]
+    },
+    {
+      "source": "client-info",
+      "target": "client-info",
+      "modules": [
+        "cliinfo"
+      ],
+      "portalModified": "2026-09-27 18:27:57.847460",
+      "erpModified": "2026-10-22 11:31:18.651001",
+      "erpNewer": true,
+      "changed": [
+        "html",
+        "css",
+        "javascript"
+      ]
+    },
+    {
+      "source": "client-weight-loss-info",
+      "target": "client-weight-loss-info",
+      "modules": [
+        "wlres"
+      ],
+      "portalModified": "2026-10-12 18:43:45.058975",
+      "erpModified": "2026-10-12 18:43:45.058975",
+      "erpNewer": false,
+      "changed": [
+        "javascript"
+      ]
+    },
+    {
+      "source": "cluster-head-dashboard",
+      "target": "cluster-head-dashboard",
+      "modules": [
+        "clusterhome"
+      ],
+      "portalModified": "2026-08-27 12:45:10.817449",
+      "erpModified": "2026-08-27 12:45:10.817449",
+      "erpNewer": false,
+      "changed": [
+        "javascript"
+      ]
+    },
+    {
+      "source": "contols-command",
+      "target": "contols-command",
+      "modules": [
+        "control"
+      ],
+      "portalModified": "2026-08-01 13:15:17.290029",
+      "erpModified": "2026-08-01 13:15:17.290029",
+      "erpNewer": false,
+      "changed": []
+    },
+    {
+      "source": "coo-dashboard",
+      "target": "coo-dashboard",
+      "modules": [
+        "execdash"
+      ],
+      "portalModified": "2026-08-16 10:57:42.630222",
+      "erpModified": "2026-08-16 10:57:42.630222",
+      "erpNewer": false,
+      "changed": [
+        "javascript"
+      ]
+    },
+    {
+      "source": "data-correction",
+      "target": "data-correction",
+      "modules": [
+        "data-correction"
+      ],
+      "portalModified": "2026-09-20 18:53:46.496723",
+      "erpModified": "2026-09-20 18:53:46.496723",
+      "erpNewer": false,
+      "changed": [
+        "html",
+        "css",
+        "javascript"
+      ]
+    },
+    {
+      "source": "employee-sale-master-data",
+      "target": "employee-sale-master-data",
+      "modules": [
+        "empsale"
+      ],
+      "portalModified": "2026-09-04 18:48:09.850544",
+      "erpModified": "2026-09-04 18:48:09.850544",
+      "erpNewer": false,
+      "changed": [
+        "javascript"
+      ]
+    },
+    {
+      "source": "enrollment-register-testing",
+      "target": "enrollment-register-testing",
+      "modules": [
+        "enrollment-register"
+      ],
+      "portalModified": "2026-09-28 11:03:40.233081",
+      "erpModified": "2026-09-28 11:03:40.233081",
+      "erpNewer": false,
+      "changed": [
+        "javascript"
+      ]
+    },
+    {
+      "source": "followup-master",
+      "target": "followup-master",
+      "modules": [
+        "followup"
+      ],
+      "portalModified": "2026-09-28 14:55:37.397921",
+      "erpModified": "2026-10-21 17:42:17.717560",
+      "erpNewer": true,
+      "changed": [
+        "css",
+        "javascript"
+      ]
+    },
+    {
+      "source": "glp-programme",
+      "target": "glp-programme",
+      "modules": [
+        "riseprog"
+      ],
+      "portalModified": "2026-09-01 12:13:05.827427",
+      "erpModified": "2026-09-01 12:13:05.827427",
+      "erpNewer": false,
+      "changed": [
+        "javascript"
+      ]
+    },
+    {
+      "source": "hrms-dashboard---copy",
+      "target": "hrms-dashboard-copy",
+      "modules": [
+        "employees",
+        "attend",
+        "payroll"
+      ],
+      "portalModified": "2026-09-13 15:54:09.292441",
+      "erpModified": "2026-10-15 14:19:24.773126",
+      "erpNewer": true,
+      "changed": [
+        "html",
+        "css"
+      ]
+    },
+    {
+      "source": "knowledge-centre",
+      "target": "knowledge-centre",
+      "modules": [
+        "hrpol",
+        "knowledge"
+      ],
+      "portalModified": "2026-09-26 19:26:44.171691",
+      "erpModified": "2026-09-26 19:26:44.171691",
+      "erpNewer": false,
+      "changed": []
+    },
+    {
+      "source": "life-audit-report",
+      "target": "life-audit-report",
+      "modules": [
+        "discountaudit"
+      ],
+      "portalModified": "2026-09-28 14:58:06.576708",
+      "erpModified": "2026-09-28 14:58:06.576708",
+      "erpNewer": false,
+      "changed": [
+        "html"
+      ]
+    },
+    {
+      "source": "life-master-report",
+      "target": "life-master-report",
+      "modules": [
+        "repmaster"
+      ],
+      "portalModified": "2026-08-12 15:48:08.178415",
+      "erpModified": "2026-08-12 15:48:08.178415",
+      "erpNewer": false,
+      "changed": [
+        "javascript"
+      ]
+    },
+    {
+      "source": "md-dashboard",
+      "target": "md-dashboard",
+      "modules": [
+        "mis"
+      ],
+      "portalModified": "2026-09-26 19:25:40.788081",
+      "erpModified": "2026-09-26 19:25:40.788081",
+      "erpNewer": false,
+      "changed": [
+        "html",
+        "javascript"
+      ]
+    },
+    {
+      "source": "new-client-registration",
+      "target": "new-client-registration",
+      "modules": [
+        "clireg"
+      ],
+      "portalModified": "2026-08-18 14:09:50.126561",
+      "erpModified": "2026-08-18 14:09:50.126561",
+      "erpNewer": false,
+      "changed": [
+        "html"
+      ]
+    },
+    {
+      "source": "operations-service-module",
+      "target": "operations-service-module",
+      "modules": [
+        "service"
+      ],
+      "portalModified": "2026-10-11 12:11:24.371904",
+      "erpModified": "2026-10-22 11:51:43.327578",
+      "erpNewer": true,
+      "changed": [
+        "html",
+        "css",
+        "javascript"
+      ]
+    },
+    {
+      "source": "package-conversion-c2c",
+      "target": "package-conversion-c2c",
+      "modules": [
+        "c2c"
+      ],
+      "portalModified": "2026-09-26 19:37:52.493427",
+      "erpModified": "2026-10-20 12:48:18.262540",
+      "erpNewer": true,
+      "changed": [
+        "javascript"
+      ]
+    },
+    {
+      "source": "package-conversion-for-p2p",
+      "target": "package-conversion-for-p2p",
+      "modules": [
+        "p2p"
+      ],
+      "portalModified": "2026-10-03 13:20:43.795084",
+      "erpModified": "2026-10-20 12:44:31.335697",
+      "erpNewer": true,
+      "changed": [
+        "javascript"
+      ]
+    },
+    {
+      "source": "payables-planner",
+      "target": "payables-planner",
+      "modules": [
+        "payables"
+      ],
+      "portalModified": "2026-08-18 19:30:14.767258",
+      "erpModified": "2026-08-18 19:30:14.767258",
+      "erpNewer": false,
+      "changed": []
+    },
+    {
+      "source": "pending-balances-updates",
+      "target": "pending-balances-updates",
+      "modules": [
+        "pendbal",
+        "receivables"
+      ],
+      "portalModified": "2026-09-18 00:15:57.994469",
+      "erpModified": "2026-09-18 00:15:57.994469",
+      "erpNewer": false,
+      "changed": [
+        "javascript"
+      ]
+    },
+    {
+      "source": "price-list",
+      "target": "price-list",
+      "modules": [
+        "pricelist"
+      ],
+      "portalModified": "2026-09-26 19:25:18.697344",
+      "erpModified": "2026-10-15 11:55:53.801642",
+      "erpNewer": true,
+      "changed": [
+        "javascript"
+      ]
+    },
+    {
+      "source": "sales-master-data",
+      "target": "sales-master-data",
+      "modules": [
+        "salemaster"
+      ],
+      "portalModified": "2026-08-18 17:44:48.747400",
+      "erpModified": "2026-08-18 17:44:48.747400",
+      "erpNewer": false,
+      "changed": [
+        "javascript"
+      ]
+    },
+    {
+      "source": "stock-dashboard",
+      "target": "stock-dashboard",
+      "modules": [
+        "stock"
+      ],
+      "portalModified": "2026-10-11 01:27:24.689694",
+      "erpModified": "2026-10-16 15:51:47.242574",
+      "erpNewer": true,
+      "changed": [
+        "html",
+        "javascript"
+      ]
+    },
+    {
+      "source": "stores-360",
+      "target": "stores-360",
+      "modules": [
+        "stores360"
+      ],
+      "portalModified": "2026-10-10 07:11:16.228701",
+      "erpModified": "2026-10-10 07:11:16.228701",
+      "erpNewer": false,
+      "changed": [
+        "javascript"
+      ]
+    },
+    {
+      "source": "task-management",
+      "target": "task-management",
+      "modules": [
+        "tasks"
+      ],
+      "portalModified": "2026-08-17 17:25:34.069904",
+      "erpModified": "2026-08-17 17:25:34.069904",
+      "erpNewer": false,
+      "changed": [
+        "javascript"
+      ]
+    },
+    {
+      "source": "unjoined-data",
+      "target": "unjoined-data",
+      "modules": [
+        "unjoined"
+      ],
+      "portalModified": "2026-10-13 12:35:17.628630",
+      "erpModified": "2026-10-13 12:35:17.628630",
+      "erpNewer": false,
+      "changed": [
+        "javascript"
+      ]
+    },
+    {
+      "source": "v",
+      "target": "v",
+      "modules": [
+        "documents"
+      ],
+      "portalModified": "2026-09-26 19:47:59.831357",
+      "erpModified": "2026-09-26 19:47:59.831357",
+      "erpNewer": false,
+      "changed": [
+        "javascript"
+      ]
+    }
+  ],
+  "billing": {
+    "name": "billing-v2",
+    "route": "billing-v2",
+    "title": "billing v2 LIVE",
+    "modified": "2026-10-21 03:10:49.051419"
+  }
+}

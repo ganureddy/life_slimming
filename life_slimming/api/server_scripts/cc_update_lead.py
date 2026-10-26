@@ -348,19 +348,7 @@ def run(**kwargs):
             }
 
 
-    # Non-manager users can update only their assigned leads.
-    if not can_edit_owner:
-        current_owner = frappe.db.get_value(
-            "Lead",
-            lead,
-            "lead_owner"
-        )
-
-        if current_owner != user:
-            frappe.throw(
-                "Not permitted: this lead is not assigned to you"
-            )
-
+    # Authorized portal roles may edit leads found through global search.
 
     # ------------------------------------------------------------
     # GET VALUES
@@ -497,6 +485,7 @@ def run(**kwargs):
         # Only Visited Booked is permanently locked.
         if (
             current_appointment_status == "Visited Booked"
+            and "Call Center Export" not in user_roles
             and requested_appointment_status != "Visited Booked"
         ):
             frappe.throw(

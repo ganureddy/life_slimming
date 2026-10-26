@@ -2,7 +2,9 @@
 const WebSocket = require('../node_modules/ws');
 const assert = require('node:assert/strict');
 (async()=>{
- const target=await(await fetch('http://127.0.0.1:9225/json/new?about:blank',{method:'PUT'})).json();
+ const endpoint=process.env.PORTAL_BROWSER_URL||'http://127.0.0.1:9230';
+ const previewBase=process.env.PORTAL_PREVIEW_URL||'http://127.0.0.1:5178';
+ const target=await(await fetch(endpoint+'/json/new?about:blank',{method:'PUT'})).json();
  const ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise(r=>ws.on('open',r));
  let id=0,fail=false,empty=false;const jobs=new Map(),errors=[],calls=[];
  const send=(method,params={})=>new Promise((resolve,reject)=>{jobs.set(++id,m=>m.error?reject(m.error):resolve(m.result));ws.send(JSON.stringify({id,method,params}));});
@@ -21,11 +23,11 @@ const assert = require('node:assert/strict');
  const wait=async expression=>{for(let i=0;i<100;i++){if(await evaluate(expression))return;await new Promise(r=>setTimeout(r,75));}throw Error('Timed out: '+expression+'\n'+await evaluate('document.body.innerText'));};
  const click=text=>evaluate(`Array.from(document.querySelectorAll('.billing-native button')).find(b=>(()=>{const c=b.cloneNode(true);c.querySelectorAll('.tab-icon,.billing-count').forEach(n=>n.remove());return c.textContent.trim();})()===${JSON.stringify(text)}).click()`);
  try{
-  await send('Page.enable');await send('Runtime.enable');await send('Fetch.enable',{patterns:[{urlPattern:'http://127.0.0.1:5175/api/*'}]});
+  await send('Page.enable');await send('Runtime.enable');await send('Fetch.enable',{patterns:[{urlPattern:previewBase+'/api/*'}]});
   for(const width of [1440,390]){
    calls.length=0;
    await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});
-   await send('Page.navigate',{url:'http://127.0.0.1:5175/life_portal/native/billing?view=collections'});
+   await send('Page.navigate',{url:previewBase+'/life_portal/native/billing?view=collections'});
    await wait("document.querySelectorAll('.billing-native tbody tr').length===1");
    assert.equal(calls.filter(c=>c.url.includes('lifescc_billing_bootstrap.run')).length,1);
    assert.equal(calls.filter(c=>c.url.includes('lifescc_billing_collections_report.run')).length,1);

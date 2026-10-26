@@ -13,7 +13,7 @@ const fs = require('node:fs');
  const wait=async expression=>{for(let i=0;i<150;i++){if(await evaluate(expression))return;await new Promise(r=>setTimeout(r,100));}throw Error('Timed out: '+expression);};
  const agents=Object.fromEntries(Array.from({length:13},(_,i)=>['agent'+i,'Agent '+i+' Long Name']));
  const rows=Array.from({length:13},(_,i)=>({name:'L'+i,lead_name:'Client '+i,lead_owner:'agent'+i,creation:'2026-10-11 09:00:00',modified:'2026-10-11 09:00:00',branch:'Banjara Hills',custom_appointment_date_and_time:'2026-10-11 12:00:00',custom_appointment_status:'Visited Booked',custom_visit_status:'Visited',custom_call_count:1,custom_last_call_time:'2026-10-11 09:01:00'}));
- rows.push({name:'waiting',lead_name:'Waiting Client',lead_owner:'agent0',creation:'2026-10-11 09:40:00',modified:'2026-10-11 09:40:00',custom_call_count:0,custom_last_call_time:null,custom_visit_status:'Follow up required'});
+ rows.push({name:'waiting',lead_name:'Waiting Client',lead_owner:'agent0',creation:'2026-10-11 09:40:00',modified:'2026-10-11 09:40:00',custom_call_count:0,custom_last_call_time:null,custom_visit_status:'Pending'});
  ws.on('message',async raw=>{
   const m=JSON.parse(raw);if(m.id){jobs.get(m.id)?.(m);jobs.delete(m.id);return;}
   if(m.method==='Runtime.exceptionThrown') errors.push(m.params.exceptionDetails.exception?.description||m.params.exceptionDetails.text);
@@ -35,12 +35,11 @@ const fs = require('node:fs');
   await send('Emulation.setDeviceMetricsOverride',{width:1920,height:1080,deviceScaleFactor:1,mobile:false});
   await send('Page.navigate',{url:'http://127.0.0.1:5178/life_portal/native/cc-live-tv'});
   await wait("document.querySelector('.waiting')?.textContent.includes('Waiting Client')");
-  assert.deepEqual(await evaluate("Array.from(document.querySelectorAll('.chip b')).map(el=>el.textContent)"),['14','13','13','13','13']);
+  assert.deepEqual(await evaluate("Array.from(document.querySelectorAll('.chip b')).map(el=>el.textContent)"),['14','13','13','13']);
   assert.equal(await evaluate("document.querySelector('.weekly-band').textContent.includes('8.75')"),true);
-  assert.equal(await evaluate("document.querySelectorAll('.chip')[4].textContent.includes('VISIT STATUS')"),true);
-  assert.equal(await evaluate("Array.from(document.querySelectorAll('.pod .ag .st')).every(el=>el.lastElementChild.textContent.includes('1VISIT STATUS'))"),true);
-  assert.equal(await evaluate("document.querySelector('.latest .visit-status').textContent"),'Visit Status: Follow up required');
-  assert.equal(await evaluate("document.querySelector('.waiting .visit-status').textContent"),'Visit Status: Follow up required');
+  assert.equal(await evaluate("document.body.innerText.includes('VISIT STATUS')"),false);
+  assert.equal(await evaluate("document.querySelector('.latest .visit-status').textContent"),'Appointment Status: Not set');
+  assert.equal(await evaluate("document.querySelector('.waiting .visit-status').textContent"),'Appointment Status: Not set');
   assert.equal(await evaluate("document.querySelector('footer a').getAttribute('href')"),'/life_portal/native/cc-dashboard');
   await evaluate("window.tvOffset=45000; window.OriginalDate=Date; window.Date=class extends OriginalDate { constructor(...args){super(...(args.length?args:[OriginalDate.now()+window.tvOffset]));} static now(){return OriginalDate.now()+window.tvOffset;} };");
   await wait("document.querySelectorAll('.rw').length===6");
@@ -51,7 +50,7 @@ const fs = require('node:fs');
   const shot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync('/tmp/cc-tv-v2.png',Buffer.from(shot.data,'base64'));
   called=true;
   await wait("!document.querySelector('.waiting')");
-  await wait("document.querySelectorAll('.chip b')[4]?.textContent==='12'");
+  assert.deepEqual(await evaluate("Array.from(document.querySelectorAll('.chip b')).map(el=>el.textContent)"),['14','13','13','13'],'retired status edits do not change totals');
   for(const [width,height] of [[1366,768],[3840,2160]]){
    await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});
    await new Promise(r=>setTimeout(r,150));

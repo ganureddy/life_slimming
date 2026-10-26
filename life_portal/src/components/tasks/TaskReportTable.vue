@@ -1,0 +1,10 @@
+<script setup>
+import {computed,ref,watch} from 'vue';
+const props=defineProps({rows:Array,columns:Array,pageSize:{type:Number,default:30},total:Boolean});const emit=defineEmits(['open']);
+const page=ref(1),sort=ref(''),direction=ref(1),value=(r,c)=>c.v?c.v(r):r[c.k];
+const ordered=computed(()=>{const c=props.columns.find(c=>c.k===sort.value);return c?props.rows.slice().sort((a,b)=>direction.value*(typeof value(a,c)==='number'&&typeof value(b,c)==='number'?value(a,c)-value(b,c):String(value(a,c)??'').localeCompare(String(value(b,c)??''),undefined,{numeric:true}))):props.rows;});
+const pages=computed(()=>Math.max(1,Math.ceil(ordered.value.length/props.pageSize))),visible=computed(()=>ordered.value.slice((page.value-1)*props.pageSize,page.value*props.pageSize));
+watch(()=>props.rows,()=>page.value=Math.min(page.value,pages.value));
+function order(c){if(sort.value===c.k)direction.value*=-1;else{sort.value=c.k;direction.value=1;}}
+</script>
+<template><div class="card"><div class="tw"><table class="tt"><colgroup><col v-for="c in columns" :key="c.k" :style="c.width?{width:c.width+'%'}:{}"></colgroup><thead><tr><th v-for="c in columns" :key="c.k" :data-sort="c.k" @click="order(c)">{{c.l}}{{sort===c.k?(direction>0?' ▲':' ▼'):''}}</th></tr></thead><tbody><tr v-for="row in visible" :key="row.id||row.name||row.user" :class="row.overdue?'od':''" :data-open="row.id" @click="emit('open',row)"><td v-for="c in columns" :key="c.k" :data-label="c.l"><slot name="cell" :row="row" :column="c" :value="value(row,c)">{{value(row,c)??'—'}}</slot></td></tr><tr v-if="!visible.length"><td :colspan="columns.length"><div class="empty"><b>No records match</b>Change filters to see other records.</div></td></tr></tbody></table></div><div class="pager"><span>{{ordered.length?(page-1)*pageSize+1:0}}–{{Math.min(page*pageSize,ordered.length)}} of {{ordered.length}}</span><button type="button" class="btn sm" :disabled="page<=1" @click="page--">‹ Prev</button><span>{{page}} / {{pages}}</span><button type="button" class="btn sm" :disabled="page>=pages" @click="page++">Next ›</button></div></div></template>
