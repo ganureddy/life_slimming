@@ -1,0 +1,22 @@
+{
+  "name": "new-mobile-login-testing-kavya",
+  "expected_modified": "2026-11-04 17:29:45.334556",
+  "changes": [
+    {
+      "old": "if(CCX.active&&(!j||!j.callId||j.callId===CCX.active.id))",
+      "new": "if(CCX.active&&j&&j.callId===CCX.active.id)"
+    },
+    {
+      "old": "end:ccxIso(new Date(n.start?+n.start+((+n.ring||0)+(+n.talk||0))*1000:now))",
+      "new": "end:ccxIso(new Date(+n.end||(n.start?+n.start+((+n.ring||0)+(+n.talk||0))*1000:now)))"
+    },
+    {
+      "old": "const hit=arr.filter(x=>String(x.number||'').replace(/\\D/g,'').slice(-10)===d).sort((x,y)=>(+y.start)-(+x.start))[0];",
+      "new": "const hit=arr.filter(x=>String(x.number||'').replace(/\\D/g,'').slice(-10)===d&&x.type==='Outgoing'&&(!x.callId||x.callId===a.id)&&Math.abs((+x.start)-a.t)<=5000).sort((x,y)=>Math.abs((+x.start)-a.t)-Math.abs((+y.start)-a.t))[0];"
+    },
+    {
+      "old": "end:ccxIso(new Date(+hit.start+((+hit.ring||0)+(+hit.talk||0))*1000))",
+      "new": "end:ccxIso(new Date(+hit.end||(+hit.start+((+hit.ring||0)+(+hit.talk||0))*1000)))"
+    }
+  ]
+}

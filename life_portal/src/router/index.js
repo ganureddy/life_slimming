@@ -154,6 +154,11 @@ export const routes = [
     meta: { title: "ConVox history", accessModule: "leads" },
   },
   {
+    path: "/cc-roster", name: "cc-roster",
+    component: () => import("../pages/CCRosterPage.vue"),
+    meta: { title: "CC ROASTER", accessModule: "leads" },
+  },
+  {
     path: "/cc-appointments", name: "cc-appointments",
     component: () => import("../pages/CCAppointmentsPage.vue"),
     meta: { title: "CC Appointments", accessModule: "leads" },
