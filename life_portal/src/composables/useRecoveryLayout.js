@@ -1,0 +1,17 @@
+import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue';
+const defaults=['pSchedule','pEmp','pCollection','pOverview','pFilter','pMain','pClean','pBr','pFlow'];
+export function useRecoveryLayout(){
+ const root=ref(null),order=ref([...defaults]),collapsed=ref(['pFlow']),hidden=ref([]),announcement=ref(''),printTarget=ref(''),active=ref('pSchedule');let observer,frame;
+ const key='pdr-premium-layout-v2:pending-balances';
+ function store(){try{localStorage.setItem(key,JSON.stringify({order:order.value,collapsed:collapsed.value}));}catch{}}
+ function reset(){order.value=[...defaults];collapsed.value=[];hidden.value=[];try{localStorage.removeItem(key);}catch{}announcement.value='Default order restored. All sections expanded.';}
+ function move(id,direction){const list=[...order.value],index=list.indexOf(id),other=index+(direction==='up'?-1:1);if(other<0||other>=list.length)return;[list[index],list[other]]=[list[other],list[index]];order.value=list;store();announcement.value=`Section moved ${direction}.`;}
+ function toggle(id){collapsed.value=collapsed.value.includes(id)?collapsed.value.filter(value=>value!==id):[...collapsed.value,id];store();}
+ async function jump(id){hidden.value=hidden.value.filter(value=>value!==id);collapsed.value=collapsed.value.filter(value=>value!==id);store();await nextTick();const section=root.value?.querySelector('#'+id);section?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});section?.focus({preventScroll:true});}
+ async function print(id){const wasCollapsed=collapsed.value.includes(id);collapsed.value=collapsed.value.filter(value=>value!==id);printTarget.value=id;await nextTick();try{window.print();}finally{printTarget.value='';if(wasCollapsed)collapsed.value=[...collapsed.value,id];}}
+ function click(event){const button=event.target.closest('button');if(!button)return;const data=button.dataset,id=button.closest('.panel')?.id;if('pdrReset'in data)reset();else if(data.pdrJump)jump(data.pdrJump);else if(data.pdrMove)move(id,data.pdrMove);else if('pdrCollapse'in data)toggle(id);else if(data.pdrExtra==='close'){hidden.value=[...hidden.value,id];announcement.value='Section closed. Restore from top navigation.';}else if(data.pdrExtra==='print')print(id);}
+ function onScroll(){if(frame)return;frame=requestAnimationFrame(()=>{frame=null;const threshold=(root.value?.querySelector('.pdr-hd')?.getBoundingClientRect().bottom||0)+25;let selected=order.value.find(id=>!hidden.value.includes(id));for(const id of order.value){const section=root.value?.querySelector('#'+id);if(section&&!section.hidden&&section.getBoundingClientRect().top<=threshold)selected=id;}active.value=selected;});}
+ onMounted(()=>{try{const saved=JSON.parse(localStorage.getItem(key)||'null');if(saved){order.value=[...new Set([...(Array.isArray(saved.order)?saved.order.filter(id=>defaults.includes(id)):[]),...defaults])];collapsed.value=Array.isArray(saved.collapsed)?saved.collapsed.filter(id=>defaults.includes(id)):[];}}catch{}const header=root.value?.querySelector('.pdr-hd');if(header){observer=new ResizeObserver(()=>root.value?.style.setProperty('--pdr-head-height',Math.ceil(header.getBoundingClientRect().height)+'px'));observer.observe(header);}window.addEventListener('scroll',onScroll,{passive:true});onScroll();});
+ onBeforeUnmount(()=>{observer?.disconnect();window.removeEventListener('scroll',onScroll);if(frame)cancelAnimationFrame(frame);});
+ return {root,order,collapsed,hidden,announcement,printTarget,active,click};
+}

@@ -204,8 +204,8 @@
 .cc-erp-root #ff-prog-pct{margin-left:auto;white-space:nowrap}
 @media(max-width:700px){.cc-erp-root .ff-progress-meta{align-items:flex-start}.cc-erp-root .ff-progress-identity,.cc-erp-root .ff-progress-actions{flex-basis:100%}}
 
-/* Keep the legacy date controls on one compact desktop row; allow touch scrolling on narrow screens. */
-.cc-erp-root #cc-quick-range.cc-rangebar{flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:thin;padding-bottom:8px!important}
+/* Wrap date controls so every preset remains visible at any window width. */
+.cc-erp-root #cc-quick-range.cc-rangebar{flex-wrap:wrap!important;overflow:visible!important;box-sizing:border-box;min-width:0;padding-bottom:8px!important}
 .cc-erp-root #cc-quick-range.cc-rangebar>strong{white-space:nowrap;flex:0 0 auto!important}
 .cc-erp-root #cc-quick-range.cc-rangebar>label{display:flex!important;flex-direction:row!important;align-items:center!important;gap:5px!important;white-space:nowrap;flex:0 0 auto!important}
 .cc-erp-root #cc-quick-range.cc-rangebar input[type=date]{width:110px!important;padding-left:7px!important;padding-right:4px!important}

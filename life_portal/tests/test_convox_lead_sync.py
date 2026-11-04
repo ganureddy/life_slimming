@@ -1,4 +1,5 @@
 """No site writes or calls: callback linking, summaries and search access."""
+import json
 import unittest
 from unittest.mock import Mock, patch
 
@@ -15,9 +16,12 @@ class LeadSyncTest(unittest.TestCase):
         self.db.sql.return_value = [frappe._dict(name='LEAD-1')]
         self.cache = Mock()
         self.cache.get_value.return_value = None
+        self.version = Mock()
+        self.make_version = Mock(return_value=self.version)
         self.event = frappe._dict(agent_id='AGENT1', call_reference='REF-1', mobile_number='+91 98765 43210', lead_id='VENDOR-1')
         for patcher in [patch.object(frappe, 'db', self.db), patch.object(frappe, 'cache', self.cache),
-                        patch.object(frappe, 'get_all', return_value=['agent@example.test'])]:
+                        patch.object(frappe, 'get_all', return_value=['agent@example.test']),
+                        patch.object(frappe, 'get_doc', self.make_version)]:
             patcher.start(); self.addCleanup(patcher.stop)
 
     def tearDown(self):
@@ -97,12 +101,63 @@ class LeadSyncTest(unittest.TestCase):
         sync.sync_disposition(event, 'LEAD-1', self.disposition_meta())
         self.db.set_value.assert_called_once_with('Lead', 'LEAD-1', {
             'status': 'Not interested', 'custom_cc_stage': 'LOST', 'custom_cc_sub_status': 'Not interested'})
+        audit = self.make_version.call_args.args[0]
+        self.assertEqual((audit['doctype'], audit['ref_doctype'], audit['docname']),
+                         ('Version', 'Lead', 'LEAD-1'))
+        self.assertEqual(audit['owner'], 'agent@example.test')
+        data = json.loads(audit['data'])
+        self.assertEqual(data['changed'], [
+            ['custom_cc_stage', None, 'LOST'],
+            ['custom_cc_sub_status', 'Very Positive', 'Not interested'],
+            ['status', None, 'Not interested'],
+        ])
+        self.assertEqual(data['convox_event'], 'EVENT-1')
+        self.assertEqual(data['source'], 'ConVox')
+        self.version.insert.assert_called_once_with(ignore_permissions=True)
 
     def test_recording_retry_does_not_undo_manual_edit(self):
         event = frappe._dict(name='EVENT-1', disposition='NR')
         self.db.get_value.return_value = frappe._dict(custom_convox_last_event='EVENT-1', custom_convox_disposition='NR', custom_cc_sub_status='Very Positive')
         sync.sync_disposition(event, 'LEAD-1', self.disposition_meta())
         self.db.set_value.assert_not_called()
+        self.make_version.assert_not_called()
+
+    def test_repeated_disposition_creates_only_one_history_entry(self):
+        event = frappe._dict(name='EVENT-1', agent_id='AGENT1', disposition='NR')
+        current = frappe._dict(status='Call Back', custom_cc_stage='FOLLOW-UP',
+                              custom_cc_sub_status='Callback: Scheduled')
+        self.db.get_value.return_value = current
+        self.db.set_value.side_effect = lambda doctype, name, values: current.update(values)
+        sync.sync_disposition(event, 'LEAD-1', self.disposition_meta())
+        sync.sync_disposition(event, 'LEAD-1', self.disposition_meta())
+        self.db.set_value.assert_called_once()
+        self.make_version.assert_called_once()
+        self.assertEqual(json.loads(self.make_version.call_args.args[0]['data'])['changed'], [
+            ['custom_cc_sub_status', 'Callback: Scheduled', 'No Response'],
+            ['status', 'Call Back', 'Not Response'],
+        ])
+
+    def test_unrecognized_disposition_creates_no_lead_history(self):
+        sync.sync_disposition(frappe._dict(disposition='CHANUNAVAIL'),
+                              'LEAD-1', self.disposition_meta())
+        self.db.set_value.assert_not_called()
+        self.make_version.assert_not_called()
+
+    def test_ambiguous_agent_creates_no_status_or_history_update(self):
+        self.db.get_value.return_value = frappe._dict(status='Call Back')
+        with patch.object(frappe, 'get_all', return_value=['one@example.test', 'two@example.test']):
+            sync.sync_disposition(frappe._dict(agent_id='AGENT1', disposition='NR'),
+                                  'LEAD-1', self.disposition_meta())
+        self.db.set_value.assert_not_called()
+        self.make_version.assert_not_called()
+
+    def test_history_failure_propagates_so_callback_transaction_can_roll_back(self):
+        self.db.get_value.return_value = frappe._dict(status='Call Back')
+        self.version.insert.side_effect = RuntimeError('History insert failed')
+        with self.assertRaisesRegex(RuntimeError, 'History insert failed'):
+            sync.sync_disposition(frappe._dict(agent_id='AGENT1', disposition='NR'),
+                                  'LEAD-1', self.disposition_meta())
+        self.db.commit.assert_not_called()
 
     def test_locked_status_requires_call_center_export_agent(self):
         event = frappe._dict(name='EVENT-1', agent_id='AGENT1', disposition='Very Positive')
@@ -110,6 +165,7 @@ class LeadSyncTest(unittest.TestCase):
         with patch.object(frappe, 'get_roles', return_value=['Sales User']):
             sync.sync_disposition(event, 'LEAD-1', self.disposition_meta())
         self.db.set_value.assert_not_called()
+        self.make_version.assert_not_called()
         with patch.object(frappe, 'get_roles', return_value=['Call Center Export']):
             sync.sync_disposition(event, 'LEAD-1', self.disposition_meta())
         self.assertEqual(self.db.set_value.call_args.args[2]['status'], 'Interested')

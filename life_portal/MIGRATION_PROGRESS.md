@@ -85,9 +85,9 @@ Rows marked **Vue baseline checked** have source-style contracts and selected wo
 | Discount Audit Report | `discountaudit` | Reactive Vue; source styles and desktop/mobile workflows checked |
 | Appointments | `appt` | Reactive Vue; original grid/styles, booking/status/reschedule/history and desktop/mobile workflows checked |
 | Accounts Command Centre | `accounts` | Legacy active; dedicated component needed |
-| Pending Balances | `pendbal` | Legacy active; component/parity work remains |
+| Pending Balances | `pendbal` | Legacy active; original Vue layout/workflows restored in `/native/pending-balances`; desktop/mobile source-style and workflow fixtures pass; final parity review remains |
 | Payables | `payables` | Legacy active; component/parity work remains |
-| Receivables | `receivables` | Legacy active; component/parity work remains |
+| Receivables | `receivables` | Legacy active; same restored Vue component at `/native/receivables`, with its own module permission check |
 | Assets | `assets` | Legacy active; dedicated component needed |
 | Price-List | `pricelist` | Vue baseline checked |
 | Stock | `stock` | Legacy active; component/parity work remains |
