@@ -126,7 +126,7 @@ export function useClientInfo() {
     const owners=[...new Set([...bundle.plans,...bundle.invoices].map(row=>row.owner).filter(Boolean))];
     const tasks=[reader.pool(bundle.plans,plan=>reader.doc('Therapy Plan',plan.name)).then(docs=>{if(valid('profile-extra',controller)&&profile.value?.pid===id)profile.value={...profile.value,plans:bundle.plans.map((plan,index)=>({...plan,...docs[index]}))};}).catch(warn),
       owners.length?reader.list('User',[['name','in',owners]],['name','full_name'],200).then(users=>{if(valid('profile-extra',controller)&&profile.value?.pid===id)profile.value={...profile.value,users:Object.fromEntries(users.map(row=>[row.name,row.full_name]))};}).catch(warn):Promise.resolve(),
-      reader.list('Zero Session',[['patient','=',id],['status','=','Completed']],['name','patient','status','session_date','creation','modified'],25,'modified desc').then(async rows=>{for(const row of rows){const doc=await reader.doc('Zero Session',row.name);if(!valid('profile-extra',controller))return;if(doc?.client_photo){photo.value=doc.client_photo;return;}}}).catch(warn),
+      reader.list('Zero Session',[['patient','=',id],['status','=','Completed']],['name','client_photo'],25,'modified desc').then(rows=>{if(!valid('profile-extra',controller)||profile.value?.pid!==id)return;const latest=rows.find(row=>row.client_photo);if(latest)photo.value=latest.client_photo;}).catch(warn),
     ];
     await Promise.all(tasks);
   }

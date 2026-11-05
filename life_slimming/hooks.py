@@ -487,4 +487,5 @@ after_migrate = [
     "life_slimming.convox_lead_sync.install_fields",
     "life_slimming.api.cc_appointment_setup.execute",
     "life_slimming.api.data_correction_setup.execute",
+    "life_slimming.lead_performance.execute",
 ]

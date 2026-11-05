@@ -111,6 +111,10 @@ class DashboardBookingRules(unittest.TestCase):
 
 class StaffBranchRules(unittest.TestCase):
     def setUp(self):
+        attendance = patch.object(api, 'today_checkins', side_effect=lambda employees: {
+            employee: {'date': '2030-01-01', 'status': 'Unavailable'} for employee in employees})
+        attendance.start()
+        self.addCleanup(attendance.stop)
         self.employees = [frappe._dict(name='E1', employee_name='Manager A', designation='Manager', branch='Branch A', custom_branch_list='Branch C')]
         self.practitioners = [frappe._dict(name='P1', practitioner_name='Manager A', employee='E1', branch='Branch B', custom_available_all_branches=1)]
         def get_all(doctype, **kwargs):
@@ -161,6 +165,11 @@ class StaffBranchRules(unittest.TestCase):
 
 
 class DashboardAppointmentDetails(unittest.TestCase):
+    def setUp(self):
+        clock = patch.object(api, 'now_datetime', return_value=datetime(2030, 1, 1, 10))
+        clock.start()
+        self.addCleanup(clock.stop)
+
     def test_appointment_details_are_scoped_to_the_authorized_lead(self):
         rows = [frappe._dict(name='LEAD1', custom_appointment='APT1'),
                 frappe._dict(name='LEAD2', custom_appointment='APT1')]

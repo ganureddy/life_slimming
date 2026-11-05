@@ -50,6 +50,13 @@ class NativeReads(unittest.TestCase):
                 self.assertFalse(response['scoped_to_owner'])
                 self.assertEqual(response['rows'][0]['name'], 'LEAD-1')
 
+    def test_opened_lead_uses_exact_primary_key_without_search_scan(self):
+        query, response = self.read_leads(['Sales User'], query='LEAD-1', detail=1)
+        self.assertEqual(query.kwargs['filters'], [['name', '=', 'LEAD-1']])
+        self.assertEqual(query.kwargs['limit_page_length'], 1)
+        self.assertNotIn('or_filters', query.kwargs)
+        self.assertEqual(response['rows'][0]['name'], 'LEAD-1')
+
     def test_page_size_clamped(self):
         query, _ = self.read_leads(['Sales User'], page_size=100000, start=-1)
         self.assertEqual(query.kwargs['limit_page_length'], 500)

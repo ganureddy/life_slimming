@@ -1,13 +1,13 @@
 <script setup>
 import { routeLoading } from "./router";
-import { computed, onUnmounted, ref, watch } from "vue";
+import { computed, defineAsyncComponent, onUnmounted, ref, watch } from "vue";
 import { workspaceLoading, loadingDetail } from "./lib/loading";
 import { useRoute, useRouter } from "vue-router";
 import PortalLoader from "./components/PortalLoader.vue";
 import IdleSession from "./components/IdleSession.vue";
 import PortalLayout from "./layouts/PortalLayout.vue";
-import ConvoxPhone from "./components/ConvoxPhone.vue";
-import { session, loadSession, loginUrl } from "./lib/session";
+import { session, loadSession, loginUrl, visibleMenu } from "./lib/session";
+const ConvoxPhone = defineAsyncComponent(() => import("./components/ConvoxPhone.vue"));
 const idleExpired = ref(false);
 const busy = computed(() => routeLoading.value || workspaceLoading.value);
 const slow = ref(false);
@@ -20,6 +20,15 @@ watch(busy, (value) => {
 onUnmounted(() => clearTimeout(slowTimer));
 const route = useRoute();
 const router = useRouter();
+const phoneRequested = ref(false);
+watch(
+  () => !route.meta.public && visibleMenu.value.some(group => group.items.some(item => item.id === "leads")),
+  allowed => {
+    // Once loaded, retain the phone across routes and session refreshes.
+    if (allowed) phoneRequested.value = true;
+  },
+  { immediate: true },
+);
 watch(
   () => route.meta.public,
   async (isPublic) => {
@@ -39,7 +48,7 @@ watch(
 </script>
 
 <template>
-  <ConvoxPhone v-show="!route.meta.public && !idleExpired" />
+  <ConvoxPhone v-if="phoneRequested" v-show="!route.meta.public && !idleExpired" />
   <RouterView v-if="route.meta.public" />
   <div v-else-if="session.loading" class="startup" role="status">
     <PortalLoader />
