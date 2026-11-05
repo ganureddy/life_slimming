@@ -6,6 +6,8 @@ Performance work must preserve those behaviors.
 
 See [MIGRATION_PROGRESS.md](MIGRATION_PROGRESS.md) for the current page-by-page queue and the scope of the Task Manager conversion.
 
+27 October update: Pending Balances now uses the original nine-section layout and scoped source CSS, including collection details, client enrichment and section controls. Desktop/mobile checks compare computed styles directly with the original CSS. The complete migration is still under review; see [the resumed audit](../docs/vue-parity-audit-2026-10-26.md).
+
 ## Current evidence
 
 25 October update: Tasks, Employee Sale Master and Cluster Dashboard now use reactive Vue templates and composables, with their DOM controllers removed. See [verification and limits](../docs/vue-reactive-conversion-2026-10-25.md). Older evidence below describes the previous baseline.
@@ -49,8 +51,8 @@ Main routes that still use PortalSourcePage continue to show the original page.
 | StockDashboardNativePage | stock-dashboard | Compare all requests, item editing, receipt, release, attachment and approval dialogs; API/upload mapping repaired |
 | ServicePage | operations-service-module | Appointment/session/execution navigation and layout differ; duplicate requests, search load and initial metadata blocking repaired |
 | PayablesNativePage | payables-planner | Native layout differs; ledger, payment, forecast and approval parity remains; API mapping repaired |
-| PendingBalancesPage | pending-balances-updates | Native layout differs; client/branch/employee reports, aging filters and drilldowns remain |
-| BranchExpenditurePage | branch-expenditure-entry | Native layout differs; all selectors, attachments, drafts, approval and export behavior remain |
+| PendingBalancesPage | pending-balances-updates | Original nine-section layout/CSS restored; calendar, client appointment/phone enrichment, grouped summaries, register, reconciliation, layout controls, pagination and export tested at desktop/mobile. Role/live-data and exhaustive parity review remain; previews preserve separate Pending Balances/Receivables access checks |
+| BranchExpenditurePage | branch-expenditure-entry | Original layout, selectors, uploads, draft/history/export and journal/date amendment workflows restored and mocked at desktop/mobile. Live backend alias is absent from this checkout and remains unverified |
 | ApprovalsPage | approvals-report | Original report retained in an iframe; not a completed native conversion |
 | ControlPage | life-home portal access control | Distinct access-control function; contols-command is not its correct parity reference |
 | ConversionsPage | portal conversion cards | Preserve existing three conversion links and their original target pages |

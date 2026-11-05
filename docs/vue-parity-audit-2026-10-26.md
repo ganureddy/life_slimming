@@ -114,3 +114,19 @@ Verification after this batch:
 - Browser requests and uploads are intercepted; no live financial or client records were modified by these tests.
 
 Outstanding source dependency: Client Info's original Take Actions loads `client-info-Enrollment`, which is absent from this repository. Connected ERP retrieval returned a permission validation failure. The source/access request remains open; that embedded workflow cannot yet be reproduced or certified.
+
+## 27 October: resume from Pending Balances
+
+The requirement remains UI and functional parity with the checked-in legacy pages. This is a conversion, and a simplified replacement UI does not satisfy it.
+
+Replaced the simplified Pending Balances screen with the original nine-section HTML structure and source stylesheet. Vue components now own the collection calendar, register, branch/employee summaries, reconciliation and client details. Restored the pending collection search (four characters), invoice-linked patient phones, earliest upcoming non-cancelled appointment, masked reveal, original 16-column register, all-page totals, original pager/page jump, manager-value sorting, status labels, original export columns, section navigation, reorder/collapse/close/reset and individual printing. Layout state remains local; backend writes continue through the existing recovery endpoint. Pending Balances and Receivables have separate preview routes and retain their respective access-module checks. Main routes remain on legacy while the migration is still under review.
+
+Found portal shell rules overriding the source font sizes, heading/control/table fonts and panel padding. Module-scoped rules now restore the source defaults. Removed the unused simplified report component and stylesheet. Enrichment loads independently after invoices; permission failures clear stale appointments and expose the invoice phone fallback rather than claiming there is no appointment. Per-invoice updates serialize later edits, protect refresh while saving, and retain unsaved-navigation guards. Invalid amounts do not reach the backend.
+
+Verification:
+
+- Every original page CSS declaration is covered by a source-style contract, excluding the external Frappe navbar and allowing module scoping/font-size precedence.
+- Desktop (1440px) and mobile (390px) fixtures compare actual computed colors, typography, padding, borders, line heights, margins and alignment against original CSS in an isolated reference document. Dynamic markup is copied into reference placeholders for this CSS comparison; this is not an independent full pixel or functional oracle.
+- Browser fixtures pass appointment/alternative-phone enrichment, cancelled appointment exclusion, four-character search, masking/export, section controls, serialized writes, amount rejection, permission failure and original paging/totals over 32 invoices.
+- The backend still caps recovery responses at 1,500 invoices, as it does for the legacy page. Do not describe either report as exhaustive above that cap.
+- Full unit suite and production build are rerun after this batch. Tests use intercepted ERP requests, not live business writes. Other partial modules and the missing enrollment source remain open; this update does not certify all pages as identical.

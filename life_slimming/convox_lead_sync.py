@@ -1,5 +1,6 @@
 """Link ConVox events and synchronize explicit dispositions to portal leads."""
 import hashlib
+import json
 
 import frappe
 
@@ -135,14 +136,32 @@ def sync_disposition(event, lead, meta):
         "Walked In & Booked", "Do Not Contact", "Existing Client", "Not interested", "Invalid Number",
         "Wrong number", "Not in Service", "Other clinic", "Joined Competition", "Job enquiry",
         "Franchise Lead", "Junk/Wrong Call", "Not Enquired", "TNA", "NID"}
+    changes = [[field, current.get(field), value] for field, value in values.items()
+               if current.get(field) != value]
+    if not changes:
+        return
+    # resolve_lead already verifies this mapping. Recheck before attributing the
+    # audit entry, since callbacks execute as a service user, not the agent.
+    users = frappe.get_all("User", filters={"enabled": 1, "custom_convox_enabled": 1,
+        "custom_convox_agent_id": event.get("agent_id")}, pluck="name", limit_page_length=2)
+    if len(users) != 1:
+        return
     if protected:
-        users = frappe.get_all("User", filters={"enabled": 1, "custom_convox_enabled": 1,
-            "custom_convox_agent_id": event.get("agent_id")}, pluck="name", limit_page_length=2)
-        if len(users) != 1 or "Call Center Export" not in frappe.get_roles(users[0]):
+        if "Call Center Export" not in frappe.get_roles(users[0]):
             return
-    if any(current.get(field) != value for field, value in values.items()):
-        # Status edits invalidate stale portal forms, unlike telephony-only summaries.
-        frappe.db.set_value("Lead", lead, values)
+    # Keep the existing targeted update: a full Lead.save() would run unrelated
+    # Lead hooks. Both the status update and Version are in the locked callback
+    # transaction, so a failed audit insert must fail the callback as well.
+    frappe.db.set_value("Lead", lead, values)
+    frappe.get_doc({
+        "doctype": "Version", "ref_doctype": "Lead", "docname": lead,
+        "owner": users[0],
+        "data": json.dumps({
+            "changed": changes, "added": [], "removed": [], "row_changed": [],
+            "source": "ConVox", "convox_event": event.get("name"),
+            "convox_agent_id": event.get("agent_id"),
+        }),
+    }).insert(ignore_permissions=True)
 
 
 def sync_event(doc, method=None):

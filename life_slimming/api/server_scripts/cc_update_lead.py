@@ -559,6 +559,22 @@ def run(**kwargs):
             "skipped": skipped
         }
 
+    elif str(frappe.form_dict.get("validate_only") or "").strip().lower() in (
+        "1", "true", "yes", "on"
+    ):
+        # Run the same authorization, conflict, status and field checks above,
+        # but never invoke save hooks: they can write records or send messages.
+        frappe.response["message"] = {
+            "ok": 1,
+            "name": lead,
+            "changed": 0,
+            "validation_only": 1,
+            "would_change": len(clean),
+            "values": clean,
+            "modified": str(frappe.db.get_value("Lead", lead, "modified")),
+            "skipped": skipped
+        }
+
     else:
         lead_doc = frappe.get_doc("Lead", lead)
 

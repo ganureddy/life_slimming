@@ -55,6 +55,24 @@ function loaded() {
       style.textContent = ".cc-erp-root,.cc-erp-root .body-wrap,.cc-erp-root .main{min-width:0;max-width:100%}.cc-erp-root .sidebar{overflow-x:hidden!important}.cc-erp-root .sidebar .nav-item{min-width:0;white-space:normal;overflow-wrap:anywhere}@media(min-width:901px){.cc-erp-root .sidebar{position:fixed!important;top:var(--hdr-h)!important;left:0!important;height:calc(100dvh - var(--hdr-h))!important}.cc-erp-root .body-wrap{padding-left:var(--side-w)}.cc-erp-root .body-wrap:has(>.sidebar.collapsed){padding-left:0}}";
       doc.head.appendChild(style);
     }
+    if (route.name === 'leads' && doc && !doc.getElementById('life-cc-roster-link')) {
+      const sidebar = doc.getElementById('sidebar');
+      if (sidebar) {
+        const link = doc.createElement('a');
+        link.id = 'life-cc-roster-link';
+        link.className = 'nav-item';
+        link.href = '/life_portal/cc-roster';
+        link.style.textDecoration = 'none';
+        link.textContent = '▦  CC ROASTER';
+        link.addEventListener('click', event => {
+          event.preventDefault();
+          router.push({ name: 'cc-roster' });
+        });
+        const appointments = doc.getElementById('nav-appointment');
+        if (appointments) appointments.after(link);
+        else sidebar.appendChild(link);
+      }
+    }
   } catch { setLoading(false); return; }
   if (url?.pathname === "/life_portal/login") {
     window.location.assign(url.href);
