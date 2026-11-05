@@ -98,7 +98,8 @@ def get_context(context):
             ).hexdigest()[:16],
             "cc_asset_version": hashlib.sha256(
                 (root / "public/js/convox_cc_bridge.js").read_bytes() +
-                (root / "public/js/cc_notifications.js").read_bytes()
+                (root / "public/js/cc_notifications.js").read_bytes() +
+                (root / "public/js/cc_mobile_call_popup.js").read_bytes()
             ).hexdigest()[:16] if module == "leads" else "",
             "csrf_token": get_csrf_token(),
             "user": frappe.session.user,

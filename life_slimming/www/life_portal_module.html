@@ -31,5 +31,8 @@
 <script src="/assets/life_slimming/js/portal_hrms.js"></script>
 {% endif %}
 <script>{{ module_javascript }}</script>
+{% if module_config.module == "leads" %}
+<script src="/assets/life_slimming/js/cc_mobile_call_popup.js?v={{ module_config.cc_asset_version }}"></script>
+{% endif %}
 {% endblock %}
 {% block base_scripts %}{% endblock %}

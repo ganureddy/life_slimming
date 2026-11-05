@@ -35,8 +35,10 @@
   }
   const originalFetch = window.fetch.bind(window);
   window.fetch = async (input, options) => {
-    const done = isApi(input instanceof Request ? input.url : String(input)) ? begin() : () => {};
-    try { return await originalFetch(input, options); }
+    // Background call polling must never hold the initial dashboard loader.
+    const { lifePortalBackground = false, ...fetchOptions } = options || {};
+    const done = !lifePortalBackground && isApi(input instanceof Request ? input.url : String(input)) ? begin() : () => {};
+    try { return await originalFetch(input, fetchOptions); }
     finally { done(); }
   };
   const open = XMLHttpRequest.prototype.open;
