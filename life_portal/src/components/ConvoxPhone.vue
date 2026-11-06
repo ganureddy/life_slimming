@@ -103,6 +103,7 @@ let stopped = false, timer, cursor = '';
 const loggedOut = ref(false);
 let sessionGeneration = 0;
 let pollingGeneration = null;
+let pollFailures = 0;
 const dashboardCallPending = ref(false);
 const callRequests = createCallRequests();
 const seen = new Set();
@@ -154,13 +155,17 @@ async function pollEvents() {
     }
     while (seen.size > 500) seen.delete(seen.values().next().value);
     pollError.value = '';
+    pollFailures = 0;
   } catch (e) {
     if (e.name === 'AbortError' || stopped || generation !== sessionGeneration) return;
     pollError.value = 'Call updates are temporarily unavailable. Calling controls remain in the ConVox phone.';
     if ([401, 403].includes(e.status)) return;
+    pollFailures = Math.min(pollFailures + 1, 3);
   }
   finally { if (pollingGeneration === generation) pollingGeneration = null; }
-  if (!stopped && generation === sessionGeneration && (settings.value?.history_ready ?? settings.value?.callbacks_ready) && !timer) timer = setTimeout(pollEvents, pollError.value ? 15000 : 5000);
+  // Keep live call updates fast; ease request pressure during a sustained outage.
+  const delay = pollFailures ? 15000 * (2 ** (pollFailures - 1)) : 5000;
+  if (!stopped && generation === sessionGeneration && (settings.value?.history_ready ?? settings.value?.callbacks_ready) && !timer) timer = setTimeout(pollEvents, delay);
 }
 async function showPhone() {
   open.value = true;
@@ -312,6 +317,7 @@ const phoneIdentity = computed(previous => {
 });
 watch(phoneIdentity, async (user, _, onCleanup) => {
   sessionGeneration++;
+  pollFailures = 0;
   starting.value = false;
   let cancelled = false;
   onCleanup(() => { cancelled = true; });
@@ -335,6 +341,7 @@ watch(phoneIdentity, async (user, _, onCleanup) => {
 function portalLogout() {
   loggedOut.value = true;
   sessionGeneration++;
+  pollFailures = 0;
   starting.value = false;
   seen.clear();
   cursor = '';

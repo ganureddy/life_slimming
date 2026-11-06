@@ -45,8 +45,38 @@ class LeadSyncTest(unittest.TestCase):
         self.cache.get_value.return_value = 'LEAD-MANAGER-DIAL'
         self.db.get_value.return_value = frappe._dict(mobile_no='9876543210', phone='')
         self.assertEqual(sync.resolve_lead(self.event), 'LEAD-MANAGER-DIAL')
+        self.db.sql.assert_not_called()
         self.db.get_value.return_value = frappe._dict(mobile_no='9123456789', phone='')
         self.assertEqual(sync.resolve_lead(self.event), 'LEAD-1')
+
+    def test_batch_reuses_phone_search_and_agent_mapping(self):
+        lookups = {}
+        with patch.object(frappe, 'get_all', return_value=['agent@example.test']) as users:
+            for index in range(100):
+                event = frappe._dict(self.event, call_reference=f'REF-{index}')
+                self.assertEqual(sync.resolve_lead(event, lookups), 'LEAD-1')
+            users.assert_called_once()
+        self.db.sql.assert_called_once()
+        # A new request must see updated lead ownership/phone data.
+        self.db.sql.return_value = [frappe._dict(name='LEAD-2')]
+        self.assertEqual(sync.resolve_lead(self.event, {}), 'LEAD-2')
+
+    def test_batch_keeps_agent_and_phone_searches_separate(self):
+        lookups = {}
+        sync.resolve_lead(self.event, lookups)
+        with patch.object(frappe, 'get_all', return_value=['other@example.test']):
+            sync.resolve_lead(frappe._dict(self.event, agent_id='AGENT2'), lookups)
+        sync.resolve_lead(frappe._dict(self.event, mobile_number='9123456789'), lookups)
+        self.assertEqual(self.db.sql.call_count, 3)
+
+    def test_batch_caches_missing_and_ambiguous_matches(self):
+        for rows, expected_queries in [([], 2), ([frappe._dict(name='A'), frappe._dict(name='B')], 1)]:
+            self.db.sql.reset_mock()
+            self.db.sql.return_value = rows
+            lookups = {}
+            for _ in range(3):
+                self.assertIsNone(sync.resolve_lead(self.event, lookups))
+            self.assertEqual(self.db.sql.call_count, expected_queries)
 
     def test_unanswered_event_updates_summary_without_changing_sales_status(self):
         doc = Mock()

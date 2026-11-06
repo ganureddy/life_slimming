@@ -95,9 +95,15 @@ def run(**kwargs):
         if len(query) < 2:
             frappe.throw("Enter at least two characters")
         pattern = "%" + query.replace("%", "").replace("_", "") + "%"
-        rows = frappe.get_all("Lead", fields=LEAD_FIELDS, filters=[],
-            or_filters=[["lead_name", "like", pattern], ["name", "like", pattern], ["mobile_no", "like", pattern], ["phone", "like", pattern], ["custom_remarks", "like", pattern]],
-            order_by="modified desc", limit_start=int(frappe.form_dict.get("start") or 0), limit_page_length=21)
+        if frappe.form_dict.get("detail"):
+            # Opening an identified lead must use its primary key, not scan
+            # names, phone numbers and remarks for substring matches.
+            rows = frappe.get_all("Lead", fields=LEAD_FIELDS,
+                filters=[["name", "=", query]], limit_page_length=1)
+        else:
+            rows = frappe.get_all("Lead", fields=LEAD_FIELDS, filters=[],
+                or_filters=[["lead_name", "like", pattern], ["name", "like", pattern], ["mobile_no", "like", pattern], ["phone", "like", pattern], ["custom_remarks", "like", pattern]],
+                order_by="modified desc", limit_start=int(frappe.form_dict.get("start") or 0), limit_page_length=21)
         frappe.response["message"] = {"rows": rows[:20], "more": len(rows) > 20, "contact_manager": contact_manager, "scoped_to_owner": 0}
     elif phone:
         digits = ""

@@ -32,6 +32,16 @@ test('DOM readiness releases the loader without waiting for image or widget load
   await settle();
   assert.equal(messages.at(-1).busy,false);
 });
+test('slow mobile call polling does not hold the initial Leads loader', async () => {
+  const {context,messages,requests}=setup('leads');
+  const poll=context.fetch('/api/method/life_cc_mobile_v18', {lifePortalBackground:true});
+  const main=context.fetch('/api/method/cc_get_leads');
+  await settle();assert.equal(messages.at(-1).busy,true);
+  requests[1].resolve({});await main;
+  await settle();assert.equal(messages.at(-1).busy,false);
+  // The mobile poll is still pending when the main dashboard finishes loading.
+  requests[0].resolve({});await poll;
+});
 test('overlapping requests keep the main loader active through success and rejection', async () => {
   const {context,messages,requests}=setup();
   const first=context.fetch('/api/one');

@@ -49,3 +49,18 @@ test('medical data caches only complete successful responses and stays scoped to
 test('medical failures remain errors rather than cached empty records and permit retry',async()=>{
  let denied=true;const bundle={pid:'A',lazy:{}},harness=medicalHarness(bundle,async()=>{if(denied)throw Error('Permission denied');return[];});await flush();assert.equal(harness.state.error.value,'Permission denied');assert.equal(harness.state.data.value,null);assert.equal(bundle.lazy.medical,undefined);assert.equal(harness.state.loading.value,false);denied=false;await harness.state.load();assert.equal(harness.state.error.value,'');assert.equal(bundle.lazy.medical.enc.length,0);harness.cleanup();
 });
+
+test('profile photo enrichment reads photo fields without opening Zero Session documents',async()=>{
+ const source=fs.readFileSync(path.join(root,'src/composables/useClientInfo.js'),'utf8');
+ const code=source.slice(source.indexOf('  async function enrichProfile('),source.indexOf('  async function loadPayments('));
+ const reads=[],docs=[];
+ let resolvePhotos,valid=true;
+ const context={profile:{value:{pid:'A',plans:[],invoices:[]}},photo:{value:'/files/patient.png'},profileWarnings:{value:[]},
+   valid:()=>valid,newScope:()=>({controller:{},reader:{pool:async()=>[],doc:async(type,name)=>{docs.push({type,name});},list:async(type,filters,fields,limit,order)=>{reads.push({type,filters,fields,limit,order});return new Promise(resolve=>{resolvePhotos=resolve;});}}})};
+ vm.runInNewContext(code+'\nthis.enrich=enrichProfile;',context);
+ const pending=context.enrich('A');
+ assert.equal(reads.length,1);assert.equal(reads[0].type,'Zero Session');assert(reads[0].fields.includes('client_photo'));assert.equal(reads[0].order,'modified desc');
+ resolvePhotos([{name:'newest',client_photo:''},{name:'photo',client_photo:'/files/session.png'},{name:'older',client_photo:'/files/older.png'}]);
+ await pending;assert.equal(context.photo.value,'/files/session.png');assert.equal(docs.length,0);
+ const stale=context.enrich('A');valid=false;resolvePhotos([{client_photo:'/files/stale.png'}]);await stale;assert.equal(context.photo.value,'/files/session.png');
+});

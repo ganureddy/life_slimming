@@ -329,8 +329,9 @@ def poll(after=None):
     # on the final page catches transactions that committed during this request.
     cursor = (str(rows[-1].received_on) + "|" + rows[-1].name) if len(rows) == 100 else str(now - timedelta(seconds=2))
     from life_slimming.convox_lead_sync import resolve_lead
+    lookups = {}
     for event in rows:
-        event["crm_lead"] = resolve_lead(event)
+        event["crm_lead"] = resolve_lead(event, lookups)
     return {"events": rows, "cursor": cursor}
 
 
@@ -351,8 +352,9 @@ def history(lead_id=None, mobile_number=None, call_reference=None):
     events = frappe.get_all("ConVox Call Event", filters=filters,
         fields=EVENT_FIELDS + ["agent_id"], order_by="received_on desc", limit_page_length=50)
     from life_slimming.convox_lead_sync import resolve_lead
+    lookups = {}
     for event in events:
-        event["crm_lead"] = resolve_lead(event)
+        event["crm_lead"] = resolve_lead(event, lookups)
     return {"events": events}
 
 

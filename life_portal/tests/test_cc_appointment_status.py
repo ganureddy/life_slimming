@@ -9,6 +9,9 @@ class AppointmentStatusTests(unittest.TestCase):
     def setUp(self):
         frappe.local.session = frappe._dict(user='editor')
         frappe.local.flags = frappe._dict(in_test=True)
+        roles = patch.object(frappe, 'get_roles', return_value=[])
+        roles.start()
+        self.addCleanup(roles.stop)
 
     def test_only_requested_roles_can_edit(self):
         for role in ['System Manager', 'Call Center Export']:
