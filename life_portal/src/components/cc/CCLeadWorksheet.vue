@@ -61,6 +61,15 @@ const phase = computed(() => {
   return 'new';
 });
 const phaseLabels = { new: 'Untouched / not yet connected', active: 'Follow-up · active discussion', booked: 'Appointment booked · awaiting visit', walkin: 'Walked in · not booked (post-visit loop)', won: 'Success - Client Booked ✓', existing: 'Existing client · protected', lost: 'Lost · locked', invalid: 'Invalid · locked', dnc: 'Do Not Contact · permanent lock' };
+const bookedAppointment = computed(() => {
+  const raw = String(props.lead.custom_appointment_date_and_time || '').trim();
+  if (!raw || phase.value === 'won') return '';
+  // Frappe datetimes without an offset are recorded in India time.
+  const normalized = raw.replace(' ', 'T');
+  const date = new Date(/^\d{4}-\d{2}-\d{2}$/.test(normalized) ? `${normalized}T00:00:00+05:30` : /(?:Z|[+-]\d{2}:?\d{2})$/i.test(normalized) ? normalized : `${normalized}+05:30`);
+  if (!Number.isFinite(date.getTime())) return raw;
+  return new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric', ...(/^\d{4}-\d{2}-\d{2}$/.test(raw) ? {} : { hour: 'numeric', minute: '2-digit', hour12: true }) }).format(date);
+});
 const exportOverride = computed(() => session.roles.includes('Call Center Export'));
 const locked = computed(() => !exportOverride.value && ['won','existing','lost','invalid','dnc'].includes(phase.value));
 const canReopen = computed(() => locked.value && props.manager && !['won','dnc'].includes(phase.value));
@@ -170,7 +179,7 @@ watch(()=>props.error,value=>{if(value)showToast(value,'error')});
       <button id="oct-back" class="btn btn-gy btn-sm" title="Back to dashboard" @click="emit('back')">←</button>
       <span class="wf-stamp" :class="phase==='won'?'wf-booked':'wf-text t-proc'"><i v-if="phase==='won'">★ LIFE ★</i><b>{{phase==='won'?'BOOKED':savedStatus.toUpperCase()}}</b><i v-if="phase==='won'">CLIENT</i></span>
       <span class="wf-title-row"><span class="wf-lbl">Client name</span><span class="wf-client" :class="phase==='won'?'is-booked':'not-booked'">{{clientName}}</span><span class="wf-lbl">Agent name</span><span class="wf-agent">{{lead.lead_owner||'Unassigned'}}</span></span>
-      <span class="wf-chips"><span class="pill p-blue">{{lead.name}}</span><span class="pill p-teal">{{lead.source||'—'}}</span><span class="pill p-gy">Call #{{calls}}</span></span><span class="wf-age">Lead Age <b>{{age}}</b> · Calls <b>{{calls}}</b></span>
+      <span class="wf-chips"><span v-if="bookedAppointment" class="pill p-blue">📅 Appointment booked for {{bookedAppointment}}</span><span class="pill p-blue">{{lead.name}}</span><span class="pill p-teal">{{lead.source||'—'}}</span><span class="pill p-gy">Call #{{calls}}</span></span><span class="wf-age">Lead Age <b>{{age}}</b> · Calls <b>{{calls}}</b></span>
     </div>
     <div class="cc-bar-actions"><button class="btn btn-g btn-sm" @click="emit('start-call')">Start Call</button><button class="btn btn-gy btn-sm" @click="emit('stop-call')">Open phone / hang up</button></div>
   </div>
