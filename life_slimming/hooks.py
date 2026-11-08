@@ -250,7 +250,10 @@ fixtures = [
 # --------------------------------
 # Wraps frappe.twofactor.two_factor_is_enabled_for_ so users listed in
 # "Two Factor Bypass Settings" log in without an OTP. See two_factor_bypass.py.
-before_request = ["life_slimming.two_factor_bypass.install"]
+before_request = [
+    "life_slimming.two_factor_bypass.install",
+    "life_slimming.mobile_otp_bypass.install",
+]
 
 override_doctype_class = {
     "Appointment": "life_slimming.cc_appointment.CCAppointment",
@@ -481,6 +484,11 @@ try:
     _patch_msg91_2fa()
 except Exception:
     pass
+
+# HTTPRequest can authenticate before before_request runs on a fresh worker.
+# Install while hooks load as well, following the SMS patch above.
+from life_slimming.mobile_otp_bypass import install as _install_mobile_otp_bypass
+_install_mobile_otp_bypass()
 
 # Staff-based CC scheduler fields.
 after_migrate = [
