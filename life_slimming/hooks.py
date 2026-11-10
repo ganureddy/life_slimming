@@ -283,6 +283,7 @@ doc_events = {
                 "on_update": "life_slimming.events.set_appointment_time",
             },
 "Lead": {
+            "before_save": "life_slimming.cc_lead_lifecycle.before_save",
             "on_update": "life_slimming.events.restrict_duplicate_lead",
         },
 "ConVox Call Event": {
@@ -491,7 +492,10 @@ from life_slimming.mobile_otp_bypass import install as _install_mobile_otp_bypas
 _install_mobile_otp_bypass()
 
 # Staff-based CC scheduler fields.
+scheduler_events = {"hourly": ["life_slimming.cc_lead_lifecycle.rotate_untouched"]}
+
 after_migrate = [
+    "life_slimming.cc_lead_lifecycle.install_fields",
     "life_slimming.convox_lead_sync.install_fields",
     "life_slimming.api.cc_appointment_setup.execute",
     "life_slimming.api.data_correction_setup.execute",

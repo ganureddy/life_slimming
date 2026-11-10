@@ -12,7 +12,7 @@ const groups = computed(() =>
     .map((group) => ({
       ...group,
       items: group.items.flatMap(item => item.id === 'leads'
-        ? [item, { id: 'cc-roster', label: 'CC ROASTER', description: 'Ho CC employee weekly and monthly roster', icon: '▦' }, { id: 'cc-appointments', label: 'Create Appointment', description: 'Branch and staff calendar', icon: '▦' }, { id: 'convox-history-index', label: 'ConVox History', description: 'Call details and recordings', icon: '☎' }]
+        ? [item, { id: 'cc-invoices', label: 'Invoices / Bills', description: 'View invoices and bills', icon: '▤' }, { id: 'cc-roster', label: 'CC ROASTER', description: 'Ho CC employee weekly and monthly roster', icon: '▦' }, { id: 'cc-appointments', label: 'Create Appointment', description: 'Branch and staff calendar', icon: '▦' }, { id: 'convox-history-index', label: 'ConVox History', description: 'Call details and recordings', icon: '☎' }]
         : [item]).filter((item) =>
         (group.label + " " + item.label + " " + item.description)
           .toLowerCase()
