@@ -31,19 +31,19 @@ const assert = require('node:assert/strict');
   await wait('document.querySelector("iframe")?.contentDocument?.querySelector("#activity")');
   assert.equal(requests.filter(u=>u.includes('portal.bootstrap')).length,1);
   assert.equal(requests.filter(u=>u.includes('login_context')).length,0);
-  await evaluate('window.idleOffset=57*60*1000');await wait('document.querySelector(".idle-dialog")?.open');
+  await evaluate('window.idleOffset=357*60*1000');await wait('document.querySelector(".idle-dialog")?.open');
   assert.match(await evaluate('document.querySelector(".idle-countdown").textContent'),/^2:5\d$|^3:00$/);
   await evaluate('document.querySelector(".idle-dialog button").click()');await wait('!document.querySelector(".idle-dialog").open');
   // Keyboard input in the same-origin ERP iframe must renew the parent timer.
-  await evaluate('window.idleOffset+=56*60*1000;document.querySelector("iframe").contentDocument.querySelector("input").focus()');
+  await evaluate('window.idleOffset+=356*60*1000;document.querySelector("iframe").contentDocument.querySelector("input").focus()');
   await send('Input.dispatchKeyEvent',{type:'keyDown',key:'a',code:'KeyA',text:'a'});
   await send('Input.dispatchKeyEvent',{type:'keyUp',key:'a',code:'KeyA'});
   await evaluate('window.idleOffset+=2*60*1000');await new Promise(r=>setTimeout(r,1200));
   assert.equal(await evaluate('document.querySelector(".idle-dialog").open'),false,'Iframe interaction resets idle deadline');
-  await evaluate('window.idleOffset+=61*60*1000');await wait('location.pathname.endsWith("/login") && !!document.querySelector("input[type=password]")');
+  await evaluate('window.idleOffset+=361*60*1000');await wait('location.pathname.endsWith("/login") && !!document.querySelector("input[type=password]")');
   assert.equal(loggedOut,true);assert.ok(requests.some(u=>u.endsWith('/logout')));
-  assert.match(await evaluate('document.body.textContent'),/one hour of inactivity/);
+  assert.match(await evaluate('document.body.textContent'),/six hours of inactivity/);
   assert.deepEqual(errors,[]);
-  process.stdout.write('PASS: single bootstrap, 57-minute warning, stay signed in, iframe activity, expiry after sleep, server logout and login redirect.\n');
+  process.stdout.write('PASS: single bootstrap, 5-hour-57-minute warning, stay signed in, iframe activity, expiry after sleep, server logout and login redirect.\n');
  }catch(error){process.stderr.write(JSON.stringify({requests,errors,page:await evaluate("document.body.innerText"),url:await evaluate("location.href")})+"\n");throw error;}finally{ws.close();await fetch(endpoint+'/json/close/'+target.id);}
 })().catch(error=>{process.stderr.write(String(error.stack||error)+'\n');process.exitCode=1;});

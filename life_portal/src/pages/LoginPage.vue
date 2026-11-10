@@ -90,7 +90,7 @@ async function initialize() {
       await request("logout", { args: {}, csrfToken: context.csrf_token });
       try { sessionStorage.removeItem("life-portal-logout-pending"); } catch { /* Storage unavailable. */ }
       session.user = "";
-      notice.value = "You were signed out after one hour of inactivity. Please sign in again.";
+      notice.value = "You were signed out after six hours of inactivity. Please sign in again.";
       context = await authApi.context();
     }
     if (!alive) return;

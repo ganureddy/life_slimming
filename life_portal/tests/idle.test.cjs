@@ -8,8 +8,8 @@ async function setup(saved) {
  const timer = createIdleTimer(options);
  return { timer, options, WARNING_MS, TIMEOUT_MS, advance: ms => time += ms, get warning() { return warned; }, get expired() { return expired; }, get saved() { return value; }, set saved(v) { value = v; } };
 }
-test('warns at 57 minutes, counts down, and expires once at 60', async () => {
- const t = await setup(); t.advance(t.WARNING_MS - 1); t.timer.check(); assert.equal(t.warning, 0);
+test('warns at 5 hours 57 minutes, counts down, and expires once at 6 hours', async () => {
+ const t = await setup(); assert.equal(t.TIMEOUT_MS, 6 * 60 * 60 * 1000); t.advance(t.WARNING_MS - 1); t.timer.check(); assert.equal(t.warning, 0);
  t.advance(1); t.timer.check(); assert.equal(t.warning, 180);
  t.advance(179000); t.timer.check(); assert.equal(t.warning, 1);
  t.advance(1000); t.timer.check(); t.timer.check(); assert.equal(t.expired, 1); assert.equal(t.saved.expired, true);
