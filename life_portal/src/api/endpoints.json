@@ -148,5 +148,6 @@
   "life_cc_agent_report_v2": "life_slimming.api.server_scripts.life_cc_agent_report_v2.run",
   "life_cc_agent_setup_v2": "life_slimming.api.server_scripts.life_cc_agent_setup_v2.run",
   "life_operations_session_dashboard_v1": "life_slimming.api.server_scripts.life_operations_session_dashboard_v1.run",
-  "life_ops_submit_cryo_batch": "life_slimming.api.server_scripts.life_ops_submit_cryo_batch.run"
+  "life_ops_submit_cryo_batch": "life_slimming.api.server_scripts.life_ops_submit_cryo_batch.run",
+  "life_cc_nofu_v1": "life_slimming.api.server_scripts.life_cc_nofu_v1.run"
 }
