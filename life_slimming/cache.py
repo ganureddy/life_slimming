@@ -32,6 +32,13 @@ STAMP_PREFIX = "life_slimming:lw:"
 STATS_PREFIX = "life_slimming:rc:stats:"
 REDIS_FIELDS = ("used_memory", "evicted_keys", "keyspace_hits", "keyspace_misses")
 
+# MariaDB runs REPEATABLE READ: a request reads from the snapshot taken at its
+# transaction's first SELECT, which can come before arm_write_tracking (session
+# loading). Entries are therefore stamped with the transaction start minus this
+# margin, never with the moment compute() runs.
+SNAPSHOT_MARGIN_SECONDS = 1.0
+TXN_STARTED_ATTR = "life_slimming_txn_started"
+
 _error_logged = False
 
 
@@ -42,7 +49,7 @@ def _now() -> float:
 def _positive_int(value, default):
 	try:
 		number = int(value)
-	except (TypeError, ValueError):
+	except (TypeError, ValueError, OverflowError):
 		return default
 	return number if number > 0 else default
 
@@ -137,6 +144,10 @@ def cached_read(namespace: str, scope: str, args: dict, compute: Callable[[], An
 	try:
 		entry = frappe.cache.get_value(key, expires=True)
 		if entry is not None:
+			if entry.get("too_large"):
+				# Recently too big to store: skip pickling it again until the marker expires.
+				_count(namespace, "too_large")
+				return compute()
 			if entry["t"] > stamp(user):
 				value = pickle.loads(zlib.decompress(entry["z"]))
 				_count(namespace, "hit")
@@ -148,7 +159,12 @@ def cached_read(namespace: str, scope: str, args: dict, compute: Callable[[], An
 		_report_error(namespace)
 		return compute()
 
-	started_at = _now()
+	view_started = getattr(frappe.local, TXN_STARTED_ATTR, None)
+	if view_started is None:
+		# Not armed (e.g. a background job): the snapshot age is unknown, so don't share it.
+		_count(namespace, "unarmed")
+		return compute()
+	started_at = min(view_started, _now()) - SNAPSHOT_MARGIN_SECONDS
 	timer = time.perf_counter()
 	result = compute()
 	_count(namespace, "compute_ms", round((time.perf_counter() - timer) * 1000))
@@ -156,6 +172,7 @@ def cached_read(namespace: str, scope: str, args: dict, compute: Callable[[], An
 		blob = zlib.compress(pickle.dumps(result))
 		if len(blob) > config.max_entry_bytes:
 			_count(namespace, "too_large")
+			frappe.cache.set_value(key, {"t": started_at, "too_large": True}, expires_in_sec=config.ttl)
 		else:
 			frappe.cache.set_value(key, {"t": started_at, "z": blob}, expires_in_sec=config.ttl)
 			_count(namespace, "stored_bytes", len(blob))
@@ -177,44 +194,49 @@ def mark_write(user: str | None = None) -> None:
 
 
 def arm_write_tracking() -> None:
-	"""``before_request`` hook: stamp the session user after each commit that wrote.
+	"""``before_request`` hook: stamp the request's user after each commit that wrote.
 
 	CallbackManager.run() drains its queue until it is empty, so a callback must
 	never add to the queue that is currently running. The chain below only ever adds
 	to the *other* queues, and re-arms itself after every commit and rollback
 	(commit() resets the rollback queues; rollback() resets the commit queues).
+
+	before_request runs before validate_auth, so API-key/token requests are still
+	Guest here: arm for every request and resolve the user at commit time. This hook
+	runs on every request and must never raise.
 	"""
-	user = _session_user()
-	if not user or user == "Guest" or not settings().enabled:
-		return
 	try:
-		if frappe.db is None:
+		if not settings().enabled or frappe.db is None:
 			return
+		_arm()
 	except Exception:
-		return
-	_arm(user)
+		_report_error("write_tracking")
 
 
-def _arm(user: str) -> None:
-	frappe.db.before_commit.add(lambda: _before_commit(user))
-	frappe.db.before_rollback.add(lambda: _before_rollback(user))
+def _arm() -> None:
+	# A new transaction (and read view) starts now: at request start, or right
+	# after COMMIT / ROLLBACK, which both begin() the next transaction.
+	setattr(frappe.local, TXN_STARTED_ATTR, _now())
+	frappe.db.before_commit.add(_before_commit)
+	frappe.db.before_rollback.add(_before_rollback)
 
 
-def _before_commit(user: str) -> None:
+def _before_commit() -> None:
 	# transaction_writes is still counted here; the COMMIT statement resets it.
+	user = _session_user()
 	wrote = frappe.db.transaction_writes > 0
 	frappe.db.after_commit.add(lambda: _after_commit(user, wrote))
 
 
-def _after_commit(user: str, wrote: bool) -> None:
+def _after_commit(user: str | None, wrote: bool) -> None:
 	# After COMMIT: any read that starts from now on sees this write.
-	if wrote:
+	if wrote and user and user != "Guest":
 		mark_write(user)
-	_arm(user)
+	_arm()
 
 
-def _before_rollback(user: str) -> None:
-	frappe.db.after_rollback.add(lambda: _arm(user))
+def _before_rollback() -> None:
+	frappe.db.after_rollback.add(_arm)
 
 
 @frappe.whitelist()

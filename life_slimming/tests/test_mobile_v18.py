@@ -84,23 +84,32 @@ class MobileV18CacheTest(unittest.TestCase):
 
 	def test_write_actions_never_cached(self):
 		for action in self.WRITE_ACTIONS:
-			self.assertIsNone(self.module._mobile_cache_key(action, "a@x", False, {}, "2026-11-11"), action)
+			self.assertIsNone(self.module._mobile_cache_key(action, "a@x", False, {}, "2026-11-11", viewer="a@x"), action)
 		for action in EXPECTED_ACTIONS - set(self.module.CACHED_ACTIONS):
-			self.assertIsNone(self.module._mobile_cache_key(action, "a@x", True, {}, "2026-11-11"), action)
+			self.assertIsNone(self.module._mobile_cache_key(action, "a@x", True, {}, "2026-11-11", viewer="m@x"), action)
 		self.assertEqual(set(self.module.CACHED_ACTIONS), {"queue", "calls", "summary", "live", "team", "feed"})
 
 	def test_read_action_key_scope_and_args(self):
 		fd = {"from": "2026-11-01", "to": "2026-11-11", "team": "A", "x": 1}
 		self.assertEqual(
-			self.module._mobile_cache_key("summary", "a@x", True, fd, "2026-11-11"),
+			self.module._mobile_cache_key("summary", "a@x", True, fd, "2026-11-11", viewer="a@x"),
 			(
 				"mobile_v18.summary",
 				"a@x|mgr=1",
 				{"today": "2026-11-11", "agent": None, "from": "2026-11-01", "to": "2026-11-11", "team": "A"},
 			),
 		)
-		self.assertEqual(self.module._mobile_cache_key("queue", "a@x", False, fd, "2026-11-11")[1:], ("a@x|mgr=0", {"today": "2026-11-11"}))
-		self.assertEqual(self.module._mobile_cache_key("calls", "a@x", False, {"date": "2026-11-10"}, "2026-11-11")[2]["date"], "2026-11-10")
+		self.assertEqual(self.module._mobile_cache_key("queue", "a@x", False, fd, "2026-11-11", viewer="a@x")[1:], ("a@x|mgr=0", {"today": "2026-11-11"}))
+		self.assertEqual(self.module._mobile_cache_key("calls", "a@x", False, {"date": "2026-11-10"}, "2026-11-11", viewer="a@x")[2]["date"], "2026-11-10")
+
+	def test_manager_views_of_same_agent_do_not_share(self):
+		"""live's updated_elsewhere compares modified_by with the viewer, so viewers never share."""
+		fd = {"lead": "CRM-LEAD-1", "since": "2026-11-11 10:00:00"}
+		first = self.module._mobile_cache_key("live", "a@x", True, fd, "2026-11-11", viewer="m1@x")
+		second = self.module._mobile_cache_key("live", "a@x", True, fd, "2026-11-11", viewer="m2@x")
+		self.assertNotEqual(first[1], second[1])
+		self.assertEqual(first[1], "a@x|viewer=m1@x|mgr=1")
+		self.assertEqual(self.module._mobile_cache_key("live", "a@x", False, fd, "2026-11-11", viewer="a@x")[1], "a@x|mgr=0")
 
 	def test_cached_action_sets_response_from_cache(self):
 		frappe.local.conf[cache.CONFIG_KEY] = {"mobile_native": 1}

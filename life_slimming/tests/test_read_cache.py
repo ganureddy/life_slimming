@@ -1,5 +1,6 @@
 """Read cache: own writes are seen at once, other users' writes within ttl."""
 import json
+import pickle
 import unittest
 from datetime import date
 from unittest.mock import MagicMock, patch
@@ -43,8 +44,10 @@ class ReadCacheTest(unittest.TestCase):
 			return [{"lead": "L-1", "n": self.calls}] if value is DEFAULT_ROWS else value
 		return run
 
-	def read(self, compute=None, namespace="cc_live_tv", scope="all", args=None):
+	def read(self, compute=None, namespace="cc_live_tv", scope="all", args=None, txn_started=None):
+		"""One read in a fresh request whose transaction (read view) began at txn_started."""
 		self.fake.new_request()
+		frappe.local.life_slimming_txn_started = self.clock.now if txn_started is None else txn_started
 		return cache.cached_read(namespace, scope, args or {"today": "2026-11-11"}, compute or self.compute())
 
 	def set_stamp(self, user, when):
@@ -105,9 +108,11 @@ class ReadCacheTest(unittest.TestCase):
 	def test_equal_timestamps_are_stale(self):
 		self.configure()
 		self.read()
-		self.set_stamp("agent@x", self.clock.now)
+		entry_t = self.clock.now - cache.SNAPSHOT_MARGIN_SECONDS  # what the entry was stamped with
+		self.set_stamp("agent@x", entry_t)
 		self.read()
 		self.assertEqual(self.calls, 2)
+		self.assertEqual(self.counters()["stale_own_write"], 1)
 
 	def test_falsy_results_are_cached(self):
 		self.configure()
@@ -144,7 +149,45 @@ class ReadCacheTest(unittest.TestCase):
 		self.read(self.compute(list(range(100))))
 		self.assertEqual(self.calls, 2)
 		self.assertEqual(self.counters()["too_large"], 2)
-		self.assertFalse(any(b"life_slimming:rc:cc_live_tv" in k for k in self.fake.store))
+		entries = [pickle.loads(v) for k, (v, _) in self.fake.store.items() if b"life_slimming:rc:cc_live_tv" in k]
+		self.assertTrue(all("z" not in entry for entry in entries), "an oversized result was stored")
+
+	def test_too_large_marker_skips_pickling(self):
+		self.configure(max_entry_bytes=10)
+		with patch.object(cache.pickle, "dumps", wraps=pickle.dumps) as dumps:
+			self.read(self.compute(list(range(100))))
+			self.read(self.compute(list(range(100))))
+			self.read(self.compute(list(range(100))))
+		results_pickled = [call for call in dumps.call_args_list if call.args and call.args[0] == list(range(100))]
+		self.assertEqual(len(results_pickled), 1)
+		self.assertEqual(self.calls, 3)
+		self.clock.advance(31)
+		self.configure()  # normal size limit; the expired marker no longer blocks storing
+		self.read(self.compute([1]))
+		self.assertEqual(self.read(self.compute([2])), [1], "small results cache again once the marker expires")
+
+	def test_entry_stamped_with_transaction_start(self):
+		"""REPEATABLE READ: data reflects the request's read view, not the moment compute() runs."""
+		self.configure()
+		view_started = self.clock.now
+		self.clock.advance(2)
+		self.set_stamp("agent@x", self.clock.now)  # agent@x commits after another request's view began
+		self.clock.advance(3)
+		self.read(txn_started=view_started)  # that request computes without agent@x's write
+		self.clock.advance(1)
+		self.read()  # agent@x must not be served the entry that predates their write
+		self.assertEqual(self.calls, 2)
+		self.assertEqual(self.counters()["stale_own_write"], 1)
+
+	def test_unarmed_request_does_not_store(self):
+		self.configure()
+		for _ in range(2):
+			self.fake.new_request()
+			frappe.local.life_slimming_txn_started = None
+			cache.cached_read("cc_live_tv", "all", {}, self.compute())
+		self.assertEqual(self.calls, 2)
+		self.assertFalse(any(b"life_slimming:rc:cc_live_tv:" in k for k in self.fake.store))
+		self.assertEqual(self.counters()["unarmed"], 2)
 
 	def test_namespace_and_prefix_disable(self):
 		self.configure(disabled=["mobile_v18"])
@@ -160,7 +203,10 @@ class ReadCacheTest(unittest.TestCase):
 		frappe.local.conf[cache.CONFIG_KEY] = json.dumps({"enabled": 1, "ttl": 45})
 		self.assertEqual(cache.settings().ttl, 45)
 		self.assertTrue(cache.enabled("cc_live_tv"))
-		for garbage in ['{"enabled": 1', "yes", 7, ["enabled"], {"enabled": 1, "ttl": "soon", "disabled": None}]:
+		for garbage in [
+			'{"enabled": 1', "yes", 7, ["enabled"], {"enabled": 1, "ttl": "soon", "disabled": None},
+			{"ttl": 1e999, "max_entry_bytes": float("nan")}, '{"ttl": Infinity, "enabled": -Infinity}',
+		]:
 			frappe.local.conf[cache.CONFIG_KEY] = garbage
 			config = cache.settings()
 			self.assertEqual(config.ttl, 30)

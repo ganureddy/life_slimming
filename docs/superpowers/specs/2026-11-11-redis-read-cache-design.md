@@ -73,7 +73,7 @@ def stats() -> dict
 |---|---|---|
 | `life_slimming:rc:<namespace>:<scope>:<argshash>` | `{"t": compute_start_epoch, "z": zlib(pickle(result))}` | `ttl` (default 30 s) |
 | `life_slimming:lw:<user>` | epoch of the user's last committed write | `max(120, 2 × ttl)` s, so a stamp always outlives every entry it must invalidate |
-| `life_slimming:rc:stats:<namespace>` | hash: `hit`, `miss`, `stale_own_write`, `too_large`, `error`, `compute_ms`, `stored_bytes` | none (small) |
+| `life_slimming:rc:stats:<namespace>` | hash: `hit`, `miss`, `stale_own_write`, `too_large`, `unarmed`, `error`, `compute_ms`, `stored_bytes` | none (small) |
 
 ### 3.3 Read algorithm
 
@@ -81,15 +81,23 @@ def stats() -> dict
 2. Look up the entry. It's a **hit** only if it exists (Redis expiry enforces the 30 s) **and**
    `entry.t > lw(frappe.session.user)`. A hit increments `hit` and returns the
    decompressed value.
-3. Otherwise count `miss`, or `stale_own_write` if the entry existed but is older than the
-   user's last write. Record `t0 = time.time()` **before** calling `compute()`, then compute.
-4. Compress the result. If the compressed size is at or below `max_entry_bytes`
+3. If the entry is a too-large marker, count `too_large` and return `compute()` without
+   pickling. Otherwise count `miss`, or `stale_own_write` if the entry existed but is older
+   than the user's last write.
+4. If write tracking isn't armed for this request (no transaction start recorded, for example
+   in a background job), count `unarmed` and return `compute()` without storing.
+5. Set `t0 = min(transaction start, now) - 1 s`, then compute.
+6. Compress the result. If the compressed size is at or below `max_entry_bytes`
    (default 1,048,576), store `{t: t0, z: …}` with expiry `ttl`. Otherwise count `too_large`
-   and don't store.
-5. Return the result.
+   and store a `{t: t0, too_large: true}` marker for `ttl`, so later calls skip the pickling.
+7. Return the result.
 
-Stamping `t0` before computing means a write that commits while `compute()` is running
-invalidates the result, so the writer is never served data from before their own write.
+MariaDB runs REPEATABLE READ (checked 2026-11-11), so a request reads from the snapshot
+taken at its transaction's first SELECT, which can be before `compute()` and even before
+`before_request`. Stamping the entry with the transaction start (recorded by write
+tracking at request start and after every commit or rollback), minus a 1 s margin, means a
+write committed after that snapshot always makes the entry stale. The writer is therefore
+never served data from before their own write.
 
 ### 3.4 Configuration (`site_config.json`, re-read on every request)
 
@@ -129,14 +137,20 @@ SQL), so tracking hangs off the **database commit** instead of document events.
 
 `arm_write_tracking()` is added to `before_request` in `hooks.py`:
 
-1. **Arm:** for a logged-in user with caching enabled, add `_before_commit` to
-   `frappe.db.before_commit` and `_after_rollback` to `frappe.db.after_rollback`.
-2. **`_before_commit`:** add `_after_commit(wrote=frappe.db.transaction_writes > 0)`
-   to `frappe.db.after_commit`.
-3. **`_after_commit`:** if `wrote`, call `mark_write(user)`, which sets
-   `lw:<user> = time.time()` with a `max(120, 2 × ttl)` s expiry. Then re-arm by adding `_before_commit` and
-   `_after_rollback` again.
-4. **`_after_rollback`:** re-arm by adding `_before_commit`. A rollback clears the commit queues.
+1. **Arm** (first `before_request` entry, for **every** request while caching is enabled):
+   record the transaction start, add `_before_commit` to `frappe.db.before_commit`, and add
+   `_before_rollback` to `frappe.db.before_rollback`. `before_request` runs before
+   `validate_auth`, so API-key and token requests are still Guest at this point, and the user
+   is resolved at commit time instead. The hook catches every exception, because it runs on
+   every request.
+2. **`_before_commit`:** read the session user and `wrote = frappe.db.transaction_writes > 0`,
+   then add `_after_commit(user, wrote)` to `frappe.db.after_commit`.
+3. **`_after_commit`:** if `wrote` and the user isn't Guest, call `mark_write(user)`, which sets
+   `lw:<user> = time.time()` with a `max(120, 2 × ttl)` s expiry. Then re-arm, which also
+   records the new transaction's start.
+4. **`_before_rollback`:** add `_arm` to `frappe.db.after_rollback`, so arming happens again
+   after the rollback. A rollback clears the commit queues, and `commit()` clears the
+   rollback queues.
 
 **Invariant:** every callback is added only to a queue *other than the one currently being
 run*. `CallbackManager.run()` empties its queue, so a callback that re-added itself to that
@@ -172,7 +186,9 @@ These rules apply to every endpoint:
 - **Cached actions:** `queue`, `calls`, `summary`, `live`, `team`, `feed`.
   - namespace: `mobile_v18.<action>`
   - scope: `"<agent>|mgr=<0|1>"`, where `agent` is the effective agent after the manager
-    check
+    check. When the viewer isn't the agent (a manager viewing an agent), it's
+    `"<agent>|viewer=<viewer>|mgr=<0|1>"`, because `live`'s `updated_elsewhere` depends on
+    the viewer.
   - args: every `form_dict` input the action reads, plus `today`
 - **Never cached:** `dial`, `finish`, `sync`, `recording`, `wa_log`, `plan_save`,
   `target_save`, `number`, and every other action.

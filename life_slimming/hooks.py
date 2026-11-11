@@ -251,11 +251,12 @@ fixtures = [
 # Wraps frappe.twofactor.two_factor_is_enabled_for_ so users listed in
 # "Two Factor Bypass Settings" log in without an OTP. See two_factor_bypass.py.
 before_request = [
-    "life_slimming.two_factor_bypass.install",
-    "life_slimming.mobile_otp_bypass.install",
+    # First, so the read cache records the transaction start as early as possible.
     # Stamps the user after each commit that wrote, so their cached reads refresh.
     # No-op until site_config life_slimming_cache.enabled = 1. See cache.py.
     "life_slimming.cache.arm_write_tracking",
+    "life_slimming.two_factor_bypass.install",
+    "life_slimming.mobile_otp_bypass.install",
 ]
 
 override_doctype_class = {

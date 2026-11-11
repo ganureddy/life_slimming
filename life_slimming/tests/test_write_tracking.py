@@ -90,21 +90,46 @@ class WriteTrackingTest(unittest.TestCase):
 		self.assertEqual(len(self.db.after_commit), 0)
 		self.assertEqual(len(self.db.after_rollback), 0)
 
-	def test_disabled_or_guest_does_not_arm(self):
+	def test_disabled_does_not_arm(self):
 		frappe.local.conf[cache.CONFIG_KEY] = {"enabled": 0}
-		cache.arm_write_tracking()
-		frappe.local.conf[cache.CONFIG_KEY] = {"enabled": 1}
-		frappe.local.session = frappe._dict(user="Guest")
 		cache.arm_write_tracking()
 		for queue in (self.db.before_commit, self.db.after_commit, self.db.before_rollback, self.db.after_rollback):
 			self.assertEqual(len(queue), 0, queue.name)
 		self.db.write()
 		self.db.commit()
-		cache.mark_write("Guest")
-		frappe.local.conf[cache.CONFIG_KEY] = {"enabled": 0}
 		cache.mark_write("agent@x")
 		self.assertEqual(self.fake.store, {})
 
+	def test_guest_commit_does_not_mark(self):
+		frappe.local.session = frappe._dict(user="Guest")
+		cache.arm_write_tracking()
+		self.db.write()
+		self.db.commit()
+		cache.mark_write("Guest")
+		self.assertFalse(any(b"life_slimming:lw:" in key for key in self.fake.store))
+
+	def test_token_auth_user_resolved_at_commit(self):
+		"""before_request runs before validate_auth: API-key/token requests are Guest when armed."""
+		frappe.local.session = frappe._dict(user="Guest")
+		cache.arm_write_tracking()
+		frappe.local.session = frappe._dict(user="agent@x")  # validate_auth sets the real user
+		self.db.write()
+		self.db.commit()
+		self.assertEqual(self.stamp(), self.clock.now)
+
+	def test_arm_never_raises(self):
+		with patch.object(cache, "settings", side_effect=OverflowError("bad config")):
+			self.assertIsNone(cache.arm_write_tracking())
+
+	def test_transaction_start_recorded_and_reset(self):
+		cache.arm_write_tracking()
+		self.assertEqual(frappe.local.life_slimming_txn_started, self.clock.now)
+		self.clock.advance(5)
+		self.db.commit()  # the fake clock moves one second at COMMIT
+		self.assertEqual(frappe.local.life_slimming_txn_started, self.clock.now)
+		self.clock.advance(2)
+		self.db.rollback()
+		self.assertEqual(frappe.local.life_slimming_txn_started, self.clock.now)
 
 if __name__ == "__main__":
 	unittest.main()

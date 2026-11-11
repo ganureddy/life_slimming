@@ -44,13 +44,21 @@ CACHED_ACTIONS = {
 }
 
 
-def _mobile_cache_key(action, agent, is_mgr, fd, today):
-    """(namespace, scope, args) for a cacheable read action, else None."""
+def _mobile_cache_key(action, agent, is_mgr, fd, today, viewer):
+    """(namespace, scope, args) for a cacheable read action, else None.
+
+    Some results depend on the viewer as well as the agent (live's
+    updated_elsewhere compares modified_by with the session user), so a manager
+    viewing another agent gets their own scope; agents viewing themselves keep
+    the plain "<agent>|mgr=<0|1>" scope.
+    """
     if action not in CACHED_ACTIONS:
         return None
     args = {"today": today}
     args.update({name: fd.get(name) for name in CACHED_ACTIONS[action]})
-    return (f"mobile_v18.{action}", f"{agent}|mgr={int(bool(is_mgr))}", args)
+    mgr = int(bool(is_mgr))
+    scope = f"{agent}|mgr={mgr}" if viewer == agent else f"{agent}|viewer={viewer}|mgr={mgr}"
+    return (f"mobile_v18.{action}", scope, args)
 
 
 @script_endpoint(allow_guest=False)
@@ -987,7 +995,7 @@ def _native():
         else:
             frappe.throw("Unknown action")
 
-    key = _mobile_cache_key(action, agent, is_mgr, fd, today)
+    key = _mobile_cache_key(action, agent, is_mgr, fd, today, viewer=user)
     if key is None:
         _dispatch()
         return
