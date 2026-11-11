@@ -186,10 +186,21 @@ def run(**kwargs):
         return ""
 
 
-    LEAD_F = ["name", "lead_name", "first_name", "lead_owner", "status", "custom_cc_stage", "custom_cc_sub_status",
+    def existing_lead_fields(fields):
+        """Skip optional Lead fields whose database columns are not installed yet."""
+        try:
+            columns = frappe.db.get_table_columns("Lead")
+            if isinstance(columns, (list, tuple, set)):
+                return [field for field in fields if field in columns]
+        except Exception:
+            pass
+        return fields
+
+
+    LEAD_F = existing_lead_fields(["name", "lead_name", "first_name", "lead_owner", "status", "custom_cc_stage", "custom_cc_sub_status",
               "custom_appointment_status", "custom_visit_status", "custom_appointment_date_and_time",
               "custom_next_followup_date", "custom_call_count", "custom_last_call_time", "source",
-              "custom_convox_disposition", "custom_convox_last_call_time", "custom_cc_appointment_agent", "creation", "modified", "lead_assign_to_branch"]
+              "custom_convox_disposition", "custom_convox_last_call_time", "custom_cc_appointment_agent", "creation", "modified", "lead_assign_to_branch"])
 
 
     def summaries(names):
@@ -230,7 +241,11 @@ def run(**kwargs):
                 "unreachable_streak": (t.get("unreachable_streak") if t else 0) or 0,
                 "next_action": na[0], "next_action_due": na[1],
                 "protected": protected_of(l, ms, pm.get(l.name)),
-                "converting_agent": ca.get(l.name),
+                # Keep an explicitly verified/credited agent from the track first,
+                # then use the event-derived attribution and the appointment agent
+                # fallback used by the live LIFE CC Server Script.
+                "converting_agent": ((t.get("converting_agent") if t else None) or ca.get(l.name) or
+                                     (l.get("custom_cc_appointment_agent") if c.get("paid") else None)),
                 "credit_provisional": (pm.get(l.name) or {}).get("credit_provisional", False),
                 "joined_on": c.get("joined_on"), "paid": c.get("paid") or 0,
                 "owner": l.lead_owner, "sub_status": l.custom_cc_sub_status, "stage": l.custom_cc_stage,
@@ -891,8 +906,9 @@ def run(**kwargs):
         srcs = jl(fd.get("sources"))
         if srcs:
             f["source"] = ["in", srcs]
-        rows = frappe.get_all("Lead", filters=f, fields=["name", "lead_owner", "source", "custom_call_count", "custom_convox_call_count", "custom_appointment_status",
-                              "custom_cc_stage", "custom_cc_sub_status", "status", "custom_next_followup_date", "custom_cc_appointment_agent"], limit_page_length=30000)
+        report_fields = existing_lead_fields(["name", "lead_owner", "source", "custom_call_count", "custom_convox_call_count", "custom_appointment_status",
+                              "custom_cc_stage", "custom_cc_sub_status", "status", "custom_next_followup_date", "custom_cc_appointment_agent"])
+        rows = frappe.get_all("Lead", filters=f, fields=report_fields, limit_page_length=30000)
         names = [r.name for r in rows]
         pm = {}
         for i in range(0, len(names), 2000):
@@ -936,7 +952,7 @@ def run(**kwargs):
                 a["joined"] = a["joined"] + 1
                 a["paid"] = a["paid"] + pm[r.name]["paid"]
                 joined_list.append({"lead": r.name, "owner": o, "joined_on": pm[r.name]["joined_on"], "paid": pm[r.name]["paid"],
-                                    "credit": ca.get(r.name) or "", "credit_provisional": pm[r.name].get("credit_provisional", False)})
+                                    "credit": ca.get(r.name) or r.get("custom_cc_appointment_agent") or "", "credit_provisional": pm[r.name].get("credit_provisional", False)})
             t = trk.get(r.name)
             if t:
                 if (t.unreachable_streak or 0) >= 3:
