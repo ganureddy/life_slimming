@@ -80,7 +80,7 @@ def run(**kwargs):
     life_cc_sensitive = ["Lead", "Patient", "Sales Invoice", "Payment Entry", "Therapy Plan"]
     life_cc_view = str(frappe.form_dict.get("view") or "full").strip()
 
-    if life_cc_view not in ["full", "appointments"]:
+    if life_cc_view not in ["full", "appointments", "calendar"]:
         frappe.throw("Invalid CC Visit report view.")
 
     if frappe.utils.getdate(from_date) > frappe.utils.getdate(to_date):
@@ -225,6 +225,15 @@ def run(**kwargs):
     if frappe.get_meta("Lead").has_field("custom_visit_status"):
         fields.append("custom_visit_status")
 
+    # Do not scan created/posting-date cohorts or financial data for visit views.
+    if life_cc_view in ("appointments", "calendar"):
+        from life_slimming.api.cc_visit_fast import read_appointments
+        frappe.response["message"] = read_appointments(
+            from_date, to_date, owner_filter, life_cc_global, is_agent_login,
+            calendar=life_cc_view == "calendar",
+            detail_fields=None if frappe.form_dict.get("compact") in (1, "1", True) else fields)
+        return
+
     date_time_from = from_date + " 00:00:00"
     date_time_to = to_date + " 23:59:59"
 
@@ -262,43 +271,7 @@ def run(**kwargs):
             unique_rows[lead_name]
         )
 
-    if life_cc_view == "appointments":
-        life_cc_owner_ids = []
-
-        for life_cc_row in final_rows:
-            life_cc_owner = str(
-                life_cc_row.get("lead_owner") or ""
-            ).strip()
-
-            if life_cc_owner and life_cc_owner not in life_cc_owner_ids:
-                life_cc_owner_ids.append(life_cc_owner)
-
-        life_cc_owner_names = {}
-
-        if life_cc_owner_ids:
-            for life_cc_name_row in life_cc_read_all(
-                "User",
-                fields=["name", "full_name"],
-                filters={"name": ["in", life_cc_owner_ids]}
-            ):
-                life_cc_owner_names[life_cc_name_row.get("name")] = (
-                    life_cc_name_row.get("full_name")
-                    or life_cc_name_row.get("name")
-                )
-
-        frappe.response["message"] = {
-            "ok": True,
-            "view": "appointments",
-            "user": user,
-            "restricted_to_owner": bool(owner_filter),
-            "count": len(final_rows),
-            "rows": final_rows,
-            "agent_names": life_cc_owner_names,
-            "ranking_rows": [],
-            "financial_events": [],
-            "marketing_agencies": []
-        }
-    else:
+    if life_cc_view == "full":
         # ------------------------------------------------
         # Secure Sales Invoice financial mapping — EXACT LINKS ONLY
         #
@@ -3210,6 +3183,9 @@ def run(**kwargs):
             ).lower()
         )
 
+
+        from life_slimming.api.cc_report_finance import enrich_consultants
+        enrich_consultants(cc_invoice_report_rows)
 
         frappe.response["message"] = {
             "ok": True,

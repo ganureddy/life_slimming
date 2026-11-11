@@ -44,6 +44,7 @@ const pageComponents = {
 };
 
 export const routes = [
+  { path: "/cc-invoices", name: "cc-invoices", component: () => import("../pages/CCInvoicesPage.vue"), meta: { title: "Invoices / Bills", accessModule: "leads" } },
   { path: "/native/receivables", name: "receivables-native", component: () => import("../pages/PendingBalancesPage.vue"), meta: { title: "Receivables Vue preview", accessModule: "receivables" } },
   { path: "/native/pending-balances", name: "pendbal-native", component: () => import("../pages/PendingBalancesPage.vue"), meta: { title: "Pending Balances Vue preview", accessModule: "pendbal" } },
   { path: "/native/branch-expenditure", name: "bexp-native", component: () => import("../pages/BranchExpenditurePage.vue"), meta: { title: "Branch Expenditure Vue preview", accessModule: "bexp" } },

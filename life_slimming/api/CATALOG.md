@@ -166,3 +166,7 @@ Added local mappings for service session reporting, cryotherapy batch submission
 - [life_cc_agent_setup_v2](server_scripts/life_cc_agent_setup_v2.py)
 - [life_operations_session_dashboard_v1](server_scripts/life_operations_session_dashboard_v1.py)
 - [life_ops_submit_cryo_batch](server_scripts/life_ops_submit_cryo_batch.py)
+
+## CC report refresh — 2026-11-10
+
+- [life_cc_nofu_v1](server_scripts/life_cc_nofu_v1.py): read-only Agent 360 no-follow-up report, synced from the enabled ERP Server Script dated 2026-11-06. Requires portal CC report access; non-managers see only their own leads; phone numbers expose only the last four digits. Registered for local remapping of the refreshed report source.

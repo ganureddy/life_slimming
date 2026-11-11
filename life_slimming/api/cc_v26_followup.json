@@ -1,0 +1,70 @@
+{
+  "doctype": "DocType",
+  "name": "CC Followup Event",
+  "module": "life_slimming",
+  "custom": 1,
+  "autoname": "hash",
+  "fields": [
+    {
+      "fieldname": "lead",
+      "fieldtype": "Link",
+      "label": "Lead",
+      "options": "Lead",
+      "reqd": 1,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "agent",
+      "fieldtype": "Link",
+      "label": "Agent",
+      "options": "Employee",
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "due_at",
+      "fieldtype": "Datetime",
+      "label": "Due at",
+      "options": null,
+      "reqd": 1,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "closed_at",
+      "fieldtype": "Datetime",
+      "label": "Closed at",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "closed_by",
+      "fieldtype": "Link",
+      "label": "Closed by",
+      "options": "User",
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "result",
+      "fieldtype": "Select",
+      "label": "Result",
+      "options": "Open\nDone on time\nDone late\nMissed\nRescheduled",
+      "reqd": 0,
+      "default": "Open",
+      "unique": 0,
+      "read_only": 0
+    }
+  ],
+  "permissions": []
+}

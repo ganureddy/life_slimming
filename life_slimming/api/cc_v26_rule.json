@@ -1,0 +1,285 @@
+{
+  "doctype": "DocType",
+  "name": "LIFE CC Assign Rule",
+  "module": "life_slimming",
+  "custom": 1,
+  "autoname": "field:rule_name",
+  "fields": [
+    {
+      "fieldname": "rule_name",
+      "fieldtype": "Data",
+      "label": "Rule Name",
+      "options": null,
+      "reqd": 1,
+      "default": null,
+      "unique": 1,
+      "read_only": 0
+    },
+    {
+      "fieldname": "rule_type",
+      "fieldtype": "Select",
+      "label": "Rule Type",
+      "options": "Time-over New Lead\nTime-over Follow-up\nScheduled Move\nAbsent Agent\nHot Lead Overdue\nVisited Not Booked\nPermissions\nSettings",
+      "reqd": 1,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "enabled",
+      "fieldtype": "Check",
+      "label": "Enabled",
+      "options": null,
+      "reqd": 0,
+      "default": "0",
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "test_mode",
+      "fieldtype": "Check",
+      "label": "Test Mode (only show what would move)",
+      "options": null,
+      "reqd": 0,
+      "default": "1",
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "time_value",
+      "fieldtype": "Int",
+      "label": "Time Limit",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "time_unit",
+      "fieldtype": "Select",
+      "label": "Unit",
+      "options": "Minutes\nHours\nDays",
+      "reqd": 0,
+      "default": "Minutes",
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "max_shuffles",
+      "fieldtype": "Int",
+      "label": "Max Auto Shuffles",
+      "options": null,
+      "reqd": 0,
+      "default": "2",
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "cb1",
+      "fieldtype": "Column Break",
+      "label": "",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "days",
+      "fieldtype": "Data",
+      "label": "Days (e.g. Mon,Tue,Wed,Thu,Fri,Sat)",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "from_time",
+      "fieldtype": "Time",
+      "label": "From",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "to_time",
+      "fieldtype": "Time",
+      "label": "To",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "every_minutes",
+      "fieldtype": "Int",
+      "label": "Run Every (minutes)",
+      "options": null,
+      "reqd": 0,
+      "default": "15",
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "absent_mode",
+      "fieldtype": "Select",
+      "label": "Absent Agent Mode",
+      "options": "\nAuto\nManual",
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "sb1",
+      "fieldtype": "Section Break",
+      "label": "Which leads",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "statuses",
+      "fieldtype": "Small Text",
+      "label": "CC Sub Statuses (JSON list)",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "from_agents",
+      "fieldtype": "Small Text",
+      "label": "From Agents (JSON list of users)",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "sources",
+      "fieldtype": "Small Text",
+      "label": "Lead Sources (JSON list)",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "sb2",
+      "fieldtype": "Section Break",
+      "label": "Move to",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "to_agents",
+      "fieldtype": "Small Text",
+      "label": "To Agents (JSON list of users, empty = all eligible)",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "method",
+      "fieldtype": "Select",
+      "label": "Method",
+      "options": "Lowest Load\nRound Robin\nBest Conversion\nMost Bookings\nBest Walk-ins\nSmart\nFree Hands Leads\nFree Hands Follow-ups",
+      "reqd": 0,
+      "default": "Lowest Load",
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "per_agent_limit",
+      "fieldtype": "Int",
+      "label": "Max per Agent per Run",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "allowed_users",
+      "fieldtype": "Small Text",
+      "label": "Can Move Leads (JSON list of users) \u2014 Permissions rule only",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "sb3",
+      "fieldtype": "Section Break",
+      "label": "Last run",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "last_run",
+      "fieldtype": "Datetime",
+      "label": "Last Run",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 1
+    },
+    {
+      "fieldname": "last_moved",
+      "fieldtype": "Int",
+      "label": "Leads Moved Last Run",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 1
+    },
+    {
+      "fieldname": "last_preview",
+      "fieldtype": "Small Text",
+      "label": "Last Run Details",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Call Center Export",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

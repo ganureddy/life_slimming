@@ -1,5 +1,5 @@
-export const WARNING_MS = 57 * 60 * 1000;
-export const TIMEOUT_MS = 60 * 60 * 1000;
+export const TIMEOUT_MS = 6 * 60 * 60 * 1000;
+export const WARNING_MS = TIMEOUT_MS - 3 * 60 * 1000;
 
 // Wall-clock deadlines survive throttled tabs, reloads and device sleep.
 export function createIdleTimer({ now = Date.now, read, write, warning, expire }) {

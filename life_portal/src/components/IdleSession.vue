@@ -76,7 +76,7 @@ onUnmounted(() => {
   <dialog v-if="!exempt" ref="dialog" class="idle-dialog" aria-labelledby="idle-title" aria-describedby="idle-description" @cancel.prevent>
     <span class="idle-symbol" aria-hidden="true">◷</span>
     <h2 id="idle-title">{{ expired ? "Signing you out" : "ERP is going to auto logout" }}</h2>
-    <p id="idle-description">{{ expired ? "You have been inactive for one hour. Redirecting to sign in…" : "Your session is inactive. Continue using ERP to stay signed in." }}</p>
+    <p id="idle-description">{{ expired ? "You have been inactive for six hours. Redirecting to sign in…" : "Your session is inactive. Continue using ERP to stay signed in." }}</p>
     <template v-if="!expired"><div class="idle-countdown" role="timer" aria-label="Time until automatic logout">{{ countdown }}</div><button class="primary" autofocus @click="timer.activity()">Stay signed in</button></template>
   </dialog>
 </template>

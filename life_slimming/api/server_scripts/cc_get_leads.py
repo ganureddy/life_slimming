@@ -85,6 +85,8 @@ def run(**kwargs):
         "creation", "modified"
     ]
     LEAD_FIELDS += ["custom_appointment", "custom_appointment_duration"]
+    if frappe.get_meta("Lead").has_field("custom_cc_chat_returned"):
+        LEAD_FIELDS.append("custom_cc_chat_returned")
     phone = (frappe.form_dict.get("phone") or "").strip()
 
     query = (frappe.form_dict.get("query") or "").strip()

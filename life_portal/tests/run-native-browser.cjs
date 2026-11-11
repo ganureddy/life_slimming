@@ -6,7 +6,7 @@ const suites = [
   'full-reactive-pages', 'client-registration-native', 'discount-audit-native', 'appointment-scheduler-native', 'client-info-native',
   'branch-expenditure-native', 'recovery-reports', 'unjoined-native', 'branch-target', 'price-list-native',
   'documents-native', 'sales-master-native', 'weight-loss-native',
-  'cc-dashboard-parity', 'billing-native', 'billing-workflows', 'native-performance',
+  'cc-dashboard-parity', 'cc-v26', 'cc-visit-v26', 'billing-native', 'billing-workflows', 'native-performance',
 ];
 const env = {
   ...process.env,

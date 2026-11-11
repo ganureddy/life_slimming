@@ -250,7 +250,10 @@ fixtures = [
 # --------------------------------
 # Wraps frappe.twofactor.two_factor_is_enabled_for_ so users listed in
 # "Two Factor Bypass Settings" log in without an OTP. See two_factor_bypass.py.
-before_request = ["life_slimming.two_factor_bypass.install"]
+before_request = [
+    "life_slimming.two_factor_bypass.install",
+    "life_slimming.mobile_otp_bypass.install",
+]
 
 override_doctype_class = {
     "Appointment": "life_slimming.cc_appointment.CCAppointment",
@@ -281,6 +284,7 @@ doc_events = {
                 "on_update": "life_slimming.events.set_appointment_time",
             },
 "Lead": {
+            "before_save": "life_slimming.cc_lead_lifecycle.before_save",
             "on_update": "life_slimming.events.restrict_duplicate_lead",
         },
 "ConVox Call Event": {
@@ -483,10 +487,20 @@ try:
 except Exception:
     pass
 
+# HTTPRequest can authenticate before before_request runs on a fresh worker.
+# Install while hooks load as well, following the SMS patch above.
+from life_slimming.mobile_otp_bypass import install as _install_mobile_otp_bypass
+_install_mobile_otp_bypass()
+
 # Staff-based CC scheduler fields.
+scheduler_events = {"hourly": ["life_slimming.cc_lead_lifecycle.rotate_untouched"],
+                    "cron": {"*/5 * * * *": ["life_slimming.cc_autoshuffle.run"]}}
+
 after_migrate = [
+    "life_slimming.cc_lead_lifecycle.install_fields",
     "life_slimming.convox_lead_sync.install_fields",
     "life_slimming.api.cc_appointment_setup.execute",
     "life_slimming.api.data_correction_setup.execute",
     "life_slimming.lead_performance.execute",
+    "life_slimming.api.cc_v26_setup.execute",
 ]

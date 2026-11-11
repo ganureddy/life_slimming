@@ -7,8 +7,9 @@ const props = defineProps({ bootstrap: Object, branches: Array, branch: String }
 const emit = defineEmits(['registered', 'cancel', 'busy-change']);
 const form = reactive({ patient_name: '', mobile: '', sex: '', dob: '', branch: props.branch || props.branches[0] || '', media: 'InHouse', visited_for: '', consultation_employee: '', final_decision: '', treatment_category: '', pd_form_number: '', lead: '' });
 const busy = ref(false), error = ref(''), otp = ref(''), sentTo = ref(''), verified = ref(''), pdFile = ref(null), leadChecked = ref(false), leadFound = ref(false), existingClient = ref(null);
+const bypassCode = ref('');
 const practitioners = computed(() => practitionersFor(props.bootstrap.practitioners, form.branch));
-watch(()=>form.mobile,()=>{form.lead='';leadChecked.value=false;leadFound.value=false;existingClient.value=null;verified.value='';sentTo.value='';});
+watch(()=>form.mobile,()=>{form.lead='';leadChecked.value=false;leadFound.value=false;existingClient.value=null;verified.value='';sentTo.value='';bypassCode.value='';});
 watch(()=>form.branch,()=>{form.consultation_employee='';});
 async function action(fn) { if (busy.value) return; busy.value = true; emit('busy-change',true); error.value = ''; try { await fn(); } catch (e) { error.value = e.message; } finally { busy.value = false; emit('busy-change',false); } }
 function validate() {
@@ -54,6 +55,15 @@ function verifyOtp() { return action(async () => {
   if (!(result === 'verified' || result === true || result.verified === true || result.status === 'verified')) throw new Error('Invalid or expired OTP.');
   verified.value = sentTo.value;
 }); }
+function verifyBypass() { return action(async () => {
+  if (existingClient.value) throw new Error('This mobile is already registered. Search for the client in Billing.');
+  if (!/^\d{6}$/.test(bypassCode.value)) throw new Error('Enter the six-digit billing bypass code.');
+  const mobile = normalizeMobile(form.mobile);
+  const result = await billingCall('life_slimming.mobile_otp_bypass.verify_billing_bypass', { mobile, code: bypassCode.value });
+  if (result.verified !== true || result.mobile !== mobile) throw new Error('Invalid or expired billing code.');
+  if (mobile !== normalizeMobile(form.mobile)) return;
+  verified.value = mobile; bypassCode.value = '';
+}); }
 function register() { return action(async () => {
   validate();
   if (!verified.value || verified.value !== normalizeMobile(form.mobile)) throw new Error('Verify this mobile number before registering.');
@@ -78,6 +88,7 @@ function register() { return action(async () => {
     <h3 class="span-full">PD form details</h3><label>PD form number *<input v-model.trim="form.pd_form_number" required :disabled="busy"></label><label>PD form attachment *<input type="file" accept="image/*,application/pdf" @change="pdFile = $event.target.files[0]" :disabled="busy"></label>
     <h3 class="span-full">Verify client mobile</h3><button class="billing-primary" type="button" :disabled="busy || !!existingClient" @click="sendOtp">{{ sentTo ? 'Resend WhatsApp OTP' : 'Send WhatsApp OTP' }}</button>
     <template v-if="sentTo"><label>Six-digit OTP<input v-model="otp" inputmode="numeric" maxlength="6" autocomplete="one-time-code" :disabled="busy"></label><button type="button" :disabled="busy" @click="verifyOtp">Verify OTP</button></template>
+    <label>Billing bypass code<input v-model.trim="bypassCode" inputmode="numeric" maxlength="6" autocomplete="off" :disabled="busy || !!verified || !!existingClient" placeholder="Code from Access Control"></label><button type="button" :disabled="busy || !!verified || !!existingClient || !bypassCode" @click="verifyBypass">Verify bypass code</button>
     <p v-if="verified === normalizeMobile(form.mobile) && verified" role="status">Mobile verified.</p>
     <button class="billing-primary" :disabled="busy || !verified || !!existingClient">Register client</button><button type="button" :disabled="busy" @click="emit('cancel')">Cancel</button>
   </form><p v-if="error" role="alert">{{ error }}</p><p v-if="busy" role="status">Processing registration…</p></section>

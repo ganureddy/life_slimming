@@ -1,7 +1,7 @@
 {
   "source": "ERP Portal / Server Script",
   "exported_on": "2026-09-19",
-  "count": 150,
+  "count": 151,
   "endpoints": [
     {
       "id": "accounts_command_centre_coa",
@@ -3848,6 +3848,36 @@
       ],
       "notes": [
         "Two active live scripts have identical bodies; use this single canonical endpoint."
+      ]
+    },
+    {
+      "id": "life_cc_nofu_v1",
+      "source_name": "life_cc_nofu_v1",
+      "legacy_method": "life_cc_nofu_v1",
+      "method": "life_slimming.api.server_scripts.life_cc_nofu_v1.run",
+      "source_modified": "2026-11-06 14:36:39.666460",
+      "source_sha256": "7301659f19d464ace1bb7d24a11309cd217aa7f3c3771fe5d7946f22d75f127e",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "agents",
+        "days",
+        "statuses",
+        "closed",
+        "owner",
+        "start",
+        "limit"
+      ],
+      "doctypes": [
+        "Has Role",
+        "Lead",
+        "User"
+      ],
+      "notes": [
+        "Read-only; portal module access required; non-managers restricted to own leads; mobile numbers masked; page size clamped to 1–500."
       ]
     }
   ],

@@ -1,0 +1,195 @@
+{
+  "doctype": "DocType",
+  "name": "LIFE CC Lead Track",
+  "module": "life_slimming",
+  "custom": 1,
+  "autoname": "field:lead",
+  "fields": [
+    {
+      "fieldname": "lead",
+      "fieldtype": "Link",
+      "label": "Lead",
+      "options": "Lead",
+      "reqd": 1,
+      "default": null,
+      "unique": 1,
+      "read_only": 0
+    },
+    {
+      "fieldname": "milestone",
+      "fieldtype": "Data",
+      "label": "Milestone (best reached)",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "booked_count",
+      "fieldtype": "Int",
+      "label": "Times Booked",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "missed_count",
+      "fieldtype": "Int",
+      "label": "Times Not Visited",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "visited_count",
+      "fieldtype": "Int",
+      "label": "Times Visited",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "last_visit_on",
+      "fieldtype": "Datetime",
+      "label": "Last Visit",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "cb1",
+      "fieldtype": "Column Break",
+      "label": "",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "last_call_result",
+      "fieldtype": "Data",
+      "label": "Last Call Result",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "last_call_at",
+      "fieldtype": "Datetime",
+      "label": "Last Call At",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "unreachable_streak",
+      "fieldtype": "Int",
+      "label": "Unreachable Streak",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "last_connected_at",
+      "fieldtype": "Datetime",
+      "label": "Last Connected Call",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "cb2",
+      "fieldtype": "Column Break",
+      "label": "",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "next_action",
+      "fieldtype": "Data",
+      "label": "Next Action",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "next_action_due",
+      "fieldtype": "Datetime",
+      "label": "Next Action Due",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "converting_agent",
+      "fieldtype": "Link",
+      "label": "Converting Agent (Sale Credit)",
+      "options": "Employee",
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "shuffle_count",
+      "fieldtype": "Int",
+      "label": "Auto Shuffle Count",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "last_shuffled_at",
+      "fieldtype": "Datetime",
+      "label": "Last Auto Shuffle",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Call Center Export",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

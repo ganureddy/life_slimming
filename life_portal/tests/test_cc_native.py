@@ -16,6 +16,7 @@ class NativeReads(unittest.TestCase):
         self.db.count.return_value = 81
         self.db.exists.return_value = False
         for mock in [patch.object(frappe, 'db', self.db),
+                     patch.object(frappe, 'get_meta', return_value=Mock()),
                      patch.object(leads, 'enrich_lead_appointments')]:
             mock.start(); self.addCleanup(mock.stop)
 
