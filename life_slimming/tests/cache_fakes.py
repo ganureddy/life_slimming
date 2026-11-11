@@ -9,6 +9,71 @@ HINCRBY therefore cannot be read back with hgetall, just like in production.
 import pickle
 
 import redis
+from frappe.utils import CallbackManager
+
+
+class GuardedCallbackManager(CallbackManager):
+	"""CallbackManager that fails loudly when a callback re-adds to the queue being run.
+
+	CallbackManager.run() drains its deque until empty, so adding to the queue that
+	is currently running would loop forever in production.
+	"""
+
+	def __init__(self, name):
+		super().__init__()
+		self.name = name
+		self.running = False
+
+	def add(self, func):
+		if self.running:
+			raise AssertionError(f"callback added to {self.name} while it was running")
+		super().add(func)
+
+	def run(self):
+		self.running = True
+		try:
+			super().run()
+		finally:
+			self.running = False
+
+	def __len__(self):
+		return len(self._functions)
+
+
+class FakeDB:
+	"""Mirrors Database.commit()/rollback() in frappe/database/database.py:1173-1201.
+
+	transaction_writes is reset by the COMMIT/ROLLBACK statement itself, i.e. after
+	before_commit / before_rollback have run. ``clock`` advances by one second at the
+	COMMIT statement so tests can tell before-commit time from after-commit time.
+	"""
+
+	def __init__(self, clock=None):
+		self.clock = clock
+		self.transaction_writes = 0
+		self.before_commit = GuardedCallbackManager("before_commit")
+		self.after_commit = GuardedCallbackManager("after_commit")
+		self.before_rollback = GuardedCallbackManager("before_rollback")
+		self.after_rollback = GuardedCallbackManager("after_rollback")
+
+	def write(self, count=1):
+		self.transaction_writes += count
+
+	def commit(self):
+		self.before_rollback.reset()
+		self.after_rollback.reset()
+		self.before_commit.run()
+		self.transaction_writes = 0  # "commit" statement
+		if self.clock is not None:
+			self.clock.advance(1)
+		self.after_commit.run()
+
+	def rollback(self):
+		self.before_commit.reset()
+		self.after_commit.reset()
+		self.before_rollback.run()
+		self.transaction_writes = 0  # "rollback" statement
+		self.after_rollback.run()
 
 
 class FakeClock:

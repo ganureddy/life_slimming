@@ -253,6 +253,9 @@ fixtures = [
 before_request = [
     "life_slimming.two_factor_bypass.install",
     "life_slimming.mobile_otp_bypass.install",
+    # Stamps the user after each commit that wrote, so their cached reads refresh.
+    # No-op until site_config life_slimming_cache.enabled = 1. See cache.py.
+    "life_slimming.cache.arm_write_tracking",
 ]
 
 override_doctype_class = {

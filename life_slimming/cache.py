@@ -164,6 +164,59 @@ def cached_read(namespace: str, scope: str, args: dict, compute: Callable[[], An
 	return result
 
 
+def mark_write(user: str | None = None) -> None:
+	"""Record that ``user`` (default: the session user) has just committed a write."""
+	config = settings()
+	user = user or _session_user()
+	if not config.enabled or not user or user == "Guest":
+		return
+	try:
+		frappe.cache.set_value(_stamp_key(user), _now(), expires_in_sec=max(120, 2 * config.ttl))
+	except Exception:
+		_report_error("write_tracking")
+
+
+def arm_write_tracking() -> None:
+	"""``before_request`` hook: stamp the session user after each commit that wrote.
+
+	CallbackManager.run() drains its queue until it is empty, so a callback must
+	never add to the queue that is currently running. The chain below only ever adds
+	to the *other* queues, and re-arms itself after every commit and rollback
+	(commit() resets the rollback queues; rollback() resets the commit queues).
+	"""
+	user = _session_user()
+	if not user or user == "Guest" or not settings().enabled:
+		return
+	try:
+		if frappe.db is None:
+			return
+	except Exception:
+		return
+	_arm(user)
+
+
+def _arm(user: str) -> None:
+	frappe.db.before_commit.add(lambda: _before_commit(user))
+	frappe.db.before_rollback.add(lambda: _before_rollback(user))
+
+
+def _before_commit(user: str) -> None:
+	# transaction_writes is still counted here; the COMMIT statement resets it.
+	wrote = frappe.db.transaction_writes > 0
+	frappe.db.after_commit.add(lambda: _after_commit(user, wrote))
+
+
+def _after_commit(user: str, wrote: bool) -> None:
+	# After COMMIT: any read that starts from now on sees this write.
+	if wrote:
+		mark_write(user)
+	_arm(user)
+
+
+def _before_rollback(user: str) -> None:
+	frappe.db.after_rollback.add(lambda: _arm(user))
+
+
 @frappe.whitelist()
 def stats() -> dict:
 	"""Per-namespace counters and Redis memory figures (System Manager only)."""
