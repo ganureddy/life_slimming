@@ -7,7 +7,14 @@ from datetime import timedelta
 
 import frappe
 from frappe.utils import now_datetime, get_system_timezone
+from life_slimming import cache
 from life_slimming.portal_access import require_module
+
+
+def _tv_cache_key(user, scoped, today, month_start, week_start):
+    """Managers share one board; owner-scoped viewers each get their own."""
+    return ("cc_live_tv", user if scoped else "all",
+            {"today": today, "month_start": month_start, "week_start": week_start})
 
 
 @frappe.whitelist()
@@ -29,29 +36,37 @@ def snapshot():
     week_start = now.date() - timedelta(days=now.weekday())
     week_end = week_start + timedelta(days=7)
     since = str(min(month_start, week_start))
-    fields = ['name', 'lead_name', 'lead_owner', 'creation', 'modified',
-              'branch', 'lead_assign_to_branch', 'source', 'enquired_for',
-              'custom_appointment_date_and_time', 'custom_appointment_status',
-              'status', 'custom_call_count', 'custom_last_call_time',
-              'custom_cc_first_touched_at', 'custom_convox_call_count', 'custom_convox_last_call_time',
-              'custom_cc_sub_status', 'custom_cc_stage', 'custom_next_followup_date']
-    meta = frappe.get_meta('Lead')
-    fields = [field for field in fields if field in {'name', 'creation', 'modified'} or meta.has_field(field)]
-    if 'custom_appointment_date_and_time' not in fields:
-        raise frappe.ValidationError('CC appointment fields are not installed.')
-    # Deliberately not paginated: never silently truncate the leaderboard.
-    rows = frappe.get_all('Lead', fields=fields,
-        filters={'lead_owner': user} if scoped else {},
-        or_filters=[['creation', '>=', since], ['modified', '>=', since],
-                    ['custom_appointment_date_and_time', '>=', since]],
-        order_by='creation asc, name asc', limit_page_length=0)
-    owners = sorted({row.lead_owner for row in rows if row.get('lead_owner')})
-    # Read enabled state on every poll so disabling a user takes effect immediately.
-    users = frappe.get_all('User', filters={'name': ['in', owners], 'enabled': 1},
-        fields=['name', 'full_name', 'user_image'], limit_page_length=0) if owners else []
-    agents = {user.name: user.full_name or user.name for user in users}
-    agent_images = {user.name: user.user_image or '' for user in users}
-    return dict(rows=rows, agents=agents, agent_images=agent_images, today=str(now.date()),
-                month_start=str(month_start), month_end=str(month_end),
-                week_start=str(week_start), week_end=str(week_end),
-                timestamp=str(now), timezone=get_system_timezone(), restricted_to_owner=bool(scoped))
+
+    def compute():
+        fields = ['name', 'lead_name', 'lead_owner', 'creation', 'modified',
+                  'branch', 'lead_assign_to_branch', 'source', 'enquired_for',
+                  'custom_appointment_date_and_time', 'custom_appointment_status',
+                  'status', 'custom_call_count', 'custom_last_call_time',
+                  'custom_cc_first_touched_at', 'custom_convox_call_count', 'custom_convox_last_call_time',
+                  'custom_cc_sub_status', 'custom_cc_stage', 'custom_next_followup_date']
+        meta = frappe.get_meta('Lead')
+        fields = [field for field in fields if field in {'name', 'creation', 'modified'} or meta.has_field(field)]
+        if 'custom_appointment_date_and_time' not in fields:
+            raise frappe.ValidationError('CC appointment fields are not installed.')
+        # Deliberately not paginated: never silently truncate the leaderboard.
+        rows = frappe.get_all('Lead', fields=fields,
+            filters={'lead_owner': user} if scoped else {},
+            or_filters=[['creation', '>=', since], ['modified', '>=', since],
+                        ['custom_appointment_date_and_time', '>=', since]],
+            order_by='creation asc, name asc', limit_page_length=0)
+        owners = sorted({row.lead_owner for row in rows if row.get('lead_owner')})
+        # Enabled state is read whenever the board is recomputed. With the read
+        # cache on, a just-disabled user can stay on the board for up to the
+        # cache ttl (default 30 s); see life_slimming/cache.py.
+        users = frappe.get_all('User', filters={'name': ['in', owners], 'enabled': 1},
+            fields=['name', 'full_name', 'user_image'], limit_page_length=0) if owners else []
+        agents = {user.name: user.full_name or user.name for user in users}
+        agent_images = {user.name: user.user_image or '' for user in users}
+        # timestamp stays inside the cached value: it says when the board was computed.
+        return dict(rows=rows, agents=agents, agent_images=agent_images, today=str(now.date()),
+                    month_start=str(month_start), month_end=str(month_end),
+                    week_start=str(week_start), week_end=str(week_end),
+                    timestamp=str(now), timezone=get_system_timezone(), restricted_to_owner=bool(scoped))
+
+    key = _tv_cache_key(user, scoped, str(now.date()), str(month_start), str(week_start))
+    return cache.cached_read(*key, compute)
