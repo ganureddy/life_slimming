@@ -1,0 +1,110 @@
+{
+  "doctype": "DocType",
+  "name": "CC Lead Activity Log",
+  "module": "life_slimming",
+  "custom": 1,
+  "autoname": "hash",
+  "fields": [
+    {
+      "fieldname": "lead",
+      "fieldtype": "Link",
+      "label": "Lead",
+      "options": "Lead",
+      "reqd": 1,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "agent",
+      "fieldtype": "Link",
+      "label": "Agent",
+      "options": "Employee",
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "erp_user",
+      "fieldtype": "Link",
+      "label": "ERP user",
+      "options": "User",
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "event_time",
+      "fieldtype": "Datetime",
+      "label": "Event time",
+      "options": null,
+      "reqd": 1,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "action",
+      "fieldtype": "Data",
+      "label": "Action",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "old_status",
+      "fieldtype": "Data",
+      "label": "Old status",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "new_status",
+      "fieldtype": "Data",
+      "label": "New status",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "connected",
+      "fieldtype": "Check",
+      "label": "Connected",
+      "options": null,
+      "reqd": 0,
+      "default": "0",
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "next_followup",
+      "fieldtype": "Datetime",
+      "label": "Next follow-up",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    },
+    {
+      "fieldname": "change_json",
+      "fieldtype": "Long Text",
+      "label": "Changes",
+      "options": null,
+      "reqd": 0,
+      "default": null,
+      "unique": 0,
+      "read_only": 0
+    }
+  ],
+  "permissions": []
+}

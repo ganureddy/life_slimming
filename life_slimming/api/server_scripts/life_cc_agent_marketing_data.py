@@ -3211,6 +3211,9 @@ def run(**kwargs):
         )
 
 
+        from life_slimming.api.cc_report_finance import enrich_consultants
+        enrich_consultants(cc_invoice_report_rows)
+
         frappe.response["message"] = {
             "ok": True,
             "user": user,

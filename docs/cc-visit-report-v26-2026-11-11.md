@@ -1,0 +1,35 @@
+# Native CC Visit Report V26 update
+
+Reviewed ERP Web Page `cc-lead-reports-v26-4-bhuvan`, route
+`branch-visit-report-CC-LEAD-REPORTS`, modified 10 November 2026.
+The live `Branch visit report` Server Script matches the migrated backend's source revision.
+
+The native page now provides:
+
+- Six report tabs, deep links, compact header, print and selectable share previews.
+- A sixth-to-fifth business-month daily appointment/visit/booking strip, with month navigation.
+- Branch and agent grouping, sortable counts, masked paged drilldowns and complete-row CSV exports.
+- Persistent card/summary visibility and text-size controls.
+- Lazy three-business-month conversion comparisons.
+- Agent 360 ConVox/mobile activity, dispositions, talk time, seven-day timelines,
+  idle gaps and call/update/appointment mismatches.
+- Existing owner-scoped no-follow-up API with day buckets, outcome filters and paging.
+- Native Lead Journey reporting through the core added with the CC dashboard update.
+- Marketing-source and invoice collection summaries. Consultant attribution is taken from
+  the invoice's linked Therapy Plan, without inventing a fallback consultant.
+- Today's appointment and staff attendance panels.
+- A lightweight change marker every 90 seconds while visible; new data requires an explicit refresh.
+
+All financial data and comparisons load on demand. Partial appointment results block visit
+exports and share previews. Activity exports are blocked when their source limit is reached;
+timelines are capped at 1,000 events per agent, and ranges above seven days omit timeline/idle checks.
+Phone numbers remain masked in drilldowns and exports. Activity APIs enforce report-module
+access and scope ordinary agents to their own ERP user and ConVox ID.
+
+The activity API is native Python; no new Server Script installation is needed. Deploy the
+backend and built portal assets. The preceding CC V26 schema migration is still required for
+Lead Journey. Existing automatic redistribution rule settings are unchanged.
+
+Validation: frontend unit suite; focused Python aggregation/access/attribution tests; production
+build; mocked desktop/mobile browser suite covering tabs, drilldowns, masked details, lazy data,
+share preview, today appointments, activity, no-follow-up, partial exports and errors/retry.

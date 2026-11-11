@@ -492,7 +492,8 @@ from life_slimming.mobile_otp_bypass import install as _install_mobile_otp_bypas
 _install_mobile_otp_bypass()
 
 # Staff-based CC scheduler fields.
-scheduler_events = {"hourly": ["life_slimming.cc_lead_lifecycle.rotate_untouched"]}
+scheduler_events = {"hourly": ["life_slimming.cc_lead_lifecycle.rotate_untouched"],
+                    "cron": {"*/5 * * * *": ["life_slimming.cc_autoshuffle.run"]}}
 
 after_migrate = [
     "life_slimming.cc_lead_lifecycle.install_fields",
@@ -500,4 +501,5 @@ after_migrate = [
     "life_slimming.api.cc_appointment_setup.execute",
     "life_slimming.api.data_correction_setup.execute",
     "life_slimming.lead_performance.execute",
+    "life_slimming.api.cc_v26_setup.execute",
 ]
