@@ -40,6 +40,7 @@ if(request.url.includes('cc_report_activity.run'))result={rows:[{agent:'Administ
 if(request.url.includes('cc_report_activity.changes'))result={token:'v1'};
 if(request.url.includes('life_cc_nofu_v1'))result={days:30,buckets:[{days:30,n:1}],statuses:[{status:'No Response',n:1}],agents:[{agent:'Administrator',n:1}],total:1,rows:[{name:'LEAD1',lead_name:'Dormant client',ph4:'3210',owner:'Administrator',sub:'No Response',last:'2026-09-01'}]};
 
+if(request.url.includes('cc_untouched.run'))result={total:1,rows:[{name:'LEAD1',lead_name:'Untouched client',phone:'••••3210',agent_name:'CC Tester',creation:today}]};
 if(request.url.includes('cc_report_history.history'))result={rows:args.kind==='updates'?[{id:'V1',at:today+' 10:00:00',agent_name:'CC Tester',lead:'LEAD1',changes:[{field:'custom_cc_sub_status',before:'Lead',after:'Interested'}]}]:[{id:'CALL-'+(Number(args.start||0)+1),at:today+' 10:00:00',agent:'Administrator',agent_name:'CC Tester',lead:'LEAD1',phone:'••••3210',direction:'Outbound',status:'Answered',duration:120,disposition:'Interested'}],has_more:!args.start,start:Number(args.start||0),limit:30};
 if(request.url.includes('cc_report_history.recording'))result={url:''};
 await send('Fetch.fulfillRequest',{requestId,responseCode:200,responseHeaders:[{name:'Content-Type',value:'application/json'}],body:Buffer.from(JSON.stringify({message:result})).toString('base64')});
@@ -91,6 +92,7 @@ for(const width of [1440,390]){
  await click('.cc-report-tabs button','Agent Report');
  await wait("document.body.textContent.includes('Agent performance')");
  assert.equal(calls.filter(c=>c.url.includes('life_cc_agent_marketing_data')&&!c.args.view).length,0,'agent performance must use appointment data without loading invoices');
+ await click('[aria-label="Agent reports"] button','Untouched');await wait("document.body.textContent.includes('Untouched client')");
  await click('[aria-label="Agent reports"] button','No follow-up');
  await wait("document.body.textContent.includes('Dormant client')");
  assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth'),true,'no follow-up overflow '+width);

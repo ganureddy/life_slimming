@@ -17,3 +17,11 @@ def execute():
         dict(fieldname='verified_on', label='Verified On', fieldtype='Datetime'),
         dict(fieldname='match_note', label='Match Note', fieldtype='Small Text'),
     ]}, update=True)
+
+    # Transfer the five-minute schedule to the maintained Python implementation.
+    # Rule enabled/test_mode settings are preserved; never enable transfers here.
+    if frappe.db.exists('Server Script', 'life_cc_autoshuffle'):
+        frappe.db.set_value('Server Script', 'life_cc_autoshuffle', 'disabled', 1)
+        if frappe.get_meta('Scheduled Job Type').has_field('server_script'):
+            for job in frappe.get_all('Scheduled Job Type', filters={'server_script':'life_cc_autoshuffle'}, pluck='name'):
+                frappe.db.set_value('Scheduled Job Type', job, 'stopped', 1)

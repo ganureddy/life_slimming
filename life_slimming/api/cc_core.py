@@ -4,6 +4,7 @@ import re
 import frappe
 from life_slimming.api._runtime import script_endpoint
 from life_slimming.portal_access import require_module
+from life_slimming.cc_business_rules import (PERMISSION_EDITORS, DEFAULT_MOVERS as POLICY_MOVERS, MOVER_ROLES, booked, has_business_result, paid_evidence, credit_for_events)
 
 
 @script_endpoint(allow_guest=False)
@@ -18,8 +19,8 @@ def run(**kwargs):
     STATUS_MAP = {"No Response": "Not Response", "Not Reachable": "Not Reachable", "Switch OFF": "Switch OFF", "TNA": "TNA",
                   "Call Disconnected": "Call Disconnected", "Appointment no response": "Appointment no response"}
     STATUS_FAILED = ["Not Response", "Not Reachable", "Switch OFF", "TNA", "Call Disconnected", "Appointment no response"]
-    EDITORS = ["Administrator"] + ([frappe.session.user] if "System Manager" in frappe.get_roles() else [])
-    DEFAULT_MOVERS = ["Administrator"]
+    EDITORS = PERMISSION_EDITORS
+    DEFAULT_MOVERS = POLICY_MOVERS
     TRACK = "LIFE CC Lead Track"
     LOG = "CC Lead Activity Log"
 
@@ -47,14 +48,14 @@ def run(**kwargs):
 
     def is_tl(u):
         rs = roles_of(u)
-        return ("Call Center Export" in rs) or ("System Manager" in rs)
+        return bool(MOVER_ROLES.intersection(rs)) or frappe.db.get_value("User", u, "custom_portal_role") == "MD"
 
 
     def movers():
         rows = frappe.get_all("LIFE CC Assign Rule", filters={"rule_type": "Permissions", "enabled": 1}, fields=["allowed_users"], limit_page_length=1)
         if rows and rows[0].allowed_users:
-            return jl(rows[0].allowed_users) + EDITORS
-        return DEFAULT_MOVERS
+            return list(set(jl(rows[0].allowed_users)) | set(EDITORS))
+        return list(set(DEFAULT_MOVERS) | set(EDITORS))
 
 
     def can_move(u):
@@ -107,55 +108,21 @@ def run(**kwargs):
 
 
     def paid_map(names):
-        # Joined Client = booked AND paid: Patient.custom_lead -> submitted Sales Invoice with any amount paid
-        out = {}
-        if not names:
-            return out
-        pats = frappe.get_all("Patient", filters={"custom_lead": ["in", names]}, fields=["name", "custom_lead"], limit_page_length=1000)
-        p2l = {}
-        for p in pats:
-            p2l[p.name] = p.custom_lead
-        # client joined with another number: agent added it, TL verified the match with branch records
-        for t in frappe.get_all(TRACK, filters={"lead": ["in", names], "match_status": "Verified", "matched_patient": ["is", "set"]},
-                                fields=["lead", "matched_patient"], limit_page_length=1000):
-            p2l[t.matched_patient] = t.lead
-        if not p2l:
-            return out
-        inv = frappe.get_all("Sales Invoice", filters={"patient": ["in", list(p2l.keys())], "docstatus": 1},
-                             fields=["patient", "posting_date", "grand_total", "outstanding_amount", "is_return"],
-                             order_by="posting_date asc", limit_page_length=5000)
-        for i in inv:
-            if i.is_return:
-                continue
-            paid = float(i.grand_total or 0) - float(i.outstanding_amount or 0)
-            if paid <= 0:
-                continue
-            ld = p2l.get(i.patient)
-            o = out.get(ld) or {"joined_on": str(i.posting_date), "paid": 0}
-            o["paid"] = o["paid"] + paid
-            out[ld] = o
-        return out
-
+        return paid_evidence(names)
 
     def credit_agents(joined):
-        # agent who booked the LAST appointment before the first payment gets 100% credit
-        out = {}
         if not joined:
-            return out
-        rows = frappe.get_all(LOG, filters={"lead": ["in", list(joined.keys())], "action": "appointment"},
-                              fields=["lead", "erp_user", "agent", "event_time"], order_by="event_time asc", limit_page_length=5000)
-        for r in rows:
-            if str(r.event_time)[:10] <= str(joined[r.lead]["joined_on"]):
-                out[r.lead] = r.agent or emp_of(r.erp_user)
-        return out
-
+            return {}
+        rows = frappe.get_all(LOG, filters={"lead": ["in", list(joined)], "action": "appointment"},
+            fields=["lead", "erp_user", "agent", "event_time"], order_by="event_time asc", limit_page_length=0)
+        return credit_for_events(rows, joined, emp_of)
 
     def milestone_of(l, c):
         ap = l.get("custom_appointment_status") or ""
         st = l.get("status") or ""
         sub = l.get("custom_cc_sub_status") or ""
         appt_dt = dt(l.get("custom_appointment_date_and_time"))
-        if c.get("paid"):
+        if c.get("paid") and booked(l, c):
             return "Joined Client"
         if ap == "Visited Booked" or sub == "Walked In & Booked" or st in ["Converted", "Joined"]:
             return "Booked - Payment Pending"
@@ -202,7 +169,7 @@ def run(**kwargs):
         return ["Call now", None]
 
 
-    def protected_of(l, ms):
+    def protected_of(l, ms, evidence=None):
         appt_dt = dt(l.get("custom_appointment_date_and_time"))
         if (l.get("status") or "") == "Do Not Contact":
             return "DNC"
@@ -214,6 +181,8 @@ def run(**kwargs):
             return "Joined client - feedback only"
         if ms == "Booked - Payment Pending":
             return "Booked - payment pending"
+        if (evidence or {}).get("paid"):
+            return "Paid client - protected"
         return ""
 
 
@@ -237,6 +206,7 @@ def run(**kwargs):
             if k in cnt:
                 cnt[k]["paid"] = pm[k]["paid"]
                 cnt[k]["joined_on"] = pm[k]["joined_on"]
+                cnt[k]["has_bill"] = pm[k].get("has_bill", False)
         ca = credit_agents(pm)
         out = {}
         for l in leads:
@@ -259,8 +229,9 @@ def run(**kwargs):
                 "last_call_result": last_res or "", "last_call_at": str(last_at) if last_at else "",
                 "unreachable_streak": (t.get("unreachable_streak") if t else 0) or 0,
                 "next_action": na[0], "next_action_due": na[1],
-                "protected": protected_of(l, ms),
-                "converting_agent": ((t.get("converting_agent") if t else None) or ca.get(l.name) or (l.get("custom_cc_appointment_agent") if c.get("paid") else None)),
+                "protected": protected_of(l, ms, pm.get(l.name)),
+                "converting_agent": ca.get(l.name),
+                "credit_provisional": (pm.get(l.name) or {}).get("credit_provisional", False),
                 "joined_on": c.get("joined_on"), "paid": c.get("paid") or 0,
                 "owner": l.lead_owner, "sub_status": l.custom_cc_sub_status, "stage": l.custom_cc_stage,
                 "appt_status": l.custom_appointment_status, "appt_at": str(l.custom_appointment_date_and_time or ""),
@@ -480,7 +451,7 @@ def run(**kwargs):
             raise
         require_module("ccvisit")
     management = can_move(user)
-    manager_actions = {"rank", "dist_preview", "dist_move", "dist_undo", "agents", "settings_save", "bulk_meta", "bulk_create", "rules", "rule_save", "credit", "agent_stats"}
+    manager_actions = {"rank", "dist_preview", "dist_move", "dist_undo", "agents", "settings_save", "bulk_meta", "bulk_check", "bulk_create", "rules", "rule_save", "credit", "agent_stats"}
     if action in manager_actions and not management:
         frappe.throw("Lead distribution requires manager access.", frappe.PermissionError)
     if action in {"header", "timeline", "attempt", "connected", "match", "match_verify", "add_number", "save_connected"}:
@@ -496,6 +467,14 @@ def run(**kwargs):
     if action == "save_connected":
         # Save the worksheet and journey state in one request/transaction.
         from life_slimming.api.server_scripts.cc_update_lead import run as update_lead
+        current = summaries([fd.get("lead")]).get(fd.get("lead")) or {}
+        if current.get("milestone") == "Joined Client":
+            values = fd.get("values") or {}
+            values = json.loads(values) if isinstance(values, str) else values
+            existing = frappe.get_doc("Lead", fd.get("lead"))
+            immutable = {"status", "custom_cc_stage", "custom_cc_sub_status", "custom_appointment_date_and_time", "custom_appointment_status", "lead_owner"}
+            if any(key in values and str(values[key] or '') != str(existing.get(key) or '') for key in immutable):
+                frappe.throw("Joined clients accept feedback only; their business outcome and owner are protected.")
         saved_result = update_lead(lead=fd.get("lead"), values=fd.get("values"),
             expected_modified=fd.get("expected_modified"), attempt=fd.get("attempt"))
         if saved_result is None:
@@ -512,20 +491,29 @@ def run(**kwargs):
     elif action == "timeline":
         lead = fd.get("lead")
         frappe.get_doc("Lead", lead).check_permission("read")
+        start = max(0, min(4900, int(fd.get("start") or 0)))
+        window = start + 101
         ev = []
-        for r in frappe.get_all(LOG, filters={"lead": lead}, fields=["event_time", "action", "old_status", "new_status", "connected", "next_followup", "erp_user", "change_json"], order_by="event_time desc", limit_page_length=300):
+        for r in frappe.get_all(LOG, filters={"lead": lead}, fields=["event_time", "action", "old_status", "new_status", "connected", "next_followup", "erp_user", "change_json"], order_by="event_time desc", limit_page_length=window):
             fr, to = r.old_status, r.new_status
             if r.action in ["tl move", "auto shuffle", "reassign", "assign"]:
                 fr, to = person(fr), person(to)
             ev.append({"at": str(r.event_time), "kind": r.action, "from": fr, "to": to, "connected": r.connected,
                        "next": str(r.next_followup or ""), "by": person(r.erp_user)})
-        for r in frappe.get_all("CC Followup Event", filters={"lead": lead}, fields=["due_at", "result", "closed_at", "agent"], order_by="due_at desc", limit_page_length=100):
+        for r in frappe.get_all("CC Followup Event", filters={"lead": lead}, fields=["due_at", "result", "closed_at", "agent"], order_by="due_at desc", limit_page_length=window):
             ev.append({"at": str(r.closed_at or r.due_at), "kind": "follow-up " + (r.result or ""), "due": str(r.due_at), "by": person(r.agent)})
         if frappe.db.exists("DocType", "LIFE Mobile Call Log"):
-            for r in frappe.get_all("LIFE Mobile Call Log", filters={"lead": lead}, fields=["creation", "call_status", "talk_seconds", "agent", "disposition"], order_by="creation desc", limit_page_length=100):
+            for r in frappe.get_all("LIFE Mobile Call Log", filters={"lead": lead}, fields=["creation", "call_status", "talk_seconds", "agent", "disposition"], order_by="creation desc", limit_page_length=window):
                 ev.append({"at": str(r.creation), "kind": "mobile call", "to": r.call_status or r.disposition, "talk": r.talk_seconds, "by": person(r.agent)})
+        if frappe.db.exists("DocType", "ConVox Call Event"):
+            for r in frappe.get_all("ConVox Call Event", filters={"crm_lead":lead,"event_type":"Call Status"}, fields=["received_on","call_status","call_duration","agent_id"], order_by="received_on desc", limit_page_length=window):
+                caller = frappe.db.get_value("User", {"custom_convox_agent_id":r.agent_id}, "name")
+                ev.append({"at":str(r.received_on),"kind":"ConVox call","to":r.call_status,"talk":r.call_duration,"by":person(caller) if caller else r.agent_id})
         ev.sort(key=lambda e: e.get("at") or "", reverse=True)
-        res["events"] = ev
+        res["events"] = ev[start:start+100]
+        res["more"] = len(ev)>start+100 and start<4900
+        res["capped"] = len(ev)>5000
+        res["start"] = start
         res["summary"] = summaries([lead]).get(lead)
 
     elif action == "attempt":
@@ -545,7 +533,7 @@ def run(**kwargs):
         if not nf:
             nf = retry_time(streak)
             if appt_dt and appt_dt > now and (d.get("custom_appointment_status") or "") == "Booked":
-                nf = min(dt(nf), frappe.utils.add_to_date(appt_dt, hours=-2))
+                nf = max(now, min(dt(nf), frappe.utils.add_to_date(appt_dt, hours=-2)))
         d.custom_call_count = int(d.get("custom_call_count") or 0) + 1
         d.custom_last_call_time = now
         d.custom_next_followup_date = nf
@@ -558,7 +546,8 @@ def run(**kwargs):
         # sub-status = failed reason, status mapped). A lead with ANY real outcome is never touched.
         cur_sub = d.get("custom_cc_sub_status") or ""
         appt_locked = (d.get("custom_appointment_status") or "") in ["Booked", "Visited", "Visited Booked", "Visited Not Booked", "Not Visited"]
-        if cur_sub in ["", "Lead"] + FAILED and not appt_locked:
+        evidence = paid_map([lead]).get(lead) or {}
+        if cur_sub in ["", "Lead"] + FAILED and not appt_locked and not has_business_result(d, evidence.get("paid"), evidence.get("has_bill")):
             d.custom_cc_sub_status = "No Response" if reason in ["Not Response", "Busy", "Not Lifted"] else reason
             if (d.get("custom_cc_stage") or "UNTOUCHED") == "UNTOUCHED":
                 d.custom_cc_stage = "FOLLOW-UP"
@@ -661,17 +650,28 @@ def run(**kwargs):
             frappe.throw("Choose configured CC agents only.")
         if not leads or not to:
             frappe.throw("Select leads and at least one agent")
+        capacity = workload(to)
+        settings = cc_settings()
+        load = {a: frappe.db.count("Lead", {"lead_owner": a, "custom_cc_stage": ["in", ["UNTOUCHED", "FOLLOW-UP", "PIPELINE"]]}) for a in to}
+        projected = dict.fromkeys(to, 0)
+        simulation = dict(load)
+        method = fd.get("method") or "equal"
+        projection_rank = agent_rank(to, method) if method in ["conversion", "bookings", "walkins", "free_leads", "free_fu"] else []
+        for index in range(len(leads)):
+            target = min(to, key=lambda a:simulation[a]) if method == "smart" else pick_agent(projection_rank, projected) if projection_rank else to[index % len(to)]
+            projected[target] += 1
+            simulation[target] += 1
+        over = [a for a in to if (capacity.get(a) or {}).get("over_cap") or settings.get("cap_on") and (capacity.get(a) or {}).get("open_recent",0)+projected[a] > int(settings.get("cap_open") or 1000)]
+        if over and fd.get("accept_capacity") not in [1, "1", True]:
+            return {"ok": True, "capacity_warning": over, "capacity": capacity, "projected": projected, "count": 0}
         batch = "TL-" + str(now)[:19].replace("-", "").replace(":", "").replace(" ", "")
-        load = {}
-        for a in to:
-            load[a] = frappe.db.count("Lead", {"lead_owner": a, "custom_cc_stage": ["in", ["UNTOUCHED", "FOLLOW-UP", "PIPELINE"]]})
         moved = []
         ranked = []
         given = {}
         i = 0
         for n in leads:
             d = frappe.get_doc("Lead", n)
-            if protected_of(d, summaries([n])[n]["milestone"]):
+            if summaries([n])[n].get("protected"):
                 continue
             meth = fd.get("method") or "equal"
             if meth == "smart":
@@ -713,7 +713,7 @@ def run(**kwargs):
         for r in rows:
             c = json.loads(r.change_json)
             d = frappe.get_doc("Lead", r.lead)
-            if c.get("batch") == batch and d.lead_owner == c.get("to") and not protected_of(d, summaries([d.name])[d.name]["milestone"]):
+            if c.get("batch") == batch and d.lead_owner == c.get("to") and not summaries([d.name])[d.name].get("protected"):
                 d.lead_owner = c.get("from")
                 d.custom_assignment_rule = "Undo " + batch + " by " + user
                 pass
@@ -892,7 +892,7 @@ def run(**kwargs):
         if srcs:
             f["source"] = ["in", srcs]
         rows = frappe.get_all("Lead", filters=f, fields=["name", "lead_owner", "source", "custom_call_count", "custom_convox_call_count", "custom_appointment_status",
-                              "custom_cc_stage", "custom_cc_sub_status", "custom_next_followup_date", "custom_cc_appointment_agent"], limit_page_length=30000)
+                              "custom_cc_stage", "custom_cc_sub_status", "status", "custom_next_followup_date", "custom_cc_appointment_agent"], limit_page_length=30000)
         names = [r.name for r in rows]
         pm = {}
         for i in range(0, len(names), 2000):
@@ -930,13 +930,13 @@ def run(**kwargs):
                 a["visited"] = a["visited"] + 1
             if ap == "Not Visited":
                 fun["not_visited"] = fun["not_visited"] + 1
-            if r.name in pm:
+            if r.name in pm and pm[r.name].get("paid") and booked(r):
                 fun["joined"] = fun["joined"] + 1
                 fun["paid"] = fun["paid"] + pm[r.name]["paid"]
                 a["joined"] = a["joined"] + 1
                 a["paid"] = a["paid"] + pm[r.name]["paid"]
                 joined_list.append({"lead": r.name, "owner": o, "joined_on": pm[r.name]["joined_on"], "paid": pm[r.name]["paid"],
-                                    "credit": ca.get(r.name) or r.custom_cc_appointment_agent or ""})
+                                    "credit": ca.get(r.name) or "", "credit_provisional": pm[r.name].get("credit_provisional", False)})
             t = trk.get(r.name)
             if t:
                 if (t.unreachable_streak or 0) >= 3:
@@ -1047,11 +1047,15 @@ def run(**kwargs):
         res.update({"branches": [b.name for b in frappe.get_all("Branch", fields=["name"], limit_page_length=100)],
                     "sources": [b.name for b in frappe.get_all("Lead Source", fields=["name"], limit_page_length=200)]})
 
+    elif action == "bulk_check":
+        from life_slimming.api.cc_bulk_upload import check_rows
+        res.update(check_rows(json.loads(fd.get("rows") or "[]"), fd.get("mode") or "auto", jl(fd.get("to_agents")), fd.get("allow_dup") in [1,"1",True]))
+
     elif action == "bulk_create":
         # TL bulk upload: create leads and assign (one agent / split / by priority / leave to the automatic assignment)
         if not can_move(user):
             frappe.throw("Not allowed to upload leads")
-        rows = json.loads(fd.get("rows") or "[]")[:500]
+        raw_rows = json.loads(fd.get("rows") or "[]")
         mode = fd.get("mode") or "auto"
         to = jl(fd.get("to_agents"))
         configured = frappe.get_doc("Lead Assignment Settings", "Lead Assignment Settings")
@@ -1060,10 +1064,27 @@ def run(**kwargs):
             frappe.throw("Choose configured CC agents only.")
         meth = fd.get("method") or "conversion"
         allow_dup = fd.get("allow_dup") in ["1", 1, True, "true"]
+        from life_slimming.api.cc_bulk_upload import check_rows
+        preflight = check_rows(raw_rows, mode, to, allow_dup)
+        if preflight["invalid"]:
+            return {"ok": True, "validation_failed": True, **preflight}
+        rows = [r for r in preflight["rows"] if r["state"] == "ready"]
+        receivers = list({r.get("agent") for r in rows if mode == "file" and r.get("agent")} | set(to))
+        capacity = workload(receivers)
+        projected = dict.fromkeys(receivers, 0)
+        ranking_for_capacity = agent_rank(to, meth) if mode == "rank" and to else []
+        for index, row in enumerate(rows):
+            target = row.get("agent") if mode == "file" else to[0] if mode == "agent" and to else to[index % len(to)] if mode == "split" and to else pick_agent(ranking_for_capacity, projected) if ranking_for_capacity else None
+            if target:
+                projected[target] = projected.get(target, 0) + 1
+        settings = cc_settings()
+        over = [a for a, load in capacity.items() if load.get("over_cap") or settings.get("cap_on") and load.get("open_recent",0)+projected.get(a,0)>int(settings.get("cap_open") or 1000)]
+        if over and fd.get("accept_capacity") not in [1,"1",True]:
+            return {"ok": True, "capacity_warning": over, "created": 0}
         ranked = agent_rank(to, meth) if mode == "rank" and to else []
         given = {}
         batch = "UP-" + str(now)[:19].replace("-", "").replace(":", "").replace(" ", "")
-        out = []
+        out = [{"row": r["row"], "ok": 0, "msg": "Duplicate skipped: " + r["duplicate"]} for r in preflight["rows"] if r["state"] == "skip"]
         i = 0
         for r in rows:
             name = str(r.get("name") or "").strip()
@@ -1117,7 +1138,7 @@ def run(**kwargs):
     elif action == "rule_save":
         r = json.loads(fd.get("rule") or "{}")
         if r.get("rule_type") == "Permissions" and user not in EDITORS:
-            frappe.throw("Only Bhuvan / Administrator can change who can move leads")
+            frappe.throw("Only Bhuvan and Naren can change who can move leads")
         if not can_move(user):
             frappe.throw("Not allowed")
         name = str(r.get("rule_name") or "").strip()
@@ -1125,7 +1146,7 @@ def run(**kwargs):
             frappe.throw("Give the rule a name of up to 140 characters.")
         existing_type = frappe.db.get_value("LIFE CC Assign Rule", name, "rule_type")
         if existing_type == "Permissions" and user not in EDITORS:
-            frappe.throw("Only administrators can change a permissions rule.", frappe.PermissionError)
+            frappe.throw("Only Bhuvan and Naren can change a permissions rule.", frappe.PermissionError)
         if r.get("rule_type") not in ["Time-over New Lead", "Time-over Follow-up", "Absent Agent", "Hot Lead Overdue", "Visited Not Booked", "Permissions"]:
             frappe.throw("Choose a supported automatic rule type.")
         if r.get("rule_type") != "Permissions":

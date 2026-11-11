@@ -52,3 +52,52 @@ def preview(content=None, **kwargs):
         return {'rows': parse_workbook(content)}
     except (ValueError, TypeError) as exc:
         frappe.throw(str(exc))
+
+
+def check_rows(rows, mode='auto', to_agents=None, allow_dup=False):
+    """Preflight uses the same normalized rows as insertion, without any writes."""
+    import re
+    if not isinstance(rows,list) or len(rows)>500:
+        frappe.throw('Upload a list of up to 500 leads.')
+    if mode not in ('auto','agent','split','rank','file'):
+        frappe.throw('Choose an assignment mode.')
+    selected=to_agents or []
+    settings=frappe.get_doc('Lead Assignment Settings','Lead Assignment Settings')
+    agents={r.get('agent') for r in settings.get('agent_config') or [] if r.get('agent')}
+    branches={r.name.lower():r.name for r in frappe.get_all('Branch',fields=['name'],limit_page_length=0)}
+    sources={r.name.lower():r.name for r in frappe.get_all('Lead Source',fields=['name'],limit_page_length=0)}
+    if any(a not in agents for a in selected) or mode in ('agent','split','rank') and not selected:
+        frappe.throw('Choose configured receiving agents.')
+    phones=list({re.sub(r'\D','',str(r.get('mobile') or ''))[-10:] for r in rows if isinstance(r,dict)})
+    phones=[number for number in phones if len(number)==10]
+    existing={}
+    if phones:
+        matches=frappe.db.sql("""select name, right(regexp_replace(ifnull(mobile_no,''),'[^0-9]',''),10) as mobile, right(regexp_replace(ifnull(phone,''),'[^0-9]',''),10) as alternate
+            from `tabLead` where right(regexp_replace(ifnull(mobile_no,''),'[^0-9]',''),10) in %(phones)s
+            or right(regexp_replace(ifnull(phone,''),'[^0-9]',''),10) in %(phones)s""",{'phones':tuple(phones)},as_dict=True)
+        for row in matches:
+            existing[row.mobile]=row.name
+            if row.alternate:
+                existing[row.alternate]=row.name
+    output=[];seen=set()
+    for i,raw in enumerate(rows):
+        if not isinstance(raw,dict):
+            output.append({'row':i+2,'errors':['Expected a row object.'],'state':'invalid'});continue
+        row={k:str(raw.get(k) or '').strip() for k in ('name','mobile','source','branch','alt','city','interest','notes','agent')}
+        row['row']=raw.get('row',i+2)
+        digits=re.sub(r'\D','',row['mobile'])
+        row['mobile']=digits[-10:]
+        errors=[]
+        if not row['name']:errors.append('Name is required.')
+        if len(digits) not in (10,12) or len(digits)==12 and not digits.startswith('91'):errors.append('Enter a ten-digit mobile or +91 number.')
+        for key,master in [('source',sources),('branch',branches)]:
+            value=master.get(row[key].lower())
+            if not value:errors.append('Unknown '+key+'.')
+            else:row[key]=value
+        if row['alt'] and len(re.sub(r'\D','',row['alt'])) not in (10,12):errors.append('Alternate number is invalid.')
+        if mode=='file' and row['agent'] not in agents:errors.append('Choose a configured agent in the agent column.')
+        duplicate=existing.get(row['mobile']) or ('earlier upload row' if row['mobile'] in seen else '')
+        row.update(errors=errors,duplicate=duplicate,state='invalid' if errors else 'skip' if duplicate and not allow_dup else 'ready')
+        if not errors:seen.add(row['mobile'])
+        output.append(row)
+    return {'rows':output,'ready':sum(r['state']=='ready' for r in output),'invalid':sum(r['state']=='invalid' for r in output),'skipped':sum(r['state']=='skip' for r in output)}

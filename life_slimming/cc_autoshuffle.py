@@ -1,6 +1,7 @@
 """V26 rule runner. Existing active ERP scheduler takes precedence."""
 import json
 import frappe
+from life_slimming.cc_business_rules import paid_evidence
 
 
 def run():
@@ -141,18 +142,7 @@ def run():
 
 
     def joined_leads(names):
-        # booked AND paid = Joined Client: never shuffled, feedback only
-        if not names:
-            return []
-        pats = frappe.get_all("Patient", filters={"custom_lead": ["in", names]}, fields=["name", "custom_lead"], limit_page_length=1000)
-        p2l = {}
-        for p in pats:
-            p2l[p.name] = p.custom_lead
-        if not p2l:
-            return []
-        inv = frappe.get_all("Sales Invoice", filters={"patient": ["in", list(p2l.keys())], "docstatus": 1, "is_return": 0},
-                            fields=["patient", "grand_total", "outstanding_amount"], limit_page_length=5000)
-        return [p2l[i.patient] for i in inv if float(i.grand_total or 0) - float(i.outstanding_amount or 0) > 0]
+        return [name for name, evidence in paid_evidence(names).items() if evidence.get("paid")]
 
 
     F = ["name", "lead_owner", "source", "status", "custom_cc_stage", "custom_appointment_status",
@@ -293,6 +283,9 @@ def run():
             if int(r.test_mode or 0) or (r.rule_type == "Absent Agent" and r.absent_mode == "Manual"):
                 continue
             d = frappe.get_doc("Lead", l.name)
+            if protected(d) or joined_leads([d.name]):
+                lines.append(d.name + " | outcome changed; protected at save")
+                continue
             old = d.lead_owner
             d.lead_owner = target
             d.custom_assignment_method = "Manual"

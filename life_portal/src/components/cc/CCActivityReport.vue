@@ -5,14 +5,15 @@ import { session } from '../../lib/session';
 import { downloadCsv } from '../../lib/cc';
 import CCReportHistory from './CCReportHistory.vue';
 import CCDataTable from './CCDataTable.vue';
-const props=defineProps({from:String,to:String,channel:{type:String,default:'all'}});const emit=defineEmits(['open']);
+const props=defineProps({from:String,to:String,channel:{type:String,default:'all'}});const emit=defineEmits(['open','loaded']);
 const historySelection=ref(null);
 function openHistory(kind,owner=agent.value){historySelection.value={kind,agent:owner};}
 const data=ref(null),busy=ref(false),error=ref(''),gap=ref(15),agent=ref(''),selected=ref(null);let generation=0,controller;
 const rows=computed(()=>(data.value?.rows||[]).filter(row=>!agent.value||row.agent===agent.value));
 const columns=[{key:'name',label:'Agent'},{key:'convox',label:'ConVox calls'},{key:'mobile',label:'Mobile calls'},{key:'answered',label:'Answered'},{key:'talk',label:'Talk (minutes)',value:r=>(r.talk/60).toFixed(1)},{key:'updates',label:'Lead updates'},{key:'idle_minutes',label:'Idle minutes'},{key:'updated_no_call',label:'Updated, no call'},{key:'talked_no_update',label:'Talked, no update'},{key:'appointment_without_booking',label:'Appt disposition, no appt'}];
 const totals=computed(()=>rows.value.reduce((out,row)=>{for(const key of ['convox','mobile','answered','talk','updates','idle_minutes','updated_no_call','talked_no_update','appointment_without_booking'])out[key]=(out[key]||0)+(Number(row[key])||0);return out;},{}));
-async function load(){const token=++generation;controller?.abort();controller=new AbortController();busy.value=true;error.value='';data.value=null;selected.value=null;try{const body=await request('life_slimming.api.cc_report_activity.run',{args:{from_date:props.from,to_date:props.to,gap:gap.value,channel:props.channel},csrfToken:session.csrf_token,signal:controller.signal});if(token===generation)data.value=body.message;}catch(e){if(token===generation&&e.name!=='AbortError')error.value=e.message;}finally{if(token===generation)busy.value=false;}}
+async function load(){const token=++generation;controller?.abort();controller=new AbortController();busy.value=true;error.value='';data.value=null;selected.value=null;try{const body=await request('life_slimming.api.cc_report_activity.run',{args:{from_date:props.from,to_date:props.to,gap:gap.value,channel:props.channel},csrfToken:session.csrf_token,signal:controller.signal});if(token===generation){data.value=body.message;emit('loaded',body.message);}}catch(e){if(token===generation&&e.name!=='AbortError')error.value=e.message;}finally{if(token===generation)busy.value=false;}}
+watch(agent,()=>{if(data.value)emit('loaded',{...data.value,rows:rows.value});});
 watch(()=>[props.from,props.to],load,{immediate:true});onBeforeUnmount(()=>{generation++;controller?.abort();});
 function exportRows(){if(data.value&&!data.value.capped)downloadCsv('cc-call-activity.csv',columns,rows.value);}
 </script>
