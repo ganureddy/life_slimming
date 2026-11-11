@@ -40,6 +40,8 @@ if(request.url.includes('cc_report_activity.run'))result={rows:[{agent:'Administ
 if(request.url.includes('cc_report_activity.changes'))result={token:'v1'};
 if(request.url.includes('life_cc_nofu_v1'))result={days:30,buckets:[{days:30,n:1}],statuses:[{status:'No Response',n:1}],agents:[{agent:'Administrator',n:1}],total:1,rows:[{name:'LEAD1',lead_name:'Dormant client',ph4:'3210',owner:'Administrator',sub:'No Response',last:'2026-09-01'}]};
 
+if(request.url.includes('cc_report_history.history'))result={rows:args.kind==='updates'?[{id:'V1',at:today+' 10:00:00',agent_name:'CC Tester',lead:'LEAD1',changes:[{field:'custom_cc_sub_status',before:'Lead',after:'Interested'}]}]:[{id:'CALL-'+(Number(args.start||0)+1),at:today+' 10:00:00',agent:'Administrator',agent_name:'CC Tester',lead:'LEAD1',phone:'••••3210',direction:'Outbound',status:'Answered',duration:120,disposition:'Interested'}],has_more:!args.start,start:Number(args.start||0),limit:30};
+if(request.url.includes('cc_report_history.recording'))result={url:''};
 await send('Fetch.fulfillRequest',{requestId,responseCode:200,responseHeaders:[{name:'Content-Type',value:'application/json'}],body:Buffer.from(JSON.stringify({message:result})).toString('base64')});
 });
 const evaluate=async expression=>(await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true})).result?.value;
@@ -69,6 +71,19 @@ for(const width of [1440,390]){
  await click('dialog[open] button','Close');
  await click('.cc-report-tabs button','Agent 360');
  await wait("document.body.textContent.includes('ConVox calls')&&document.body.textContent.includes('CC Tester')");
+ assert.equal(calls.filter(c=>c.url.includes('cc_report_history.')).length,0,'history and recordings must not load with summary');
+ await click('.cc-history-card','convox');
+ await wait("document.querySelector('.cc-history-dialog[open]')?.textContent.includes('••••3210')");
+ assert.equal(await evaluate("document.querySelector('.cc-history-dialog').textContent.includes('9876543210')"),false);
+ await click('.cc-history-dialog footer button','Next');
+ await wait("document.querySelector('.cc-history-dialog footer')?.textContent.includes('31')");
+ await click('.cc-history-dialog nav button','CC History');
+ await wait("document.querySelector('.cc-history-dialog tbody')?.textContent.includes('Interested')");
+ await click('.cc-history-dialog tbody button','Play');
+ await wait("document.querySelector('.cc-history-dialog')?.textContent.includes('Recording unavailable')");
+ await click('.cc-history-dialog nav button','Lead Updates');
+ await wait("document.querySelector('.cc-history-dialog')?.textContent.includes('custom_cc_sub_status')");
+ await click('.cc-history-dialog header button','Close history');
  await click('.cc-card button','Timeline / outcomes');
  await wait("document.body.textContent.includes('Interested: 2')");
  await click('.cc-report-tabs button','Lead Journey');

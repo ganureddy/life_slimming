@@ -49,3 +49,21 @@ Validated query shape, bounds and permission-aware reads with focused backend te
 verified in the desktop/mobile browser suite that Agent Performance makes no invoice request
 and switching between financial tabs reuses one completed request. Live server latency was not
 benchmarked; these checks verify the removal of avoidable work rather than a measured speedup.
+
+## Live report refresh, 11 November 2026
+
+Compared the current `branch-visit-report` (modified 11 November 2026 08:59:39)
+with the prior V26 report. The HTML/CSS are unchanged; JavaScript adds Agent 360
+call history, lazy recording playback and lead field-change history.
+
+The native activity report now opens history from summary cards and per-agent
+ConVox/CC counts. A modal provides channel tabs, search, 30-record pages, masked
+phone numbers, direction, status, duration, disposition and recording controls.
+Lead Updates shows the reportable changed fields and before/after values.
+
+History and recording URLs are requested only on demand through
+`life_slimming.api.cc_report_history`. Agent scope is checked on both endpoints;
+a caller cannot fetch another agent's recording by guessing a call ID. Mobile
+private-file URLs retain their original file route, while trusted PBX recording
+URLs use the existing public HTTPS ConVox host. No live Server Script changes
+or additional data migrations are required for this update.
