@@ -30,6 +30,9 @@ if(request.url.includes('cc_core.run')){
  case 'dist_preview':result={ok:true,items:[{...summary,lead:'LEAD1'}],count:1};break;
  case 'dist_move':result={ok:true,batch:'TL-20261111120000',count:1};break;
  case 'dist_undo':result={ok:true,undone:1};break;
+ case 'rule_save':result={ok:true,saved:1};break;
+ case 'bulk_check':{const rows=JSON.parse(args.rows);result={ok:true,rows:rows.map((r,i)=>({...r,state:i?'invalid':'ready',errors:i?['Unknown branch.']:[],duplicate:''})),ready:1,invalid:Math.max(0,rows.length-1),skipped:0};break;}
+ case 'bulk_create':result={ok:true,created:1,results:[{row:2,ok:1,lead:'LEAD-NEW',owner:'CC Tester'}]};break;
  case 'rank':result.rows=[{agent:'Administrator',name:'CC Tester',rank:1,conv:50,showup:60,score:10}];break;
  case 'report':result={ok:true,funnel:{leads:1,joined:0},agents:[{agent:'Administrator',name:'CC Tester',leads:1,paid:0}],last_call_mix:{'No Response':1},joined:[],moves:[]};break;
  }
@@ -47,10 +50,19 @@ for(const width of [1440,390]){
  await wait("document.querySelector('.cc-recovery-tiles')?.textContent.includes('No-show recovery')");
  await wait("document.querySelector('.cc-recovery-tiles strong')?.textContent==='1'");
  assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth'),true,'dashboard overflow '+width);
+ assert.equal(await evaluate("document.querySelector('#cc-reports-link')"),null);
+ if(width===1440){
+  if(await evaluate("document.querySelector('.cc-menu-pin').getAttribute('aria-pressed')==='true'"))await click('.cc-menu-pin','Unpin menu');
+  await new Promise(r=>setTimeout(r,10500));await wait("!!document.querySelector('.cc-menu-tab')");
+  await click('.cc-menu-tab','MENU');await click('.cc-menu-pin','Pin menu');
+  await new Promise(r=>setTimeout(r,10500));
+  assert.equal(await evaluate("document.querySelector('.sidebar').classList.contains('collapsed')"),false,'pinned menu must stay open');
+ }
  await click('.sidebar .nav-item','Lead Distribution');
- await wait("document.querySelector('.cc-distribution')?.textContent.includes('Receiving agents')");
+ await wait("document.querySelector('.cc-distribution')?.textContent.includes('Current owners')");
  await click('.cc-distribution button','Preview leads');
  await wait("document.querySelector('.cc-distribution')?.textContent.includes('1 eligible leads')");
+ await click('.cc-distribution button','Choose receiving agents');
  await evaluate("const s=[...document.querySelectorAll('.distribution-fields label')].find(e=>e.textContent.startsWith('Receiving agents')).querySelector('select');s.options[0].selected=true;s.dispatchEvent(new Event('change',{bubbles:true}));");
  await click('.cc-distribution button','Move 1 selected');
  await wait("document.querySelector('.cc-distribution')?.textContent.includes('1 leads moved.')");
@@ -59,6 +71,17 @@ for(const width of [1440,390]){
  await click('.distribution-tabs button','Auto Rules');
  await wait("document.querySelector('.cc-distribution')?.textContent.includes('New leads')");
  assert.equal(await evaluate("[...document.querySelectorAll('label')].find(e=>e.textContent.trim()==='Test mode').querySelector('input').checked"),true);
+ await evaluate("const input=[...document.querySelectorAll('.distribution-fields label')].find(el=>el.textContent.startsWith('Rule name')).querySelector('input');input.value='Review rule';input.dispatchEvent(new Event('input',{bubbles:true}));");
+ const beforeRules=calls.filter(c=>c.args.action==='rule_save').length;
+ await click('.cc-distribution button','Review rule');await wait("document.querySelector('.rule-applied')?.textContent.includes('What is applied')");
+ assert.equal(calls.filter(c=>c.args.action==='rule_save').length,beforeRules,'review must not save');
+ await click('.rule-applied button','Accept & Apply');await wait("document.querySelector('.cc-distribution')?.textContent.includes('Rule saved')");
+ await click('.distribution-tabs button','Bulk Upload');
+ const pastedCsv=['name,mobile,source,branch','A,9876543210,Website,Ho CC','B,9876543211,Website,Unknown'].join('\n');
+ await evaluate(`const input=document.querySelector('textarea[placeholder="Include the header row"]');input.value=${JSON.stringify(pastedCsv)};input.dispatchEvent(new Event('input',{bubbles:true}));`);
+ await click('.cc-distribution button','Read pasted rows');await click('.cc-distribution button','Check every row');
+ await wait("document.querySelector('.cc-distribution')?.textContent.includes('Unknown branch.')");
+ assert.equal(await evaluate("[...document.querySelectorAll('.cc-distribution button')].find(b=>b.textContent.startsWith('Create ')).disabled"),true);
  await click('.distribution-tabs button','Agents & Priority');await click('.cc-distribution button','Calculate ranking');
  await wait("document.querySelector('.cc-distribution')?.textContent.includes('Conversion %')");
  assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth'),true,'distribution overflow '+width);

@@ -26,7 +26,8 @@ class CheckLeadUpdateTests(unittest.TestCase):
         def throw(message, exc=frappe.ValidationError):
             raise exc(message)
 
-        for context in [patch.object(frappe, 'db', self.db),
+        for context in [patch('life_slimming.cc_business_rules.paid_evidence', return_value={}),
+                        patch.object(frappe, 'db', self.db),
                         patch.object(frappe, 'throw', side_effect=throw),
                         patch.object(frappe, 'get_all', side_effect=lambda *a, **k: self.roles),
                         patch.object(frappe, 'get_doc', return_value=self.doc)]:

@@ -577,6 +577,8 @@ def run(**kwargs):
 
     else:
         lead_doc = frappe.get_doc("Lead", lead)
+        from life_slimming.cc_business_rules import validate_lead_update
+        validate_lead_update(lead_doc, clean)
 
         lead_doc.update(clean)
 

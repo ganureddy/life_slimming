@@ -199,6 +199,9 @@ def validate_booking(doc, method=None):
     doc.custom_cc_staff_name, doc.custom_cc_staff_role = selected['name'], selected.get('designation') or selected['role']
     doc.custom_consultation_taken_by = selected['practitioner'] or None
     doc.custom_employee_name = selected['name']
+    from life_slimming.cc_business_rules import booked, paid_evidence
+    if booked(lead) and (paid_evidence([lead.name]).get(lead.name) or {}).get('paid'):
+        raise frappe.ValidationError('Joined clients receive feedback calls only; a new appointment cannot replace their result.')
     doc.customer_name, doc.customer_phone_number = lead.lead_name, lead.mobile_no
     if doc.is_new(): doc.lead_owner = lead.lead_owner
     elif doc.has_value_changed('lead_owner'): raise frappe.ValidationError('The appointment lead owner cannot be changed.')
