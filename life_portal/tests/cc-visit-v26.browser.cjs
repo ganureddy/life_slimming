@@ -35,7 +35,7 @@ if(request.url.includes('cc_core.run')){
  }
 }
 
-if(request.url.includes('life_cc_agent_marketing_data.run'))result=args.view==='appointments'?(fail?{error:'Report fixture failed'}:{rows:[lead],total:partial?10001:1,truncated:partial,restricted_to_owner:false}):{ranking_rows:[lead],rows:[{...lead,source:'Website'}],agent_report_summary:{counts:{appointments:1,visited:0,booked:0}},cc_invoice_report_summary:{rows:[{invoice:'INV1',branch:'Ho CC',lead_owner:'Administrator',lead_name:'Test Client',with_gst:100,paid:60,balance:40}],totals:{invoice_count:1,with_gst:100,paid:60,balance:40}},financial_events:[]};
+if(request.url.includes('life_cc_agent_marketing_data.run'))result=args.view==='calendar'?{days:[{day:today,branch:'Ho CC',lead_owner:'Administrator',custom_appointment_status:'Booked',count:1}]}:args.view==='appointments'?(fail?{error:'Report fixture failed'}:{rows:[lead],total:partial?10001:1,truncated:partial,restricted_to_owner:false}):{ranking_rows:[lead],rows:[{...lead,source:'Website'}],agent_report_summary:{counts:{appointments:1,visited:0,booked:0}},cc_invoice_report_summary:{rows:[{invoice:'INV1',branch:'Ho CC',lead_owner:'Administrator',lead_name:'Test Client',with_gst:100,paid:60,balance:40}],totals:{invoice_count:1,with_gst:100,paid:60,balance:40}},financial_events:[]};
 if(request.url.includes('cc_report_activity.run'))result={rows:[{agent:'Administrator',name:'CC Tester',convox:2,mobile:1,answered:2,talk:180,updates:1,idle_minutes:20,updated_no_call:0,talked_no_update:1,dispositions:{Interested:2},events:[{at:today+' 10:00:00',channel:'convox',lead:'LEAD1',status:'Answered',talk:120}]}],timeline_available:true,warnings:[]};
 if(request.url.includes('cc_report_activity.changes'))result={token:'v1'};
 if(request.url.includes('life_cc_nofu_v1'))result={days:30,buckets:[{days:30,n:1}],statuses:[{status:'No Response',n:1}],agents:[{agent:'Administrator',n:1}],total:1,rows:[{name:'LEAD1',lead_name:'Dormant client',ph4:'3210',owner:'Administrator',sub:'No Response',last:'2026-09-01'}]};
@@ -75,11 +75,18 @@ for(const width of [1440,390]){
  await wait("document.querySelector('.card-hdr')?.textContent.includes('Lead Journey')");
  await click('.cc-report-tabs button','Agent Report');
  await wait("document.body.textContent.includes('Agent performance')");
+ assert.equal(calls.filter(c=>c.url.includes('life_cc_agent_marketing_data')&&!c.args.view).length,0,'agent performance must use appointment data without loading invoices');
  await click('[aria-label="Agent reports"] button','No follow-up');
  await wait("document.body.textContent.includes('Dormant client')");
  assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth'),true,'no follow-up overflow '+width);
  await click('.cc-report-tabs button','Consultant');
  await wait("document.body.textContent.includes('Branch collections')&&document.body.textContent.includes('INV1')");
+ assert.equal(calls.filter(c=>c.url.includes('life_cc_agent_marketing_data')&&!c.args.view).length,1);
+ await click('.cc-report-tabs button','Digital Marketing');
+ await wait("document.body.textContent.includes('Campaign / agency sources:')||document.body.textContent.includes('Lead & digital marketing')");
+ await click('.cc-report-tabs button','Consultant');
+ await wait("document.body.textContent.includes('Branch collections')");
+ assert.equal(calls.filter(c=>c.url.includes('life_cc_agent_marketing_data')&&!c.args.view).length,1,'financial report must be reused across tabs');
  assert.equal(await evaluate('document.documentElement.scrollWidth<=innerWidth'),true,'consultant overflow '+width);
  calls.length=0;
 }

@@ -33,3 +33,19 @@ Lead Journey. Existing automatic redistribution rule settings are unchanged.
 Validation: frontend unit suite; focused Python aggregation/access/attribution tests; production
 build; mocked desktop/mobile browser suite covering tabs, drilldowns, masked details, lazy data,
 share preview, today appointments, activity, no-follow-up, partial exports and errors/retry.
+
+## Loading optimization
+
+The appointment-only request now filters by appointment date before reading Lead records,
+rather than querying a union of creation/posting/appointment cohorts. Native visit lists request
+compact rows, bounded to 10,000 plus a partial-result sentinel; other appointment consumers
+retain their detailed fields. Calendar requests use a single database grouping by day, branch,
+agent and appointment outcome, with no client names or phone payload. Agent Performance uses
+already-loaded appointment rows. Financial data is reused across report tabs until Apply/refresh
+changes or refreshes the range. Calendar back-navigation reuses a short per-login memory cache;
+explicit report refresh bypasses it. The change-marker request runs on its timer, not on initial paint.
+
+Validated query shape, bounds and permission-aware reads with focused backend tests, and
+verified in the desktop/mobile browser suite that Agent Performance makes no invoice request
+and switching between financial tabs reuses one completed request. Live server latency was not
+benchmarked; these checks verify the removal of avoidable work rather than a measured speedup.
