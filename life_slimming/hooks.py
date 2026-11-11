@@ -420,6 +420,14 @@ doc_events = {
 # override_whitelisted_methods = {
 #	"frappe.desk.doctype.event.event.get_events": "life_slimming.event.get_events"
 # }
+
+override_whitelisted_methods = {
+    # Native copy of the DB Server Script of the same name. Frappe applies this
+    # override before its Server Script lookup, so the mobile app is unchanged.
+    # It delegates to the DB script until site_config
+    # life_slimming_cache.mobile_native = 1. See api/server_scripts/life_cc_mobile_v18.py.
+    "life_cc_mobile_v18": "life_slimming.api.server_scripts.life_cc_mobile_v18.run",
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,

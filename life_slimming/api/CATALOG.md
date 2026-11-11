@@ -170,3 +170,7 @@ Added local mappings for service session reporting, cryotherapy batch submission
 ## CC report refresh — 2026-11-10
 
 - [life_cc_nofu_v1](server_scripts/life_cc_nofu_v1.py): read-only Agent 360 no-follow-up report, synced from the enabled ERP Server Script dated 2026-11-06. Requires portal CC report access; non-managers see only their own leads; phone numbers expose only the last four digits. Registered for local remapping of the refreshed report source.
+
+## Mobile CC agent API — 2026-11-11
+
+- [life_cc_mobile_v18](server_scripts/life_cc_mobile_v18.py): native copy of the enabled ERP Server Script dated 2026-11-05 (body verbatim). Unlike the other migrated APIs it **overrides the original method name** through `override_whitelisted_methods`, so the mobile app keeps calling `life_cc_mobile_v18`. While site_config `life_slimming_cache.mobile_native` is 0 (default) it delegates to the DB Server Script unchanged; switch it on only after `life_slimming.cache_tools.compare_mobile` reports matches.

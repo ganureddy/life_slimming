@@ -1,7 +1,7 @@
 {
   "source": "ERP Portal / Server Script",
   "exported_on": "2026-09-19",
-  "count": 151,
+  "count": 152,
   "endpoints": [
     {
       "id": "accounts_command_centre_coa",
@@ -3878,6 +3878,69 @@
       ],
       "notes": [
         "Read-only; portal module access required; non-managers restricted to own leads; mobile numbers masked; page size clamped to 1–500."
+      ]
+    },
+    {
+      "id": "life_cc_mobile_v18",
+      "source_name": "life_cc_mobile_v18",
+      "legacy_method": "life_cc_mobile_v18",
+      "method": "life_slimming.api.server_scripts.life_cc_mobile_v18.run",
+      "source_modified": "2026-11-05 16:01:10.326368",
+      "source_sha256": "0e68bd2ec37bd5c502583d3bb77c11a91eff1f335bce4787931ab664def8bb00",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": [
+        "POST"
+      ],
+      "parameters": [
+        "action",
+        "agent",
+        "app_version",
+        "call_key",
+        "call_status",
+        "cc_stage",
+        "connected",
+        "data_source",
+        "date",
+        "device",
+        "disposition",
+        "doc",
+        "ended_on",
+        "file_url",
+        "from",
+        "id",
+        "lead",
+        "lead_updated",
+        "next_followup",
+        "plan",
+        "remarks",
+        "ring_seconds",
+        "route",
+        "rows",
+        "since",
+        "started_on",
+        "talk_seconds",
+        "team",
+        "template",
+        "to",
+        "which"
+      ],
+      "doctypes": [
+        "ConVox Call Event",
+        "Has Role",
+        "LIFE CC Auto Dial Plan",
+        "LIFE CC Target",
+        "LIFE Mobile Call Log",
+        "Lead",
+        "Patient",
+        "Payment Entry",
+        "Sales Invoice",
+        "User",
+        "Web Page"
+      ],
+      "notes": [
+        "Overrides the original method name through override_whitelisted_methods, so the mobile app keeps calling life_cc_mobile_v18.",
+        "Delegates to the DB Server Script while site_config life_slimming_cache.mobile_native is 0 (default)."
       ]
     }
   ],
