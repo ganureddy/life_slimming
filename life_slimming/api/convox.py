@@ -331,7 +331,7 @@ def poll(after=None):
     from life_slimming.convox_lead_sync import resolve_lead
     lookups = {}
     for event in rows:
-        event["crm_lead"] = resolve_lead(event, lookups)
+        event["crm_lead"] = resolve_lead(event, lookups, cache_reads=True)
     return {"events": rows, "cursor": cursor}
 
 
@@ -354,7 +354,7 @@ def history(lead_id=None, mobile_number=None, call_reference=None):
     from life_slimming.convox_lead_sync import resolve_lead
     lookups = {}
     for event in events:
-        event["crm_lead"] = resolve_lead(event, lookups)
+        event["crm_lead"] = resolve_lead(event, lookups, cache_reads=True)
     return {"events": events}
 
 

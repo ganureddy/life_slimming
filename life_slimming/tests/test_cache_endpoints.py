@@ -141,5 +141,63 @@ class CCGetLeadsCacheTest(unittest.TestCase):
 		self.assertIs(frappe.response["message"]["contact_manager"], False)
 
 
+class ConvoxResolveCacheTest(unittest.TestCase):
+	EVENT = {"mobile_number": "+91 93901 70043", "agent_id": "A1", "call_reference": "R1"}
+
+	def setUp(self):
+		frappe.local.conf = frappe._dict()
+		frappe.local.flags = frappe._dict()
+		frappe.local.session = frappe._dict(user="agent@x")
+		from life_slimming import convox_lead_sync
+
+		self.module = convox_lead_sync
+		self.sql_calls = []
+
+		def sql(query, values=None, as_dict=False):
+			self.sql_calls.append(query)
+			# Not owned by the agent; exactly one lead globally.
+			return [] if "lead_owner" in query else [frappe._dict(name="CRM-LEAD-1")]
+
+		self.patches = [
+			patch.object(frappe, "get_all", return_value=["agent@x"]),
+			patch.object(frappe, "cache", MagicMock(**{"get_value.return_value": None})),
+			patch.object(frappe, "db", MagicMock(**{"sql.side_effect": sql})),
+		]
+		for p in self.patches:
+			p.start()
+
+	def tearDown(self):
+		for p in reversed(self.patches):
+			p.stop()
+		frappe.destroy()
+
+	def test_resolve_lead_default_never_uses_cache(self):
+		with patch("life_slimming.cache.cached_read") as cached_read:
+			self.assertEqual(self.module.resolve_lead(dict(self.EVENT)), "CRM-LEAD-1")
+		cached_read.assert_not_called()
+		self.assertEqual(len(self.sql_calls), 2)
+
+	def test_resolve_lead_cache_reads_keys_by_agent_kind_number(self):
+		with patch("life_slimming.cache.cached_read", side_effect=lambda ns, scope, args, fetch: fetch()) as cached_read:
+			self.assertEqual(self.module.resolve_lead(dict(self.EVENT), {}, cache_reads=True), "CRM-LEAD-1")
+		self.assertEqual(
+			[call.args[:3] for call in cached_read.call_args_list],
+			[
+				("convox_resolve", "agent@x", {"kind": "owned", "number": "9390170043"}),
+				("convox_resolve", "agent@x", {"kind": "global", "number": "9390170043"}),
+			],
+		)
+
+	def test_poll_and_history_pass_cache_reads_and_sync_event_does_not(self):
+		import inspect
+
+		from life_slimming.api import convox
+
+		for endpoint in (convox.poll, convox.history):
+			source = inspect.getsource(inspect.unwrap(endpoint))
+			self.assertIn("resolve_lead(event, lookups, cache_reads=True)", source, endpoint.__name__)
+		self.assertNotIn("cache_reads", inspect.getsource(self.module.sync_event))
+
+
 if __name__ == "__main__":
 	unittest.main()

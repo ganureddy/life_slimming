@@ -4,20 +4,24 @@ import json
 
 import frappe
 
+from life_slimming import cache
+
 
 def reference_key(agent, reference):
     return "convox-lead:" + hashlib.sha256(f"{agent}:{reference}".encode()).hexdigest()
 
 
-def resolve_lead(event, lookups=None):
+def resolve_lead(event, lookups=None, cache_reads=False):
     from life_slimming.api.convox import normalize_phone
 
     try:
         number = normalize_phone(event.get("mobile_number"))
     except frappe.ValidationError:
         return None
-    # The caller may share lookups across one read-only event batch. Never keep
-    # these results across requests: owners and phone numbers can change.
+    # The caller may share lookups across one read-only event batch. Owners and
+    # phone numbers can change, so the write path (sync_event) always queries
+    # fresh. Read-only screens (poll/history) pass cache_reads=True and may reuse
+    # the phone matches through the read cache for up to its ttl (default 30 s).
     if lookups is None:
         lookups = {}
 
@@ -25,6 +29,11 @@ def resolve_lead(event, lookups=None):
         if key not in lookups:
             lookups[key] = fetch()
         return lookups[key]
+
+    def shared(kind, owner, fetch):
+        if not cache_reads:
+            return fetch
+        return lambda: cache.cached_read("convox_resolve", owner, {"kind": kind, "number": number}, fetch)
 
     users = lookup(("agent", event.get("agent_id")), lambda: frappe.get_all(
         "User", filters={"enabled": 1, "custom_convox_enabled": 1,
@@ -45,20 +54,20 @@ def resolve_lead(event, lookups=None):
                         return mapped
                 except frappe.ValidationError:
                     pass
-    rows = lookup(("owned", users[0], number), lambda: frappe.db.sql("""SELECT name FROM `tabLead` WHERE lead_owner = %(owner)s AND
+    rows = lookup(("owned", users[0], number), shared("owned", users[0], lambda: frappe.db.sql("""SELECT name FROM `tabLead` WHERE lead_owner = %(owner)s AND
         (REGEXP_REPLACE(COALESCE(mobile_no, ''), '[[:space:]()+.-]', '') IN %(numbers)s
          OR REGEXP_REPLACE(COALESCE(phone, ''), '[[:space:]()+.-]', '') IN %(numbers)s)
-        LIMIT 2""", {"owner": users[0], "numbers": (number, "91" + number, "0" + number)}, as_dict=True))
+        LIMIT 2""", {"owner": users[0], "numbers": (number, "91" + number, "0" + number)}, as_dict=True)))
     if len(rows) == 1:
         return rows[0].name
     if rows:
         return None
     # Global caller lookup also supports calls to another agent's lead, but
     # never chooses arbitrarily when the same phone belongs to several leads.
-    rows = lookup(("global", number), lambda: frappe.db.sql("""SELECT name FROM `tabLead` WHERE
+    rows = lookup(("global", number), shared("global", users[0], lambda: frappe.db.sql("""SELECT name FROM `tabLead` WHERE
         REGEXP_REPLACE(COALESCE(mobile_no, ''), '[[:space:]()+.-]', '') IN %(numbers)s
         OR REGEXP_REPLACE(COALESCE(phone, ''), '[[:space:]()+.-]', '') IN %(numbers)s
-        LIMIT 2""", {"numbers": (number, "91" + number, "0" + number)}, as_dict=True))
+        LIMIT 2""", {"numbers": (number, "91" + number, "0" + number)}, as_dict=True)))
     return rows[0].name if len(rows) == 1 else None
 
 
