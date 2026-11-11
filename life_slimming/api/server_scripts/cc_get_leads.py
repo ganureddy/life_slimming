@@ -12,8 +12,39 @@ import frappe
 from frappe.integrations.utils import make_post_request as _make_post_request
 from frappe.utils.safe_exec import read_sql as _read_sql
 from frappe.utils.safe_exec import call_whitelisted_function as _call_whitelisted
+from life_slimming import cache
 from life_slimming.api._runtime import script_endpoint
 from life_slimming.api.cc_appointments import enrich_lead_appointments
+
+
+def _cache_plan(fd, user, can_view_all):
+    """Read-cache key for this request, or None when it must stay uncached.
+
+    Mirrors run()'s branch order (query, then phone, then date range). Opening one
+    lead (query + detail) is never cached. Search and phone lookups are global for
+    every allowed role, so they share one scope; date ranges are owner-scoped for
+    agents and shared by everyone who can view all leads.
+    """
+    query = (fd.get("query") or "").strip()
+    phone = (fd.get("phone") or "").strip()
+    if query:
+        if fd.get("detail"):
+            return None
+        return ("cc_get_leads", "search", {"mode": "query", "query": query, "start": str(fd.get("start") or 0)})
+    if phone:
+        digits = "".join(ch for ch in phone if ch.isdigit())[-10:]
+        return ("cc_get_leads", "search", {"mode": "phone", "digits": digits})
+    return ("cc_get_leads", "all" if can_view_all else user, {
+        "mode": "range",
+        "from_date": fd.get("from_date"),
+        "to_date": fd.get("to_date"),
+        "date_mode": fd.get("date_mode") or "created",
+        "page_size": fd.get("page_size"),
+        "start": fd.get("start"),
+        "branch": str(fd.get("branch") or "").strip(),
+        "stage": str(fd.get("stage") or "").strip(),
+        "paginated": fd.get("page_size") is not None,
+    })
 
 
 @script_endpoint(allow_guest=False)
@@ -93,105 +124,113 @@ def run(**kwargs):
     contact_manager = user in ["bhuvan@lifescc.com", "surya@lifescc.com"]
     if not contact_manager:
         contact_manager = bool(frappe.db.exists("Employee", {"user_id": user, "status": "Active", "designation": "Business Executive Team Leader"}))
-    if query:
-        if len(query) < 2:
-            frappe.throw("Enter at least two characters")
-        pattern = "%" + query.replace("%", "").replace("_", "") + "%"
-        if frappe.form_dict.get("detail"):
-            # Opening an identified lead must use its primary key, not scan
-            # names, phone numbers and remarks for substring matches.
-            rows = frappe.get_all("Lead", fields=LEAD_FIELDS,
-                filters=[["name", "=", query]], limit_page_length=1)
+    def compute():
+        # Viewer-neutral: everything here may be shared through the read cache.
+        # Viewer-specific values (contact_manager) are applied after it.
+        if query:
+            if len(query) < 2:
+                frappe.throw("Enter at least two characters")
+            pattern = "%" + query.replace("%", "").replace("_", "") + "%"
+            if frappe.form_dict.get("detail"):
+                # Opening an identified lead must use its primary key, not scan
+                # names, phone numbers and remarks for substring matches.
+                rows = frappe.get_all("Lead", fields=LEAD_FIELDS,
+                    filters=[["name", "=", query]], limit_page_length=1)
+            else:
+                rows = frappe.get_all("Lead", fields=LEAD_FIELDS, filters=[],
+                    or_filters=[["lead_name", "like", pattern], ["name", "like", pattern], ["mobile_no", "like", pattern], ["phone", "like", pattern], ["custom_remarks", "like", pattern]],
+                    order_by="modified desc", limit_start=int(frappe.form_dict.get("start") or 0), limit_page_length=21)
+            message = {"rows": rows[:20], "more": len(rows) > 20, "scoped_to_owner": 0}
+        elif phone:
+            digits = ""
+            for ch in phone:
+                if ch.isdigit():
+                    digits = digits + ch
+            digits = digits[-10:]
+            if len(digits) < 5:
+                frappe.throw("Phone search needs at least 5 digits")
+            phone_filters = []
+            rows = frappe.get_all(
+                "Lead",
+                fields=LEAD_FIELDS,
+                filters=phone_filters,
+                or_filters=[
+                    ["mobile_no", "like", "%" + digits + "%"],
+                    ["phone", "like", "%" + digits + "%"]
+                ],
+                order_by="modified desc",
+                limit_page_length=10
+            )
+            message = {"rows": rows, "total": len(rows), "truncated": 0,
+                                         "scoped_to_owner": 0}
         else:
-            rows = frappe.get_all("Lead", fields=LEAD_FIELDS, filters=[],
-                or_filters=[["lead_name", "like", pattern], ["name", "like", pattern], ["mobile_no", "like", pattern], ["phone", "like", pattern], ["custom_remarks", "like", pattern]],
-                order_by="modified desc", limit_start=int(frappe.form_dict.get("start") or 0), limit_page_length=21)
-        frappe.response["message"] = {"rows": rows[:20], "more": len(rows) > 20, "contact_manager": contact_manager, "scoped_to_owner": 0}
-    elif phone:
-        digits = ""
-        for ch in phone:
-            if ch.isdigit():
-                digits = digits + ch
-        digits = digits[-10:]
-        if len(digits) < 5:
-            frappe.throw("Phone search needs at least 5 digits")
-        phone_filters = []
-        rows = frappe.get_all(
-            "Lead",
-            fields=LEAD_FIELDS,
-            filters=phone_filters,
-            or_filters=[
-                ["mobile_no", "like", "%" + digits + "%"],
-                ["phone", "like", "%" + digits + "%"]
-            ],
-            order_by="modified desc",
-            limit_page_length=10
-        )
-        frappe.response["message"] = {"rows": rows, "total": len(rows), "truncated": 0,
-                                     "scoped_to_owner": 0}
-    else:
-        from_date = frappe.form_dict.get("from_date")
-        to_date = frappe.form_dict.get("to_date")
-        date_mode = frappe.form_dict.get("date_mode") or "created"
-        if not from_date or not to_date:
-            frappe.throw("from_date and to_date are required")
-        if date_mode == "updated":
-            filters = [["modified", "between", [from_date + " 00:00:00", to_date + " 23:59:59"]]]
-        elif date_mode == "posting":
-            filters = [["custom_posting_date", "between", [from_date, to_date]]]
-        elif date_mode == "appointment":
-            # Leads whose APPOINTMENT falls in the range (whenever the lead was created)
-            filters = [["custom_appointment_date_and_time", "between", [from_date + " 00:00:00", to_date + " 23:59:59"]]]
-        elif date_mode == "followup":
-            # Leads whose NEXT FOLLOW-UP falls in the range (whenever the lead was created)
-            filters = [["custom_next_followup_date", "between", [from_date + " 00:00:00", to_date + " 23:59:59"]]]
-        else:
-            # v2: "created" now uses the portal's REAL creation timestamp, not the
-            # editable custom_posting_date business field.
-            filters = [["creation", "between", [from_date + " 00:00:00", to_date + " 23:59:59"]]]
-        if not can_view_all_leads:
-            filters.append(["lead_owner", "=", user])
+            from_date = frappe.form_dict.get("from_date")
+            to_date = frappe.form_dict.get("to_date")
+            date_mode = frappe.form_dict.get("date_mode") or "created"
+            if not from_date or not to_date:
+                frappe.throw("from_date and to_date are required")
+            if date_mode == "updated":
+                filters = [["modified", "between", [from_date + " 00:00:00", to_date + " 23:59:59"]]]
+            elif date_mode == "posting":
+                filters = [["custom_posting_date", "between", [from_date, to_date]]]
+            elif date_mode == "appointment":
+                # Leads whose APPOINTMENT falls in the range (whenever the lead was created)
+                filters = [["custom_appointment_date_and_time", "between", [from_date + " 00:00:00", to_date + " 23:59:59"]]]
+            elif date_mode == "followup":
+                # Leads whose NEXT FOLLOW-UP falls in the range (whenever the lead was created)
+                filters = [["custom_next_followup_date", "between", [from_date + " 00:00:00", to_date + " 23:59:59"]]]
+            else:
+                # v2: "created" now uses the portal's REAL creation timestamp, not the
+                # editable custom_posting_date business field.
+                filters = [["creation", "between", [from_date + " 00:00:00", to_date + " 23:59:59"]]]
+            if not can_view_all_leads:
+                filters.append(["lead_owner", "=", user])
 
-        # Opt-in pagination for Vue. Legacy callers retain their existing contract.
-        paginated = frappe.form_dict.get("page_size") is not None
-        try:
-            page_size = max(1, min(500, int(frappe.form_dict.get("page_size") or 40)))
-            start = max(0, int(frappe.form_dict.get("start") or 0)) if paginated else 0
-        except (TypeError, ValueError):
-            frappe.throw("Invalid pagination")
-        if paginated:
-            for argument, field in [("branch", "branch"), ("stage", "custom_cc_stage")]:
-                value = str(frappe.form_dict.get(argument) or "").strip()
-                if value:
-                    filters.append([field, "=", value])
-        PAGE_LIMIT = page_size if paginated else 5000
-        total = frappe.db.count("Lead", filters=filters)
-        rows = frappe.get_all(
-            "Lead",
-            fields=LEAD_FIELDS,
-            filters=filters,
-            order_by="modified desc, name desc",
-            limit_start=start,
-            limit_page_length=PAGE_LIMIT
-        )
-        frappe.response["message"] = {
-            "rows": rows,
-            "total": total,
-            "truncated": 1 if not paginated and total > PAGE_LIMIT else 0,
-            "has_more": start + len(rows) < total,
-            "start": start,
-            "scoped_to_owner": 0 if can_view_all_leads else 1
-        }
-    frappe.response["message"]["contact_manager"] = contact_manager
-    result_rows = frappe.response["message"].get("rows") or []
-    owners = sorted({row.get("lead_owner") for row in result_rows if row.get("lead_owner")})
-    owner_names = {
-        row.name: row.full_name or row.name
-        for row in frappe.get_all("User", filters={"name": ["in", owners]},
-                                  fields=["name", "full_name"], limit_page_length=0)
-    } if owners else {}
-    for row in result_rows:
-        row["lead_owner_name"] = owner_names.get(row.get("lead_owner"), row.get("lead_owner") or "Unassigned")
+            # Opt-in pagination for Vue. Legacy callers retain their existing contract.
+            paginated = frappe.form_dict.get("page_size") is not None
+            try:
+                page_size = max(1, min(500, int(frappe.form_dict.get("page_size") or 40)))
+                start = max(0, int(frappe.form_dict.get("start") or 0)) if paginated else 0
+            except (TypeError, ValueError):
+                frappe.throw("Invalid pagination")
+            if paginated:
+                for argument, field in [("branch", "branch"), ("stage", "custom_cc_stage")]:
+                    value = str(frappe.form_dict.get(argument) or "").strip()
+                    if value:
+                        filters.append([field, "=", value])
+            PAGE_LIMIT = page_size if paginated else 5000
+            total = frappe.db.count("Lead", filters=filters)
+            rows = frappe.get_all(
+                "Lead",
+                fields=LEAD_FIELDS,
+                filters=filters,
+                order_by="modified desc, name desc",
+                limit_start=start,
+                limit_page_length=PAGE_LIMIT
+            )
+            message = {
+                "rows": rows,
+                "total": total,
+                "truncated": 1 if not paginated and total > PAGE_LIMIT else 0,
+                "has_more": start + len(rows) < total,
+                "start": start,
+                "scoped_to_owner": 0 if can_view_all_leads else 1
+            }
+        result_rows = message.get("rows") or []
+        owners = sorted({row.get("lead_owner") for row in result_rows if row.get("lead_owner")})
+        owner_names = {
+            row.name: row.full_name or row.name
+            for row in frappe.get_all("User", filters={"name": ["in", owners]},
+                                      fields=["name", "full_name"], limit_page_length=0)
+        } if owners else {}
+        for row in result_rows:
+            row["lead_owner_name"] = owner_names.get(row.get("lead_owner"), row.get("lead_owner") or "Unassigned")
+        return message
+
+    plan = _cache_plan(frappe.form_dict, user, can_view_all_leads)
+    message = cache.cached_read(*plan, compute) if plan else compute()
+    message["contact_manager"] = contact_manager
+    frappe.response["message"] = message
 
     if query and frappe.form_dict.get("detail"):
         for item in frappe.response["message"].get("rows") or []:
