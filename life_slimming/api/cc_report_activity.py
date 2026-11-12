@@ -45,9 +45,23 @@ def aggregate(events, updates, gap_minutes=15):
     return sorted(groups.values(), key=lambda r: -(r['convox'] + r['mobile']))
 
 
+def appointment_counts(appointments):
+    result = {}
+    for lead in appointments:
+        row = result.setdefault(lead.get('lead_owner'), {'appointments': 0, 'walkins': 0, 'booked': 0})
+        row['appointments'] += 1
+        status = str(lead.get('custom_appointment_status') or lead.get('custom_visit_status') or '').lower().strip()
+        status = ' '.join(status.replace('–', ' ').replace('—', ' ').replace('-', ' ').replace('&', ' ').split())
+        if status.startswith('visited') or status in ('walked in booked', 'walked in: not booked'):
+            row['walkins'] += 1
+        if status in ('visited booked', 'walked in booked'):
+            row['booked'] += 1
+    return result
+
+
 @script_endpoint(allow_guest=False)
 def run(from_date=None, to_date=None, agents=None, gap=15, channel=None, **kwargs):
-    require_module('ccvisit')
+    require_module('ccvisit', tab=('convox',) if channel=='convox' else ('agent360','standalone'))
     start, end = getdate(from_date), getdate(to_date)
     if start > end or date_diff(end, start) > 92:
         frappe.throw('Choose an activity range of up to 93 days.')
@@ -99,6 +113,22 @@ def run(from_date=None, to_date=None, agents=None, gap=15, channel=None, **kwarg
         events = [e for e in events if e["channel"] == "convox"]
         updates = []
     rows = aggregate(events, updates, max(1, min(120, int(gap))))
+    # ERP outcomes belong to the activity tab as well, including agents who
+    # have appointments but no calls in the period. Keep this read bounded.
+    if channel != 'convox' and allowed:
+        fields = ['lead_owner', 'custom_appointment_status']
+        if frappe.get_meta('Lead').has_field('custom_visit_status'):
+            fields.append('custom_visit_status')
+        appointments = frappe.get_all('Lead', filters={'lead_owner': ['in', list(allowed)], 'custom_appointment_date_and_time': period},
+            fields=fields, order_by='name asc', limit_page_length=10001)
+        capped = capped or len(appointments) > 10000
+        by_owner = {row['agent']: row for row in rows}
+        for owner, counts in appointment_counts(appointments[:10000]).items():
+            if owner not in by_owner:
+                by_owner[owner] = dict(agent=owner, convox=0, mobile=0, answered=0, talk=0, updates=0,
+                    idle_minutes=0, longest_gap=0, updated_no_call=0, talked_no_update=0, dispositions={}, events=[])
+                rows.append(by_owner[owner])
+            by_owner[owner].update(counts)
     appointment_leads = sorted({event.get('lead') for event in events if event.get('lead') and any(word in str(event.get('disposition') or '').lower() for word in ('appointment', 'appt', 'walk-in', 'walkin'))})
     appointment_state = {}
     for offset in range(0, len(appointment_leads), 500):
@@ -106,6 +136,8 @@ def run(from_date=None, to_date=None, agents=None, gap=15, channel=None, **kwarg
         for lead in frappe.get_all('Lead', filters=lead_filters, fields=['name','custom_appointment_date_and_time','custom_cc_sub_status'], limit_page_length=500):
             appointment_state[lead.name] = bool(lead.custom_appointment_date_and_time or lead.custom_cc_sub_status == 'Appointment Booked')
     for row in rows:
+        for key in ('appointments', 'walkins', 'booked'):
+            row.setdefault(key, 0)
         row['appointment_without_booking'] = len({event.get('lead') for event in row['events'] if event.get('lead') in appointment_state and not appointment_state[event['lead']] and any(word in str(event.get('disposition') or '').lower() for word in ('appointment', 'appt', 'walk-in', 'walkin'))})
         row['name'] = allowed[row['agent']].full_name or row['agent']
         if not timeline_available:

@@ -273,6 +273,13 @@ def calendar(branch, date, resource='', duration=45, appointment=None):
         for r in frappe.get_all('Patient Appointment', filters={'practitioner': ['in', practitioners], 'appointment_date': str(day), 'status': ['not in', ['Cancelled', 'No Show']]}, fields=['name', 'practitioner', 'appointment_time', 'duration', 'branch'], limit_page_length=0):
             start = get_datetime(str(day) + ' ' + str(r.appointment_time or '00:00:00'))
             all_busy.append(frappe._dict(name=r.name, custom_consultation_taken_by=r.practitioner, scheduled_time=start, appointment_time=start + timedelta(minutes=int(r.duration or 45)), branch=r.branch))
+    # Resolve visible Lead metadata once for the entire calendar, never per cell.
+    visible_ids = list({r.get('party') for r in all_busy if r.get('party') and (is_manager() or r.get('lead_owner') == frappe.session.user)})
+    lead_details = {}
+    if visible_ids:
+        meta = frappe.get_meta('Lead')
+        fields = ['name'] + [f for f in ['mobile_no', 'source', 'custom_appointment_status', 'custom_cc_sub_status', 'custom_next_followup_date', 'custom_remarks', 'enquired_for'] if meta.has_field(f)]
+        lead_details = {r.name: r for r in frappe.get_all('Lead', filters={'name': ['in', visible_ids]}, fields=fields, limit_page_length=0)}
     for person in staff:
         busy = [r for r in all_busy if r.get('custom_cc_resource') == person['id'] or (r.get('custom_consultation_taken_by') and r.custom_consultation_taken_by in person.get('practitioners', []))]
         slots = []
@@ -287,6 +294,9 @@ def calendar(branch, date, resource='', duration=45, appointment=None):
             allowed = is_manager() or r.get('lead_owner') == frappe.session.user
             events.append(dict(editable=bool(allowed and r.get('custom_cc_booking') and r.get('status') == 'Open'), name=r.name if allowed else '', start=str(r.scheduled_time), end=str(r.appointment_time), branch=r.branch,
                 client=r.get('customer_name') if allowed else 'Booked', agent=r.get('lead_owner') if allowed else '', agent_name=user_name(r.get('lead_owner')) if allowed else '', lead=r.get('party') if allowed else ''))
+        for event in events:
+            details = lead_details.get(event.get('lead'), {})
+            event.update({key: value for key, value in details.items() if key != 'name'})
         schedules.append(dict(staff=person, slots=slots, events=events))
     return dict(schedules=schedules, date=str(day), now=str(now))
 

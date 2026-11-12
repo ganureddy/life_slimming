@@ -42,3 +42,19 @@ class FastVisitTests(unittest.TestCase):
         self.assertEqual(len(result['rows']),10000)
         self.assertTrue(result['truncated'])
         self.assertTrue(result['total_is_lower_bound'])
+
+    def test_visit_order_counts_only_earlier_explicit_walkins(self):
+        row={'name':'current','mobile_no':'9000000000','custom_appointment_date_and_time':'2026-11-12 10:00:00'}
+        history=[{'name':'old','mobile_no':'9000000000','custom_appointment_date_and_time':'2026-11-01 10:00:00','custom_appointment_status':'Visited Booked'},
+                 {'name':'failed','mobile_no':'9000000000','custom_appointment_date_and_time':'2026-11-02 10:00:00','custom_appointment_status':'Not Visited'},
+                 {'name':'future','mobile_no':'9000000000','custom_appointment_date_and_time':'2026-11-20 10:00:00','custom_appointment_status':'Visited'}]
+        api.apply_visit_ordinals([row],history)
+        self.assertEqual(row['lifeVisit'],2)
+
+    def test_history_read_is_bounded_and_owner_scoped(self):
+        row={'name':'current','mobile_no':'9000000000','custom_appointment_date_and_time':'2026-11-12 10:00:00'}
+        query=Mock(return_value=[])
+        self.assertTrue(api.enrich_visit_ordinals([row],'2026-11-12',query,'agent@example.test'))
+        self.assertEqual(query.call_args.kwargs['filters']['lead_owner'],'agent@example.test')
+        self.assertEqual(query.call_args.kwargs['limit_page_length'],30001)
+        self.assertEqual(row['lifeVisit'],1)

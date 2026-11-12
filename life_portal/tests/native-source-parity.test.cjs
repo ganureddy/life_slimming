@@ -6,6 +6,7 @@ const path = require('node:path');
 const postcss = require('../node_modules/postcss');
 const root = path.join(__dirname, '..');
 const pages = [
+  ['cc-new-dashboard-bhuvan-oct2', 'src/styles/cc-legacy.css'],
   ['task-management', 'src/styles/tasks.css'],
   ['appointment-shedular', 'src/styles/appointment-scheduler.css'],
   ['employee-sale-master-data', 'src/styles/employee-sale-master.css'],
@@ -46,9 +47,20 @@ function rules(css) {
 for (const [source, native] of pages) test(source + ' preserves original page styling', () => {
   const original = JSON.parse(fs.readFileSync(path.join(root, '../life_slimming/portal_pages', source + '.json'), 'utf8'));
   const file = fs.readFileSync(path.join(root, native), 'utf8');
-  const css = native.endsWith('.vue') ? [...file.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map(match => match[1]).join('\n') : file;
+  let css = native.endsWith('.vue') ? [...file.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map(match => match[1]).join('\n') : file;
+  if (source === 'cc-new-dashboard-bhuvan-oct2') css += fs.readFileSync(path.join(root, 'src/styles/cc-runtime.css'), 'utf8');
   const nativeRules = rules(css);
   let sourceCss = [original.css || '', ...[...original.html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map(match => match[1])].join('\n');
+  if (source === 'cc-new-dashboard-bhuvan-oct2') {
+    const originalRules = postcss.parse(sourceCss);
+    const siteRules = new Set(['*', '.navbar,header.navbar,.website-navbar,.navbar-expand,#navbar-collapse,.web-footer,footer.web-footer,.footer,.page-footer,.navbar-brand,.for-mobile-view .navbar', 'body', '.main-section,.page_content,main.container']);
+    originalRules.walkRules(rule => {
+      // The legacy attendance overlay's body print mode is replaced by the roster view.
+      if (siteRules.has(normalize(rule.selector)) || rule.selector.includes('body.a-printing')) rule.remove();
+      else if (rule.parent.type !== 'atrule' || !rule.parent.name.endsWith('keyframes')) rule.selectors = rule.selectors.map(selector => selector.startsWith('.cc-erp-root') ? selector : selector === ':root' ? '.cc-erp-root' : '.cc-erp-root ' + selector);
+    });
+    sourceCss = originalRules.toString();
+  }
   if (source === 'new-client-registration') sourceCss = sourceCss.replace(':root{', '#cr-root{');
   const missing = [...rules(sourceCss)].filter(rule => !nativeRules.has(rule));
   assert.deepEqual(missing, [], 'source styling missing from ' + native);
@@ -59,7 +71,8 @@ test('every default native conversion is included in the source-style contract',
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'src/data/portalPages.json'), 'utf8'));
   const declaration = router.match(/const nativeModules = new Set\((\[[^;]*\])\);/);
   assert(declaration, 'default native modules must be explicitly listed');
-  // Tasks owns its source and has a standalone dependency/workflow contract.
-  const covered = new Set([...pages.map(([source]) => source), 'task-management']);
+  // Tasks owns its source. Agent 360 replaces legacy startup addons with four
+  // report components; ccvisit-route.browser.cjs checks its entry/request contract.
+  const covered = new Set([...pages.map(([source]) => source), 'task-management', 'branch-visit-report']);
   for (const id of JSON.parse(declaration[1])) assert(covered.has(manifest[id]?.source), id + ' needs a source parity contract before it becomes a default native page');
 });

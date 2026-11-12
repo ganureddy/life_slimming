@@ -24,7 +24,11 @@ def linked_patients(names):
     if not names:
         return {}
     mapping = {p.name:p.custom_lead for p in frappe.get_all('Patient', filters={'custom_lead':['in',names]}, fields=['name','custom_lead'], limit_page_length=0)}
-    for row in frappe.get_all('LIFE CC Lead Track', filters={'lead':['in',names],'match_status':'Verified','matched_patient':['is','set']}, fields=['lead','matched_patient'], limit_page_length=0):
+    try:
+        matches=frappe.get_all('LIFE CC Lead Track', filters={'lead':['in',names],'match_status':'Verified','matched_patient':['is','set']}, fields=['lead','matched_patient'], limit_page_length=0)
+    except frappe.DoesNotExistError:
+        matches=[]
+    for row in matches:
         mapping[row.matched_patient] = row.lead
     return mapping
 
@@ -44,7 +48,7 @@ def submission_times(doctype, names):
     return result
 
 
-def paid_evidence(names):
+def paid_evidence(names, include_invoices=False):
     p2l=linked_patients(names)
     if not p2l:
         return {}
@@ -66,6 +70,9 @@ def paid_evidence(names):
         name=p2l[invoice.patient]
         record=out.setdefault(name,{'paid':0,'has_bill':True,'joined_on':None,'paid_at':None,'credit_provisional':False})
         amount=max(0,float(invoice.grand_total or 0)-float(invoice.outstanding_amount or 0))
+        if include_invoices:
+            record.setdefault('invoices', []).append({'invoice': invoice.name, 'invoice_date': str(invoice.posting_date),
+                'billed': float(invoice.grand_total or 0), 'paid': amount, 'balance': float(invoice.outstanding_amount or 0)})
         if not amount:
             continue
         record['paid']+=amount

@@ -25,8 +25,10 @@ def run(**kwargs):
     if not lead or not frappe.db.exists("Lead", lead):
         frappe.throw("Lead not found")
 
-    patient = frappe.db.get_value("Patient", {"custom_lead": lead},
-        ["name", "patient_name", "custom_pd_form_number"], as_dict=True)
+    patient_fields = ["name", "patient_name"]
+    if frappe.get_meta("Patient").has_field("custom_pd_form_number"):
+        patient_fields.append("custom_pd_form_number")
+    patient = frappe.db.get_value("Patient", {"custom_lead": lead}, patient_fields, as_dict=True)
 
     images = []
     seen_image_urls = []
@@ -114,9 +116,11 @@ def run(**kwargs):
             "by": comment.get("comment_by") or comment.get("owner") or ""
         })
 
-    lead_data = frappe.db.get_value("Lead", lead,
-        ["custom_remarks", "custom_appointment_status", "custom_status_updated_by_name",
-         "custom_status_updated_on"], as_dict=True) or {}
+    lead_meta = frappe.get_meta("Lead")
+    detail_fields = [field for field in ("custom_remarks", "custom_appointment_status",
+        "custom_status_updated_by_name", "custom_status_updated_on") if lead_meta.has_field(field)]
+    lead_data = frappe.db.get_value("Lead", lead, detail_fields, as_dict=True) if detail_fields else {}
+    lead_data = lead_data or {}
 
     frappe.response["message"] = {
         "lead": lead,

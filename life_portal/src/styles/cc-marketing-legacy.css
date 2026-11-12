@@ -1,0 +1,520 @@
+/* =====================================================================
+   LIFE CC REPORTS — PRO GREEN THEME (DESIGN ONLY)
+   Replace the entire Style > CSS with this file.
+   All IDs / classes used by the page script are preserved.
+   ===================================================================== */
+
+/* ---------- base ---------- */
+
+/* text-size control target (A− / A+) */
+
+/* ---------- hide website chrome / removed items (unchanged behaviour) ---------- */
+
+/* ---------- header ---------- */
+
+/* ---------- report tabs ---------- */
+
+/* ---------- containers ---------- */
+
+/* section titles — clear differentiation */
+
+/* collapsible sections (driven by the small UI script) */
+
+/* ---------- filter bar ---------- */
+
+/* ---------- buttons ---------- */
+
+/* =====================================================================
+   KPI CARDS — dual tone, fine border, auto-fit numbers
+   ===================================================================== */
+.cc-report-native .life-mkt-kpis{
+ display:grid!important;grid-template-columns:repeat(auto-fill,minmax(178px,1fr))!important;grid-auto-flow:row!important;
+ grid-auto-rows:auto!important;gap:12px!important;width:100%!important;margin:0 0 18px!important;padding:0!important;overflow:visible!important}
+
+.cc-report-native .life-mkt-kpi{
+ container-type:inline-size;position:relative;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;
+ min-width:0!important;width:auto!important;height:auto!important;min-height:118px!important;max-height:none!important;
+ padding:14px 14px 0!important;margin:0!important;overflow:hidden!important;
+ background:linear-gradient(180deg,#FFFFFF 0%,#F7FCF8 100%)!important;
+ border:1px solid #C9E2CF!important;border-top:4px solid var(--g600)!important;border-radius:14px!important;
+ box-shadow:var(--shadow-sm)!important;backdrop-filter:none!important;transition:box-shadow .15s,transform .15s}
+
+/* big number — scales with card width so large values always fit */
+.cc-report-native .life-mkt-kpi b{
+ display:block!important;order:1;margin:2px 0 10px!important;
+ font-family:var(--disp)!important;font-weight:900!important;line-height:1!important;letter-spacing:-.8px!important;
+ font-size:clamp(22px,19cqi,44px)!important;color:var(--pos)!important;
+ white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important}
+
+/* label on the second tone band */
+.cc-report-native .life-mkt-kpi>span{
+ order:5;display:block!important;margin:auto -14px 0!important;padding:8px 14px 9px!important;
+ background:linear-gradient(180deg,var(--g100),#DBF0E1)!important;border-top:1px solid #C9E2CF!important;
+ font-size:12px!important;font-weight:700!important;line-height:1.25!important;letter-spacing:0!important;text-transform:none!important;
+ color:var(--g900)!important;white-space:normal!important;overflow-wrap:anywhere!important;min-height:0!important}
+
+/* colour states: positive = dark green, negative = red, warning = amber, pending = gold */
+.cc-report-native .life-mkt-kpi b:not(.red):not(.orange):not(.gold):not(.blue){color:var(--pos)!important}
+.cc-report-native .life-mkt-kpi:has(b.red){border-top-color:var(--neg)!important;border-color:var(--neg-line)!important;background:linear-gradient(180deg,#fff,#FFF8F7)!important}
+.cc-report-native .life-mkt-kpi:has(b.red)>span{background:var(--neg-bg)!important;border-top-color:var(--neg-line)!important;color:#7F1D1D!important}
+.cc-report-native .life-mkt-kpi b.red{color:var(--neg)!important}
+.cc-report-native .life-mkt-kpi:has(b.orange){border-top-color:var(--amb)!important;border-color:var(--amb-line)!important;background:linear-gradient(180deg,#fff,#FFFAF4)!important}
+.cc-report-native .life-mkt-kpi:has(b.orange)>span{background:var(--amb-bg)!important;border-top-color:var(--amb-line)!important;color:#7A3300!important}
+.cc-report-native .life-mkt-kpi b.orange{color:var(--amb)!important}
+.cc-report-native .life-mkt-kpi:has(b.gold){border-top-color:#B8900A!important;border-color:var(--gold-line)!important;background:linear-gradient(180deg,#fff,#FFFCF0)!important}
+.cc-report-native .life-mkt-kpi:has(b.gold)>span{background:var(--gold-bg)!important;border-top-color:var(--gold-line)!important;color:#5C4700!important}
+.cc-report-native .life-mkt-kpi b.gold{color:var(--gold)!important}
+.cc-report-native .life-mkt-kpi:has(b.blue){border-top-color:var(--blu)!important}
+.cc-report-native .life-mkt-kpi b.blue{color:var(--blu)!important}
+
+/* loading state inside KPI grid */
+.cc-report-native .life-mkt-error{background:var(--neg-bg);color:var(--neg);border:1px solid var(--neg-line);border-radius:var(--r);padding:12px 16px;font-weight:700}
+
+/* small “today” tiles */
+
+/* =====================================================================
+   TABLES
+   ===================================================================== */
+.cc-report-native .life-mkt-table-wrap{
+ width:100%;overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm)}
+.cc-report-native .life-mkt-table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;line-height:1.4}
+.cc-report-native .life-mkt-table th{
+ position:sticky;top:0;z-index:5;padding:11px 10px!important;text-align:left;vertical-align:middle;
+ background:linear-gradient(180deg,var(--g800),var(--g900))!important;color:#fff!important;-webkit-text-fill-color:#fff;
+ font-size:11px!important;font-weight:800;letter-spacing:.5px;text-transform:uppercase;line-height:1.2;
+ border-right:1px solid rgba(255,255,255,.12);border-bottom:0;white-space:normal;word-break:keep-all;overflow-wrap:normal}
+.cc-report-native .life-mkt-table td{padding:10px!important;vertical-align:middle;font-size:13px;border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);background:#fff}
+.cc-report-native .life-mkt-table th:last-child,.cc-report-native .life-mkt-table td:last-child{border-right:0}
+.cc-report-native .life-mkt-table tbody tr:nth-child(even) td{background:#F6FBF7}
+.cc-report-native .life-mkt-click,.cc-report-native .life-mkt-performance-click{cursor:pointer}
+.cc-report-native .life-mkt-table tbody tr:hover td{background:#E3F4E8!important}
+.cc-report-native .life-mkt-table .num{text-align:right;white-space:nowrap;font-weight:600}
+.cc-report-native .life-mkt-table .total td{background:linear-gradient(180deg,#D6EDDC,#C8E6CF)!important;color:var(--g950);font-weight:900;font-size:13.5px;border-top:2px solid var(--g700);border-bottom:0}
+
+/* value colours */
+
+/* summary / consultant / drill tables (auto widths, readable) */
+.cc-report-native .life-mkt-empty{padding:28px!important;text-align:center;color:var(--mut);font-weight:700}
+
+/* pills / tags */
+.cc-report-native .life-mkt-pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:800;white-space:nowrap;border:1px solid transparent}
+.cc-report-native .life-mkt-pill{background:var(--pos-bg);color:var(--pos);border-color:var(--g200)}
+.cc-report-native .life-mkt-pill.warn{background:var(--amb-bg);color:var(--amb);border-color:var(--amb-line)}
+.cc-report-native .life-mkt-pill.muted{background:#EEF1EF;color:#5F6F63;border-color:#DDE4DF}
+
+/* =====================================================================
+   AGENT REPORT
+   ===================================================================== */
+
+/* performance board */
+
+/* =====================================================================
+   LEAD & DIGITAL MARKETING
+   ===================================================================== */
+.cc-report-native .life-mkt-root{display:flex;flex-direction:column;gap:14px}
+.cc-report-native .life-mkt-hero{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px 20px;border-radius:var(--r-lg);color:#fff;
+ background:linear-gradient(120deg,var(--g950),var(--g800) 55%,var(--g600));box-shadow:var(--shadow)}
+.cc-report-native .life-mkt-hero-icon{width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:22px}
+.cc-report-native .life-mkt-hero h2{color:#fff!important;-webkit-text-fill-color:#fff!important;font-size:21px;margin:0}
+.cc-report-native .life-mkt-hero p{color:#CDEBD4;font-size:12.5px;margin:2px 0 0}
+.cc-report-native .life-mkt-live{margin-left:auto;display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:99px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.25);font-size:11px;font-weight:800}
+.cc-report-native .life-mkt-live i{width:7px;height:7px;border-radius:50%;background:#8EF0A8}
+.cc-report-native .life-mkt-hero-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+
+.cc-report-native .life-mkt-filter-wrap{width:100%;overflow:visible}
+.cc-report-native .life-mkt-filter{display:flex!important;flex-wrap:wrap!important;align-items:flex-end!important;gap:12px!important;width:100%!important;min-width:0!important;
+ padding:16px 18px!important;background:linear-gradient(180deg,#fff,var(--g50))!important;border:1px solid var(--line)!important;border-radius:var(--r-lg)!important;box-shadow:var(--shadow-sm)}
+.cc-report-native .life-mkt-filter>*{grid-column:auto!important;grid-row:auto!important;order:0!important;margin:0!important}
+.cc-report-native .life-mkt-filter::after{display:none!important;content:none!important}
+.cc-report-native .life-mkt-filter>.life-mkt-period-field{flex:1 1 100%!important;width:100%!important}
+.cc-report-native .life-mkt-filter>.life-mkt-field{flex:1 1 180px!important;width:auto!important;min-width:160px!important}
+.cc-report-native .life-mkt-filter>.life-mkt-agency-field{flex:1 1 240px!important}
+.cc-report-native .life-mkt-filter>.life-mkt-btn{flex:0 0 auto!important;width:auto!important;min-width:110px}
+.cc-report-native .life-mkt-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.cc-report-native .life-mkt-field label{font-size:11px!important;font-weight:800!important;letter-spacing:.5px!important;text-transform:uppercase!important;color:var(--g700)!important;white-space:nowrap}
+.cc-report-native .life-mkt-field input,.cc-report-native .life-mkt-field select{height:42px!important;width:100%!important;border:1px solid #C6DDCB!important;border-radius:var(--r-sm)!important;padding:0 12px!important;background:#fff!important;font-size:13px!important}
+.cc-report-native .life-mkt-period{display:flex!important;gap:7px!important;flex-wrap:wrap!important}
+.cc-report-native .life-mkt-period button{border:1px solid #9FCDAE!important;background:#fff!important;color:var(--g800)!important;border-radius:99px!important;height:38px!important;padding:0 16px!important;font-size:12.5px!important;font-weight:800!important;white-space:nowrap}
+.cc-report-native .life-mkt-period button.on{background:linear-gradient(135deg,var(--g700),var(--g800))!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border-color:var(--g800)!important}
+.cc-report-native .life-mkt-btn{height:42px;border-radius:var(--r-sm);padding:0 16px;border:1px solid transparent;font-weight:800;font-size:13px;white-space:nowrap}
+.cc-report-native .life-mkt-btn.primary{background:linear-gradient(135deg,var(--g700),var(--g800))!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
+.cc-report-native .life-mkt-btn.secondary{background:#fff!important;color:var(--g800)!important;-webkit-text-fill-color:var(--g800)!important;border-color:#9FCDAE!important}
+.cc-report-native .life-mkt-note{padding:10px 14px;border:1px solid var(--line);border-left:4px solid var(--g600);border-radius:10px;background:var(--g50);color:var(--g800);font-size:12.5px;line-height:1.55}
+
+.cc-report-native .life-mkt-section{position:relative;z-index:1;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow)}
+.cc-report-native .life-mkt-section-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;cursor:pointer;
+ background:linear-gradient(90deg,var(--g100),#fff);border-bottom:1px solid var(--line);border-left:5px solid var(--g700)}
+.cc-report-native .life-mkt-section-head h3{font-family:var(--disp);font-size:17px!important;font-weight:800;color:var(--g900)!important;margin:0!important;flex:1;padding:0!important}
+.cc-report-native .life-mkt-section-head h3::before{display:none}
+.cc-report-native .life-mkt-section-head small{font-size:11.5px;color:var(--mut);font-weight:700}
+.cc-report-native .life-mkt-section-head .arrow{width:26px;height:26px;border-radius:8px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--g700);transition:transform .2s}
+.cc-report-native .life-mkt-section.closed .life-mkt-section-body{display:none}
+.cc-report-native .life-mkt-section.closed .arrow{transform:rotate(-90deg)}
+.cc-report-native .life-mkt-section.closed .life-mkt-section-head{border-bottom:0}
+.cc-report-native .life-mkt-main{font-weight:800;color:var(--ink)}
+.cc-report-native .life-mkt-sub{font-size:11px;color:var(--mut);margin-top:2px}
+.cc-report-native .life-mkt-detail-cell{cursor:pointer}
+.cc-report-native .life-mkt-detail-cell:hover{background:#D5EEDC!important;box-shadow:inset 0 0 0 1px var(--g400)}
+.cc-report-native .life-mkt-detail-cell.disabled{cursor:default;box-shadow:none}
+.cc-report-native .life-mkt-category-table{min-width:1680px!important;table-layout:auto!important}
+.cc-report-native .life-mkt-category-table .num{text-align:center!important}
+.cc-report-native .life-mkt-full-detail-table{min-width:2350px!important}
+.cc-report-native .life-mkt-category-rules{padding:10px 14px;border-top:1px solid var(--line);background:var(--g50);color:var(--mut);font-size:12px}
+.cc-report-native .life-mkt-category-rules b{color:var(--g800)}
+.cc-report-native .life-mkt-branch-strip{padding:12px 14px;border-top:1px solid var(--line);background:var(--g50);overflow-x:auto}
+.cc-report-native .life-mkt-branches{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:8px}
+.cc-report-native .life-mkt-branch{display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid #C9E2CF;border-radius:10px;background:#fff;padding:7px;font-size:12px;font-weight:800;color:var(--g800);white-space:nowrap}
+.cc-report-native .life-mkt-branch strong{background:var(--g800);color:#fff;border-radius:99px;padding:1px 7px;font-size:11px}
+.cc-report-native .life-mkt-branch.nil{opacity:.5}
+.cc-report-native .life-mkt-actions{display:flex;justify-content:flex-end;gap:8px;padding:11px 14px;border-top:1px solid var(--line);background:#FAFCFA}
+.cc-report-native .life-mkt-loading{padding:40px 18px;text-align:center;color:var(--mut);font-weight:700}
+.cc-report-native .life-mkt-spinner{width:28px;height:28px;margin:0 auto 10px;border:3px solid var(--g200);border-top-color:var(--g700);border-radius:50%;animation:sp .75s linear infinite}
+.cc-report-native .life-mkt-summary{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px}
+
+/* agency multi-select (portal) — behaviour classes kept */
+.cc-report-native .life-mkt-multi{position:relative;width:100%}
+.cc-report-native .life-mkt-multi-control{width:100%;min-height:42px;display:flex;align-items:center;gap:7px;padding:5px 30px 5px 8px;border:1px solid #C6DDCB;border-radius:var(--r-sm);background:#fff;overflow:hidden;cursor:text;position:relative}
+.cc-report-native .life-mkt-multi-control:focus-within{border-color:var(--g500);box-shadow:0 0 0 3px rgba(46,154,78,.15)}
+.cc-report-native .life-mkt-agency-current,.cc-report-native .life-mkt-selected-summary{max-width:48%;height:28px;display:inline-flex;align-items:center;padding:0 9px;border-radius:7px;background:var(--g100);color:var(--g800);font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-report-native .life-mkt-multi #lifeMktAgencySearch{flex:1 1 100px;min-width:72px;height:30px!important;padding:0 2px!important;border:0!important;box-shadow:none!important;background:transparent!important}
+.cc-report-native .life-mkt-multi-arrow{position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--mut)}
+.cc-report-native .life-mkt-multi-menu,.cc-report-native .life-mkt-multi-chips,.cc-report-native .life-mkt-multi-chip,.cc-report-native .life-mkt-multi-more{display:none!important}
+.cc-report-native .life-mkt-agency-portal{position:fixed!important;z-index:2147483000!important;max-height:330px;max-width:380px;display:flex!important;flex-direction:column;overflow:hidden;border:1px solid var(--g300);border-radius:12px;background:#fff;box-shadow:var(--shadow-lg)}
+.cc-report-native .life-mkt-agency-portal-head,.cc-report-native .life-mkt-agency-portal-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;background:var(--g50)}
+.cc-report-native .life-mkt-agency-portal-head{border-bottom:1px solid var(--line)}
+.cc-report-native .life-mkt-agency-portal-foot{border-top:1px solid var(--line);justify-content:flex-end}
+.cc-report-native .life-mkt-agency-portal-head b{font-size:12px;color:var(--g900)}
+.cc-report-native .life-mkt-agency-portal-head small,.cc-report-native .life-mkt-agency-portal-foot>span,.cc-report-native .life-mkt-agency-option small{display:none}
+.cc-report-native .life-mkt-agency-portal-head button,.cc-report-native .life-mkt-agency-portal-foot button{height:28px;padding:0 10px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--g800);font-size:11px;font-weight:800}
+.cc-report-native .life-mkt-agency-portal-foot button{background:var(--g700);color:#fff;border-color:var(--g700)}
+.cc-report-native .life-mkt-agency-portal-search{display:flex;align-items:center;gap:6px;margin:6px;padding:0 8px;height:34px;border:1px solid #C6DDCB;border-radius:8px;background:#fff}
+.cc-report-native .life-mkt-agency-portal-search input{flex:1;min-width:0;height:30px;border:0;outline:none;background:transparent;font-size:12px}
+.cc-report-native .life-mkt-agency-portal-options{flex:1;min-height:70px;max-height:210px;overflow-y:auto;overscroll-behavior:contain;padding:2px 6px 6px}
+.cc-report-native .life-mkt-agency-option{width:100%;min-height:32px;display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:7px;cursor:pointer;text-transform:none;letter-spacing:normal}
+.cc-report-native .life-mkt-agency-option:hover{background:var(--g50)}
+.cc-report-native .life-mkt-agency-option:has(input:checked){background:var(--g100)}
+.cc-report-native .life-mkt-agency-option input[type="checkbox"]{appearance:auto;-webkit-appearance:checkbox;width:15px;height:15px;min-height:15px;flex:0 0 15px;margin:0;padding:0;accent-color:var(--g700)}
+.cc-report-native .life-mkt-agency-option b{font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-report-native .life-mkt-agency-option.life-mkt-agency-hidden{display:none!important}
+.cc-report-native .life-mkt-agency-no-option,.cc-report-native .life-mkt-agency-search-empty,.cc-report-native .life-mkt-multi-empty{padding:16px 10px;text-align:center;color:var(--mut);font-size:12px}
+
+/* =====================================================================
+   POPUP / MODAL
+   ===================================================================== */
+
+/* PD form gallery */
+
+/* =====================================================================
+   RIGHT EDGE TABS + PANELS
+   ===================================================================== */
+
+/* notifications / toast */
+
+/* text size control (created by UI script) */
+
+/* print button */
+
+/* =====================================================================
+   RESPONSIVE
+   ===================================================================== */
+@media(max-width:900px){
+ .cc-report-native .life-mkt-hero-actions{margin-left:0;width:100%}
+}
+@media(max-width:600px){
+ .cc-report-native .life-mkt-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+
+/* =====================================================================
+   PRINT
+   ===================================================================== */
+@page{size:A4 landscape;margin:8mm}
+@media print{
+ .cc-report-native .life-mkt-actions,.cc-report-native .life-mkt-filter-wrap{display:none!important}
+ .cc-report-native .life-mkt-section-body{display:block!important}
+ .cc-report-native .life-mkt-section{box-shadow:none!important}
+ .cc-report-native .life-mkt-table-wrap{overflow:visible!important;box-shadow:none}
+ .cc-report-native .life-mkt-table th{position:static}
+ .cc-report-native .life-mkt-kpis{grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:5px!important}
+}
+
+
+/* #####################################################################
+   V2 LAYER — tabs, nav, unified cards, auto-fit numbers, filters,
+   agent layout, marketing layout, auto column widths
+   ##################################################################### */
+
+/* ---------- main tab bar: one embossed bar ---------- */
+
+/* ---------- CC filter: quick buttons fill the width ---------- */
+
+/* ---------- card group bar ---------- */
+
+/* ---------- unified dual-tone cards ---------- */
+
+/* numeric font everywhere else */
+.cc-report-native .life-mkt-branch strong{font-family:var(--num)!important;font-variant-numeric:tabular-nums lining-nums}
+
+/* native □ — ✕ section buttons */
+
+/* ---------- marketing filter: 2 clean rows ---------- */
+.cc-report-native #tabv3 .life-mkt-filter.life-mkt-filter{display:grid!important;grid-template-columns:repeat(12,minmax(0,1fr))!important;gap:12px!important;align-items:end!important;min-width:0!important}
+.cc-report-native #tabv3 .life-mkt-filter.life-mkt-filter>*{flex:none!important;width:auto!important;min-width:0!important;max-width:none!important}
+.cc-report-native #tabv3 .life-mkt-filter>.life-mkt-period-field{grid-column:1 / span 8!important;grid-row:1!important}
+.cc-report-native #tabv3 .life-mkt-filter>.life-mkt-field:nth-of-type(2){grid-column:9 / span 2!important;grid-row:1!important}
+.cc-report-native #tabv3 .life-mkt-filter>.life-mkt-field:nth-of-type(3){grid-column:11 / span 2!important;grid-row:1!important}
+.cc-report-native #tabv3 .life-mkt-filter>.life-mkt-field:nth-of-type(4){grid-column:1 / span 3!important;grid-row:2!important}
+.cc-report-native #tabv3 .life-mkt-filter>.life-mkt-field:nth-of-type(5){grid-column:4 / span 2!important;grid-row:2!important}
+.cc-report-native #tabv3 .life-mkt-filter>.life-mkt-field:nth-of-type(6){grid-column:6 / span 2!important;grid-row:2!important}
+.cc-report-native #tabv3 .life-mkt-filter>.life-mkt-field:nth-of-type(7){grid-column:8 / span 3!important;grid-row:2!important}
+.cc-report-native #tabv3 .life-mkt-filter>.life-mkt-btn.primary{grid-column:11 / span 1!important;grid-row:2!important;padding:0 8px!important}
+.cc-report-native #tabv3 .life-mkt-filter>.life-mkt-btn.secondary{grid-column:12 / span 1!important;grid-row:2!important;padding:0 8px!important}
+.cc-report-native #tabv3 .life-mkt-period.life-mkt-period{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(92px,1fr))!important;gap:6px!important;width:100%!important}
+.cc-report-native #tabv3 .life-mkt-period.life-mkt-period button{width:100%!important;height:36px!important;min-height:36px!important;padding:0 8px!important;border:1px solid #BFDCC7!important;border-radius:9px!important;
+ font-size:12px!important;font-weight:700!important;letter-spacing:.2px!important;background:linear-gradient(180deg,#fff,#F2F9F4)!important;box-shadow:inset 0 1px 0 #fff!important}
+.cc-report-native #tabv3 .life-mkt-period.life-mkt-period button.on{background:linear-gradient(180deg,var(--g600),var(--g800))!important;border-color:var(--g900)!important;color:#fff!important}
+@media(max-width:1200px){
+ .cc-report-native #tabv3 .life-mkt-filter.life-mkt-filter{grid-template-columns:repeat(6,minmax(0,1fr))!important}
+ .cc-report-native #tabv3 .life-mkt-filter>.life-mkt-period-field{grid-column:1 / -1!important;grid-row:1!important}
+ .cc-report-native #tabv3 .life-mkt-filter>.life-mkt-field:nth-of-type(2){grid-column:1 / span 3!important;grid-row:2!important}
+ .cc-report-native #tabv3 .life-mkt-filter>.life-mkt-field:nth-of-type(3){grid-column:4 / span 3!important;grid-row:2!important}
+ .cc-report-native #tabv3 .life-mkt-filter>.life-mkt-field:nth-of-type(4){grid-column:1 / span 3!important;grid-row:3!important}
+ .cc-report-native #tabv3 .life-mkt-filter>.life-mkt-field:nth-of-type(5){grid-column:4 / span 3!important;grid-row:3!important}
+ .cc-report-native #tabv3 .life-mkt-filter>.life-mkt-field:nth-of-type(6){grid-column:1 / span 3!important;grid-row:4!important}
+ .cc-report-native #tabv3 .life-mkt-filter>.life-mkt-field:nth-of-type(7){grid-column:4 / span 3!important;grid-row:4!important}
+ .cc-report-native #tabv3 .life-mkt-filter>.life-mkt-btn.primary{grid-column:1 / span 3!important;grid-row:5!important}
+ .cc-report-native #tabv3 .life-mkt-filter>.life-mkt-btn.secondary{grid-column:4 / span 3!important;grid-row:5!important}}
+@media(max-width:700px){
+ .cc-report-native #tabv3 .life-mkt-filter.life-mkt-filter{grid-template-columns:1fr!important}
+ .cc-report-native #tabv3 .life-mkt-filter.life-mkt-filter>*{grid-column:1 / -1!important;grid-row:auto!important}}
+
+/* branch conversion ratio: full width with gaps */
+.cc-report-native .life-mkt-branch-strip{overflow:visible!important;padding:14px 16px!important}
+.cc-report-native .life-mkt-branches.life-mkt-branches{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(120px,1fr))!important;gap:12px!important;width:100%!important;min-width:0!important;margin-top:10px!important}
+.cc-report-native .life-mkt-branch.life-mkt-branch{justify-content:space-between!important;padding:10px 12px!important;border:1px solid #C9E2CF!important;border-left:4px solid var(--g600)!important;border-radius:12px!important;font-size:13px!important;background:#fff!important}
+.cc-report-native .life-mkt-branch.nil{border-left-color:#C9D3CC!important}
+
+/* ---------- auto column widths (set by UI script) ---------- */
+
+/* thin premium scrollbars */
+.cc-report-native .life-mkt-table-wrap{scrollbar-width:thin;scrollbar-color:#8FC49F #EEF6F0}
+
+
+
+/* #####################################################################
+   V3 LAYER — spacing, nav, agent header, section buttons, A4 print
+   ##################################################################### */
+
+/* tab bar: nav pinned left, tabs never pushed to a 2nd row */
+
+/* all cards: number on top, label below (every tab) */
+
+/* agent header: compact, stats in one horizontal row */
+
+/* section open/close buttons */
+
+/* spacing rhythm */
+
+/* =====================================================================
+   A4 LANDSCAPE PRINT (active tab or open popup only)
+   ===================================================================== */
+@page{size:A4 landscape;margin:8mm}
+@media print{
+
+ /* hide screen-only controls */
+ .cc-report-native html.lcc-print .life-mkt-filter-wrap,.cc-report-native html.lcc-print .life-mkt-actions,.cc-report-native html.lcc-print .life-mkt-hero-actions,.cc-report-native html.lcc-print .life-mkt-section-head .arrow,.cc-report-native html.lcc-print .life-mkt-live{display:none!important}
+
+ /* scope: tab */
+ /* scope: popup */
+
+ /* print header */
+
+ /* containers */
+ .cc-report-native html.lcc-print .life-mkt-section{padding:6px 8px!important;margin:0 0 7px!important;border:1px solid #CFE3D4!important;border-radius:6px!important;break-inside:auto!important}
+ .cc-report-native html.lcc-print .life-mkt-section-body{display:block!important}
+ .cc-report-native html.lcc-print .life-mkt-section-head{padding:5px 8px!important}
+ .cc-report-native html.lcc-print .life-mkt-hero{padding:6px 10px!important;margin:0 0 6px!important;border-radius:6px!important;gap:6px 12px!important}
+ .cc-report-native html.lcc-print .life-mkt-hero h2{font-size:13px!important}
+
+ /* cards */
+
+ /* tables */
+ .cc-report-native html.lcc-print .life-mkt-table-wrap,.cc-report-native html.lcc-print .life-mkt-branch-strip{overflow:visible!important;max-height:none!important;border:0!important;border-radius:0!important;width:100%!important}
+ .cc-report-native html.lcc-print .life-mkt-pill{font-size:7px!important;padding:1px 5px!important}
+
+ /* charts / boards */
+ .cc-report-native html.lcc-print .life-mkt-branches.life-mkt-branches{grid-template-columns:repeat(11,minmax(0,1fr))!important;gap:4px!important}
+ .cc-report-native html.lcc-print .life-mkt-branch.life-mkt-branch{padding:3px 4px!important;font-size:7.5px!important;border-radius:5px!important}
+ .cc-report-native html.lcc-print .life-mkt-note{font-size:8px!important;padding:4px 8px!important}
+}
+
+/* =====================================================================
+   TODAY'S CC - WALK-IN APMTS PANEL ONLY  (append at END of Style CSS)
+   ===================================================================== */
+
+/* summary strip */
+
+/* card */
+
+/* top line: SN · time · status · visit */
+
+/* client line */
+
+/* meta lines in 2 columns */
+
+/* ================================================================
+   LIFE TODAY APMTS — CC EMPLOYEE MULTI SELECT FILTER
+   APPEND AT VERY END OF STYLE CSS
+   ================================================================ */
+
+/* =====================================================================
+   LIFE TODAY APMTS — BRANCH LIVE TEAM
+   APPEND AT VERY END OF STYLE CSS
+   ===================================================================== */
+
+
+/* PERSON */
+
+
+/* ROLE */
+
+
+/* STATUS DOT */
+
+
+/* AVAILABLE — BIOMETRIC IN */
+
+
+/* NOT AVAILABLE */
+
+
+/* NO EMPLOYEE MAPPED */
+
+
+/* ================================================================
+   CC FILTER V2 — ALL AGENTS + CLEAR + APPLY
+   ================================================================ */
+
+
+/* FOOTER */
+
+
+/* CLEAR */
+
+
+/* APPLY */
+
+
+/* KEEP AGENT LIST SCROLLABLE */
+
+/* ============================================================
+   LIFE TODAY APMTS — BRANCH STAFF V4
+   ============================================================ */
+
+
+/* PERSON */
+
+
+/* CM / ACM / TCM / Dr */
+
+
+/* STATUS DOT */
+
+
+/* GREEN = LATEST CHECKIN IS IN */
+
+
+/* RED = OUT / NO CHECKIN TODAY */
+
+/* ============================================================
+   ON-FLOOR CC TEAM — FINAL UI ENHANCEMENT
+   VISUAL ONLY — DOES NOT CHANGE ATTENDANCE LOGIC
+   ============================================================ */
+
+
+/* ---------- SUMMARY ---------- */
+
+
+/* ============================================================
+   EMPLOYEE CARD
+   ============================================================ */
+
+
+/* Remove old separator style if present */
+
+
+/* ============================================================
+   STATUS COLOUR — CARD BORDER + BACKGROUND
+
+   Existing state classes are on:
+   .support-floor-status
+   so :has() styles the complete employee card.
+   ============================================================ */
+
+
+/* ON FLOOR */
+
+
+/* CHECKED OUT */
+
+
+/* NO CHECK-IN */
+
+
+/* ============================================================
+   LEFT STATUS DOT
+   ============================================================ */
+
+
+/* ============================================================
+   EMPLOYEE NAME
+   ============================================================ */
+
+
+/* ============================================================
+   DEPARTMENT · DESIGNATION · BRANCH
+   ============================================================ */
+
+
+/* ============================================================
+   STATUS BADGES
+   ============================================================ */
+
+
+/* GREEN */
+
+
+/* ORANGE */
+
+
+/* RED */
+
+
+/* ============================================================
+   CHECK-IN / CHECK-OUT COLUMN
+   ============================================================ */
+
+
+/* EACH TIME LINE */
+
+
+/* LABEL */
+
+
+/* TIME */
+
+
+/* Checked-out time emphasis */
+
+
+/* No check-in time */
+
+
+/* ============================================================
+   MOBILE / NARROW PANEL SAFETY
+   ============================================================ */
+
+/* Agent report filters: keep the full filter set on one compact line */
+
+/* Agent report filters: one compact non-wrapping row */
+
+.cc-report-native{--g950:#072A14;--g900:#0B3D1C;--g800:#0E5125;--g700:#146B31;--g600:#1E7F3C;--g500:#2E9A4E;--g400:#5DBB76;--g300:#A5D9B3;--g200:#CFEBD6;--g100:#E6F5EA;--g50:#F3FAF5;--pos:#0B6B2E;--pos-bg:#E3F4E8;--neg:#C62828;--neg-bg:#FDECEA;--neg-line:#F2B8B5;--amb:#D84A00;--amb-bg:#FFF1E4;--amb-line:#FFCFA8;--gold:#8A6A00;--gold-bg:#FFF7DB;--gold-line:#EEDC98;--blu:#1257A8;--blu-bg:#E6F0FC;--ink:#10261A;--mut:#5B6E61;--line:#D4E6D9;--line2:#E6F0E8;--shadow-sm:0 1px 2px rgba(7,42,20,.06);--shadow:0 2px 6px rgba(7,42,20,.05),0 8px 22px rgba(7,42,20,.07);--shadow-lg:0 20px 60px rgba(7,42,20,.28);--disp:'Archivo',system-ui,sans-serif;--body:'Inter',system-ui,sans-serif;--r-lg:16px;--r:12px;--r-sm:9px;--num:'Manrope','Inter',system-ui,sans-serif;--disp:Poppins,sans-serif;--body:Poppins,sans-serif;}

@@ -115,35 +115,35 @@
   "menu": [
     {
       "label": "MAIN",
-      "icon": "\u2302",
+      "icon": "⌂",
       "items": [
         {
           "id": "home",
-          "icon": "\u2302",
+          "icon": "⌂",
           "label": "Home",
           "description": "Portal dashboard"
         },
         {
           "id": "tasks",
-          "icon": "\u2611",
+          "icon": "☑",
           "label": "My Tasks",
           "description": "Assigned work"
         },
         {
           "id": "approvals",
-          "icon": "\u270d",
+          "icon": "✍",
           "label": "Approvals Pending",
           "description": "Awaiting your sign-off"
         },
         {
           "id": "stores360",
-          "icon": "\ud83c\udfec",
+          "icon": "🏬",
           "label": "Stores 360",
-          "description": "Store-wise 360\u00b0 view"
+          "description": "Store-wise 360° view"
         },
         {
           "id": "data-correction",
-          "icon": "\u270e",
+          "icon": "✎",
           "label": "Data Correction",
           "description": "Request, approve and track data corrections"
         }
@@ -151,47 +151,47 @@
     },
     {
       "label": "BRANCH HOME",
-      "icon": "\ud83c\udfe5",
+      "icon": "🏥",
       "items": [
         {
           "id": "bdash",
-          "icon": "\ud83d\udcca",
+          "icon": "📊",
           "label": "Branch Dashboard",
           "description": "Live branch performance"
         },
         {
           "id": "conv",
-          "icon": "\ud83c\udfaf",
+          "icon": "🎯",
           "label": "Conversions & Targets",
           "description": "Target vs achieved"
         },
         {
           "id": "empsale",
-          "icon": "\ud83d\udc65",
+          "icon": "👥",
           "label": "Employee Sale Master",
           "description": "Employee-wise sales"
         },
         {
           "id": "salemaster",
-          "icon": "\ud83d\udcbc",
+          "icon": "💼",
           "label": "Sale Master Data",
           "description": "All invoices"
         },
         {
           "id": "audit",
-          "icon": "\ud83d\udd0d",
+          "icon": "🔍",
           "label": "Audit Reports",
           "description": "200-point branch audit"
         },
         {
           "id": "documents",
-          "icon": "\ud83d\udcbc",
+          "icon": "💼",
           "label": "Forms And Documents",
           "description": "Forms"
         },
         {
           "id": "bexp",
-          "icon": "\ud83e\uddfe",
+          "icon": "🧾",
           "label": "Branch Expenditures",
           "description": "Branch spend"
         }
@@ -199,89 +199,83 @@
     },
     {
       "label": "CRM & CALL CENTRE",
-      "icon": "\ud83d\udcde",
+      "icon": "📞",
       "items": [
         {
           "id": "leads",
-          "icon": "\u25ce",
+          "icon": "◎",
           "label": "CC Dashboard",
           "description": "Leads, follow-ups & agent performance"
         },
         {
           "id": "ccvisit",
-          "icon": "\ud83d\udccb",
+          "icon": "📋",
           "label": "CC Visit Report",
           "description": "Reports, visits & agent performance"
-        },
-        {
-          "id": "campaign",
-          "icon": "\ud83d\udce3",
-          "label": "Campaigns",
-          "description": "Ads & ROI"
         }
       ]
     },
     {
       "label": "CLIENTS & CLINICAL",
-      "icon": "\ud83e\ude7a",
+      "icon": "🩺",
       "items": [
         {
           "id": "cliinfo",
-          "icon": "\ud83d\udc64",
+          "icon": "👤",
           "label": "Client Info",
-          "description": "360\u00b0 client file"
+          "description": "360° client file"
         },
         {
           "id": "enrollment-register",
-          "icon": "\ud83d\udccb",
+          "icon": "📋",
           "label": "Enrollment Register",
           "description": "Client enrollment register"
         },
         {
           "id": "unjoined",
-          "icon": "\u26d4",
+          "icon": "⛔",
           "label": "Unjoined Clients",
           "description": "Consulted, not joined"
         },
         {
           "id": "appt",
-          "icon": "\ud83d\udcc5",
+          "icon": "📅",
           "label": "Appointments",
           "description": "Appointment Scheduler"
         },
         {
           "id": "conversions",
-          "icon": "\ud83d\udd04",
+          "icon": "🔄",
           "label": "Conversions",
           "description": "P2P, C2C & B2B transfers"
         },
         {
           "id": "service",
-          "icon": "\ud83d\udee0",
+          "icon": "🛠",
           "label": "Service",
           "description": "Operations & service module"
         },
         {
           "id": "wlres",
-          "icon": "\ud83d\udcc8",
+          "icon": "📈",
           "label": "WL Results Report",
           "description": "Weight-loss outcomes"
         },
         {
           "id": "dietfb",
-          "icon": "\ud83e\udd57",
+          "icon": "🥗",
           "label": "Dietitian Feedback",
           "description": "Diet compliance"
         },
         {
           "id": "followup",
-          "icon": "\u23f0",
+          "icon": "⏰",
           "label": "Follow-ups",
           "description": "Pending call-backs"
         },
         {
           "id": "knowledge",
-          "icon": "\ud83d\udcda",
+          "icon": "📚",
           "label": "Knowledge Center",
           "description": "SOPs & documents"
         }
@@ -289,53 +283,53 @@
     },
     {
       "label": "BILLING & ACCOUNTS",
-      "icon": "\u20b9",
+      "icon": "₹",
       "items": [
         {
           "id": "billing",
-          "icon": "\ud83e\uddfe",
+          "icon": "🧾",
           "label": "Billing & Invoices",
           "description": "Package billing"
         },
         {
           "id": "accounts",
-          "icon": "\ud83c\udfe6",
+          "icon": "🏦",
           "label": "Accounts Command Centre",
           "description": "Entry book & cash"
         },
         {
           "id": "pendbal",
-          "icon": "\ud83e\uddee",
+          "icon": "🧮",
           "label": "Pending Balances",
           "description": "Branch pending balances report"
         },
         {
           "id": "payables",
-          "icon": "\u2b05",
+          "icon": "⬅",
           "label": "Payables",
           "description": "Vendor dues"
         },
         {
           "id": "receivables",
-          "icon": "\u27a1",
+          "icon": "➡",
           "label": "Receivables",
           "description": "Client dues"
         },
         {
           "id": "gst",
-          "icon": "\ud83d\udcd1",
+          "icon": "📑",
           "label": "GST India",
           "description": "Returns & filing"
         },
         {
           "id": "assets",
-          "icon": "\ud83c\udfd7",
+          "icon": "🏗",
           "label": "Assets",
           "description": "Fixed assets"
         },
         {
           "id": "finrep",
-          "icon": "\ud83d\udcc9",
+          "icon": "📉",
           "label": "Financial Reports",
           "description": "P&L, ledgers"
         }
@@ -343,29 +337,29 @@
     },
     {
       "label": "STOCK & PURCHASE",
-      "icon": "\ud83d\udce6",
+      "icon": "📦",
       "items": [
         {
           "id": "stock",
-          "icon": "\ud83d\udce6",
+          "icon": "📦",
           "label": "Stock",
           "description": "Item-wise stock"
         },
         {
           "id": "buying",
-          "icon": "\ud83d\uded2",
+          "icon": "🛒",
           "label": "Buying / Purchase Orders",
           "description": "PO & GRN"
         },
         {
           "id": "vendors",
-          "icon": "\ud83d\ude9a",
+          "icon": "🚚",
           "label": "Vendors",
           "description": "Vendor master"
         },
         {
           "id": "pricelist",
-          "icon": "\ud83c\udff7",
+          "icon": "🏷",
           "label": "Price-List",
           "description": "Package pricing"
         }
@@ -373,35 +367,35 @@
     },
     {
       "label": "HR & PAYROLL",
-      "icon": "\ud83e\udeaa",
+      "icon": "🪪",
       "items": [
         {
           "id": "employees",
-          "icon": "\ud83e\uddd1\u200d\ud83d\udcbc",
+          "icon": "🧑‍💼",
           "label": "HRMS Dashboard",
           "description": "HR overview & employee management"
         },
         {
           "id": "attend",
-          "icon": "\ud83e\udeaa",
+          "icon": "🪪",
           "label": "Attendance",
           "description": "Biometric punches"
         },
         {
           "id": "payroll",
-          "icon": "\ud83d\udcb0",
+          "icon": "💰",
           "label": "Payroll",
           "description": "Salary & incentives"
         },
         {
           "id": "leaves",
-          "icon": "\ud83c\udf34",
+          "icon": "🌴",
           "label": "Leaves",
           "description": "Leave register"
         },
         {
           "id": "hrpol",
-          "icon": "\ud83d\udcd8",
+          "icon": "📘",
           "label": "HR Policies",
           "description": "Documents & SOPs"
         }
@@ -409,29 +403,29 @@
     },
     {
       "label": "LIFE RISE",
-      "icon": "\ud83c\udf31",
+      "icon": "🌱",
       "items": [
         {
           "id": "risedash",
-          "icon": "\ud83c\udf31",
+          "icon": "🌱",
           "label": "RISE Dashboard",
           "description": "Online vertical"
         },
         {
           "id": "riseprog",
-          "icon": "\ud83c\udf81",
+          "icon": "🎁",
           "label": "Programs & Packages",
           "description": "6 hero programs"
         },
         {
           "id": "risewb",
-          "icon": "\ud83c\udfa5",
+          "icon": "🎥",
           "label": "Webinars",
           "description": "Schedule & history"
         },
         {
           "id": "riseclients",
-          "icon": "\ud83d\udc65",
+          "icon": "👥",
           "label": "RISE Clients",
           "description": "Enrolled clients"
         }
@@ -439,41 +433,41 @@
     },
     {
       "label": "REPORTS & MIS",
-      "icon": "\ud83d\udcca",
+      "icon": "📊",
       "items": [
         {
           "id": "repmaster",
-          "icon": "\ud83d\uddc2",
+          "icon": "🗂",
           "label": "Report Master",
           "description": "24 enterprise reports"
         },
         {
           "id": "discountaudit",
-          "icon": "\ud83d\uddc2",
+          "icon": "🗂",
           "label": "Discount Audit Report",
           "description": "Discount Audit"
         },
         {
           "id": "approvalsreport",
-          "icon": "\u2705",
+          "icon": "✅",
           "label": "Approvals Report",
           "description": "Approval requests & status"
         },
         {
           "id": "execdash",
-          "icon": "\ud83d\udc51",
+          "icon": "👑",
           "label": "Executive Dashboard",
           "description": "CEO / COO view"
         },
         {
           "id": "mis",
-          "icon": "\ud83d\udcca",
+          "icon": "📊",
           "label": "MD Dashboard",
           "description": "Charts & leaderboards"
         },
         {
           "id": "clusterhome",
-          "icon": "\ud83e\udde9",
+          "icon": "🧩",
           "label": "Cluster Dashboard",
           "description": "Multi-branch rollup"
         }
@@ -481,29 +475,29 @@
     },
     {
       "label": "SETTINGS",
-      "icon": "\u2699",
+      "icon": "⚙",
       "items": [
         {
           "id": "control",
-          "icon": "\u2699",
+          "icon": "⚙",
           "label": "Control Panel",
           "description": "Menu & user rights"
         },
         {
           "id": "users",
-          "icon": "\ud83d\udd10",
+          "icon": "🔐",
           "label": "Users & Roles",
           "description": "Access management"
         },
         {
           "id": "masters",
-          "icon": "\ud83d\uddc3",
+          "icon": "🗃",
           "label": "Masters",
           "description": "Branches, clusters, items"
         },
         {
           "id": "auditlog",
-          "icon": "\ud83d\udee1",
+          "icon": "🛡",
           "label": "System Audit Log",
           "description": "Every action traced"
         }
@@ -527,5 +521,142 @@
       "parent": "cliinfo",
       "title": "Client Registration"
     }
+  },
+  "tabs": {
+    "leads": [
+      {
+        "id": "dashboard",
+        "label": "CC Dashboard"
+      },
+      {
+        "id": "testing",
+        "label": "Lead Updates"
+      },
+      {
+        "id": "queue",
+        "label": "My Lead Queue"
+      },
+      {
+        "id": "followup",
+        "label": "Lead Follow-Up Form"
+      },
+      {
+        "id": "create",
+        "label": "Create Lead"
+      },
+      {
+        "id": "assign",
+        "label": "Assign Leads"
+      },
+      {
+        "id": "duplicates",
+        "label": "Duplicate Leads"
+      },
+      {
+        "id": "worksheet",
+        "label": "My Worksheet"
+      },
+      {
+        "id": "distribution",
+        "label": "Lead Distribution"
+      },
+      {
+        "id": "tl",
+        "label": "TL Control Panel"
+      },
+      {
+        "id": "reports",
+        "label": "CC Reports"
+      },
+      {
+        "id": "scripts",
+        "label": "Call Scripts"
+      },
+      {
+        "id": "faq",
+        "label": "FAQ / Knowledge Base"
+      },
+      {
+        "id": "treatments",
+        "label": "Treatment Guide"
+      },
+      {
+        "id": "objections",
+        "label": "Objection Handling"
+      },
+      {
+        "id": "branches",
+        "label": "Branch Directory"
+      },
+      {
+        "id": "doctors",
+        "label": "Doctor Directory"
+      },
+      {
+        "id": "invoices",
+        "label": "Invoices / Bills"
+      },
+      {
+        "id": "roster",
+        "label": "CC Roster"
+      },
+      {
+        "id": "appointments",
+        "label": "Create Appointment"
+      },
+      {
+        "id": "live-tv",
+        "label": "CC Live TV"
+      }
+    ],
+    "ccvisit": [
+      {
+        "id": "visits",
+        "label": "CC — BRANCH VISITS REPORT"
+      },
+      {
+        "id": "agents",
+        "label": "AGENT REPORT"
+      },
+      {
+        "id": "marketing",
+        "label": "LEAD & DIGITAL MARKETING REPORT"
+      },
+      {
+        "id": "consultants",
+        "label": "CONSULTANT / MANAGER REPORT"
+      },
+      {
+        "id": "cluster",
+        "label": "CLUSTER REPORT"
+      },
+      {
+        "id": "agent360",
+        "label": "AGENT 360"
+      },
+      {
+        "id": "journey",
+        "label": "LEAD JOURNEY"
+      },
+      {
+        "id": "convox",
+        "label": "ConVox dispositions",
+        "parent": "agents"
+      },
+      {
+        "id": "nofollowup",
+        "label": "No follow-up",
+        "parent": "agents"
+      },
+      {
+        "id": "untouched",
+        "label": "Untouched leads",
+        "parent": "agents"
+      },
+      {
+        "id": "standalone",
+        "label": "Agent 360 — separate sidebar page"
+      }
+    ]
   }
 }

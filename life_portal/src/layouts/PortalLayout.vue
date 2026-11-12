@@ -6,6 +6,7 @@ import PortalSidebar from "../components/PortalSidebar.vue";
 import AccountDialog from "../components/AccountDialog.vue";
 import { session, initials, roleLabel, canAccessModule } from "../lib/session";
 const route = useRoute();
+const isCrmPage = computed(() => ['leads','leads-native','ccvisit','ccvisit-native','cc-roster','cc-appointments','cc-invoices','cc-live-tv'].includes(route.name) || ['leads','ccvisit'].includes(route.meta.accessModule));
 const allowed = computed(() => route.name === 'not-found' || canAccessModule(route.meta.accessModule || route.name));
 const collapsed = ref(false);
 const mobileOpen = ref(false);
@@ -28,7 +29,7 @@ watch(
 <template>
   <div
     class="portal"
-    :class="{ rail: collapsed, 'mobile-open': mobileOpen }"
+    :class="{ rail: collapsed, 'mobile-open': mobileOpen, 'crm-workspace': isCrmPage }"
     @keydown.esc="mobileOpen = false"
   >
     <a class="skip-link" href="#main-content">Skip to content</a>

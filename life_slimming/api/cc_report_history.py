@@ -14,7 +14,7 @@ CHANGE_FIELDS = {'status','custom_cc_stage','custom_cc_sub_status','lead_owner',
 
 
 def scope(agents=None):
-    require_module('ccvisit')
+    require_module('ccvisit', tab=('agent360','standalone','convox'))
     user = frappe.session.user
     manager = user == 'Administrator' or bool(MANAGERS.intersection(frappe.get_roles()))
     try:
