@@ -76,7 +76,7 @@
 .cc-erp-root #wf-panel header .wf-h-client{font-size:13px;color:#fff}
 .cc-erp-root #wf-panel header .wf-h-client b{font-size:15px;color:#ffd9d6}
 .cc-erp-root #wf-panel header .wf-h-br{font-weight:700;color:#e6cf8b}
-.cc-erp-root #wf-panel header .wf-h-phone{display:flex;align-items:center;gap:6px;margin:3px 0}
+.cc-erp-root #wf-panel header .wf-h-phone{display:flex;align-items:center;gap:6px;margin:3px 0;padding:0;border:0;background:transparent;color:#fff;font:inherit;font-weight:600;font-size:13px;letter-spacing:.5px;cursor:pointer}.cc-erp-root #wf-panel header .wf-h-phone:hover,.cc-erp-root #wf-panel header .wf-h-phone:focus-visible{color:#ffe9a8;text-decoration:underline}
 .cc-erp-root #wf-panel header .wf-ph{color:#fff;font-weight:600;font-size:13px;letter-spacing:.5px;cursor:default}
 .cc-erp-root #wf-panel header .wf-copy{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4)}
 .cc-erp-root .wf-copy{border:1px solid #c9d6cd;background:#fff;color:#1e5a3e;border-radius:5px;font-size:12px;line-height:1;padding:3px 6px;cursor:pointer}
@@ -242,7 +242,8 @@
 .cc-dashboard-vue .cc-pager-row button{padding:7px 14px;border:1px solid var(--line);border-radius:8px;background:#fff}
 .cc-dashboard-vue .cc-pager-row button:disabled{opacity:.45}
 .cc-dashboard-vue .cc-access-restricted{padding:28px;text-align:center;color:#8a6508;background:#fff9e8;border-radius:8px}
-.cc-dashboard-vue .cc-report-click{color:var(--green);text-decoration:underline;cursor:pointer}
+.cc-dashboard-vue .cc-report-click{padding:0!important;min-width:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:var(--green);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
+.cc-erp-root .cc-masked-phone{display:inline;padding:0;border:0;background:transparent;color:inherit;font:inherit;text-decoration:none;cursor:pointer}.cc-erp-root .cc-masked-phone:hover,.cc-erp-root .cc-masked-phone:focus-visible{color:#17663d;text-decoration:underline}.cc-erp-root .cc-masked-phone small{font-size:.8em;font-weight:700}
 @media(max-width:900px){.cc-dashboard-vue .cc-sales-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.cc-erp-root #cc-quick-range.cc-rangebar{flex-wrap:wrap!important;overflow:visible!important}.cc-erp-root #cc-quick-range.cc-rangebar>label{flex-direction:column!important;align-items:flex-start!important}}
 
@@ -253,13 +254,14 @@
 .cc-dashboard-vue button:disabled{cursor:not-allowed;opacity:.55}
 .cc-dashboard-vue .main,.cc-dashboard-vue .page-section,.cc-dashboard-vue .card,.cc-dashboard-vue .cc-card,.cc-dashboard-vue .tl-inner-section{min-width:0;max-width:100%;box-sizing:border-box}
 .cc-dashboard-vue .tbl-wrap{max-width:100%;overflow-x:auto}
-.cc-dashboard-vue .cc-queue-filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap;max-width:100%}
-.cc-dashboard-vue .cc-queue-filters input,.cc-dashboard-vue .cc-queue-filters select{min-width:0;max-width:100%}
+.cc-dashboard-vue .cc-queue-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:center;max-width:100%}
+.cc-dashboard-vue .cc-queue-filters input,.cc-dashboard-vue .cc-queue-filters select{width:100%;min-width:0;max-width:100%;box-sizing:border-box}.cc-dashboard-vue .cc-queue-filters button{justify-self:start}
+.cc-dashboard-vue #cc-quick-range .cc-qr-btn.active{background:#17663d!important;color:#fff!important;border-color:#17663d!important;box-shadow:0 2px 7px #17663d45}
 .cc-dashboard-vue .cc-sales-report header,.cc-dashboard-vue .cc-card>header{min-width:0;flex-wrap:wrap;gap:8px}
 .cc-dashboard-vue #wf-panel header{min-width:0;overflow-wrap:anywhere}
 .cc-dashboard-vue .ff-progress-wrap{max-width:100%;overflow:hidden}
 .cc-dashboard-vue .ff-prog-steps{max-width:100%;overflow-x:auto}
-@media(max-width:700px){.cc-dashboard-vue .cc-queue-filters>*{flex:1 1 140px}}
+@media(max-width:700px){.cc-dashboard-vue .cc-queue-filters{grid-template-columns:1fr}.cc-dashboard-vue .cc-queue-filters>*{min-width:0}}
 .cc-dashboard-vue .cc-history-dialog{width:min(720px,92vw);max-height:min(82vh,760px);overflow:auto;padding:18px;border:1px solid #d9e4db;border-radius:12px;box-shadow:0 20px 70px #102c2233}
 .cc-dashboard-vue .cc-history-dialog::backdrop{background:#102c2266;backdrop-filter:blur(2px)}
 .cc-dashboard-vue .cc-history-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid #e1e9e3;margin-bottom:12px}

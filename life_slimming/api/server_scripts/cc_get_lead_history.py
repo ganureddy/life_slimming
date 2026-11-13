@@ -51,4 +51,58 @@ def run(**kwargs):
         order_by="creation asc",
         limit_page_length=200
     )
-    frappe.response["message"] = rows
+    # A failed call against an already-booked lead deliberately does not change
+    # the appointment state.  It is instead written to the append-only activity
+    # log, so include that log here as part of the customer-facing history.
+    # Otherwise the dialog only shows the next-follow-up field Version and hides
+    # the actual call outcome (for example, "No Response").
+    activities = frappe.get_all(
+        "CC Lead Activity Log",
+        filters={"lead": lead},
+        fields=["event_time", "erp_user", "action", "new_status", "next_followup", "change_json"],
+        order_by="event_time asc",
+        limit_page_length=200,
+    )
+    track = frappe.db.get_value(
+        "LIFE CC Lead Track", lead,
+        ["last_call_result", "last_call_at", "modified_by"],
+        as_dict=True,
+    ) or {}
+    last_call_at = str(track.get("last_call_at") or "")
+    latest_call_added = False
+    activity_rows = []
+    for activity in activities:
+        event_time = str(activity.get("event_time") or "")
+        is_latest_call = (
+            activity.get("action") == "call"
+            and last_call_at
+            and event_time[:19] == last_call_at[:19]
+        )
+        if is_latest_call:
+            latest_call_added = True
+        activity_rows.append({
+            "creation": event_time,
+            "owner": activity.get("erp_user") or "User",
+            "history_type": "activity",
+            "activity_action": activity.get("action") or "Activity",
+            "call_result": track.get("last_call_result") if is_latest_call else "",
+            "new_status": activity.get("new_status") or "",
+            "next_followup": str(activity.get("next_followup") or ""),
+        })
+
+    # Older records can pre-date the activity log.  The track still has the
+    # latest saved outcome, so expose it once rather than hiding it entirely.
+    if last_call_at and track.get("last_call_result") and not latest_call_added:
+        activity_rows.append({
+            "creation": last_call_at,
+            "owner": track.get("modified_by") or "User",
+            "history_type": "activity",
+            "activity_action": "call",
+            "call_result": track.get("last_call_result"),
+            "new_status": "",
+            "next_followup": "",
+        })
+
+    history = rows + activity_rows
+    history.sort(key=lambda row: str(row.get("creation") or ""))
+    frappe.response["message"] = history

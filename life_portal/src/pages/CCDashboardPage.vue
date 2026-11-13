@@ -13,6 +13,7 @@ import { enquiryDate, mergeEnquiryRows, enquiryLabel, repeatEnquiryRows } from '
 import { ccDashboardGroup } from '../lib/cc-dashboard-groups';
 import { session } from '../lib/session';
 import CCMobileCallPopup from '../components/cc/CCMobileCallPopup.vue';
+import CCMaskedPhone from '../components/cc/CCMaskedPhone.vue';
 import '../styles/cc.css';
 import '../styles/cc-legacy.css';
 import '../styles/cc-runtime.css';
@@ -28,12 +29,26 @@ const validDate=value=>/^\d{4}-\d{2}-\d{2}$/.test(value);
 const from = ref(validDate(routeValue(route.query.from))?routeValue(route.query.from):today), to = ref(validDate(routeValue(route.query.to))?routeValue(route.query.to):today), mode = ref(['created','posting','updated'].includes(routeValue(route.query.mode))?routeValue(route.query.mode):'created'), query = ref('');
 const rows = ref([]), total = ref(0), page = ref(1), more = ref(false), searching = ref(false), scoped = ref(false);
 const queueOwner=ref('');
+const activeQuickRange=ref('today');
 const tlCollapsed=ref(false);
-const queueFlag=ref(''),journeys=ref({}),journeyError=ref('');
+const queueFlag=ref(''),journeys=ref({}),journeyError=ref(''),journeyLoading=ref(false);
 
 let journeyGeneration=0;
 onBeforeUnmount(()=>journeyGeneration++);
-watch(rows,async values=>{const token=++journeyGeneration;journeys.value={};journeyError.value='';try{for(let i=0;i<values.length;i+=500){const result=await ccCore('summary',{leads:JSON.stringify(values.slice(i,i+500).map(r=>r.name))});if(token!==journeyGeneration)return;journeys.value={...journeys.value,...result.leads};}}catch(e){if(token===journeyGeneration)journeyError.value=e.message;}});
+async function loadJourneys(values){
+  const token=++journeyGeneration;
+  journeys.value={};journeyError.value='';
+  if(!values.length)return;
+  journeyLoading.value=true;
+  try{
+    for(let i=0;i<values.length;i+=500){
+      const result=await ccCore('summary',{leads:JSON.stringify(values.slice(i,i+500).map(row=>row.name))});
+      if(token!==journeyGeneration)return;
+      journeys.value={...journeys.value,...result.leads};
+    }
+  }catch(e){if(token===journeyGeneration)journeyError.value=e.message;}
+  finally{if(token===journeyGeneration)journeyLoading.value=false;}
+}
 
 
 const matrixFilter=ref(null);
@@ -41,7 +56,7 @@ const queueStatus=ref(''), queueCategory=ref(''), queueSubStatus=ref(''), queueS
 const incomplete=ref(false);
 const createdIds=ref(new Set()), appointmentCohort=ref([]);
 const contactManager = ref(false);
-const loading = ref(false), error = ref(''), applied = ref('');
+const loading = ref(false), rangeLoading = ref(false), error = ref(''), applied = ref('');
 const tlConfig=ref(null),tlConfigBusy=ref(false),tlConfigError=ref(''),tlPreviewSource=ref(''),tlPreview=ref(null),tlPreviewBusy=ref(false),tlPreviewError=ref('');
 const salesData=ref(null),salesBusy=ref(false),salesError=ref(''),salesSearch=ref(''),salesLoadedRange=ref('');let salesRequest=0;
 const summaryLead=ref(null);
@@ -55,6 +70,10 @@ const matchNotice=ref('');
 const createDuplicate=ref(null),createSources=ref([]),createBranches=ref([]),createCategories=ref([]),createMastersLoading=ref(false);
 const followup = ref({stage:'', sub_status:'', status:'', next_followup:'', conclusion:'', remarks:''});
 const savingFollowup = ref(false), actionError = ref(''), actionNotice = ref('');
+const saveToast = ref(null); let saveToastTimer;
+function showSaveToast(message, type='success') { saveToast.value={message,type}; clearTimeout(saveToastTimer); saveToastTimer=setTimeout(()=>{saveToast.value=null;},7000); }
+function dismissSaveToast() { saveToast.value=null; clearTimeout(saveToastTimer); }
+onBeforeUnmount(()=>clearTimeout(saveToastTimer));
 const viewNames=['create','testing','dashboard','queue','followup','worksheet','tl','reports','assign','duplicates','scripts','faq','treatments','objections','branches','doctors','distribution'];
 const initialView=ccViewOfRoute(route);
 const selectedView = ref(viewNames.includes(initialView)?initialView:'dashboard');
@@ -109,7 +128,13 @@ function closeTileOnBackdrop(event){if(event.target!==tileDialog.value)return;co
 const filteredTileRows=computed(()=>tileRows.value.filter(row=>!tileOwner.value||row.lead_owner===tileOwner.value));
 const tileOwners=computed(()=>{const owners=new Map();for(const row of tileRows.value)if(row.lead_owner)owners.set(row.lead_owner,{id:row.lead_owner,name:row.lead_owner_name||row.lead_owner});return [...owners.values()].sort((a,b)=>a.name.localeCompare(b.name))});
 function tileStage(row){return row.custom_cc_chat_returned?'New Lead to the Same Agent':(row.custom_cc_stage||row.status||'—')}
-function tileAppointmentStatus(row){return String(row.custom_appointment_status||'Not Booked').replace(/_/g,' ').toUpperCase()}
+function tileAppointmentStatus(row){
+  const status=String(row.custom_appointment_status||'').trim().toLowerCase().replace(/[ _-]+/g,' ');
+  if(['booked','appointment booked','scheduled','appointment scheduled','confirmed','awaiting visit'].includes(status)) return 'APPOINTMENT BOOKED';
+  if(['visited booked','visited and booked'].includes(status)) return 'APPOINTMENT BOOKED · VISITED';
+  if(['visited not booked','visited and not booked','not booked'].includes(status)) return 'APPOINTMENT NOT BOOKED';
+  return status ? String(row.custom_appointment_status).replace(/_/g,' ').toUpperCase() : 'APPOINTMENT NOT BOOKED';
+}
 function tileDate(value,withTime=false){
   if(!value)return '';
   const parsed=new Date(String(value).replace(' ','T'));
@@ -305,7 +330,7 @@ const columns = [
   { key: 'mobile_no', label: 'Phone', value: r => maskPhone(r.mobile_no) },
   { key: 'branch', label: 'Branch', value: r => r.branch || r.lead_assign_to_branch },
   { key: 'lead_owner', label: 'Agent' }, { key: 'custom_cc_sub_status', label: 'Status', value: r => r.custom_cc_sub_status || r.status },
-  { key: 'custom_appointment_status', label: 'Appointment Status' },
+  { key: 'custom_appointment_status', label: 'Appointment Status', value: tileAppointmentStatus },
   { key: 'custom_appointment_date_and_time', label: 'Appointment' }, { key: 'custom_next_followup_date', label: 'Next follow-up' },
 ];
 const queuePageRows=computed(()=>searching.value?visibleLeads.value:visibleLeads.value.slice((page.value-1)*10,page.value*10));
@@ -319,7 +344,7 @@ watch(salesClientSearch,()=>salesClientPage.value=1);
 let filters = {from_date:from.value,to_date:to.value,date_mode:mode.value};
 let loadedLeadKey='', activeLeadKey='', leadLoadedAt=0;
 function leadDataKey(){return JSON.stringify([filters,searching.value?page.value:0,selectedView.value==='assign'?'assign':'shared']);}
-function apply() {
+async function apply() {
   error.value = '';
   if (query.value.trim() && query.value.trim().length < 2) { error.value = 'Enter at least two characters to search.'; return; }
   if (!query.value.trim() && (!from.value || !to.value || from.value > to.value)) { error.value = 'Choose a valid date range.'; return; }
@@ -327,11 +352,16 @@ function apply() {
   searching.value = !!filters.query;
   applied.value = filters.query ? 'Search across permitted history: ' + filters.query : `${from.value} → ${to.value} · ${mode.value}`;
   matrixFilter.value=null;
-  if(selectedView.value==='duplicates'){
-    generation++;controller?.abort();rows.value=[];loading.value=false;loadDuplicateLeads();return;
-  }
-  if(['dashboard','queue','followup','tl','reports','assign'].includes(selectedView.value)&&(selectedView.value!=='followup'||searching.value))load(1);
-  if(selectedView.value==='reports'&&!salesBusy.value)loadSales();
+  rangeLoading.value=true;
+  try {
+    if(selectedView.value==='duplicates'){
+      generation++;controller?.abort();rows.value=[];loading.value=false;await loadDuplicateLeads();return;
+    }
+    const requests=[];
+    if(['dashboard','queue','followup','tl','reports','assign'].includes(selectedView.value)&&(selectedView.value!=='followup'||searching.value))requests.push(load(1));
+    if(selectedView.value==='reports'&&!salesBusy.value)requests.push(loadSales());
+    await Promise.all(requests);
+  } finally { rangeLoading.value=false; }
 }
 async function load(nextPage,{preserveRows=false,preserveSelection=false}={}) {
   const token = ++generation; controller?.abort(); controller = new AbortController();
@@ -386,6 +416,9 @@ async function load(nextPage,{preserveRows=false,preserveSelection=false}={}) {
     if(searching.value){createdIds.value=new Set((data.rows||[]).map(row=>row.name));appointmentCohort.value=(data.rows||[]).filter(row=>row.custom_appointment_date_and_time)}
     rows.value = data.rows || []; total.value = searching.value?createdIds.value.size:(data.total??createdIds.value.size); more.value = !!data.more; scoped.value = !!data.scoped_to_owner; contactManager.value=!!data.contact_manager;
     loadedLeadKey=requestKey;leadLoadedAt=Date.now();
+    // Journey summaries drive the dashboard recovery cards and queue chips.
+    // Do not call this extra API on reports, assignment, TL, or follow-up pages.
+    if(['dashboard','queue'].includes(selectedView.value))await loadJourneys(rows.value);
   } catch (e) { if (token === generation && e.name !== 'AbortError') error.value = e.message; }
   finally { if (token === generation) loading.value = false; }
 }
@@ -395,6 +428,11 @@ function refreshCurrentView(){
   if(!['dashboard','queue','followup','tl','reports','assign'].includes(selectedView.value))return;
   load(page.value,{preserveRows:true,preserveSelection:true});
   if(selectedView.value==='reports'&&!salesBusy.value)loadSales(true);
+}
+async function refreshDashboardMetrics(){
+  // Keep dashboard card counts current while the agent remains on the lead form.
+  // Preserving the rows avoids a visible empty state behind the follow-up page.
+  await load(page.value,{preserveRows:true,preserveSelection:true});
 }
 
 async function openDetail(row) {
@@ -512,7 +550,11 @@ async function saveFollowup(payload) {
     if(payload.result==='Not Connected'&&['No Response','Not Response','Not Reachable','Switch OFF','TNA','Call Disconnected','Appointment no response','Busy','Not Lifted'].includes(payload.reason||outcome)) {
       const result=await ccCore('attempt',{lead:detail.value.name,reason:payload.reason||outcome,expected_modified:detail.value.modified,remarks:values.custom_remarks});
       actionNotice.value=`Call attempt saved · ${result.streak} in a row · retry ${result.next_followup}${result.tl_review?' · TL review required':''}`;
-      stopCall();detailGeneration++;detailController?.abort();detail.value=null;selectedView.value='dashboard';await load(1);return;
+      showSaveToast(actionNotice.value);
+      stopCall();
+      await openDetail({name:detail.value.name});
+      await refreshDashboardMetrics();
+      return;
     }
     if(actionType.value==='pipeline') { values.custom_pipeline_date_and_time=followup.value.next_followup; values.custom_cc_stage='PIPELINE'; }
     const saveArgs={lead:detail.value.name,values:JSON.stringify(values),expected_modified:detail.value.modified,attempt:JSON.stringify({result:payload.result,reason:payload.reason,expected_modified:detail.value.modified})};
@@ -528,14 +570,16 @@ async function saveFollowup(payload) {
       if(followupPayload?.ok===0||followupPayload?.success===false)throw new Error(followupPayload.error||'Call outcome was not recorded.');
     }
     actionNotice.value=actionType.value==='book'?'Lead saved. Choose the appointment slot next.':'Lead update and call outcome saved.';
+    showSaveToast(actionNotice.value);
     const id=detail.value.name;
     if(actionType.value==='book') {
       await router.push({name:'cc-appointments',query:{lead:id,branch:appointmentBranch}});
     } else {
-      stopCall();detailGeneration++;detailController?.abort();detail.value=null;selectedView.value='dashboard';
-      load(1);
+      stopCall();
+      await openDetail({name:id});
+      await refreshDashboardMetrics();
     }
-  } catch(e) { if(e.message)actionError.value=e.message; }
+  } catch(e) { if(e.message)actionError.value=e.message; if(actionError.value)showSaveToast(actionError.value,'error'); }
   finally { savingFollowup.value=false; }
 }
 function quickRange(period){
@@ -547,12 +591,12 @@ function quickRange(period){
    const [start]=dateRange('month',today),date=new Date(start+'T12:00:00Z');date.setUTCDate(date.getUTCDate()-1);range=dateRange('month',date.toISOString().slice(0,10));
  }else if(period==='nextmonth')range=dateRange('nextmonth',today);
  else range=[today,today];
- [from.value,to.value]=range;query.value='';apply();
+ activeQuickRange.value=period;[from.value,to.value]=range;query.value='';apply();
 }
 function clearRange(){
   // The legacy Clear action removes date filtering; this API requires a bounded
   // range, so reset to the dashboard's default day and clear all draft filters.
-  query.value='';queueSearch.value='';queueOwner.value='';queueStatus.value='';queueSubStatus.value='';queueCategory.value='';
+  activeQuickRange.value='';query.value='';queueSearch.value='';queueOwner.value='';queueStatus.value='';queueSubStatus.value='';queueCategory.value='';
   [from.value,to.value]=dateRange('today');apply();
 }
 async function findConvoxLead(event){
@@ -570,6 +614,7 @@ async function findConvoxLead(event){
     const result=await convoxApi.findLeads(mobile,controller.signal);
     if(token!==generation)return;
     rows.value=result.rows||[];total.value=rows.value.length;page.value=1;more.value=false;
+    if(['dashboard','queue'].includes(selectedView.value))await loadJourneys(rows.value);
     createdIds.value=new Set(rows.value.map(row=>row.name));
     if(result.truncated)error.value='More than 100 leads match this number. Narrow the search in CRM.';
     if(rows.value.length===1)await openDetail(rows.value[0]);
@@ -608,10 +653,12 @@ provide(ccDashboardKey, reactive({
 </script>
 <template>
 <section class="cc-erp-root cc-dashboard-vue" :class="{'cc-native':selectedView!=='followup','cc-native-shell':selectedView!=='followup'}">
+  <div v-if="rangeLoading" class="cc-range-loading" role="status" aria-live="polite" aria-label="Loading dashboard data"><div><span aria-hidden="true"></span><strong>Loading dashboard data…</strong><small>Please wait while the selected date range is loaded.</small></div></div>
   <CCMobileCallPopup @open="id => openDetail({name:id})" />
+  <div v-if="saveToast" class="toast-wrap" role="status" aria-live="polite"><div class="toast" :class="saveToast.type==='error'?'toast-red':'toast-green'"><span>{{saveToast.message}}</span><button type="button" class="cc-toast-x" aria-label="Dismiss notification" @click="dismissSaveToast">×</button></div></div>
   <header class="hdr portal-module-toolbar"><div class="hdr-brand"><div class="logo">L</div><div><div class="bn">🎧 LIFE CALL CENTRE</div><div class="bs">CC Command ERP</div></div></div><div class="hdr-center"><div class="search-wrap"><span class="si">🔍</span><input id="global-search" v-model="globalSearch" type="search" placeholder="Search client name, mobile or lead ID…" aria-label="Search all leads" autocomplete="off" @keydown.esc="globalSearch=''" @keydown.enter.prevent="globalMatches.length===1&&chooseGlobal(globalMatches[0])"><div v-if="globalSearch.trim().length>=2" class="search-results show" role="region" aria-label="Lead search results"><div v-if="globalSearchBusy" class="sr-item" role="status">Searching all leads…</div><div v-else-if="globalSearchError" class="sr-item" role="alert">{{globalSearchError}}</div><template v-else><button v-for="item in globalMatches" :key="item.lead.name" class="sr-item search-item" @click="chooseGlobal(item)"><strong>{{item.title}}</strong><span class="sr-cat">{{item.sub}}</span></button><div v-if="!globalMatches.length" class="sr-item">No matching lead found.</div><div v-if="globalSearchMore" class="sr-item">More matches exist. Add part of the name or phone to narrow the results.</div></template></div></div></div><div class="hdr-right"><div class="agent-info"><div class="an">{{session?.full_name||'Agent Name'}}</div><div class="ai">Call Center</div></div><div class="agent-avatar">{{String(session?.full_name||'A').slice(0,1).toUpperCase()}}</div></div></header>
   <div class="body-wrap"><main class="main">
-  <form v-if="['dashboard','queue','tl','reports','duplicates'].includes(selectedView)" id="cc-quick-range" class="cc-rangebar" @submit.prevent="query='';apply()"><strong>📅 Enquiry Date Range</strong><button type="button" class="btn btn-sm cc-qr-btn" @click="quickRange('today')">Today</button><button type="button" class="btn btn-sm cc-qr-btn" @click="quickRange('yesterday')">Yesterday</button><button type="button" class="btn btn-sm cc-qr-btn" @click="quickRange('tomorrow')">Tomorrow</button><button type="button" class="btn btn-sm cc-qr-btn" @click="quickRange('month')">This Month</button><button type="button" class="btn btn-sm cc-qr-btn" @click="quickRange('nextmonth')">Next Month</button><button type="button" class="btn btn-sm cc-qr-btn" @click="quickRange('lastmonth')">Last Month</button><label>From <input v-model="from" type="date"></label><label>To <input v-model="to" type="date"></label><label>Filter <select id="cc-date-mode" v-model="mode"><option value="created">Created</option><option value="posting">Posting</option><option value="updated">Updated</option></select></label><button class="btn btn-g btn-sm cc-qr-btn" data-range="apply">Apply</button><button type="button" class="btn btn-gy btn-sm" @click="clearRange">Clear</button></form>
+  <form v-if="['dashboard','queue','tl','reports','duplicates'].includes(selectedView)" id="cc-quick-range" class="cc-rangebar" @submit.prevent="activeQuickRange='';query='';apply()"><strong>📅 Enquiry Date Range</strong><button type="button" class="btn btn-sm cc-qr-btn" :class="{active:activeQuickRange==='today'}" @click="quickRange('today')">Today</button><button type="button" class="btn btn-sm cc-qr-btn" :class="{active:activeQuickRange==='yesterday'}" @click="quickRange('yesterday')">Yesterday</button><button type="button" class="btn btn-sm cc-qr-btn" :class="{active:activeQuickRange==='tomorrow'}" @click="quickRange('tomorrow')">Tomorrow</button><button type="button" class="btn btn-sm cc-qr-btn" :class="{active:activeQuickRange==='month'}" @click="quickRange('month')">This Month</button><button type="button" class="btn btn-sm cc-qr-btn" :class="{active:activeQuickRange==='nextmonth'}" @click="quickRange('nextmonth')">Next Month</button><button type="button" class="btn btn-sm cc-qr-btn" :class="{active:activeQuickRange==='lastmonth'}" @click="quickRange('lastmonth')">Last Month</button><label>From <input v-model="from" type="date" @change="activeQuickRange=''"/></label><label>To <input v-model="to" type="date" @change="activeQuickRange=''"/></label><label>Filter <select id="cc-date-mode" v-model="mode"><option value="created">Created</option><option value="posting">Posting</option><option value="updated">Updated</option></select></label><button class="btn btn-g btn-sm cc-qr-btn" data-range="apply">Apply</button><button type="button" class="btn btn-gy btn-sm" @click="clearRange">Clear</button></form>
   <div class="page-breadcrumb">Home <span>›</span><span class="cur">{{({create:'Create Lead',testing:'Testing',dashboard:'Dashboard',queue:'My Lead Queue',followup:'Lead Follow-Up Form',tl:'TL Control Panel',reports:'Reports',worksheet:'My Worksheet',assign:'Assign Leads',duplicates:'Duplicate Leads',scripts:'Call Scripts',faq:'FAQ / Knowledge Base',treatments:'Treatment Guide',objections:'Objection Handling',branches:'Branch Directory',doctors:'Doctor Directory',distribution:'Lead Distribution'})[selectedView]||'Dashboard'}}</span><button v-if="['dashboard','queue','followup','tl','reports'].includes(selectedView)" class="btn btn-g btn-sm" @click="openCreate">＋ Create lead</button></div>
 
   <p v-if="error" class="cc-error" role="alert">{{ error }} <button @click="load(page)">Retry</button></p>
@@ -624,7 +671,8 @@ provide(ccDashboardKey, reactive({
     <article v-for="row in filteredTileRows" :key="row.name" class="queue-item cc-tile-lead-card">
       <div class="cc-tile-lead-main">
         <div class="qi-name">{{row.lead_name||row.name}}</div>
-        <div class="qi-sub">{{maskPhone(row.mobile_no)}} | {{row.city||row.branch||row.lead_assign_to_branch||'—'}} | {{tileStage(row)}}</div>
+        <div class="qi-sub"><CCMaskedPhone :number="row.mobile_no" /> | {{row.city||row.branch||row.lead_assign_to_branch||'—'}} | {{tileStage(row)}}</div>
+        <div v-if="row.custom_appointment_date_and_time" class="qi-sub cc-tile-appointment">📅 Appointment: {{tileDate(row.custom_appointment_date_and_time)}} · {{String(row.custom_appointment_date_and_time).slice(11,16)}}</div>
         <div class="qi-sub">👤 {{row.lead_owner_name||row.lead_owner||'Unassigned'}}</div>
         <div v-if="enquiryLabel(row)" class="qi-sub cc-tile-enquiry"><strong>{{enquiryLabel(row)}}</strong> · Enquiry: {{enquiryDate(row)}} · Original ID: {{row.name}}</div>
         <div class="qi-tags"><span class="pill p-green">{{tileAppointmentStatus(row)}}</span><span v-if="row.custom_next_followup_date" class="pill p-gold">📅 FU: {{tileDate(row.custom_next_followup_date)}}</span></div>
@@ -642,3 +690,6 @@ provide(ccDashboardKey, reactive({
 
 </section>
 </template>
+<style>
+.cc-range-loading{position:fixed;z-index:1100;inset:0;display:grid;place-items:center;padding:20px;background:#1438299c;backdrop-filter:blur(3px);cursor:wait}.cc-range-loading>div{display:grid;justify-items:center;gap:12px;min-width:280px;padding:28px 34px;border:1px solid #c9dfce;border-radius:16px;background:#fff;color:#185b39;text-align:center;box-shadow:0 20px 60px #001b0d66}.cc-range-loading span{width:42px;height:42px;border:5px solid #cbe3d1;border-top-color:#087647;border-radius:50%;animation:cc-range-spin .7s linear infinite}.cc-range-loading strong{font-size:17px}.cc-range-loading small{color:#667a6d}@keyframes cc-range-spin{to{transform:rotate(360deg)}}
+</style>

@@ -413,6 +413,11 @@ def run(**kwargs):
     selected_substatus = values.get("custom_cc_sub_status")
     if selected_substatus in SUBSTATUS_STATE:
         values["status"], values["custom_cc_stage"] = SUBSTATUS_STATE[selected_substatus]
+    # The presentation label is title-cased, but the existing Lead Select
+    # option is stored as "Not interested".  Save the field's canonical value
+    # so Frappe's Select validation does not reject a valid CC disposition.
+    if selected_substatus == "Not Interested":
+        values["custom_cc_sub_status"] = "Not interested"
 
     # ------------------------------------------------------------
     # LINK FIELD VALIDATION
@@ -545,6 +550,20 @@ def run(**kwargs):
             continue
 
         clean[fieldname] = fieldvalue
+
+    # Old appointment bookings wrote their duration to a Lead Select field.
+    # The Appointment document already stores the authoritative duration, but
+    # some sites now allow only "30 Minutes" in the legacy Lead field.  Clear
+    # a legacy invalid value before saving so a call-result update is not
+    # blocked by an unrelated appointment-duration validation error.
+    duration_field = frappe.get_meta("Lead").get_field("custom_appointment_duration")
+    allowed_durations = {
+        value.strip() for value in str(duration_field.options or "").splitlines()
+        if value.strip()
+    } if duration_field else set()
+    current_duration = frappe.db.get_value("Lead", lead, "custom_appointment_duration") or ""
+    if allowed_durations and current_duration and current_duration not in allowed_durations:
+        clean["custom_appointment_duration"] = ""
 
 
     # ------------------------------------------------------------

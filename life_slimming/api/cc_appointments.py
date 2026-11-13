@@ -292,6 +292,10 @@ def calendar(branch, date, resource='', duration=45, appointment=None):
         events = []
         for r in busy:
             allowed = is_manager() or r.get('lead_owner') == frappe.session.user
+            # Other agents' bookings still make their time unavailable, but
+            # must not appear in an agent's calendar or agenda.
+            if not allowed:
+                continue
             events.append(dict(editable=bool(allowed and r.get('custom_cc_booking') and r.get('status') == 'Open'), status_editable=bool(allowed and r.get('custom_cc_booking') and r.get('status') == 'Open'), name=r.name if allowed else '', start=str(r.scheduled_time), end=str(r.appointment_time), branch=r.branch,
                 client=r.get('customer_name') if allowed else 'Booked', agent=r.get('lead_owner') if allowed else '', agent_name=user_name(r.get('lead_owner')) if allowed else '', lead=r.get('party') if allowed else ''))
         for event in events:
@@ -303,7 +307,10 @@ def calendar(branch, date, resource='', duration=45, appointment=None):
 
 @frappe.whitelist(methods=['POST'])
 def book(lead, branch, resource, start, duration, request_id):
-    authorize(); lead_access(lead); branch_access(branch)
+    authorize(); lead_doc = lead_access(lead); branch_access(branch)
+    assigned_branch = lead_doc.get('branch') or lead_doc.get('lead_assign_to_branch')
+    if not is_manager() and assigned_branch and branch != assigned_branch:
+        raise frappe.PermissionError('Appointments must be booked at the lead\'s assigned branch: %s.' % assigned_branch)
     if not re.fullmatch('[a-f0-9]{32}', str(request_id or '')): raise frappe.ValidationError('Invalid booking request. Refresh and try again.')
     start, end = interval(start, duration)
     previous = frappe.db.get_value('Appointment', {'custom_cc_request': request_id}, ['name', 'party', 'owner', 'branch', 'custom_cc_resource', 'scheduled_time', 'duration'], as_dict=True)
@@ -322,7 +329,11 @@ def book(lead, branch, resource, start, duration, request_id):
 def sync_lead(doc):
     frappe.db.set_value('Lead', doc.party, {'custom_appointment_date_and_time': doc.scheduled_time,
         'custom_appointment_status': 'Booked', 'lead_assign_to_branch': doc.branch, 'branch': doc.branch,
-        'custom_appointment': doc.name, 'custom_appointment_duration': doc.duration,
+        # Appointment is the source of truth for duration.  The legacy Lead
+        # duration Select has different allowed options on some sites (for
+        # example only "30 Minutes"), so storing "45 Minutes" here makes a
+        # later unrelated Lead update fail validation.
+        'custom_appointment': doc.name, 'custom_appointment_duration': '',
         'status': 'Appointment Booked', 'custom_cc_stage': 'SUCCESS',
         'custom_cc_sub_status': 'Appointment Booked',
         'custom_consulting_doctor': doc.custom_consultation_taken_by})

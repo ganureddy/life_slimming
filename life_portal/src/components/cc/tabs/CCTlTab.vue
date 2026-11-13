@@ -3,6 +3,7 @@ import { computed, inject, toRefs } from 'vue';
 import { ccDashboardKey } from '../../../lib/cc-dashboard-context';
 import { activeCcAgents } from '../../../lib/cc-agents';
 import CCAssignmentControls from '../CCAssignmentControls.vue';
+import CCMaskedPhone from '../CCMaskedPhone.vue';
 const { maskPhone, enquiryDate, enquiryLabel, today, to, mode, rows, total, tlCollapsed, queueStatus, loading, error, tlConfig, tlConfigBusy, tlConfigError, tlPreviewSource, tlPreview, tlPreviewBusy, tlPreviewError, viewLead, openTile, stages, stageCounts, agentRows, tlSearch, tlOwner, tlStatus, tlPage, tlFiltered, tlPages, tlVisible, loadTlConfig, previewTlAssignment, showView, printReport, filters, assignOwners } = toRefs(inject(ccDashboardKey));
 const activeAgents=computed(()=>activeCcAgents(tlConfig.value?.agents||[]));
 </script>

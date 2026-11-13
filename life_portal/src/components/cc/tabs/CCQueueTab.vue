@@ -2,6 +2,7 @@
 import { inject, toRefs } from 'vue';
 import { ccDashboardKey } from '../../../lib/cc-dashboard-context';
 import CCJourneyChips from '../CCJourneyChips.vue';
+import CCMaskedPhone from '../CCMaskedPhone.vue';
 import CCPager from '../CCPager.vue';
 const { journeyFlags, maskPhone, to, rows, total, page, searching, scoped, queueOwner, queueFlag, journeys, journeyError, matrixFilter, queueStatus, queueCategory, queueSubStatus, queueSearch, loading, error, applied, viewLead, callOutcomes, treatmentCategories, queuePageRows, pages, visibleLeads, filters, load, openDetail, assignOwners } = toRefs(inject(ccDashboardKey));
 </script>

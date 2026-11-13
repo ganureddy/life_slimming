@@ -21,7 +21,7 @@ function isSelected(item) {
   return route.name === item.id || (item.id === 'ccvisit' && route.meta.accessModule === 'ccvisit' && !route.meta.standaloneAgent360);
 }
 const props = defineProps({ collapsed: Boolean });
-defineEmits(["toggle", "close", "activity"]);
+defineEmits(["toggle", "close"]);
 const route = useRoute();
 const search = ref("");
 const closed = ref(new Set());
@@ -39,7 +39,7 @@ const ccMenuItems = computed(() => {
   return [...tabs,
     { id: 'cc-invoices', label: 'Invoices / Bills', description: 'View invoices and bills', icon: '▤' },
     { id: 'cc-roster', label: 'CC ROASTER', description: 'CC employee weekly and monthly roster', icon: '▦' },
-    { id: 'cc-appointments', label: 'Create Appointment', description: 'Branch and staff calendar', icon: '▦' },
+    { id: 'cc-appointments', label: 'CC Appointments', description: 'Branch and staff calendar', icon: '▦' },
   ].filter(item=>!['cc-invoices','cc-roster','cc-appointments','cc-live-tv'].includes(item.id)||canAccessTab('leads',({'cc-invoices':'invoices','cc-roster':'roster','cc-appointments':'appointments','cc-live-tv':'live-tv'})[item.id]));
 });
 const groups = computed(() =>
@@ -65,10 +65,6 @@ function toggle(label) {
   <aside
     class="sidebar"
     aria-label="Workspace menu"
-    @pointerdown="$emit('activity')"
-    @keydown="$emit('activity')"
-    @focusin="$emit('activity')"
-    @wheel.passive="$emit('activity')"
   >
     <div class="sidebar-card">
       <div class="sidebar-heading">

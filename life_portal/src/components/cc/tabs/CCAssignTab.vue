@@ -2,6 +2,7 @@
 import { inject, toRefs } from 'vue';
 import { ccDashboardKey } from '../../../lib/cc-dashboard-context';
 import CCPager from '../CCPager.vue';
+import CCMaskedPhone from '../CCMaskedPhone.vue';
 const { maskPhone, enquiryDate, enquiryLabel, to, page, searching, loading, stages, pages, filters, apply, load, assignSearch, assignSelected, assignTo, assignBusy, assignError, autoTransferStatus, assignRows, assignRecipients, assignAutoRows, toggleAssignLead, selectAllAssign, applyManualAssignment, runAutoTransfer } = toRefs(inject(ccDashboardKey));
 </script>
 
