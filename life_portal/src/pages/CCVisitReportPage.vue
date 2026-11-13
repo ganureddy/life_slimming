@@ -141,7 +141,7 @@ provide(agentReportKey, { ownerNames, refreshKey, agentScope, printReport, activ
 </script>
 <template>
 <section class="cc-native cc-native-shell cc-report-native cc-visit-v26" :style="{'--report-text-size':textSize+'px'}">
-  <header class="cc-workspace-head"><div class="cc-brand"><span class="cc-brand-mark">L</span><div><h1>📊 LIFE BRANCH VISIT REPORT</h1><small>Branch appointments · visits · agent performance</small></div></div><div class="cc-report-header-actions"><button @click="shareNotice='';shareDialog.showModal()" :disabled="!applied||truncated">Share preview</button><button @click="printReport">Print</button><button @click="openToday">Today’s appointments</button></div><RouterLink class="cc-report-back" :to="{name:'leads-native'}">← Back to Dashboard</RouterLink></header>
+  <header class="cc-workspace-head"><div class="cc-brand"><span class="cc-brand-mark">L</span><div><h1>📊 CC BRANCH VISIT REPORT</h1><small>Branch appointments · visits · agent performance</small></div></div><div class="cc-report-header-actions"><button @click="shareNotice='';shareDialog.showModal()" :disabled="!applied||truncated">Share preview</button><button @click="printReport">Print</button><button @click="openToday">Today’s appointments</button></div><RouterLink class="cc-report-back" :to="{name:'leads-native'}">← Back to Dashboard</RouterLink></header>
   <div class="cc-app-layout"><main class="cc-main">
 
   <nav class="cc-report-tabs" aria-label="CC reports"><RouterLink v-for="tab in reportTabs.filter(tab=>canAccessTab('ccvisit',tab.key))" :key="tab.key" :class="{active:reportTab===tab.key}" :to="reportRoute(tab.key,route.query)">{{tab.label}}</RouterLink></nav>

@@ -1,5 +1,5 @@
 export const reportTabs = [
- {key:'visits',path:'',name:'ccvisit',label:'📊 CC — BRANCH VISITS REPORT'},
+ {key:'visits',path:'',name:'ccvisit',label:'📊 CC BRANCH VISIT REPORT'},
  {key:'agents',path:'agents',name:'ccvisit-agents',label:'🎧 AGENT REPORT'},
  {key:'marketing',path:'marketing',name:'ccvisit-marketing',label:'📣 LEAD & DIGITAL MARKETING REPORT'},
  {key:'consultants',path:'consultants',name:'ccvisit-consultants',label:'👥 CONSULTANT / MANAGER REPORT'},

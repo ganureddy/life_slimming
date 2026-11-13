@@ -57,3 +57,11 @@ test('unrelated sub-statuses cannot fall back into a requested dashboard group',
   assert.equal(classify({custom_cc_sub_status: '', status: 'Call Back'}), 'followup');
   assert.equal(classify({custom_cc_sub_status: 'Lead', status: 'Not Response'}), 'norespnotreach');
 });
+test('dashboard drill-down cards retain sub-status and follow-up context without a second data request', () => {
+  const page = fs.readFileSync(path.join(root, 'life_portal/src/pages/CCDashboardPage.vue'), 'utf8');
+  for (const value of ['custom_cc_sub_status', 'tileNextAction(row)', 'tileAppointmentStatus(row)', 'FU:', 'cc-tile-lead-card']) {
+    assert.ok(page.includes(value), value);
+  }
+  const tileSection = page.slice(page.indexOf('function openTile'), page.indexOf('const knowledgeTab'));
+  assert.equal(tileSection.includes('ccCall('), false, 'opening an already-loaded tile must not request leads again');
+});

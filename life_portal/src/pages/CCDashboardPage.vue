@@ -107,6 +107,27 @@ const tileDialog=ref(null),tileTitle=ref(''),tileRows=ref([]),tileOwner=ref('');
 function closeTileOnBackdrop(event){if(event.target!==tileDialog.value)return;const rect=tileDialog.value.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)tileDialog.value.close();}
 const filteredTileRows=computed(()=>tileRows.value.filter(row=>!tileOwner.value||row.lead_owner===tileOwner.value));
 const tileOwners=computed(()=>{const owners=new Map();for(const row of tileRows.value)if(row.lead_owner)owners.set(row.lead_owner,{id:row.lead_owner,name:row.lead_owner_name||row.lead_owner});return [...owners.values()].sort((a,b)=>a.name.localeCompare(b.name))});
+function tileStage(row){return row.custom_cc_chat_returned?'New Lead to the Same Agent':(row.custom_cc_stage||row.status||'—')}
+function tileAppointmentStatus(row){return String(row.custom_appointment_status||'Not Booked').replace(/_/g,' ').toUpperCase()}
+function tileDate(value,withTime=false){
+  if(!value)return '';
+  const parsed=new Date(String(value).replace(' ','T'));
+  if(Number.isNaN(parsed.getTime()))return String(value);
+  const date=new Intl.DateTimeFormat('en-IN',{day:'2-digit',month:'short',year:'numeric'}).format(parsed);
+  if(!withTime)return date;
+  return `${date} ${new Intl.DateTimeFormat('en-IN',{hour:'numeric',minute:'2-digit',hour12:true}).format(parsed)}`;
+}
+function tileNextAction(row){
+  const outcome=String(row.custom_cc_sub_status||'').trim();
+  const labels={
+    'Callback: Scheduled':'Call back','Get Back':'Call back later','Price Negotiation':'Price follow-up',
+    'Very Positive':'Book appointment','Call & Confirm':'Confirm appointment','Walked In: Not Booked':'Convert follow-up',
+    'Out Station':'Call back later','No Response':'Retry call','Not Reachable':'Retry call','Switch OFF':'Retry call',
+    'Appointment no response':'Confirm appointment'
+  };
+  const action=row.custom_next_action||row.next_action||labels[outcome]||'';
+  return action?(row.custom_next_followup_date?`${action} ${tileDate(row.custom_next_followup_date,true)}`:action):'';
+}
 function openTile(kind){
   const created=rows.value.filter(row=>createdIds.value.has(row.name));
   const apptToday=row=>String(row.custom_appointment_date_and_time||'').slice(0,10)===todayISO;
@@ -592,7 +613,25 @@ provide(ccDashboardKey, reactive({
   <div class="page-section active" :id="({dashboard:'page-dashboard',queue:'page-my-leads',followup:'page-followup',tl:'page-tl-panel'})[selectedView]||'page-'+selectedView">
   <RouterView v-slot="{ Component }"><KeepAlive :max="17"><component :is="Component" /></KeepAlive></RouterView>
   </div></main></div>
-  <dialog ref="tileDialog" @click="closeTileOnBackdrop($event)" class="modal-box cc-summary-modal" aria-labelledby="cc-tile-title"><h2 id="cc-tile-title" class="modal-title">{{tileTitle}} ({{filteredTileRows.length}})</h2><div class="cc-queue-filters"><label>Agent <select v-model="tileOwner" aria-label="Filter card leads by agent"><option value="">All Agents</option><option v-for="owner in tileOwners" :key="owner.id" :value="owner.id">{{owner.name}}</option></select></label></div><article v-for="row in filteredTileRows" :key="row.name" class="queue-item"><div><div class="qi-name">{{row.lead_name||row.name}}</div><div class="qi-sub">{{maskPhone(row.mobile_no)}} | {{row.city||'—'}} | {{row.custom_cc_chat_returned?'New Lead to the Same Agent':(row.custom_cc_stage||row.status)}}</div><div class="qi-sub">👤 {{row.lead_owner_name||row.lead_owner||'Unassigned'}}</div><div v-if="enquiryLabel(row)" class="qi-sub"><strong>{{enquiryLabel(row)}}</strong> · Enquiry: {{enquiryDate(row)}} · Original ID: {{row.name}}</div><div class="qi-tags"><span class="pill p-green">{{row.custom_appointment_status||'Pending'}}</span><span v-if="row.custom_next_followup_date" class="pill p-gold">📅 {{row.custom_next_followup_date}}</span></div></div><button class="btn btn-n btn-sm" @click="tileDialog.close();openDetail(row)">Open</button></article><p v-if="!filteredTileRows.length" class="cc-empty-state">No leads in this category.</p><div class="btn-row"><button class="btn btn-gy btn-sm" @click="tileDialog.close()">Close</button></div></dialog>
+  <dialog ref="tileDialog" @click="closeTileOnBackdrop($event)" class="modal-box cc-summary-modal cc-tile-modal" aria-labelledby="cc-tile-title">
+    <h2 id="cc-tile-title" class="modal-title">{{tileTitle}} ({{filteredTileRows.length}})</h2>
+    <div v-if="tileOwners.length" class="cc-queue-filters cc-tile-agent-filter"><label>Agent <select v-model="tileOwner" aria-label="Filter card leads by agent"><option value="">All Agents</option><option v-for="owner in tileOwners" :key="owner.id" :value="owner.id">{{owner.name}}</option></select></label></div>
+    <article v-for="row in filteredTileRows" :key="row.name" class="queue-item cc-tile-lead-card">
+      <div class="cc-tile-lead-main">
+        <div class="qi-name">{{row.lead_name||row.name}}</div>
+        <div class="qi-sub">{{maskPhone(row.mobile_no)}} | {{row.city||row.branch||row.lead_assign_to_branch||'—'}} | {{tileStage(row)}}</div>
+        <div class="qi-sub">👤 {{row.lead_owner_name||row.lead_owner||'Unassigned'}}</div>
+        <div v-if="enquiryLabel(row)" class="qi-sub cc-tile-enquiry"><strong>{{enquiryLabel(row)}}</strong> · Enquiry: {{enquiryDate(row)}} · Original ID: {{row.name}}</div>
+        <div class="qi-tags"><span class="pill p-green">{{tileAppointmentStatus(row)}}</span><span v-if="row.custom_next_followup_date" class="pill p-gold">📅 FU: {{tileDate(row.custom_next_followup_date)}}</span></div>
+      </div>
+      <div class="cc-tile-lead-actions">
+        <div class="cc-tile-statuses"><span v-if="row.custom_cc_sub_status" class="pill p-purple">💬 {{row.custom_cc_sub_status}}</span><span v-if="tileNextAction(row)" class="pill p-action">↪ {{tileNextAction(row)}}</span></div>
+        <button class="btn btn-n btn-sm" @click="tileDialog.close();openDetail(row)">Open</button>
+      </div>
+    </article>
+    <p v-if="!filteredTileRows.length" class="cc-empty-state">No leads in this category.</p>
+    <div class="btn-row"><button class="btn btn-gy btn-sm" @click="tileDialog.close()">Close</button></div>
+  </dialog>
   <dialog ref="dialog" class="modal-box cc-summary-modal"><template v-if="summaryLead"><h2 class="modal-title">Lead Summary — {{summaryLead.lead_name||summaryLead.name}}</h2><div class="form-section">👤 Lead Owner: {{summaryLead.lead_owner||'Unassigned'}} · 🆔 {{summaryLead.name}}</div><div class="form-grid"><div v-for="[label,value] in [['ID',summaryLead.name],['Name',summaryLead.lead_name],['Phone',maskPhone(summaryLead.mobile_no)],['Age / Gender',(summaryLead.age||'—')+' / '+(summaryLead.gender||'—')],['Area',summaryLead.city],['Branch',summaryLead.branch||summaryLead.lead_assign_to_branch],['Source',summaryLead.source],['Assigned To',summaryLead.lead_owner],['Status',summaryLead.custom_cc_stage],['Sub-status',summaryLead.custom_cc_chat_returned?'New Lead to the Same Agent':summaryLead.custom_cc_sub_status],['Categories',summaryLead.custom_treatment_interests],['Calls Made',summaryLead.custom_call_count||0],['Next Follow-up',summaryLead.custom_next_followup_date],['Portal Status',summaryLead.status],['Posting Date',summaryLead.custom_posting_date],['Enquiry Date',enquiryDate(summaryLead)],['Original Created On',summaryLead.creation],['Last Updated',summaryLead.modified],['Conclusion',summaryLead.custom_conclusion_remark],['Remarks',String(summaryLead.custom_remarks||'').replace(/\[CC_PROFILE_V1\][\s\S]*?\[\/CC_PROFILE_V1\]/g,'').trim()]]" :key="label"><strong>{{label}}:</strong> {{value||'—'}}</div></div><div class="btn-row"><button v-if="['Junk/Wrong Call','Not Enquired'].includes(summaryLead.custom_cc_sub_status)" class="btn btn-gy btn-sm" @click="recoverJunk(summaryLead)">Unlock junk lead</button><button class="btn btn-n btn-sm" @click="dialog.close();openDetail(summaryLead)">📞 Open Follow-Up Form</button><button class="btn btn-gy btn-sm" @click="dialog.close();openLeadHistory(summaryLead)">🕘 Lead History</button><button class="btn btn-gy btn-sm" @click="dialog.close();openConvoxHistory(summaryLead.name)">🎧 ConVox history</button><RouterLink class="btn btn-gy btn-sm" :to="{name:'cc-appointments',query:{lead:summaryLead.name}}" @click="dialog.close()">📅 Create Appointment</RouterLink><button class="btn btn-gy btn-sm" @click="dialog.close()">Close</button></div></template></dialog>
   <dialog ref="leadHistoryDialog" class="modal-box cc-summary-modal"><h2 class="modal-title">Lead History — {{leadHistoryLead?.lead_name||leadHistoryLead?.name}}</h2><p v-if="leadHistoryBusy" role="status">Loading history…</p><p v-if="leadHistoryError" class="cc-error" role="alert">{{leadHistoryError}}</p><div v-for="(event,index) in leadHistoryRows" :key="index" class="wf-event"><b>{{event.creation||event.time||"Lead change"}} · {{event.owner||event.by||"User"}}</b><template v-for="(change,changeIndex) in leadHistoryChanges(event)" :key="changeIndex"><span><strong>{{leadHistoryLabels[change[0]]||change[0]}}:</strong> {{change[1]||"—"}} → {{change[2]||"—"}}</span></template></div><p v-if="!leadHistoryBusy&&!leadHistoryError&&!leadHistoryRows.length">No tracked changes are available for this lead.</p><div class="btn-row"><button v-if="leadHistoryLead" class="btn btn-gy btn-sm" @click="leadHistoryDialog?.close();openConvoxHistory(leadHistoryLead.name)">🎧 ConVox history</button><button class="btn btn-gy btn-sm" @click="leadHistoryDialog?.close()">Close</button></div></dialog>
 
