@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onErrorCaptured, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onErrorCaptured, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import ConvoxHistoryDialog from "../components/ConvoxHistoryDialog.vue";
 import PortalSidebar from "../components/PortalSidebar.vue";
@@ -12,6 +12,30 @@ const collapsed = ref(false);
 const mobileOpen = ref(false);
 const account = ref(null);
 const pageError = ref("");
+const SIDEBAR_AUTO_CLOSE_MS = 10_000;
+let sidebarCloseTimer;
+
+function clearSidebarCloseTimer() {
+  if (sidebarCloseTimer) window.clearTimeout(sidebarCloseTimer);
+  sidebarCloseTimer = undefined;
+}
+function scheduleSidebarClose() {
+  clearSidebarCloseTimer();
+  // The phone layout is an explicit drawer, so leave its open/close state to
+  // the user rather than hiding it while they are reading the navigation.
+  if (collapsed.value || !window.matchMedia("(min-width: 901px)").matches) return;
+  sidebarCloseTimer = window.setTimeout(() => {
+    collapsed.value = true;
+    sidebarCloseTimer = undefined;
+  }, SIDEBAR_AUTO_CLOSE_MS);
+}
+function toggleSidebar() {
+  collapsed.value = !collapsed.value;
+  scheduleSidebarClose();
+}
+function noteSidebarActivity() {
+  if (!collapsed.value) scheduleSidebarClose();
+}
 function reloadPage() { window.location.reload(); }
 onErrorCaptured((error, _instance, info) => {
   pageError.value = `${error?.message || error || "Unknown page error"} (${info})`;
@@ -22,8 +46,11 @@ watch(
   () => {
     mobileOpen.value = false;
     pageError.value = "";
+    scheduleSidebarClose();
   },
 );
+onMounted(scheduleSidebarClose);
+onBeforeUnmount(clearSidebarCloseTimer);
 </script>
 
 <template>
@@ -81,8 +108,9 @@ watch(
     ></button>
     <PortalSidebar
       :collapsed="collapsed"
-      @toggle="collapsed = !collapsed"
+      @toggle="toggleSidebar"
       @close="mobileOpen = false"
+      @activity="noteSidebarActivity"
     />
     <main id="main-content" class="main-content" tabindex="-1">
       <section v-if="pageError" class="page-render-error" role="alert">

@@ -21,7 +21,7 @@ function isSelected(item) {
   return route.name === item.id || (item.id === 'ccvisit' && route.meta.accessModule === 'ccvisit' && !route.meta.standaloneAgent360);
 }
 const props = defineProps({ collapsed: Boolean });
-defineEmits(["toggle", "close"]);
+defineEmits(["toggle", "close", "activity"]);
 const route = useRoute();
 const search = ref("");
 const closed = ref(new Set());
@@ -62,7 +62,14 @@ function toggle(label) {
 </script>
 
 <template>
-  <aside class="sidebar" aria-label="Workspace menu">
+  <aside
+    class="sidebar"
+    aria-label="Workspace menu"
+    @pointerdown="$emit('activity')"
+    @keydown="$emit('activity')"
+    @focusin="$emit('activity')"
+    @wheel.passive="$emit('activity')"
+  >
     <div class="sidebar-card">
       <div class="sidebar-heading">
         <span>WORKSPACE</span><span class="sidebar-edition">LIFE</span>
