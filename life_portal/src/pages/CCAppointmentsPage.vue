@@ -1,14 +1,15 @@
 <script setup>
 import { maskPhone } from '../lib/cc';
 import { computed, ref, watch, onMounted, onUnmounted, nextTick } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { request } from '../api/http';
 import { session } from '../lib/session';
 import { createRequestId } from '../api/convox';
 import '../styles/cc.css';
 import CCConsultationBooking from '../components/cc/CCConsultationBooking.vue';
+import { goToPreviousPage } from '../lib/navigation';
 const rescheduleDialog=ref(null);
-const route = useRoute();
+const route = useRoute(), router = useRouter();
 const bookingDialog=ref(null), editing=ref(null);
 const statusDialog=ref(null), statusTarget=ref(null), newStatus=ref(''), statusRemarks=ref('');
 const branches=ref([]), staff=ref([]), leads=ref([]), branch=ref(''), date=ref(''), today=ref(''), timezone=ref('');
@@ -43,6 +44,7 @@ function checkinBadge(person) {
 }
 const bookedCount=computed(()=>visible.value.reduce((count,s)=>count+s.events.length,0));
 function closeBooking(){if(!saving.value){bookingDialog.value?.close();selected.value=null;}}
+function goBack(){goToPreviousPage(router,{name:'leads'});}
 watch(selected,value=>{if(!value)bookingDialog.value?.close();});
 async function call(action,args={}) { return (await request('life_slimming.api.cc_appointments.'+action,{args,csrfToken:session.csrf_token})).message; }
 async function init(){try{const d=await call('bootstrap',{selected_lead:lead.value});if(!mounted)return;branches.value=d.branches;leads.value=d.leads;today.value=d.today;date.value=d.today;timezone.value=d.timezone;if(d.appointment){editing.value=d.appointment;branch.value=d.appointment.branch;date.value=d.appointment.start.slice(0,10)<d.today?d.today:d.appointment.start.slice(0,10);duration.value=d.appointment.duration;}else if(d.branches.length)branch.value=d.branches.includes(route.query.branch)?route.query.branch:d.branches[0];}catch(e){error.value=e.message;}}
@@ -91,7 +93,7 @@ onUnmounted(()=>{mounted=false;generation++;searchGeneration++;clearTimeout(time
 <template>
 <CCConsultationBooking ref="rescheduleDialog" @saved="appointmentRescheduled" />
 <section class="cc-scheduler" :aria-busy="loading||saving">
- <header><div><RouterLink :to="{name:'leads'}">← CC Dashboard</RouterLink><h1>CC Appointment Scheduler</h1><p>10:00 AM–8:00 PM · Minimum 45 minutes · {{ timezone }}</p></div><button :disabled="loading||saving" @click="refresh">Refresh calendar</button></header>
+ <header><div><button class="back-link" type="button" @click="goBack">← Back</button><h1>CC Appointment Scheduler</h1><p>10:00 AM–8:00 PM · Minimum 45 minutes · {{ timezone }}</p></div><button :disabled="loading||saving" @click="refresh">Refresh calendar</button></header>
  <p v-if="error" role="alert" class="error">{{ error }}</p><p v-if="success" role="status" class="success">{{ success }}</p>
  <fieldset :disabled="saving" class="filters"><legend>Branch and consultation staff</legend>
   <label>Branch<select v-model="branch"><option disabled value="">Select branch</option><option v-for="b in branches" :key="b">{{ b }}</option></select></label>

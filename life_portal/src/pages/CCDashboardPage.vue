@@ -18,6 +18,7 @@ import '../styles/cc-legacy.css';
 import '../styles/cc-runtime.css';
 import ccReference from '../data/cc-reference.json';
 import { ccRoute, ccViewOfRoute } from '../lib/cc-navigation';
+import { goToPreviousPage } from '../lib/navigation';
 import { ccDashboardKey } from '../lib/cc-dashboard-context';
 const [today] = dateRange('today');
 const router=useRouter();
@@ -413,7 +414,7 @@ async function openDetail(row) {
   } catch (e) { if (token === detailGeneration && e.name !== 'AbortError') detailError.value = e.message; }
   finally { if (token === detailGeneration) detailLoading.value = false; }
 }
-function closeDetail() { stopCall(); detailGeneration++; detailController?.abort(); detail.value=null; showView('queue'); }
+function closeDetail() { stopCall(); detailGeneration++; detailController?.abort(); detail.value=null; goToPreviousPage(router,ccRoute('queue',pageQuery())); }
 function initLeadDraft(row) {
   const dateTime = String(row.custom_next_followup_date||'').replace(' ','T').slice(0,16);
   const interests=String(row.custom_treatment_interests||'').split(';').map(x=>x.trim()).filter(Boolean);

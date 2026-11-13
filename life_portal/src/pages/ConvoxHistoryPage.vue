@@ -1,9 +1,11 @@
 <script setup>
 import { computed, ref, watch, onUnmounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { convoxApi } from '../api/convox';
+import { goToPreviousPage } from '../lib/navigation';
 const props = defineProps({ leadId: { type: String, default: '' }, modal: Boolean });
-const route = useRoute();
+const route = useRoute(), router = useRouter();
+const goBack = () => goToPreviousPage(router, { name: 'leads' });
 const lookup = ref('');
 const selectedLead = computed(() => props.leadId || route.params.leadId || lookup.value.trim());
 const data = ref(null), busy = ref(false), error = ref('');
@@ -47,7 +49,7 @@ onUnmounted(() => controller?.abort());
 <template>
   <section class="call-history" :aria-busy="busy">
     <div class="history-heading">
-      <div><RouterLink v-if="!modal" :to="{ name: 'leads' }">← CC dashboard</RouterLink><h1>{{ selectedLead ? 'ConVox call history' : 'Recent ConVox calls' }}</h1><p v-if="data && selectedLead">{{ data.lead_name }} · {{ data.lead_id }} · {{ data.mobile_number }}</p></div>
+      <div><button v-if="!modal" class="history-back" type="button" @click="goBack">← Back</button><h1>{{ selectedLead ? 'ConVox call history' : 'Recent ConVox calls' }}</h1><p v-if="data && selectedLead">{{ data.lead_name }} · {{ data.lead_id }} · {{ data.mobile_number }}</p></div>
       <button class="history-button" :disabled="busy" @click="load(data?.start || 0)">Refresh</button>
     </div>
     <form v-if="!leadId && !route.params.leadId" class="history-lookup" @submit.prevent="load()">

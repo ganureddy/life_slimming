@@ -19,6 +19,7 @@ import '../styles/cc-agent-legacy.css';
 import '../styles/cc-report-theme.css';
 import { agentReportKey } from '../lib/cc-agent-report-context';
 import { reportTabs, reportRoute } from '../lib/cc-report-navigation';
+import { goToPreviousPage } from '../lib/navigation';
 const route=useRoute(),router=useRouter();
 const validDay=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value);
 const initial = reportRange('today'), from = ref(validDay(route.query.from)?route.query.from:initial[0]), to = ref(validDay(route.query.to)?route.query.to:initial[1]), period = ref(validDay(route.query.from)?'custom':'today');
@@ -53,6 +54,7 @@ const cards = computed(()=>['',...branches.value].map(name=>({name, ...visitMetr
 const financialRows = computed(()=>financial.value?.financial_events || []);
 const reportTab=computed(()=>route.meta.reportTab||'visits');
 function showReport(tab){router.push(reportRoute(tab,route.query));}
+function goBack(){goToPreviousPage(router,{name:'leads-native'});}
 watch(reportTab,tab=>{financialPage.value=1;if(['agents','marketing','consultants'].includes(tab))loadFinancial();});
 const grouping=ref('branch'),summarySort=ref('key'),summaryDescending=ref(false),hidden=ref([]),textSize=ref(12),refreshKey=ref(0),agentSubtab=computed(()=>route.meta.agentSubtab||'performance');
 const drillDialog=ref(null),drillTitle=ref(''),drillRows=ref([]),drillPage=ref(1),shareDialog=ref(null),shareSections=ref(['visits','groups']),shareNotice=ref('');
@@ -141,7 +143,7 @@ provide(agentReportKey, { ownerNames, refreshKey, agentScope, printReport, activ
 </script>
 <template>
 <section class="cc-native cc-native-shell cc-report-native cc-visit-v26" :style="{'--report-text-size':textSize+'px'}">
-  <header class="cc-workspace-head"><div class="cc-brand"><span class="cc-brand-mark">L</span><div><h1>📊 CC BRANCH VISIT REPORT</h1><small>Branch appointments · visits · agent performance</small></div></div><div class="cc-report-header-actions"><button @click="shareNotice='';shareDialog.showModal()" :disabled="!applied||truncated">Share preview</button><button @click="printReport">Print</button><button @click="openToday">Today’s appointments</button></div><RouterLink class="cc-report-back" :to="{name:'leads-native'}">← Back to Dashboard</RouterLink></header>
+  <header class="cc-workspace-head"><div class="cc-brand"><span class="cc-brand-mark">L</span><div><h1>📊 CC BRANCH VISIT REPORT</h1><small>Branch appointments · visits · agent performance</small></div></div><div class="cc-report-header-actions"><button @click="shareNotice='';shareDialog.showModal()" :disabled="!applied||truncated">Share preview</button><button @click="printReport">Print</button><button @click="openToday">Today’s appointments</button></div><button class="cc-report-back" type="button" @click="goBack">← Back</button></header>
   <div class="cc-app-layout"><main class="cc-main">
 
   <nav class="cc-report-tabs" aria-label="CC reports"><RouterLink v-for="tab in reportTabs.filter(tab=>canAccessTab('ccvisit',tab.key))" :key="tab.key" :class="{active:reportTab===tab.key}" :to="reportRoute(tab.key,route.query)">{{tab.label}}</RouterLink></nav>
