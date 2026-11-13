@@ -29,6 +29,33 @@ class TimeRules(unittest.TestCase):
         for value,expected in [('Area Manager','Area Manager'),('Branch Manager','Manager'),('Sr Dietician','Dietitian'),('Doctor','Doctor'),('Receptionist','')]:self.assertEqual(api.role_group(value),expected)
 
 
+class AppointmentStatusRules(unittest.TestCase):
+    def setUp(self):
+        frappe.local.flags = frappe._dict(in_test=True)
+
+    def test_status_workflow_is_forward_only_and_keeps_conversion_locked(self):
+        self.assertEqual(api.allowed_appointment_statuses('Booked'), ('Visited', 'Not Visited'))
+        self.assertEqual(api.allowed_appointment_statuses('Visited'), ('Visited Booked', 'Visited Not Booked'))
+        self.assertEqual(api.allowed_appointment_statuses('Visited Booked'), ())
+
+    def test_status_update_writes_the_linked_lead_document(self):
+        lead = frappe._dict(name='LEAD1', modified='2026-11-13 10:00:00', custom_appointment_status='Booked')
+        lead.save = Mock()
+        with patch.object(api, 'authorize'), patch.object(api, 'lead_access', return_value=lead):
+            result = api.update_status('LEAD1', 'Visited', modified='2026-11-13 10:00:00')
+        self.assertEqual(lead.custom_appointment_status, 'Visited')
+        self.assertEqual(lead.status, 'Appointment Booked')
+        self.assertEqual(lead.custom_cc_stage, 'SUCCESS')
+        lead.save.assert_called_once_with(ignore_permissions=True)
+        self.assertEqual(result['lead'], 'LEAD1')
+
+    def test_negative_status_requires_reason(self):
+        lead = frappe._dict(name='LEAD1', modified='2026-11-13 10:00:00', custom_appointment_status='Booked')
+        with patch.object(api, 'authorize'), patch.object(api, 'lead_access', return_value=lead):
+            with self.assertRaisesRegex(frappe.ValidationError, 'reason'):
+                api.update_status('LEAD1', 'Not Visited')
+
+
 class BookingRules(unittest.TestCase):
     def setUp(self):
         frappe.local.flags=frappe._dict(in_test=True)

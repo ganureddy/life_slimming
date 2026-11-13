@@ -278,7 +278,7 @@ def calendar(branch, date, resource='', duration=45, appointment=None):
     lead_details = {}
     if visible_ids:
         meta = frappe.get_meta('Lead')
-        fields = ['name'] + [f for f in ['mobile_no', 'source', 'custom_appointment_status', 'custom_cc_sub_status', 'custom_next_followup_date', 'custom_remarks', 'enquired_for'] if meta.has_field(f)]
+        fields = ['name'] + [f for f in ['modified', 'mobile_no', 'source', 'custom_appointment_status', 'custom_cc_sub_status', 'custom_next_followup_date', 'custom_remarks', 'enquired_for'] if meta.has_field(f)]
         lead_details = {r.name: r for r in frappe.get_all('Lead', filters={'name': ['in', visible_ids]}, fields=fields, limit_page_length=0)}
     for person in staff:
         busy = [r for r in all_busy if r.get('custom_cc_resource') == person['id'] or (r.get('custom_consultation_taken_by') and r.custom_consultation_taken_by in person.get('practitioners', []))]
@@ -292,7 +292,7 @@ def calendar(branch, date, resource='', duration=45, appointment=None):
         events = []
         for r in busy:
             allowed = is_manager() or r.get('lead_owner') == frappe.session.user
-            events.append(dict(editable=bool(allowed and r.get('custom_cc_booking') and r.get('status') == 'Open'), name=r.name if allowed else '', start=str(r.scheduled_time), end=str(r.appointment_time), branch=r.branch,
+            events.append(dict(editable=bool(allowed and r.get('custom_cc_booking') and r.get('status') == 'Open'), status_editable=bool(allowed and r.get('custom_cc_booking') and r.get('status') == 'Open'), name=r.name if allowed else '', start=str(r.scheduled_time), end=str(r.appointment_time), branch=r.branch,
                 client=r.get('customer_name') if allowed else 'Booked', agent=r.get('lead_owner') if allowed else '', agent_name=user_name(r.get('lead_owner')) if allowed else '', lead=r.get('party') if allowed else ''))
         for event in events:
             details = lead_details.get(event.get('lead'), {})
@@ -326,6 +326,59 @@ def sync_lead(doc):
         'status': 'Appointment Booked', 'custom_cc_stage': 'SUCCESS',
         'custom_cc_sub_status': 'Appointment Booked',
         'custom_consulting_doctor': doc.custom_consultation_taken_by})
+
+
+APPOINTMENT_STATUS_STATES = {
+    'Booked': ('Appointment Booked', 'SUCCESS', 'Appointment Booked'),
+    'Visited': ('Appointment Booked', 'SUCCESS', 'Appointment Booked'),
+    'Visited Booked': ('Converted', 'SUCCESS', 'Walked In & Booked'),
+    'Visited Not Booked': ('Appointment no response', 'FOLLOW-UP', 'Walked In: Not Booked'),
+    'Not Visited': ('Appointment no response', 'FOLLOW-UP', 'Appointment no response'),
+}
+
+
+def allowed_appointment_statuses(current):
+    """Keep the scheduler's walk-in progression consistent with Lead workflow."""
+    current = str(current or 'Booked').strip() or 'Booked'
+    transitions = {
+        'Booked': ('Visited', 'Not Visited'),
+        'Not Booked': ('Visited', 'Not Visited'),
+        'Visited': ('Visited Booked', 'Visited Not Booked'),
+        'Visited Not Booked': ('Visited', 'Visited Booked', 'Not Visited'),
+        'Not Visited': ('Visited',),
+        'Visited Booked': (),
+    }
+    return transitions.get(current, ())
+
+
+@frappe.whitelist(methods=['POST'])
+def update_status(lead, status, remarks='', modified=''):
+    """Save an appointment outcome to its Lead, without exposing direct DocType writes."""
+    authorize()
+    doc = lead_access(lead)
+    current = str(doc.get('custom_appointment_status') or 'Booked').strip() or 'Booked'
+    status = str(status or '').strip()
+    if modified and str(doc.modified) != str(modified):
+        raise frappe.ValidationError('This lead was updated by another user. Refresh it before changing the appointment status.')
+    if status not in APPOINTMENT_STATUS_STATES:
+        raise frappe.ValidationError('Choose a valid appointment status.')
+    if status not in allowed_appointment_statuses(current):
+        if current == 'Visited Booked':
+            raise frappe.ValidationError('Visited Booked is locked and cannot be changed.')
+        raise frappe.ValidationError('From %s, choose one of: %s.' % (current, ', '.join(allowed_appointment_statuses(current)) or 'no further status'))
+    remarks = str(remarks or '').strip()
+    if status in ('Visited Not Booked', 'Not Visited') and not remarks:
+        raise frappe.ValidationError('Add a reason before saving %s.' % status)
+    lead_status, stage, sub_status = APPOINTMENT_STATUS_STATES[status]
+    doc.custom_appointment_status = status
+    doc.status = lead_status
+    doc.custom_cc_stage = stage
+    doc.custom_cc_sub_status = sub_status
+    doc.custom_remarks = remarks if status in ('Visited Not Booked', 'Not Visited') else ''
+    doc.save(ignore_permissions=True)
+    return dict(lead=doc.name, appointment_status=status, status=doc.status,
+                stage=doc.custom_cc_stage, sub_status=doc.custom_cc_sub_status,
+                modified=str(doc.modified))
 
 
 def editable_appointment(name):
