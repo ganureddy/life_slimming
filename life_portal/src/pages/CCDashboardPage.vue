@@ -499,11 +499,15 @@ async function runAutoTransfer(){const selected=assignAutoRows.value.slice().sor
 async function saveFollowup(payload) {
   if(!detail.value) return;
   actionType.value=payload.nextAction;
+  // Older leads can have only the assigned-branch field populated. Keep that
+  // branch through the booking hand-off instead of defaulting the scheduler.
+  const appointmentBranch=leadDraft.value.branch||leadDraft.value.lead_assign_to_branch||detail.value.branch||detail.value.lead_assign_to_branch||'';
   const outcome=followup.value.sub_status||leadDraft.value.custom_cc_sub_status;
   const stage=followup.value.stage||stageFromOutcome(outcome);
   savingFollowup.value=true; actionError.value=''; actionNotice.value='';
   try {
     const values={...leadDraft.value,custom_cc_stage:stage,custom_cc_sub_status:outcome,custom_treatment_interests:selectedCategories.value.join('; '),custom_specific_interests:selectedInterests.value.join('; '),custom_next_followup_date:followup.value.next_followup,custom_conclusion_remark:followup.value.conclusion,custom_remarks:followup.value.remarks+"\n[CC_PROFILE_V1]"+JSON.stringify(payload.profile)+"[/CC_PROFILE_V1]"};
+    if(actionType.value==='book'&&appointmentBranch&&!values.branch) values.branch=appointmentBranch;
     if(payload.result==='Not Connected'&&['No Response','Not Response','Not Reachable','Switch OFF','TNA','Call Disconnected','Appointment no response','Busy','Not Lifted'].includes(payload.reason||outcome)) {
       const result=await ccCore('attempt',{lead:detail.value.name,reason:payload.reason||outcome,expected_modified:detail.value.modified,remarks:values.custom_remarks});
       actionNotice.value=`Call attempt saved · ${result.streak} in a row · retry ${result.next_followup}${result.tl_review?' · TL review required':''}`;
@@ -525,7 +529,7 @@ async function saveFollowup(payload) {
     actionNotice.value=actionType.value==='book'?'Lead saved. Choose the appointment slot next.':'Lead update and call outcome saved.';
     const id=detail.value.name;
     if(actionType.value==='book') {
-      await router.push({name:'cc-appointments',query:{lead:id,branch:leadDraft.value.branch||''}});
+      await router.push({name:'cc-appointments',query:{lead:id,branch:appointmentBranch}});
     } else {
       stopCall();detailGeneration++;detailController?.abort();detail.value=null;selectedView.value='dashboard';
       load(1);
