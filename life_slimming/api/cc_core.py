@@ -129,9 +129,13 @@ def run(**kwargs):
         if ap in ["Visited", "Visited Not Booked"] or c["visited"] > 0:
             last = c.get("last_visit_result") or ap
             return "Visited - Not Booked" if last == "Visited Not Booked" or sub == "Walked In: Not Booked" else "Visited"
-        if ap == "Booked" and appt_dt and appt_dt >= now:
+        # A failed outbound call is not a visit outcome.  Keep a confirmed
+        # booking in its booked state—even once its scheduled time has passed—
+        # until the branch/agent explicitly records "Not Visited".  Otherwise
+        # a simple No Response call incorrectly turns the UI into a no-show.
+        if ap == "Booked":
             return "Appointment Booked"
-        if ap == "Not Visited" or c["missed"] > 0 or (ap == "Booked" and appt_dt and appt_dt < now):
+        if ap == "Not Visited" or c["missed"] > 0:
             return "Appointment Missed"
         if sub in ["Very Positive", "Price Negotiation", "Call & Confirm", "Callback: Scheduled", "Out Station", "Get Back"]:
             return "Interested"
@@ -570,6 +574,18 @@ def run(**kwargs):
                 d.custom_cc_stage = "FOLLOW-UP"
             if (d.get("status") or "") in ["", "Lead", "Open"] + STATUS_FAILED:
                 d.status = STATUS_MAP.get(d.custom_cc_sub_status) or d.status
+        # Legacy bookings stored values such as "45 Minutes" on a Lead Select
+        # whose current options may only contain "30 Minutes".  This failed
+        # call path saves the Lead directly, so clear that obsolete duplicate
+        # before Frappe validates the document.  The Appointment remains the
+        # source of truth for the booked duration.
+        duration_field = frappe.get_meta("Lead").get_field("custom_appointment_duration")
+        allowed_durations = {
+            value.strip() for value in str(duration_field.options or "").splitlines()
+            if value.strip()
+        } if duration_field else set()
+        if allowed_durations and d.get("custom_appointment_duration") and d.get("custom_appointment_duration") not in allowed_durations:
+            d.custom_appointment_duration = ""
         d.save(ignore_permissions=True)
         t = save_track(lead, {"last_call_result": reason, "last_call_at": now, "unreachable_streak": streak})
         res.update({"lead": lead, "streak": streak, "next_followup": str(nf), "modified": str(d.modified),

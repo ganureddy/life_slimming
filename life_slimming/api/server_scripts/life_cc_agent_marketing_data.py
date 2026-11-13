@@ -667,7 +667,12 @@ def run(**kwargs):
         invoice_rows = []
 
         if patient_names:
-            invoice_rows = life_cc_read_all(
+            # Agents do not have broad Sales Invoice permission. Their Lead
+            # scope above has already reduced this list to patients linked to
+            # their own leads, so this exact patient query is safe to read
+            # without applying Frappe's unrelated invoice permission filter.
+            invoice_reader = frappe.get_all if is_agent_login else life_cc_read_all
+            invoice_rows = invoice_reader(
                 "Sales Invoice",
                 fields=invoice_fields,
                 filters=[

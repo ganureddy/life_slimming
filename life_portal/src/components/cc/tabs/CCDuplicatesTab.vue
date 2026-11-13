@@ -1,6 +1,7 @@
 <script setup>
 import { inject, toRefs } from 'vue';
 import { ccDashboardKey } from '../../../lib/cc-dashboard-context';
+import CCMaskedPhone from '../CCMaskedPhone.vue';
 
 const { maskPhone, from, to, error, duplicatePages, duplicateVisible, filters, openDuplicateLead, duplicateLoading, duplicateError, duplicateSearch, duplicatePage, duplicateFiltered, loadDuplicateLeads } = toRefs(inject(ccDashboardKey));
 </script>

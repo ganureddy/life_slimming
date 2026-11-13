@@ -2,13 +2,13 @@
 import { inject, toRefs } from 'vue';
 import { ccDashboardKey } from '../../../lib/cc-dashboard-context';
 import CCJourneyChips from '../CCJourneyChips.vue';
+import CCMaskedPhone from '../CCMaskedPhone.vue';
 const { maskPhone, today, from, to, mode, rows, total, scoped, journeys, journeyError, loading, error, followup, groupPanel, repeatWebsiteRows, myLeads, openTile, stageCounts, agentRows, appointmentRows, recoveryFlags, openRecovery, dashQueueRows, reminderRows, reminderBuckets, dashboardGroups, convertedRows, sameDayAppointments, olderLeadAppointments, sameDayConverted, olderConverted, showView, openDetail } = toRefs(inject(ccDashboardKey));
 </script>
 
 <template>
 <div >
     <div class="cc-recovery-tiles"><button v-for="item in recoveryFlags" :key="item.flag" @click="openRecovery(item.flag)"><strong>{{item.count}}</strong>{{item.label}}</button></div><p v-if="journeyError" class="cc-error" role="alert">{{journeyError}}</p><div class="stat-grid">
-      <button class="stat-card s-blue" @click="openTile('assigned')"><div class="sl">{{mode==='created'?'New Enquiries':(from===today && to===today?'Assigned Today':'Assigned in range')}}</div><div class="sv">{{total}}</div><div class="ss">{{scoped?'Leads assigned to you':'All team leads in range'}} · click to view</div></button>
       <button class="stat-card s-blue" @click="openTile('mine')"><div class="sl">My Leads</div><div class="sv">{{myLeads.length}}</div><div class="ss">Owned by you · selected date range · click to view</div></button>
       <button class="stat-card s-teal" @click="openTile('repeat')" aria-label="View repeat website enquiries"><div class="sl">Repeat Website Enquiries</div><div class="sv">{{repeatWebsiteRows.length}}</div><div class="ss">Existing leads · selected dates · click to view</div></button>
       <button class="stat-card s-gold" @click="openTile('untouched')"><div class="sl">Untouched</div><div class="sv">{{stageCounts.UNTOUCHED||0}}</div><div class="ss">Call now! · click to view</div></button>

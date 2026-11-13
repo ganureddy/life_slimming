@@ -9,7 +9,7 @@ export const ccTabs = [
   { view: 'duplicates', label: 'Duplicate Leads', icon: '🧬', manager: true },
   { view: 'worksheet', label: 'My Worksheet', icon: '📊' },
   { view: 'distribution', label: 'Lead Distribution', icon: '🔀', mover: true },
-  { view: 'tl', label: 'TL Control Panel', icon: '👥' },
+  { view: 'tl', label: 'TL Control Panel', icon: '👥', manager: true },
   { view: 'reports', label: 'CC Reports', icon: '📈' },
   { view: 'scripts', label: 'Call Scripts', icon: '💬' },
   { view: 'faq', label: 'FAQ / Knowledge Base', icon: '❓' },

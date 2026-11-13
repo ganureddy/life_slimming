@@ -14,29 +14,10 @@ const collapsed = ref(false);
 const mobileOpen = ref(false);
 const account = ref(null);
 const pageError = ref("");
-const SIDEBAR_AUTO_CLOSE_MS = 10_000;
-let sidebarCloseTimer;
-
-function clearSidebarCloseTimer() {
-  if (sidebarCloseTimer) window.clearTimeout(sidebarCloseTimer);
-  sidebarCloseTimer = undefined;
-}
-function scheduleSidebarClose() {
-  clearSidebarCloseTimer();
-  // The phone layout is an explicit drawer, so leave its open/close state to
-  // the user rather than hiding it while they are reading the navigation.
-  if (collapsed.value || !window.matchMedia("(min-width: 901px)").matches) return;
-  sidebarCloseTimer = window.setTimeout(() => {
-    collapsed.value = true;
-    sidebarCloseTimer = undefined;
-  }, SIDEBAR_AUTO_CLOSE_MS);
-}
+const routeLoading = ref(false);
+let stopBeforeNavigation, stopAfterNavigation, routeLoadingTimer;
 function toggleSidebar() {
   collapsed.value = !collapsed.value;
-  scheduleSidebarClose();
-}
-function noteSidebarActivity() {
-  if (!collapsed.value) scheduleSidebarClose();
 }
 function reloadPage() { window.location.reload(); }
 function goBack() { goToPreviousPage(router, { name: 'home' }); }
@@ -49,11 +30,25 @@ watch(
   () => {
     mobileOpen.value = false;
     pageError.value = "";
-    scheduleSidebarClose();
   },
 );
-onMounted(scheduleSidebarClose);
-onBeforeUnmount(clearSidebarCloseTimer);
+onMounted(() => {
+  stopBeforeNavigation = router.beforeEach((_to, _from, next) => {
+    clearTimeout(routeLoadingTimer);
+    routeLoading.value = true;
+    next();
+  });
+  stopAfterNavigation = router.afterEach(() => {
+    // Keep the transition visible long enough to be perceptible; page-owned
+    // loaders continue to represent any slower API work after navigation.
+    routeLoadingTimer = setTimeout(() => { routeLoading.value = false; }, 250);
+  });
+});
+onBeforeUnmount(() => {
+  clearTimeout(routeLoadingTimer);
+  stopBeforeNavigation?.();
+  stopAfterNavigation?.();
+});
 </script>
 
 <template>
@@ -114,8 +109,10 @@ onBeforeUnmount(clearSidebarCloseTimer);
       :collapsed="collapsed"
       @toggle="toggleSidebar"
       @close="mobileOpen = false"
-      @activity="noteSidebarActivity"
     />
+    <div v-if="routeLoading" class="portal-route-loader" role="status" aria-live="polite">
+      <span aria-hidden="true"></span><strong>Loading page…</strong>
+    </div>
     <main id="main-content" class="main-content" tabindex="-1">
       <section v-if="pageError" class="page-render-error" role="alert">
         <div class="page-render-error-code">!</div>
@@ -132,5 +129,6 @@ onBeforeUnmount(clearSidebarCloseTimer);
 
 <style scoped>
 .portal-back{border:1px solid #bad3c0;border-radius:9px;background:#fff;color:#1d5a3d;padding:9px 13px;font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}.portal-back:hover{background:#edf7ef;border-color:#72a886}@media(max-width:700px){.portal-back{padding:7px 9px;font-size:12px}}
+.portal-route-loader{position:fixed;z-index:1000;inset:0;display:flex;align-items:center;justify-content:center;gap:13px;background:#f5faf7c9;color:#175c37;font-size:17px;backdrop-filter:blur(2px);cursor:wait}.portal-route-loader span{width:30px;height:30px;border:4px solid #a9cfb3;border-top-color:#17663d;border-radius:50%;animation:portal-route-spin .7s linear infinite}@keyframes portal-route-spin{to{transform:rotate(360deg)}}
 .page-render-error{display:flex;align-items:center;gap:16px;max-width:900px;margin:48px auto;padding:24px;border:1px solid #ead4cf;border-radius:12px;background:#fff;color:#26382e}.page-render-error-code{display:grid;place-items:center;flex:0 0 48px;height:48px;border-radius:12px;background:#fff0ed;color:#a13b30;font-size:28px;font-weight:800}.page-render-error h1{margin:0;font-size:20px}.page-render-error p{margin:6px 0 12px;color:#66746c}.page-render-error details{font-size:12px;color:#58665e}.page-render-error code{display:block;max-width:620px;margin-top:6px;overflow-wrap:anywhere;white-space:pre-wrap}.page-render-error button{margin-left:auto;flex-shrink:0;padding:9px 13px;border:1px solid #ccd9cf;border-radius:7px;background:#fff;color:#245d3d;cursor:pointer}@media(max-width:650px){.page-render-error{align-items:flex-start;flex-direction:column;margin:18px auto;padding:17px}.page-render-error button{margin-left:0}}
 </style>
