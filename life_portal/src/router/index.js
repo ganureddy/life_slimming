@@ -1,15 +1,36 @@
 import { ref } from "vue";
 import { createRouter, createWebHistory } from "vue-router";
-import { session, loadSession } from "../lib/session";
+import { session, loadSession, canAccessTab } from "../lib/session";
 import access from "../../../life_slimming/portal_pages/access.json";
 const menu = access.menu;
+import { reportTabs, reportAliases, reportRoute } from '../lib/cc-report-navigation';
+import { ccTabs, ccPagePath, ccRoute } from '../lib/cc-navigation';
 import portalPages from "../data/portalPages.json";
 import PortalSourcePage from "../pages/PortalSourcePage.vue";
 
-// User approval is required before promoting Vue previews to main module URLs.
-// Keep all mapped legacy modules active; native components are preview routes only.
-const nativeModules = new Set([]);
+// The CC Dashboard uses native Vue tabs; other mapped modules retain their legacy pages.
+const nativeModules = new Set(["leads", "ccvisit"]);
 const keepLegacyModule = (id) => Boolean(portalPages[id]) && !nativeModules.has(id);
+
+const ccPages = {
+  dashboard: () => import('../components/cc/tabs/CCDashboardTab.vue'),
+  testing: () => import('../components/cc/tabs/CCTestingTab.vue'),
+  queue: () => import('../components/cc/tabs/CCQueueTab.vue'),
+  followup: () => import('../components/cc/tabs/CCFollowupTab.vue'),
+  create: () => import('../components/cc/tabs/CCCreateLeadTab.vue'),
+  assign: () => import('../components/cc/tabs/CCAssignTab.vue'),
+  duplicates: () => import('../components/cc/tabs/CCDuplicatesTab.vue'),
+  worksheet: () => import('../components/cc/tabs/CCWorksheetTab.vue'),
+  distribution: () => import('../components/cc/tabs/CCDistributionTab.vue'),
+  tl: () => import('../components/cc/tabs/CCTlTab.vue'),
+  reports: () => import('../components/cc/tabs/CCReportsTab.vue'),
+  scripts: () => import('../components/cc/tabs/CCScriptsTab.vue'),
+  faq: () => import('../components/cc/tabs/CCFaqTab.vue'),
+  treatments: () => import('../components/cc/tabs/CCTreatmentsTab.vue'),
+  objections: () => import('../components/cc/tabs/CCObjectionsTab.vue'),
+  branches: () => import('../components/cc/tabs/CCBranchesTab.vue'),
+  doctors: () => import('../components/cc/tabs/CCDoctorsTab.vue'),
+};
 
 export const routeLoading = ref(false);
 
@@ -43,7 +64,23 @@ const pageComponents = {
   approvalsreport: () => import("../pages/ApprovalsPage.vue"),
 };
 
+const reportPages={
+ visits:()=>import('../components/cc/reports/CCBranchVisitsPage.vue'),
+ agents:()=>import('../components/cc/reports/CCAgentPerformancePage.vue'),
+ marketing:()=>import('../components/cc/reports/CCMarketingReportPage.vue'),
+ consultants:()=>import('../components/cc/reports/CCConsultantReportPage.vue'),
+ cluster:()=>import('../components/cc/reports/CCClusterReportPage.vue'),
+ agent360:()=>import('../components/cc/reports/CCActivityPage.vue'),
+ journey:()=>import('../components/cc/reports/CCJourneyPage.vue'),
+};
 export const routes = [
+  {path:'/control/access',name:'control-access',component:()=>import('../pages/ControlPage.vue'),meta:{title:'Role & tab access',accessModule:'control'}},
+  {path:'/agent-360',name:'agent-360',component:()=>import('../pages/CCAgent360Page.vue'),meta:{title:'Agent 360',accessModule:'ccvisit',standaloneAgent360:true}},
+  { path:'/ccvisit', component:pageComponents.ccvisit, meta:{title:'Branch Visit Report',accessModule:'ccvisit'}, children:[
+    ...reportTabs.map(tab=>({path:tab.path,name:tab.name,component:reportPages[tab.key],meta:{reportTab:tab.key,title:tab.label,accessModule:'ccvisit'}})),
+    ...[['convox','convox'],['no-follow-up','nofollowup'],['untouched','untouched']].map(([path,sub])=>({path:'agents/'+path,name:'ccvisit-agents-'+sub,component:reportPages.agents,meta:{reportTab:'agents',agentSubtab:sub,title:'Agent Report',accessModule:'ccvisit'}})),
+  ]},
+
   { path: "/cc-invoices", name: "cc-invoices", component: () => import("../pages/CCInvoicesPage.vue"), meta: { title: "Invoices / Bills", accessModule: "leads" } },
   { path: "/native/receivables", name: "receivables-native", component: () => import("../pages/PendingBalancesPage.vue"), meta: { title: "Receivables Vue preview", accessModule: "receivables" } },
   { path: "/native/pending-balances", name: "pendbal-native", component: () => import("../pages/PendingBalancesPage.vue"), meta: { title: "Pending Balances Vue preview", accessModule: "pendbal" } },
@@ -94,13 +131,11 @@ export const routes = [
   },
   {
     path: "/native/cc-dashboard", name: "leads-native",
-    component: () => import("../pages/CCDashboardPage.vue"),
-    meta: { title: "CC Dashboard preview", accessModule: "leads" },
+    redirect: to => ({ name: "leads", query: to.query }),
   },
   {
     path: "/native/cc-visit-report", name: "ccvisit-native",
-    component: () => import("../pages/CCVisitReportPage.vue"),
-    meta: { title: "CC Visit Report preview", accessModule: "ccvisit" },
+    redirect: to => reportRoute(reportAliases[String(to.query.tab||to.hash.slice(1))]||'visits',to.query),
   },
   {
     path: "/native/cluster-dashboard", name: "clusterhome-native",
@@ -146,13 +181,11 @@ export const routes = [
   },
   {
     path: "/leads/:leadId/convox", name: "convox-history",
-    component: () => import("../pages/ConvoxHistoryPage.vue"),
-    meta: { title: "ConVox call details", accessModule: "leads" },
+    redirect: to => ccRoute("followup", { lead: to.params.leadId, history: "convox" }),
   },
   {
     path: "/convox-history", name: "convox-history-index",
-    component: () => import("../pages/ConvoxHistoryPage.vue"),
-    meta: { title: "ConVox history", accessModule: "leads" },
+    redirect: { name: "leads" },
   },
   {
     path: "/cc-roster", name: "cc-roster",
@@ -164,9 +197,19 @@ export const routes = [
     component: () => import("../pages/CCAppointmentsPage.vue"),
     meta: { title: "CC Appointments", accessModule: "leads" },
   },
+  {
+    path: '/leads', component: pageComponents.leads,
+    meta: { title: 'CC Dashboard', accessModule: 'leads' },
+    children: ccTabs.map(tab => ({
+      path: ccPagePath(tab.view) + (tab.view === 'followup' ? '/:leadId?' : ''),
+      name: tab.view === 'dashboard' ? 'leads' : 'cc-leads-' + tab.view,
+      component: ccPages[tab.view],
+      meta: { title: tab.label, accessModule: 'leads', ccView: tab.view },
+    })),
+  },
   ...menu
     .flatMap((group) => group.items)
-    .filter((item) => item.id !== "home")
+    .filter((item) => !["home", "leads", "ccvisit"].includes(item.id))
     .map((item) => ({
       path: "/" + item.id,
       name: item.id,
@@ -184,7 +227,7 @@ export const routes = [
                 ? pageComponents[item.id]
                 : () => import("../pages/ModulePage.vue"),
       meta: {
-        title: item.label,
+        title: item.id === "ccvisit" ? "Agent 360" : item.label,
         description: item.description,
         icon: item.icon,
       },
@@ -208,6 +251,16 @@ const router = createRouter({
 });
 router.beforeEach(async (to, from) => {
   routeLoading.value = true;
+  if(to.meta.accessModule==='ccvisit'&&(to.query.tab||to.hash)){const tab=reportAliases[String(to.query.tab||to.hash.slice(1))];if(tab)return {...reportRoute(tab,to.query),replace:true};}
+  // Retain shared links to retired dashboard tabs without loading duplicate views.
+  if (['leads', 'leads-native'].includes(to.name) && ['appointments', 'agent360', 'attendance'].includes(to.query.view)) {
+    const { view, ...query } = to.query;
+    return { name: view === 'appointments' ? 'cc-appointments' : view === 'agent360' ? 'ccvisit' : 'leads', query, replace: true };
+  }
+  if (to.meta.accessModule === 'leads' && to.query.view && ccTabs.some(tab => tab.view === to.query.view)) {
+    return { ...ccRoute(to.query.view, to.query), replace: true };
+  }
+  if (to.name === 'cc-leads-followup' && to.query.lead && !to.params.leadId) return { ...ccRoute('followup', to.query), replace: true };
   // Check guest entry before rendering the workspace, including Vite.
   if (!to.meta.public && !from.name) {
     try {
@@ -217,6 +270,15 @@ router.beforeEach(async (to, from) => {
       return { name: "login", query: { "redirect-to": "/life_portal" + to.fullPath }, replace: true };
     }
   }
+  const accessTab=to.meta.ccView||(to.meta.standaloneAgent360?'standalone':to.meta.agentSubtab||to.meta.reportTab)||({'cc-invoices':'invoices','cc-roster':'roster','cc-appointments':'appointments','cc-live-tv':'live-tv'})[to.name];
+  const tabModule=to.meta.reportTab||to.meta.standaloneAgent360?'ccvisit':accessTab?'leads':null;
+  if(tabModule&&accessTab&&!canAccessTab(tabModule,accessTab)){
+    if(tabModule==='ccvisit'){const first=reportTabs.find(tab=>canAccessTab('ccvisit',tab.key));if(first)return {...reportRoute(first.key,to.query),replace:true};if(canAccessTab('ccvisit','standalone'))return {name:'agent-360',query:to.query,replace:true};}
+    else {const first=ccTabs.find(tab=>canAccessTab('leads',tab.view)&&(!tab.manager||['System Manager','Call Center Export','Sales Manager'].some(role=>session.roles.includes(role))));if(first)return {...ccRoute(first.view,to.query),replace:true};}
+    return {name:'home',replace:true};
+  }
+  const ccTab=ccTabs.find(tab=>tab.view===to.meta.ccView);
+  if(ccTab?.manager&&!['System Manager','Call Center Export','Sales Manager'].some(role=>session.roles.includes(role)))return ccRoute('dashboard');
   // Accept old portal links without taking over the live /life-home route.
   if (
     to.path === "/" &&

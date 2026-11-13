@@ -1,0 +1,168 @@
+/* Final, report-scoped surface rules. Legacy fragments must not leak white
+   text or WebKit text-fill colors from their green headers into white cards. */
+.cc-report-native {
+  --report-ink:#173c2a;
+  --report-muted:#53685b;
+  --report-line:#d7e3d9;
+  --report-green:#164b32;
+  --report-gold:#c9a54a;
+  color:var(--report-ink);
+  font:13px/1.5 Poppins,sans-serif;
+  -webkit-text-fill-color:currentColor;
+  border-radius:12px;
+  overflow:clip;
+}
+.cc-report-native *, .cc-report-native *::before, .cc-report-native *::after {
+  box-sizing:border-box;
+  -webkit-text-fill-color:currentColor;
+}
+.cc-report-native :is(button,input,select,textarea) {font-family:Poppins,sans-serif!important}
+.cc-report-native :is(input,select,textarea) {
+  background:#fff!important;
+  color:var(--report-ink)!important;
+  border-color:#bdcec1;
+  line-height:1.5;
+}
+.cc-report-native :is(input,textarea)::placeholder {color:#607467;opacity:1}
+.cc-report-native :is(button,a,input,select,textarea,summary):focus-visible {
+  outline:3px solid #3a8559;
+  outline-offset:3px;
+}
+.cc-report-native .cc-main,.cc-report-native .cc-agent360-main {padding:20px;min-width:0}
+.cc-report-native .cc-section-heading {margin:0 0 16px;padding:0 0 12px}
+.cc-report-native .cc-section-heading h1 {font-size:23px;line-height:1.3;margin:5px 0;color:var(--report-ink)}
+.cc-report-native .cc-eyebrow {color:var(--report-muted);line-height:1.5}
+.cc-report-native .cc-workspace-head {
+  min-height:70px;padding:14px 20px;gap:14px;
+  background:linear-gradient(110deg,#103b27,#17613c)!important;
+  color:#fff!important;
+}
+.cc-report-native .cc-workspace-head :is(strong,small) {color:#fff!important;opacity:1}
+.cc-report-native .cc-report-header-actions button,
+.cc-report-native .cc-report-back {
+  background:#fff!important;color:#17452e!important;
+  border:1px solid #c7d9cd!important;min-height:36px;
+  padding:7px 12px;border-radius:7px;text-decoration:none;font-size:12px;
+}
+.cc-report-native .cc-report-tabs {
+  display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;
+  margin:0 0 16px;padding:0;max-width:100%;
+}
+.cc-report-native .cc-report-tabs a {
+  min-width:0;min-height:48px;padding:9px 10px;border-radius:8px;
+  border:1px solid #cfbc85;background:#fffdf7!important;
+  color:#17452e!important;font-size:11px;line-height:1.45;text-align:center;
+}
+.cc-report-native .cc-report-tabs :is(a.active,span.active) {
+  background:#164b32!important;color:#fff!important;border-color:#164b32;
+}
+.cc-report-native .cc-filters {gap:12px;margin:14px 0;padding:16px;border-radius:10px}
+.cc-report-native .cc-filters label {min-width:140px;gap:6px;color:var(--report-ink)}
+.cc-report-native .cc-filters :is(input,select) {min-height:40px}
+.cc-report-native .cc-report-tools {gap:8px;margin:14px 0;align-items:end}
+.cc-report-native .cc-report-tools button {min-height:36px}
+.cc-report-native .cc-report-tools button[aria-pressed=true],
+.cc-report-native .arx-filters button[aria-pressed=true] {
+  background:#164b32!important;color:#fff!important;border-color:#164b32;
+}
+.cc-report-native :is(.cc-report-summary,.cc-card,.arx-sec,.life-mkt-section) {
+  background:#fff;color:var(--report-ink);border-color:var(--report-line);border-radius:12px;
+}
+.cc-report-native :is(.cc-report-summary,.cc-card) {padding:16px;margin:16px 0}
+.cc-report-native :is(.cc-report-summary,.cc-card) > h2 {margin:0 0 12px;font-size:18px;color:var(--report-ink)}
+.cc-report-native :is(.arx-sec,.life-mkt-section) {margin:16px 0;overflow:hidden}
+.cc-report-native .arx-sec > summary.arx-sh {
+  background:linear-gradient(90deg,#14501f,#1f6b32)!important;
+  color:#fff!important;border-bottom:2px solid #c9a54a;
+  padding:12px 16px;min-height:48px;line-height:1.45;font-size:15px;
+}
+.cc-report-native .arx-sec > summary.arx-sh :is(h2,h3,h4,span,small) {color:#fff!important}
+.cc-report-native :is(.arx-head,.arx-hero,.life-mkt-hero) {
+  padding:18px 20px;border-radius:12px;
+  background:linear-gradient(110deg,#103b27,#17613c)!important;color:#fff!important;
+}
+.cc-report-native :is(.arx-hero,.life-mkt-hero) :is(h2,p) {color:#fff!important;opacity:1}
+.cc-report-native :is(.arx-hero,.life-mkt-hero) > button {
+  background:#fff!important;color:#17452e!important;border:1px solid #b9cebf;
+}
+.cc-report-native :is(.arx-card,.life-mkt-kpi,.consultant-report-kpis .kpi,.cc-history-card) {
+  background:#fff!important;color:#173c2a!important;min-width:0;
+  padding:14px 16px;border-radius:10px;line-height:1.5;
+}
+.cc-report-native :is(.arx-card,.life-mkt-kpi,.consultant-report-kpis .kpi,.cc-history-card) :is(span,small) {
+  color:#405d4b!important;opacity:1;
+}
+.cc-report-native :is(.arx-cards,.life-mkt-kpis,.consultant-report-kpis,.cc-report-metrics) {
+  gap:12px;margin:14px 0;
+}
+.cc-report-native .arx-cards {padding:0 14px 14px}
+.cc-report-native .arx-sec > .cc-table {margin:14px;width:calc(100% - 28px)}
+.cc-report-native .arx-sec > :is(input,button,.arx-filters) {margin:12px 14px}
+.cc-report-native .arx-filters {gap:10px;align-items:end;flex-wrap:wrap}
+.cc-report-native .arx-filters label {color:var(--report-ink)}
+.cc-report-native .arx-fbox {min-width:0;padding:14px;border:1px solid var(--report-line);border-radius:9px;background:#f7faf6;color:var(--report-ink)}
+.cc-report-native .arx-fbox h3 {margin:0 0 14px;font-size:15px;color:var(--report-ink)}
+.cc-report-native .arx-fr {color:var(--report-ink);line-height:1.5}
+.cc-report-native .life-mkt-section-head {
+  padding:14px 16px;background:#e9f3e8!important;color:#173c2a!important;
+}
+.cc-report-native .life-mkt-section-head :is(h3,small) {color:#173c2a!important;line-height:1.5}
+.cc-report-native .life-mkt-section-body {padding:16px}
+.cc-report-native .life-mkt-filter {gap:12px;align-items:end}
+.cc-report-native .life-mkt-field {min-width:150px;flex:1 1 160px;color:var(--report-ink)}
+.cc-report-native .life-mkt-category-rules {color:#435f4e;line-height:1.7;padding:14px}
+.cc-report-native .cc-table {max-width:100%;overflow:auto;background:#fff;color:#173c2a}
+.cc-report-native .cc-table :is(th,td) {padding:11px 13px;line-height:1.5;vertical-align:top}
+.cc-report-native .cc-table th {background:#edf4ed;color:#214d32;font-size:11px;font-weight:700}
+.cc-report-native .cc-table td {color:#173c2a}
+.cc-report-native .cc-table td :is(button,a) {background:#fff;color:#174b30;border-color:#bfcec3;line-height:1.5}
+.cc-report-native :is(.cc-note,.arx-note,.cc-pager) {color:var(--report-muted);line-height:1.6}
+.cc-report-native .cc-report-dialog {
+  background:#fff!important;color:#173c2a!important;
+  padding:22px;border-color:#c5d5c8;border-radius:12px;
+}
+.cc-report-native .cc-report-dialog header {margin-bottom:16px;gap:14px}
+.cc-report-native .cc-report-dialog :is(h2,h3,p,label,td,dd,dt,textarea) {color:#173c2a}
+.cc-report-native .cc-report-dialog h2 {font-size:19px;line-height:1.4;margin:0}
+.cc-report-native .cc-report-dialog button {background:#f8fbf7;color:#17452e;min-height:36px}
+.cc-report-native .cc-report-dialog .cc-share-table tr:first-child td {background:#16402d;color:#fff}
+.cc-report-native .cc-report-dialog textarea {margin:12px 0;line-height:1.6}
+@media(max-width:1100px) {
+  .cc-report-native .cc-report-tabs {display:flex;overflow:auto;padding-bottom:5px}
+  .cc-report-native .cc-report-tabs a {flex:0 0 150px}
+}
+@media(max-width:650px) {
+  .cc-report-native .cc-main,.cc-report-native .cc-agent360-main {padding:12px}
+  .cc-report-native .cc-workspace-head {padding:14px;gap:12px}
+  .cc-report-native .cc-section-heading h1 {font-size:21px}
+  .cc-report-native .cc-report-header-actions {flex-basis:100%}
+  .cc-report-native .cc-filters {padding:12px;gap:10px}
+  .cc-report-native .cc-filters label {flex:1 1 140px;min-width:0}
+  .cc-report-native :is(.cc-report-summary,.cc-card,.life-mkt-section-body) {padding:12px}
+  .cc-report-native :is(.arx-cards,.life-mkt-kpis,.consultant-report-kpis,.cc-report-metrics) {grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .cc-report-native :is(.arx-card,.life-mkt-kpi,.consultant-report-kpis .kpi) {padding:12px}
+  .cc-report-native .cc-report-dialog {padding:14px;max-width:94vw;max-height:86dvh}
+}
+@media print {
+  .cc-report-native,.cc-report-native * {color:#173c2a!important;-webkit-text-fill-color:currentColor!important;box-shadow:none!important}
+  .cc-report-native :is(.arx-hero,.arx-sh,.life-mkt-hero,th) {background:#fff!important}
+  .cc-report-native .cc-report-tabs {display:none!important}
+}
+/* Gold is an accent surface, not a dark surface: its labels need dark ink. */
+.cc-report-native .cc-month-strip small {color:#66572c!important}
+.cc-report-native .cc-month-strip .today,
+.cc-report-native .cc-month-strip .today :is(button,small) {color:#173c2a!important}
+.cc-report-native .crm-source-select small {color:#53685b!important;opacity:1}
+.cc-report-native .arx-note,.cc-report-native .arx-note * {color:#53685b}
+.cc-report-native .arx-badge span {color:#405d4b!important;opacity:1}
+.cc-report-native .arx-root > .arx-sec {margin:0}
+.cc-report-native .arx-root {gap:16px}
+.cc-report-native .cc-report-metrics {display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr))}
+.cc-report-native .cc-brand h1 {font-size:18px;line-height:1.35;margin:0;color:#fff!important;letter-spacing:.02em}
+.cc-report-native .cc-report-tabs {margin-top:0}
+.cc-report-native .cc-main > .cc-report-tabs {margin-top:0}
+@media(max-width:650px){.cc-report-native .cc-brand h1{font-size:16px}}
+/* These are read-only metric cards, not unavailable actions. Keep totals legible. */
+.cc-report-native .cc-report-metrics .cc-history-card:disabled {opacity:1!important;cursor:default}
+.cc-report-native .arx-sec > .arx-cards {padding:0 14px;margin:14px 0}
+.cc-report-native .arx-sec > .arx-cards:last-child {padding-bottom:14px}

@@ -465,6 +465,8 @@ def run(**kwargs):
         if action not in {"report", "cal"}:
             raise
         require_module("ccvisit")
+    if action == "report":
+        require_module("ccvisit", tab="journey")
     management = can_move(user)
     manager_actions = {"rank", "dist_preview", "dist_move", "dist_undo", "agents", "settings_save", "bulk_meta", "bulk_check", "bulk_create", "rules", "rule_save", "credit", "agent_stats"}
     if action in manager_actions and not management:

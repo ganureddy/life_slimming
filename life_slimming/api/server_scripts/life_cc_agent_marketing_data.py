@@ -13,6 +13,7 @@ from frappe.integrations.utils import make_post_request as _make_post_request
 from frappe.utils.safe_exec import read_sql as _read_sql
 from frappe.utils.safe_exec import call_whitelisted_function as _call_whitelisted
 from life_slimming.api._runtime import script_endpoint
+from life_slimming.portal_access import require_module
 
 
 @script_endpoint(allow_guest=False)
@@ -79,8 +80,14 @@ def run(**kwargs):
     life_cc_global = user == "Administrator" or "System Manager" in roles
     life_cc_sensitive = ["Lead", "Patient", "Sales Invoice", "Payment Entry", "Therapy Plan"]
     life_cc_view = str(frappe.form_dict.get("view") or "full").strip()
+    try:
+        require_module("ccvisit", tab=("visits","agents","marketing","consultants") if life_cc_view=="full" else ("consultants",) if life_cc_view=="consultants" else ("visits","agents","marketing","consultants","cluster","agent360","journey","standalone"))
+    except frappe.PermissionError:
+        if life_cc_view != "full":
+            raise
+        require_module("leads", tab=("reports","invoices"))
 
-    if life_cc_view not in ["full", "appointments", "calendar"]:
+    if life_cc_view not in ["full", "appointments", "calendar", "consultants"]:
         frappe.throw("Invalid CC Visit report view.")
 
     if frappe.utils.getdate(from_date) > frappe.utils.getdate(to_date):
@@ -221,17 +228,28 @@ def run(**kwargs):
     ]
 
 
+    # Optional classification/activity fields differ between site schemas. Read only
+    # fields present in metadata; do not probe get_list with an invalid field first.
+    lead_meta = frappe.get_meta("Lead")
+    for optional_field in ("custom_cc_sub_status", "custom_call_count", "custom_last_call_time", "custom_status_updated_by_employee", "custom_status_updated_by_name", "custom_status_updated_by_user"):
+        if lead_meta.has_field(optional_field) and optional_field not in fields:
+            fields.append(optional_field)
+
     # Preserve the native appointment view when the optional visit field exists.
     if frappe.get_meta("Lead").has_field("custom_visit_status"):
         fields.append("custom_visit_status")
 
     # Do not scan created/posting-date cohorts or financial data for visit views.
-    if life_cc_view in ("appointments", "calendar"):
+    if life_cc_view in ("appointments", "calendar", "consultants"):
         from life_slimming.api.cc_visit_fast import read_appointments
         frappe.response["message"] = read_appointments(
             from_date, to_date, owner_filter, life_cc_global, is_agent_login,
             calendar=life_cc_view == "calendar",
-            detail_fields=None if frappe.form_dict.get("compact") in (1, "1", True) else fields)
+            detail_fields=None if frappe.form_dict.get("compact") in (1, "1", True) else fields,
+            visit_history=frappe.form_dict.get("visit_history") in (1, "1", True))
+        if life_cc_view == "consultants":
+            from life_slimming.api.cc_report_finance import enrich_appointment_consultants
+            frappe.response["message"]["consultant_appointments"] = enrich_appointment_consultants(frappe.response["message"]["rows"], [])
         return
 
     date_time_from = from_date + " 00:00:00"
@@ -3184,11 +3202,13 @@ def run(**kwargs):
         )
 
 
-        from life_slimming.api.cc_report_finance import enrich_consultants
+        from life_slimming.api.cc_report_finance import enrich_consultants, enrich_appointment_consultants
         enrich_consultants(cc_invoice_report_rows)
 
+        from life_slimming.api.cc_report_campaigns import read_campaign_details
         frappe.response["message"] = {
             "ok": True,
+            "campaign_details": read_campaign_details(final_rows),
             "user": user,
             "roles": roles,
             "restricted_to_owner": True if owner_filter else False,
@@ -3208,6 +3228,7 @@ def run(**kwargs):
             "ranking_count": len(ranking_rows),
             "ranking_rows": ranking_rows,
             "agent_names": agent_names,
+            "consultant_appointments": enrich_appointment_consultants(final_rows, cc_invoice_report_rows),
             "marketing_agencies": marketing_agencies,
             "agent_report_summary": agent_report_summary,
             "cc_invoice_report_summary": cc_invoice_report_summary

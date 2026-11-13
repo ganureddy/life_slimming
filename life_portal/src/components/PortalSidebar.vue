@@ -1,25 +1,58 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { visibleMenu, roleLabel } from "../lib/session";
+import { visibleMenu, roleLabel, session, canAccessTab } from "../lib/session";
+import {reportTabs} from '../lib/cc-report-navigation';
+import { ccPermissions } from "../lib/cc-permissions";
+import { ccTabs, ccRoute, ccViewOfRoute, isCcRoute } from "../lib/cc-navigation";
+const canMoveLeads = ref(false);
+let permissionGeneration = 0;
+watch(() => visibleMenu.value.some(group => group.items.some(item => item.id === 'leads')) ? session.user : '', async user => {
+  const token = ++permissionGeneration;canMoveLeads.value = false;
+  if (!user) return;
+  try { const result = await ccPermissions();if (token === permissionGeneration) canMoveLeads.value = !!result.can_move; } catch {}
+}, { immediate: true });
+const canManageLeads = computed(() => ["System Manager", "Call Center Export", "Sales Manager"].some(role => session.roles.includes(role)));
+function itemTarget(item) { return item.to || { name: item.id==='control'?'control-access':item.id }; }
+function isSelected(item) {
+  if (item.ccView) return isCcRoute(route) && ccViewOfRoute(route) === item.ccView;
+  if(item.id==='agent-360')return Boolean(route.meta.standaloneAgent360);
+  if(item.id==='control'&&route.meta.accessModule==='control')return true;
+  return route.name === item.id || (item.id === 'ccvisit' && route.meta.accessModule === 'ccvisit' && !route.meta.standaloneAgent360);
+}
 const props = defineProps({ collapsed: Boolean });
-defineEmits(["toggle", "close"]);
+defineEmits(["toggle", "close", "activity"]);
 const route = useRoute();
 const search = ref("");
 const closed = ref(new Set());
+const ccMenuItems = computed(() => {
+  const range = isCcRoute(route)
+    ? Object.fromEntries(['from', 'to', 'mode'].filter(key => route.query[key]).map(key => [key, route.query[key]]))
+    : {};
+  const tabs = ccTabs
+    .filter(tab => canAccessTab('leads',tab.view) && (!tab.manager || canManageLeads.value) && (!tab.mover || canMoveLeads.value))
+    .map(tab => ({
+      id: 'cc-tab-' + tab.view, ccView: tab.view,
+      label: tab.label, icon: tab.icon, description: '',
+      to: ccRoute(tab.view, range),
+    }));
+  return [...tabs,
+    { id: 'cc-invoices', label: 'Invoices / Bills', description: 'View invoices and bills', icon: '▤' },
+    { id: 'cc-roster', label: 'CC ROASTER', description: 'CC employee weekly and monthly roster', icon: '▦' },
+    { id: 'cc-appointments', label: 'Create Appointment', description: 'Branch and staff calendar', icon: '▦' },
+  ].filter(item=>!['cc-invoices','cc-roster','cc-appointments','cc-live-tv'].includes(item.id)||canAccessTab('leads',({'cc-invoices':'invoices','cc-roster':'roster','cc-appointments':'appointments','cc-live-tv':'live-tv'})[item.id]));
+});
 const groups = computed(() =>
   visibleMenu.value
-    .map((group) => ({
+    .map(group => ({
       ...group,
-      items: group.items.flatMap(item => item.id === 'leads'
-        ? [item, { id: 'cc-invoices', label: 'Invoices / Bills', description: 'View invoices and bills', icon: '▤' }, { id: 'cc-roster', label: 'CC ROASTER', description: 'Ho CC employee weekly and monthly roster', icon: '▦' }, { id: 'cc-appointments', label: 'Create Appointment', description: 'Branch and staff calendar', icon: '▦' }, { id: 'convox-history-index', label: 'ConVox History', description: 'Call details and recordings', icon: '☎' }]
-        : [item]).filter((item) =>
-        (group.label + " " + item.label + " " + item.description)
-          .toLowerCase()
-          .includes(search.value.toLowerCase()),
-      ),
+      items: group.items.flatMap(item => item.id === 'leads' ? ccMenuItems.value : item.id === 'ccvisit' ? [{...item,label:'Branch Visit Report'}, {id:'agent-360',label:'Agent 360',description:'ConVox, mobile calls and ERP activity',icon:'🔗'}] : [item])
+        .filter(item=>item.id!=='agent-360'||canAccessTab('ccvisit','standalone'))
+        .filter(item=>item.id!=='ccvisit'||reportTabs.some(tab=>canAccessTab('ccvisit',tab.key)))
+        .filter(item => (group.label + ' ' + item.label + ' ' + item.description)
+          .toLowerCase().includes(search.value.toLowerCase())),
     }))
-    .filter((group) => group.items.length),
+    .filter(group => group.items.length),
 );
 function toggle(label) {
   const next = new Set(closed.value);
@@ -29,7 +62,14 @@ function toggle(label) {
 </script>
 
 <template>
-  <aside class="sidebar" aria-label="Workspace menu">
+  <aside
+    class="sidebar"
+    aria-label="Workspace menu"
+    @pointerdown="$emit('activity')"
+    @keydown="$emit('activity')"
+    @focusin="$emit('activity')"
+    @wheel.passive="$emit('activity')"
+  >
     <div class="sidebar-card">
       <div class="sidebar-heading">
         <span>WORKSPACE</span><span class="sidebar-edition">LIFE</span>
@@ -54,7 +94,7 @@ function toggle(label) {
           :key="group.label"
           class="nav-group"
           :class="{
-            active: group.items.some((item) => item.id === route.name),
+            active: group.items.some(isSelected),
           }"
         >
           <button
@@ -71,11 +111,13 @@ function toggle(label) {
             <RouterLink
               v-for="item in group.items"
               :key="item.id"
-              :to="{ name: item.id }"
+              :to="itemTarget(item)"
               class="nav-item"
               :title="item.label"
               :aria-label="item.label"
-              active-class="selected"
+              active-class=""
+              :class="{ selected: isSelected(item) }"
+              :aria-current="isSelected(item) ? 'page' : undefined"
             >
               <span class="nav-icon" aria-hidden="true">{{ item.icon }}</span
               ><span class="nav-label">{{ item.label }}</span>

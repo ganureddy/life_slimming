@@ -4,17 +4,17 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const source = fs.readFileSync(path.resolve(__dirname, '..', 'src/pages/ControlPage.vue'), 'utf8').split('<script setup>')[1].split('</script>')[0].replace(/^import .*;$/gm, '');
-function setup(fail = false) {
+function setup(fail = false, tabs = {}) {
   const calls = [];
   const session = { user: 'fixture', csrf_token: 'csrf', access_config: { BM: { groups: ['MAIN'], hide: ['two'], show: ['three'] } } };
   const context = {
     session, roleKey: {value:'IT'}, labels: { IT:'IT Admin', BM:'Branch Manager' }, groupRoles: { BM:['MAIN'] },
-    access: {menu: [{label:'MAIN',items:[{id:'one'},{id:'two'}]},{label:'OTHER',items:[{id:'three'}]}]},
+    access: {tabs, menu: [{label:'MAIN',items:[{id:'one'},{id:'two'}]},{label:'OTHER',items:[{id:'three'}]}]},
     ref: value => ({value}), computed: fn => ({get value(){return fn();}}), watch: (_, fn) => fn(),
     call: async (...args) => { calls.push(args); if(fail) throw new Error('Permission denied'); },
   };
   vm.createContext(context);
-  vm.runInContext(source + '\n globalThis.panel = { selectedRole, selectedItems, selectedGroups, loadRole, selectAll, toggleGroup, save, error };', context);
+  vm.runInContext(source + '\n globalThis.panel = { selectedRole, selectedItems, selectedGroups, selectedTabs, loadRole, selectAll, toggleGroup, save, error };', context);
   return { ...context, calls };
 }
 test('individual include and exclude permissions survive saving', async () => {
@@ -41,4 +41,14 @@ test('failed saves leave session permissions unchanged', async () => {
 test('other portal roles cannot invoke a save', async () => {
   const c = setup(); c.roleKey.value = 'BM'; await c.panel.save();
   assert.equal(c.calls.length, 0);
+});
+
+test('nested tab choices and existing custom settings survive save/reload',async()=>{
+ const c=setup(false,{one:[{id:'first',label:'First'},{id:'second',label:'Second'}]});
+ c.session.access_config.BM.tab_access={one:{first:false,legacy:false}};
+ c.session.access_config.BM.extra='preserve';c.panel.selectedRole.value='BM';c.panel.loadRole();
+ assert.equal(c.panel.selectedTabs.value.one.first,false);assert.equal(c.panel.selectedTabs.value.one.second,true);
+ c.panel.selectedTabs.value.one.second=false;await c.panel.save();c.panel.loadRole();
+ assert.deepEqual(JSON.parse(JSON.stringify(c.session.access_config.BM.tab_access)),{one:{first:false,second:false,legacy:false}});
+ assert.equal(c.session.access_config.BM.extra,'preserve');
 });

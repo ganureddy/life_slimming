@@ -14,6 +14,15 @@ class ActivityAggregationTests(unittest.TestCase):
         self.assertEqual(rows[0]['longest_gap'],20)
         self.assertEqual(rows[0]['talked_no_update'],1)
 
+    def test_appointment_outcome_counts_and_status_precedence(self):
+        result=api.appointment_counts([
+            {'lead_owner':'a','custom_appointment_status':'Visited – Booked'},
+            {'lead_owner':'a','custom_appointment_status':'Visited Not Booked'},
+            {'lead_owner':'a','custom_appointment_status':'Booked','custom_visit_status':'Visited Booked'},
+            {'lead_owner':'b','custom_visit_status':'Visited'}])
+        self.assertEqual(result['a'],{'appointments':3,'walkins':2,'booked':1})
+        self.assertEqual(result['b'],{'appointments':1,'walkins':1,'booked':0})
+
     def test_mismatches_are_distinct_leads_per_day(self):
         calls=[self.event('2026-11-11 10:00:00','L1',120),self.event('2026-11-11 10:30:00','L1',120,'mobile')]
         updates=[dict(agent='a',channel='update',at='2026-11-11 10:10:00',lead='L2',talk=0),dict(agent='a',channel='update',at='2026-11-11 10:11:00',lead='L2',talk=0)]
@@ -35,7 +44,7 @@ class ActivityAccessTests(unittest.TestCase):
             if doctype=='User':
                 return [frappe._dict(name='agent@example.test',full_name='Agent',custom_convox_agent_id='101')]
             return []
-        for context in [patch.object(api,'require_module'),patch.object(frappe,'get_roles',return_value=['Sales User']),patch.object(frappe,'get_all',side_effect=get_all),patch.object(frappe,'db',Mock(exists=Mock(return_value=True)))]:
+        for context in [patch.object(api,'require_module'),patch.object(frappe,'get_meta',return_value=Mock(has_field=Mock(return_value=True))),patch.object(frappe,'get_roles',return_value=['Sales User']),patch.object(frappe,'get_all',side_effect=get_all),patch.object(frappe,'db',Mock(exists=Mock(return_value=True)))]:
             context.start();self.addCleanup(context.stop)
 
     def tearDown(self):
@@ -53,6 +62,8 @@ class ActivityAccessTests(unittest.TestCase):
         mobile=next(args for dt,args in self.queries if dt=='LIFE Mobile Call Log')
         self.assertEqual(convox['filters']['agent_id'],['in',['101']])
         self.assertEqual(mobile['filters']['agent'],['in',['agent@example.test']])
+        appointments=next(args for dt,args in self.queries if dt=='Lead')
+        self.assertEqual(appointments['filters']['lead_owner'],['in',['agent@example.test']])
 
 
 class ConsultantAttributionTests(unittest.TestCase):

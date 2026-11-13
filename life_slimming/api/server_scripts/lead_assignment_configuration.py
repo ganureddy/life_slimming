@@ -171,6 +171,7 @@ def run(**kwargs):
             agents.append({
                 "row_name": row.name,
                 "agent": row.agent,
+                "user_enabled": int(frappe.db.get_value("User", row.agent, "enabled") or 0),
                 "employee": (
                     employee.get("name")
                     if employee else None

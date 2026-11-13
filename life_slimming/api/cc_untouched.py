@@ -8,7 +8,7 @@ from life_slimming.portal_access import require_module
 
 @script_endpoint(allow_guest=False)
 def run(from_date=None,to_date=None,start=0,**kwargs):
-    require_module('ccvisit')
+    require_module('ccvisit', tab='untouched')
     first,last=getdate(from_date),getdate(to_date)
     if first>last or date_diff(last,first)>366:
         frappe.throw('Choose a range of up to 367 days.')

@@ -1,4 +1,6 @@
 <script setup>
+import { isCcRoute } from "../lib/cc-navigation";
+import { openConvoxHistory } from "../lib/convox-history";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { convoxApi, CONVOX_ORIGIN, createCallRequests, isDashboardMessage, validWidgetUrl } from '../api/convox';
@@ -96,7 +98,7 @@ function fitPanel() {
 }
 function resetPosition() { position.value = null; resizeTo(760, 780); }
 
-const isCcDashboard = computed(() => ['leads', 'leads-native'].includes(route.name));
+const isCcDashboard = computed(() => isCcRoute(route));
 const visible = computed(() => Boolean(phoneIdentity.value) && (isCcDashboard.value || Boolean(url.value)));
 const controller = new AbortController();
 let stopped = false, timer, cursor = '';
@@ -434,7 +436,7 @@ onBeforeUnmount(() => {
           </div>
         </template>
         <p v-if="settings?.enabled && !events.length && !pollError" class="convox-hint">No recent saved call events found for your agent.</p>
-        <div v-if="events.length" class="convox-events"><h3>Recent call updates</h3><article v-for="event in events" :key="event.name"><strong>{{ event.call_status || event.call_type || event.event_type }}</strong><small>{{ event.call_datetime || event.received_on }} · {{ event.call_reference }}</small><span>{{ event.mobile_number }} <span v-if="event.disposition">· {{ event.disposition }}</span></span><button v-if="event.mobile_number" @click="findCaller(event)">Find caller in CRM</button><RouterLink v-if="event.crm_lead" :to="{name: 'convox-history', params: {leadId: event.crm_lead}}" @click="minimize">Lead call details</RouterLink></article></div>
+        <div v-if="events.length" class="convox-events"><h3>Recent call updates</h3><article v-for="event in events" :key="event.name"><strong>{{ event.call_status || event.call_type || event.event_type }}</strong><small>{{ event.call_datetime || event.received_on }} · {{ event.call_reference }}</small><span>{{ event.mobile_number }} <span v-if="event.disposition">· {{ event.disposition }}</span></span><button v-if="event.mobile_number" @click="findCaller(event)">Find caller in CRM</button><button v-if="event.crm_lead" @click="minimize();openConvoxHistory(event.crm_lead)">Lead call details</button></article></div>
       </div>
       <button class="convox-resize" aria-label="Resize phone panel" title="Drag to resize, or use arrow keys"
         @pointerdown="startResize" @pointermove="moveResize" @pointerup="stopResize" @pointercancel="stopResize" @lostpointercapture="stopResize"

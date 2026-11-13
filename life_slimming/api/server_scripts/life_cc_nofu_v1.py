@@ -11,7 +11,7 @@ from life_slimming.portal_access import require_module
 
 @script_endpoint(allow_guest=False)
 def run(**kwargs):
-    require_module("ccvisit")
+    require_module("ccvisit", tab="nofollowup")
     # =====================================================================
     # Server Script : life_cc_nofu_v1      Type: API   API Method: life_cc_nofu_v1   Allow Guest: NO
     # LIFE CC Reports (branch-visit-report) · Agent 360 · "No follow-up since N days" (6-Nov-2026)

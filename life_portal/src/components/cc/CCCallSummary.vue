@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue';
+import { openConvoxHistory } from '../../lib/convox-history';
 import { convoxApi } from '../../api/convox';
 import reference from '../../data/cc-reference.json';
 import { portalDisposition } from '../../lib/convox-disposition';
@@ -37,6 +38,6 @@ onBeforeUnmount(() => { controller?.abort(); window.removeEventListener('life-co
       <p v-if="latest.remarks">{{ latest.remarks }}</p>
     </template>
     <p v-else>No call events received yet.</p>
-    <RouterLink :to="{name: 'convox-history', params: {leadId: lead.name}}">View call details and recordings</RouterLink>
+    <button type="button" class="btn btn-gy btn-sm" @click="openConvoxHistory(lead.name)">View call details and recordings</button>
   </section>
 </template>

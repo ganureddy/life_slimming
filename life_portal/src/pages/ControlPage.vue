@@ -8,6 +8,8 @@ const allowed = computed(() => ["IT", "MD"].includes(roleKey.value));
 const selectedRole = ref("IT");
 const selectedGroups = ref([]);
 const selectedItems = ref([]);
+const selectedTabs = ref({});
+const tabsFor = id => access.tabs?.[id] || [];
 const saving = ref(false);
 const error = ref("");
 const notice = ref("");
@@ -24,6 +26,7 @@ function loadRole() {
   selectedItems.value = menu.flatMap(g => g.items.filter(item =>
     cfg.show?.includes(item.id) || (!cfg.hide?.includes(item.id) && selectedGroups.value.includes(g.label))
   ).map(item => item.id));
+  selectedTabs.value=Object.fromEntries(Object.entries(access.tabs||{}).map(([module,tabs])=>[module,Object.fromEntries(tabs.map(tab=>[tab.id,cfg.tab_access?.[module]?.[tab.id]!==false]))]));
   error.value = "";
   notice.value = "";
 }
@@ -38,6 +41,7 @@ function toggleGroup(group, checked) {
   }
 }
 function selectAll(checked) {
+  for(const rules of Object.values(selectedTabs.value))for(const tab of Object.keys(rules))rules[tab]=checked;
   selectedGroups.value = checked ? menu.map(g => g.label) : [];
   selectedItems.value = checked ? menu.flatMap(g => g.items.map(i => i.id)) : [];
 }
@@ -48,10 +52,12 @@ async function save() {
   const config = Object.fromEntries(Object.keys(labels).map(key => [key, roleConfig(key)]));
   Object.assign(config, session.access_config || {});
   config[role] = {
+    ...roleConfig(role),
     groups: selectedGroups.value.length === menu.length ? "ALL" : [...selectedGroups.value],
     show: menu.flatMap(g => g.items.filter(i => !selectedGroups.value.includes(g.label) && selectedItems.value.includes(i.id)).map(i => i.id)),
     hide: menu.flatMap(g => g.items.filter(i => selectedGroups.value.includes(g.label) && !selectedItems.value.includes(i.id)).map(i => i.id)),
   };
+  if(Object.keys(access.tabs||{}).length)config[role].tab_access=Object.fromEntries(Object.entries(selectedTabs.value).map(([module,rules])=>[module,{...roleConfig(role).tab_access?.[module],...rules}]));
   try {
     await call("frappe.client.set_value", {
       doctype: "Portal Access Settings", name: "Portal Access Settings",
@@ -70,7 +76,8 @@ async function save() {
     <p>Portal Access Control can only be opened by an IT Admin or MD.</p>
   </section>
   <section v-else class="access-panel">
-    <p>Choose a role, then select the groups and tabs it can see.</p>
+    <h1>Role &amp; tab access</h1><p>Choose a portal role, enable its modules, then choose the tabs inside CC Dashboard and Branch Visit Report.</p>
+    <p><a href="/life_portal_module?module=control&amp;embed=1" target="_blank" rel="noopener">Open other control tools ↗</a></p>
     <fieldset :disabled="saving">
       <div class="access-toolbar panel">
         <label for="access-role">Role
@@ -91,10 +98,13 @@ async function save() {
             <label><input type="checkbox" :checked="selectedGroups.includes(group.label)" @change="toggleGroup(group, $event.target.checked)"> {{ group.label }}</label>
             <span>{{ group.items.filter(i => selectedItems.includes(i.id)).length }}/{{ group.items.length }}</span>
           </header>
-          <label v-for="item in group.items" :key="item.id" class="access-item" :class="{ enabled: selectedItems.includes(item.id) }">
+          <div v-for="item in group.items" :key="item.id" class="access-module">
+          <label class="access-item" :class="{ enabled: selectedItems.includes(item.id) }">
             <input v-model="selectedItems" type="checkbox" :value="item.id">
             <span aria-hidden="true">{{ item.icon }}</span><span>{{ item.label }}</span>
           </label>
+            <details v-if="tabsFor(item.id).length" class="access-subtabs" open><summary>Individual tabs</summary><label v-for="tab in tabsFor(item.id)" :key="tab.id" :class="{nested:tab.parent}"><input v-model="selectedTabs[item.id][tab.id]" type="checkbox" :disabled="!selectedItems.includes(item.id)||(tab.parent&&!selectedTabs[item.id][tab.parent])"><span>{{tab.label}}</span></label><small>Requires the module above. Hidden tabs cannot be opened through direct links.</small></details>
+          </div>
         </section>
       </div>
     </fieldset>
@@ -104,3 +114,5 @@ async function save() {
 <style scoped>
 .access-panel{max-width:1180px}fieldset{border:0;padding:0;margin:0;min-width:0}.access-toolbar{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:18px}.access-toolbar label{display:grid;gap:6px;font-size:12px;font-weight:600}select{min-width:190px;padding:10px;border:1px solid var(--line);border-radius:8px;background:white;color:inherit}.access-matrix{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}.access-group{border:1px solid var(--line);border-radius:12px;background:white;overflow:hidden}.access-group header{display:flex;justify-content:space-between;gap:8px;padding:14px;background:#eaf3e8;font-size:11px;font-weight:600}.access-group header label{display:flex;align-items:center;gap:8px}.access-group header>span{white-space:nowrap}.access-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border-top:1px solid #edf2eb;font-size:12px;color:#6b8070}.access-item.enabled{color:#183d26;background:#f8fbf6}input{accent-color:#236d38;width:16px;height:16px;flex-shrink:0}.access-error{color:#9a4233}.access-notice{color:#236d38}@media(max-width:1000px){.access-matrix{grid-template-columns:repeat(2,minmax(0,1fr))}.access-toolbar{align-items:flex-start;flex-direction:column}}@media(max-width:600px){.access-matrix{grid-template-columns:1fr}.actions{flex-wrap:wrap}}
 </style>
+
+<style scoped>.access-subtabs{padding:8px 14px 14px 28px;background:#fbfdf9}.access-subtabs summary{font-size:12px;font-weight:700;cursor:pointer;padding:6px 0}.access-subtabs label{display:flex;align-items:center;gap:9px;font-size:12px;padding:7px 0;color:#254e33}.access-subtabs label.nested{padding-left:18px}.access-subtabs small{display:block;color:#536b5c;font-size:11px;margin-top:8px}.access-module:has(>.access-item:not(.enabled)) .access-subtabs{opacity:.7}</style>

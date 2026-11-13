@@ -1,17 +1,45 @@
 <script setup>
-import { computed, onErrorCaptured, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { computed, onBeforeUnmount, onErrorCaptured, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import ConvoxHistoryDialog from "../components/ConvoxHistoryDialog.vue";
 import PortalSidebar from "../components/PortalSidebar.vue";
 import AccountDialog from "../components/AccountDialog.vue";
 import { session, initials, roleLabel, canAccessModule } from "../lib/session";
+import { goToPreviousPage } from "../lib/navigation";
 const route = useRoute();
+const router = useRouter();
+const isCrmPage = computed(() => ['leads','leads-native','ccvisit','ccvisit-native','cc-roster','cc-appointments','cc-invoices','cc-live-tv'].includes(route.name) || ['leads','ccvisit'].includes(route.meta.accessModule));
 const allowed = computed(() => route.name === 'not-found' || canAccessModule(route.meta.accessModule || route.name));
 const collapsed = ref(false);
 const mobileOpen = ref(false);
 const account = ref(null);
 const pageError = ref("");
+const SIDEBAR_AUTO_CLOSE_MS = 10_000;
+let sidebarCloseTimer;
+
+function clearSidebarCloseTimer() {
+  if (sidebarCloseTimer) window.clearTimeout(sidebarCloseTimer);
+  sidebarCloseTimer = undefined;
+}
+function scheduleSidebarClose() {
+  clearSidebarCloseTimer();
+  // The phone layout is an explicit drawer, so leave its open/close state to
+  // the user rather than hiding it while they are reading the navigation.
+  if (collapsed.value || !window.matchMedia("(min-width: 901px)").matches) return;
+  sidebarCloseTimer = window.setTimeout(() => {
+    collapsed.value = true;
+    sidebarCloseTimer = undefined;
+  }, SIDEBAR_AUTO_CLOSE_MS);
+}
+function toggleSidebar() {
+  collapsed.value = !collapsed.value;
+  scheduleSidebarClose();
+}
+function noteSidebarActivity() {
+  if (!collapsed.value) scheduleSidebarClose();
+}
 function reloadPage() { window.location.reload(); }
+function goBack() { goToPreviousPage(router, { name: 'home' }); }
 onErrorCaptured((error, _instance, info) => {
   pageError.value = `${error?.message || error || "Unknown page error"} (${info})`;
   return false;
@@ -21,14 +49,17 @@ watch(
   () => {
     mobileOpen.value = false;
     pageError.value = "";
+    scheduleSidebarClose();
   },
 );
+onMounted(scheduleSidebarClose);
+onBeforeUnmount(clearSidebarCloseTimer);
 </script>
 
 <template>
   <div
     class="portal"
-    :class="{ rail: collapsed, 'mobile-open': mobileOpen }"
+    :class="{ rail: collapsed, 'mobile-open': mobileOpen, 'crm-workspace': isCrmPage }"
     @keydown.esc="mobileOpen = false"
   >
     <a class="skip-link" href="#main-content">Skip to content</a>
@@ -56,6 +87,7 @@ watch(
         <span>Workspace</span><strong>{{ route.meta.title }}</strong>
       </div>
       <div class="header-actions">
+        <button v-if="route.name !== 'home'" class="portal-back" type="button" @click="goBack">← Back</button>
         <span class="workspace-badge"
           ><i aria-hidden="true"></i> LIFE Portal</span
         >
@@ -80,8 +112,9 @@ watch(
     ></button>
     <PortalSidebar
       :collapsed="collapsed"
-      @toggle="collapsed = !collapsed"
+      @toggle="toggleSidebar"
       @close="mobileOpen = false"
+      @activity="noteSidebarActivity"
     />
     <main id="main-content" class="main-content" tabindex="-1">
       <section v-if="pageError" class="page-render-error" role="alert">
@@ -98,5 +131,6 @@ watch(
 </template>
 
 <style scoped>
+.portal-back{border:1px solid #bad3c0;border-radius:9px;background:#fff;color:#1d5a3d;padding:9px 13px;font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}.portal-back:hover{background:#edf7ef;border-color:#72a886}@media(max-width:700px){.portal-back{padding:7px 9px;font-size:12px}}
 .page-render-error{display:flex;align-items:center;gap:16px;max-width:900px;margin:48px auto;padding:24px;border:1px solid #ead4cf;border-radius:12px;background:#fff;color:#26382e}.page-render-error-code{display:grid;place-items:center;flex:0 0 48px;height:48px;border-radius:12px;background:#fff0ed;color:#a13b30;font-size:28px;font-weight:800}.page-render-error h1{margin:0;font-size:20px}.page-render-error p{margin:6px 0 12px;color:#66746c}.page-render-error details{font-size:12px;color:#58665e}.page-render-error code{display:block;max-width:620px;margin-top:6px;overflow-wrap:anywhere;white-space:pre-wrap}.page-render-error button{margin-left:auto;flex-shrink:0;padding:9px 13px;border:1px solid #ccd9cf;border-radius:7px;background:#fff;color:#245d3d;cursor:pointer}@media(max-width:650px){.page-render-error{align-items:flex-start;flex-direction:column;margin:18px auto;padding:17px}.page-render-error button{margin-left:0}}
 </style>

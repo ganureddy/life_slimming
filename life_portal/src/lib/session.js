@@ -1,6 +1,7 @@
 import { reactive, computed } from "vue";
 import { call } from "./api";
 import access from "../../../life_slimming/portal_pages/access.json";
+import {tabAllowed} from "./portal-tab-access";
 const menu = access.menu;
 
 export const session = reactive({
@@ -67,6 +68,9 @@ export const visibleMenu = computed(() =>
 export function canAccessModule(module) {
   const parent = access.children[module]?.parent || module;
   return visibleMenu.value.some(group => group.items.some(item => item.id === parent));
+}
+export function canAccessTab(module,tab) {
+  return canAccessModule(module)&&tabAllowed(access.tabs,session.access_config?.[roleKey.value],module,tab);
 }
 export function loadSession() {
   // The router guard and App startup watcher can request this at the same

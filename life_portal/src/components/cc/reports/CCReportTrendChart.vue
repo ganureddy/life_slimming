@@ -1,0 +1,12 @@
+<script setup>
+import {computed} from 'vue';
+const props=defineProps({rows:{type:Array,default:()=>[]},title:{type:String,default:'Daily performance trend'}});
+const series=[{key:'appointments',label:'Appointments',color:'#315f9e'},{key:'visits',label:'Walk-ins',color:'#187444'},{key:'booked',label:'Booked',color:'#8d6816'}];
+const maximum=computed(()=>Math.max(1,...props.rows.flatMap(row=>series.map(s=>Number(row[s.key]||0)))));
+const x=index=>52+(props.rows.length===1?320:index*640/Math.max(1,props.rows.length-1));
+const y=value=>190-Number(value||0)/maximum.value*150;
+const points=key=>props.rows.map((row,index)=>x(index)+','+y(row[key])).join(' ');
+const labels=computed(()=>props.rows.filter((_,index)=>index===0||index===props.rows.length-1||index%Math.max(1,Math.ceil(props.rows.length/6))===0));
+</script>
+<template><figure class="cc-trend-chart"><figcaption>{{title}}</figcaption><div class="cc-chart-legend"><span v-for="s in series" :key="s.key"><i :style="{background:s.color}"/>{{s.label}}</span></div><p v-if="!rows.length">No activity to plot for this selection.</p><svg v-else viewBox="0 0 740 230" role="img" :aria-label="title+' · '+rows.length+' dates'"><g v-for="step in [0,1,2,3]" :key="step"><line x1="52" :y1="190-step*50" x2="692" :y2="190-step*50" stroke="#d7e3d9"/><text x="40" :y="194-step*50" text-anchor="end">{{Math.round(maximum*step/3)}}</text></g><g v-for="s in series" :key="s.key"><polyline :points="points(s.key)" fill="none" :stroke="s.color" stroke-width="3"/><circle v-for="(row,index) in rows" :key="row.key" :cx="x(index)" :cy="y(row[s.key])" r="3.5" :fill="s.color"><title>{{row.key}} · {{s.label}}: {{row[s.key]||0}}</title></circle></g><text v-for="row in labels" :key="row.key" :x="x(rows.indexOf(row))" y="215" text-anchor="middle">{{row.key.slice(5)}}</text></svg></figure></template>
+<style scoped>.cc-trend-chart{margin:16px;padding:14px;background:#f8fbf7;border:1px solid #d7e3d9;border-radius:10px;color:#173c2a}.cc-trend-chart figcaption{font-weight:700;margin-bottom:10px}.cc-chart-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px}.cc-chart-legend span{display:flex;align-items:center;gap:6px}.cc-chart-legend i{width:12px;height:12px;border-radius:50%}.cc-trend-chart svg{display:block;width:100%;height:auto;min-height:150px;margin-top:12px}.cc-trend-chart text{font:11px Poppins,sans-serif;fill:#405d4b}@media(max-width:650px){.cc-trend-chart{margin:12px;padding:10px}.cc-chart-legend{gap:10px}}</style>
