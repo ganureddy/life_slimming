@@ -122,6 +122,8 @@
   transition:background .16s var(--ease),border-color .16s var(--ease),box-shadow .16s var(--ease);
 }
 .cc-erp-root .search-wrap input::placeholder{color:rgba(217,236,226,.68);font-weight:400;opacity:1}
+.cc-erp-root input#global-search,.cc-erp-root input#global-search:hover,.cc-erp-root input#global-search:focus{color:#fff!important;-webkit-text-fill-color:#fff!important;caret-color:#fff!important}
+.cc-erp-root #global-search:-webkit-autofill,.cc-erp-root #global-search:-webkit-autofill:hover,.cc-erp-root #global-search:-webkit-autofill:focus{-webkit-text-fill-color:#fff!important;caret-color:#fff;box-shadow:0 0 0 1000px #1b5b3d inset!important}
 .cc-erp-root .search-wrap input:hover{background:rgba(255,255,255,.14)}
 .cc-erp-root .search-wrap input:focus{
   border-color:var(--gold-l);background:rgba(255,255,255,.17);

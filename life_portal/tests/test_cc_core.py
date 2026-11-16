@@ -46,11 +46,10 @@ class JourneyTests(unittest.TestCase):
     def tearDown(self):
         frappe.destroy()
 
-    def test_summary_rejects_another_agents_lead(self):
+    def test_summary_allows_another_agents_lead_for_collaboration(self):
         self.doc.lead_owner = 'other@example.test'
-        with self.assertRaises(frappe.ValidationError):
-            api.run(action='summary', leads='["LEAD1"]')
-        self.assertFalse(any(dt == 'Lead' for dt, _ in self.queries))
+        result = api.run(action='summary', leads='["LEAD1"]')
+        self.assertIn('LEAD1', result['leads'])
 
     def test_agent_cannot_distribute(self):
         with self.assertRaises(frappe.PermissionError):

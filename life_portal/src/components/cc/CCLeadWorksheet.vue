@@ -193,7 +193,9 @@ function submit(checkOnly=false) {
   else if (['Price Negotiation','Walked In: Not Booked'].includes(choice.value) && followup.value.remarks.trim().length<5) validation.value='Write the pricing discussion or counsellor reason in Agent Notes.';
   else if (canReopen.value && followup.value.remarks.trim().length<10) validation.value='Manager reopen requires an audit reason of at least 10 characters in Agent Notes.';
   if (validation.value) { showToast(validation.value,'error'); return; }
-  if(!checkOnly&&!categories.value.length&&!['LOST','INVALID'].includes(followup.value.stage)){validation.value='Select at least one Treatment Interest (Section 3)';showToast(validation.value,'error');return;}
+  // Legacy leads can already carry their treatment in Enquired For without a
+  // normalised Treatment Interest category. Keep that valid data valid.
+  if(!checkOnly&&!categories.value.length&&!String(draft.value.enquired_for||'').trim()&&!['LOST','INVALID'].includes(followup.value.stage)){validation.value='Select at least one Treatment Interest (Section 3)';showToast(validation.value,'error');return;}
   if(!checkOnly&&!followup.value.conclusion.trim()){if(choice.value==='Appointment Booked')followup.value.conclusion='Walk-in happened - treatment not booked yet';else{validation.value='Please select a Conclusion Remark';showToast(validation.value,'error');return;}}
   if (checkOnly) { validation.value = 'Update checked. No record changed.'; showToast(validation.value); return; }
   const profile = { ...savedProfile.value, alias:alias.value, phones:phones.value.filter(Boolean), primary:primary.value||phones.value.find(Boolean), issues:issues.value.map(row=>row[1]), assessment:assessment.value, medical_conditions:medical.value, reminder_priority:followupPriority.value };

@@ -13,7 +13,10 @@ def run(from_date=None,to_date=None,start=0,**kwargs):
     if first>last or date_diff(last,first)>366:
         frappe.throw('Choose a range of up to 367 days.')
     manager=frappe.session.user=='Administrator' or bool(set(frappe.get_roles()).intersection({'System Manager','Call Center Export','Sales Manager','CC Manager','MD','COO'}))
-    filters={'custom_cc_stage':'UNTOUCHED','creation':['between',[str(first)+' 00:00:00',str(last)+' 23:59:59']]}
+    # Stage alone is not sufficient on older records: a legacy update can
+    # leave UNTOUCHED behind after the final invalid outcome was saved.
+    final_outcomes=['Not Enquired','Junk/Wrong Call','Invalid Number','Wrong number','Not in Service','TNA','NID','Job enquiry','Franchise Lead','Not interested','Other clinic','Joined Competition','Do Not Contact','Existing Client']
+    filters={'custom_cc_stage':'UNTOUCHED','status':['not in',final_outcomes],'custom_cc_sub_status':['not in',final_outcomes],'creation':['between',[str(first)+' 00:00:00',str(last)+' 23:59:59']]}
     if not manager:filters['lead_owner']=frappe.session.user
     rows=frappe.get_all('Lead',filters=filters,fields=['name','lead_name','lead_owner','mobile_no','creation'],order_by='creation desc, name desc',limit_start=max(0,int(start)),limit_page_length=50)
     users={u.name:u.full_name for u in frappe.get_all('User',filters={'name':['in',list({r.lead_owner for r in rows if r.lead_owner}) or ['-']]},fields=['name','full_name'],limit_page_length=50)}

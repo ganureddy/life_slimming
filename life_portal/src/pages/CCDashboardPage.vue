@@ -59,6 +59,7 @@ const contactManager = ref(false);
 const loading = ref(false), rangeLoading = ref(false), error = ref(''), applied = ref('');
 const tlConfig=ref(null),tlConfigBusy=ref(false),tlConfigError=ref(''),tlPreviewSource=ref(''),tlPreview=ref(null),tlPreviewBusy=ref(false),tlPreviewError=ref('');
 const salesData=ref(null),salesBusy=ref(false),salesError=ref(''),salesSearch=ref(''),salesLoadedRange=ref('');let salesRequest=0;
+const periodAgentStats=ref({});
 const summaryLead=ref(null);
 function viewLead(row){summaryLead.value=row;nextTick(()=>dialog.value?.showModal())}
 const dialog = ref(null), leadHistoryDialog=ref(null), leadHistoryLead=ref(null), leadHistoryRows=ref([]), leadHistoryBusy=ref(false), leadHistoryError=ref(''), detail = ref(null), detailLoading = ref(false), detailError = ref('');
@@ -127,7 +128,13 @@ const tileDialog=ref(null),tileTitle=ref(''),tileRows=ref([]),tileOwner=ref('');
 function closeTileOnBackdrop(event){if(event.target!==tileDialog.value)return;const rect=tileDialog.value.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)tileDialog.value.close();}
 const filteredTileRows=computed(()=>tileRows.value.filter(row=>!tileOwner.value||row.lead_owner===tileOwner.value));
 const tileOwners=computed(()=>{const owners=new Map();for(const row of tileRows.value)if(row.lead_owner)owners.set(row.lead_owner,{id:row.lead_owner,name:row.lead_owner_name||row.lead_owner});return [...owners.values()].sort((a,b)=>a.name.localeCompare(b.name))});
+const agentName=value=>rows.value.find(row=>row.lead_owner===value)?.lead_owner_name||String(value||'Unassigned');
 function tileStage(row){return row.custom_cc_chat_returned?'New Lead to the Same Agent':(row.custom_cc_stage||row.status||'—')}
+function isUntouched(row){
+  if((row.custom_cc_stage||row.status)!=='UNTOUCHED')return false;
+  const finalOutcomes=new Set(['not enquired','junk/wrong call','invalid number','wrong number','not in service','tna','nid','job enquiry','franchise lead','not interested','other clinic','joined competition','do not contact','existing client']);
+  return ![row.custom_cc_sub_status,row.status].some(value=>finalOutcomes.has(String(value||'').trim().toLowerCase()));
+}
 function tileAppointmentStatus(row){
   const status=String(row.custom_appointment_status||'').trim().toLowerCase().replace(/[ _-]+/g,' ');
   if(['booked','appointment booked','scheduled','appointment scheduled','confirmed','awaiting visit'].includes(status)) return 'APPOINTMENT BOOKED';
@@ -162,7 +169,7 @@ function openTile(kind){
     assigned:['All Assigned Leads',created],
     repeat:['Repeat Website Enquiries',repeatWebsiteRows.value],
     mine:['My Leads — selected date range',myLeads.value],
-    untouched:['Untouched Leads',created.filter(row=>row.custom_cc_stage==='UNTOUCHED')],
+    untouched:['Untouched Leads',created.filter(isUntouched)],
     followup:['FOLLOW UPS',dashboardGroups.value.followup],
     norespnotreach:['NOT RESPONDING / NOT REACHABLE',dashboardGroups.value.norespnotreach],
     invalid:['INVALID',dashboardGroups.value.invalid],
@@ -183,7 +190,7 @@ const filteredFaqs = computed(()=>faqs.filter(item=>!faqSearch.value.trim()||`${
 function leadHistoryChanges(event){try{return (JSON.parse(event.data||'{}').changed||[]).filter(change=>['status','custom_cc_stage','custom_cc_sub_status','lead_owner','custom_appointment_status','branch','lead_assign_to_branch','custom_next_followup_date','custom_conclusion_remark','source'].includes(change[0]))}catch{return []}}
 const stages = ['UNTOUCHED','FOLLOW-UP','SUCCESS','LOST','INVALID'];
 const leadHistoryLabels={status:'Status',custom_cc_stage:'CC Stage',custom_cc_sub_status:'Sub-status',lead_owner:'Lead Owner',custom_appointment_status:'Appointment',branch:'Branch',lead_assign_to_branch:'Assigned Branch',custom_next_followup_date:'Next Follow-up',custom_conclusion_remark:'Conclusion',source:'Source'};
-const stageCounts = computed(()=>Object.fromEntries(stages.map(stage=>[stage,rows.value.filter(r=>(stage==='FOLLOW-UP'||createdIds.value.has(r.name))&&(r.custom_cc_stage||r.status)===stage).length])));
+const stageCounts = computed(()=>Object.fromEntries(stages.map(stage=>[stage,rows.value.filter(r=>(stage==='FOLLOW-UP'||createdIds.value.has(r.name))&&(stage==='UNTOUCHED'?isUntouched(r):(r.custom_cc_stage||r.status)===stage)).length])));
 const sourceCounts = computed(()=>{const counts={};rows.value.forEach(r=>{const key=r.source||r.custom_media||'Unknown';counts[key]=(counts[key]||0)+1});return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,12)});
 const categoryCounts=computed(()=>{const counts={};rows.value.forEach(row=>String(row.custom_treatment_interests||'').split(';').map(value=>value.trim()).filter(Boolean).forEach(value=>counts[value]=(counts[value]||0)+1));return Object.entries(counts).sort((a,b)=>b[1]-a[1])});
 const subStatusCounts=computed(()=>{const counts={};rows.value.forEach(row=>{const key=row.custom_cc_sub_status||'(none)';counts[key]=(counts[key]||0)+1});return Object.entries(counts).sort((a,b)=>b[1]-a[1])});
@@ -202,7 +209,7 @@ function exportMatrixCsv(field){
   downloadCsv(`cc-${field}-sub-status.csv`,columns,output);
 }
 
-const agentRows = computed(()=>{const grouped={};rows.value.forEach(r=>{const key=r.lead_owner||'Unassigned';(grouped[key] ||= []).push(r)});return Object.entries(grouped).map(([name,items])=>({name,total:items.length,called:items.filter(r=>Number(r.custom_call_count)>0).length,success:items.filter(r=>(r.custom_cc_stage||r.status)==='SUCCESS').length,followups:items.filter(r=>r.custom_next_followup_date).length}))});
+const agentRows = computed(()=>{const grouped={};rows.value.forEach(r=>{const key=r.lead_owner||'Unassigned';(grouped[key] ||= []).push(r)});Object.keys(periodAgentStats.value).forEach(key=>{grouped[key] ||= []});return Object.entries(grouped).map(([id,items])=>{const period=periodAgentStats.value[id]||{};return {id,name:items[0]?.lead_owner_name||period.name||id,total:items.length,assigned:period.assigned??items.length,updated:period.updated??0,success:items.filter(r=>(r.custom_cc_stage||r.status)==='SUCCESS').length,followups:items.filter(r=>r.custom_next_followup_date).length}})});
 const tlSearch=ref(''),tlOwner=ref(''),tlStatus=ref(''),tlPage=ref(1);
 const tlFiltered=computed(()=>rows.value.filter(row=>(!tlOwner.value||row.lead_owner===tlOwner.value)&&(!tlStatus.value||(row.custom_cc_stage||row.status)===tlStatus.value)&&(!tlSearch.value.trim()||[row.name,row.lead_name,row.mobile_no,row.city,row.lead_owner,row.source].some(value=>String(value||'').toLowerCase().includes(tlSearch.value.trim().toLowerCase())))));
 const tlPages=computed(()=>Math.max(1,Math.ceil(tlFiltered.value.length/10)));
@@ -223,12 +230,16 @@ const salesClientFiltered=computed(()=>{const q=salesClientSearch.value.trim().t
 const salesClientPages=computed(()=>Math.max(1,Math.ceil(salesClientFiltered.value.length/10)));
 const salesClientVisible=computed(()=>salesClientFiltered.value.slice((salesClientPage.value-1)*10,salesClientPage.value*10));
 const money=value=>'₹'+Number(value||0).toLocaleString('en-IN',{maximumFractionDigits:0});
-const appointmentRows = computed(()=>appointmentCohort.value);
+const appointmentRows = computed(()=>appointmentCohort.value.slice().sort((a,b)=>{
+  const aTime=String(a.custom_appointment_date_and_time||'9999-12-31 23:59:59');
+  const bTime=String(b.custom_appointment_date_and_time||'9999-12-31 23:59:59');
+  return aTime.localeCompare(bTime)||String(a.lead_name||a.name).localeCompare(String(b.lead_name||b.name));
+}));
 const appointmentStatusCounts=computed(()=>{const counts={};appointmentRows.value.forEach(row=>{const key=row.custom_appointment_status||'Unspecified';counts[key]=(counts[key]||0)+1});return Object.entries(counts).sort((a,b)=>b[1]-a[1])});
 const appointmentAgentRows=computed(()=>{const groups={};appointmentRows.value.forEach(row=>{const key=row.lead_owner||'(unassigned)',group=groups[key]||=( {key,name:row.lead_owner_name||key,booked:0,vb:0,vnb:0,nv:0,cancelled:0,pending:0,converted:0,branches:{},billed:0,paid:0});group.booked++;const status=String(row.custom_appointment_status||'').toLowerCase();if(status==='visited booked'){group.vb++;group.converted++}else if(status==='visited not booked')group.vnb++;else if(status==='not visited')group.nv++;else if(status==='cancelled')group.cancelled++;else group.pending++;const branch=row.lead_assign_to_branch||row.branch;if(branch)group.branches[branch]=(group.branches[branch]||0)+1;});const leadAgent={};appointmentRows.value.forEach(row=>leadAgent[row.name]=row.lead_owner||'(unassigned)');salesInvoiceRows.value.forEach(row=>{const key=leadAgent[row.lead_id||row.lead];if(!key||!groups[key])return;groups[key].billed+=Number(row.with_gst??row.grand_total)||0;groups[key].paid+=Number(row.paid_with_gst??row.paid_amount??row.paid)||0});return Object.values(groups).map(group=>({...group,visited:group.vb+group.vnb,rate:group.booked?Math.round(group.converted*100/group.booked):0,preferredBranch:Object.entries(group.branches).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—'})).sort((a,b)=>b.converted-a.converted||b.booked-a.booked)});
 const recoveryFlags=computed(()=>[{flag:'Appointment Missed',label:'🚨 No-show recovery'},{flag:'Visited - Not Booked',label:'🏥 Post-consult closing'},{flag:'unreachable',label:'⚠ Unreachable 3+'},{flag:'overdue',label:'⏰ Follow-up overdue'}].map(item=>({...item,count:rows.value.filter(row=>matchesJourney(journeys.value[row.name],item.flag)).length})));
 function openRecovery(flag){queueFlag.value=flag;showView('queue');}
-const dashQueueRows = computed(()=>rows.value.filter(r=>['UNTOUCHED','FOLLOW-UP'].includes(r.custom_cc_stage||r.status)).slice(0,60));
+const dashQueueRows = computed(()=>rows.value.filter(r=>(r.custom_cc_stage||r.status)==='UNTOUCHED'?isUntouched(r):(r.custom_cc_stage||r.status)==='FOLLOW-UP').slice(0,60));
 const reminderRows = computed(()=>rows.value.filter(r=>r.custom_next_followup_date||['Call Back','Get Back','Followup'].includes(r.status)));
 const reminderBuckets = computed(()=>({overdue:reminderRows.value.filter(r=>r.custom_next_followup_date&&String(r.custom_next_followup_date).slice(0,10)<todayISO),today:reminderRows.value.filter(r=>String(r.custom_next_followup_date||'').slice(0,10)===todayISO),upcoming:reminderRows.value.filter(r=>String(r.custom_next_followup_date||'').slice(0,10)>todayISO),nodate:reminderRows.value.filter(r=>!r.custom_next_followup_date)}));
 const todayISO = dateRange('today')[0];
@@ -310,6 +321,12 @@ const categoryInterests = {
   'Online Consultation':['Online Consultation'],
 };
 const treatmentCategories = Object.keys(categoryInterests);
+const enquiryCategory = value => {
+  const label=String(value||'').trim();
+  const aliases={Skin:'Skin / Dermat',Dermatology:'Skin / Dermat',HT:'HT (Hair Transplant)','Hair Transplant':'HT (Hair Transplant)'};
+  const category=aliases[label]||label;
+  return treatmentCategories.includes(category)?category:'';
+};
 const treatmentInterests = computed(()=>[...new Set(selectedCategories.value.flatMap(category=>categoryInterests[category]||[]))]);
 const leadDraft = ref({}), selectedCategories=ref([]), selectedInterests=ref([]), actionType=ref(''), historyRows=computed(()=>detail.value?.workflow_hint?.legacy_events||[]);
 const stepComplete=computed(()=>[!!leadDraft.value.source,!!leadDraft.value.first_name&&!!leadDraft.value.gender,!!leadDraft.value.city,selectedCategories.value.length>0,!!(leadDraft.value.weight||leadDraft.value.medical_history),!!followup.value.sub_status,!!actionType.value]);
@@ -329,7 +346,7 @@ const columns = [
   { key: 'name', label: 'Lead ID' }, { key: 'lead_name', label: 'Client' },
   { key: 'mobile_no', label: 'Phone', value: r => maskPhone(r.mobile_no) },
   { key: 'branch', label: 'Branch', value: r => r.branch || r.lead_assign_to_branch },
-  { key: 'lead_owner', label: 'Agent' }, { key: 'custom_cc_sub_status', label: 'Status', value: r => r.custom_cc_sub_status || r.status },
+  { key: 'lead_owner', label: 'Agent', value: r => r.lead_owner_name || agentName(r.lead_owner) }, { key: 'custom_cc_sub_status', label: 'Status', value: r => r.custom_cc_sub_status || r.status },
   { key: 'custom_appointment_status', label: 'Appointment Status', value: tileAppointmentStatus },
   { key: 'custom_appointment_date_and_time', label: 'Appointment' }, { key: 'custom_next_followup_date', label: 'Next follow-up' },
 ];
@@ -359,9 +376,13 @@ async function apply() {
     }
     const requests=[];
     if(['dashboard','queue','followup','tl','reports','assign'].includes(selectedView.value)&&(selectedView.value!=='followup'||searching.value))requests.push(load(1));
+    if(selectedView.value==='dashboard'&&!searching.value)requests.push(loadPeriodAgentStats());
     if(selectedView.value==='reports'&&!salesBusy.value)requests.push(loadSales());
     await Promise.all(requests);
   } finally { rangeLoading.value=false; }
+}
+async function loadPeriodAgentStats(){
+  try{const data=await ccCore('agent_stats',{from_date:from.value,to_date:to.value});periodAgentStats.value=data.period||{};}catch{periodAgentStats.value={};}
 }
 async function load(nextPage,{preserveRows=false,preserveSelection=false}={}) {
   const token = ++generation; controller?.abort(); controller = new AbortController();
@@ -456,7 +477,10 @@ function closeDetail() { stopCall(); detailGeneration++; detailController?.abort
 function initLeadDraft(row) {
   const dateTime = String(row.custom_next_followup_date||'').replace(' ','T').slice(0,16);
   const interests=String(row.custom_treatment_interests||'').split(';').map(x=>x.trim()).filter(Boolean);
-  selectedCategories.value=treatmentCategories.filter(x=>interests.includes(x));
+  // Older leads can have Enquired For without the newer Treatment Interest
+  // field. Recognise it so agents are not asked for the same detail again.
+  const enquiries=String(row.enquired_for||'').split(';').map(x=>x.trim()).filter(Boolean);
+  selectedCategories.value=[...new Set([...interests,...enquiries].map(enquiryCategory).filter(Boolean))];
   selectedInterests.value=String(row.custom_specific_interests||'').split(';').map(x=>x.trim()).filter(Boolean);
   leadDraft.value={lead_owner:row.lead_owner||'',consultant:row.consultant||'',first_name:row.first_name||row.lead_name||'',email_id:row.email_id||'',age:row.age||'',gender:row.gender||'',city:row.city||'',source:row.source||'',custom_media:row.custom_media||'',custom_posting_date:row.custom_posting_date||'',branch:row.branch||'',lead_assign_to_branch:row.lead_assign_to_branch||'',enquired_for:row.enquired_for||'',phone:row.phone||'',custom_marital_status:row.custom_marital_status||'',custom_no_of_kids:row.custom_no_of_kids||'',custom_delivery_type:row.custom_delivery_type||'',custom_breastfeeding:row.custom_breastfeeding||'',weight:row.weight||'',height:row.height||'',custom_bmi:row.custom_bmi||'',custom_target_weight:row.custom_target_weight||'',medical_history:row.medical_history||'',custom_current_medication:row.custom_current_medication||'',custom_previous_attempts:row.custom_previous_attempts||'',custom_hospitalized:row.custom_hospitalized||'',custom_cc_stage:row.custom_cc_stage||row.status||'UNTOUCHED',custom_cc_sub_status:row.custom_cc_sub_status||'',custom_next_followup_date:dateTime,custom_conclusion_remark:row.custom_conclusion_remark||'',custom_remarks:row.custom_remarks||'',custom_chat_script:row.custom_chat_script||''};
   followup.value={stage:row.custom_cc_stage||row.status||'UNTOUCHED',sub_status:row.custom_cc_sub_status||'',status:row.status||'',next_followup:dateTime,conclusion:row.custom_conclusion_remark||'',remarks:String(row.custom_remarks||'').replace(/\[CC_PROFILE_V1\][\s\S]*?\[\/CC_PROFILE_V1\]/g,'').trim()};
@@ -545,7 +569,9 @@ async function saveFollowup(payload) {
   const stage=followup.value.stage||stageFromOutcome(outcome);
   savingFollowup.value=true; actionError.value=''; actionNotice.value='';
   try {
-    const values={...leadDraft.value,custom_cc_stage:stage,custom_cc_sub_status:outcome,custom_treatment_interests:selectedCategories.value.join('; '),custom_specific_interests:selectedInterests.value.join('; '),custom_next_followup_date:followup.value.next_followup,custom_conclusion_remark:followup.value.conclusion,custom_remarks:followup.value.remarks+"\n[CC_PROFILE_V1]"+JSON.stringify(payload.profile)+"[/CC_PROFILE_V1]"};
+    const existingInterests=String(detail.value.custom_treatment_interests||'').split(';').map(x=>x.trim()).filter(Boolean);
+    const existingEnquiries=String(leadDraft.value.enquired_for||detail.value.enquired_for||'').split(';').map(x=>x.trim()).filter(Boolean);
+    const values={...leadDraft.value,custom_cc_stage:stage,custom_cc_sub_status:outcome,custom_treatment_interests:(selectedCategories.value.length?selectedCategories.value:[...existingInterests,...existingEnquiries]).filter(Boolean).join('; '),custom_specific_interests:selectedInterests.value.join('; '),custom_next_followup_date:followup.value.next_followup,custom_conclusion_remark:followup.value.conclusion,custom_remarks:followup.value.remarks+"\n[CC_PROFILE_V1]"+JSON.stringify(payload.profile)+"[/CC_PROFILE_V1]"};
     if(actionType.value==='book'&&appointmentBranch&&!values.branch) values.branch=appointmentBranch;
     if(payload.result==='Not Connected'&&['No Response','Not Response','Not Reachable','Switch OFF','TNA','Call Disconnected','Appointment no response','Busy','Not Lifted'].includes(payload.reason||outcome)) {
       const result=await ccCore('attempt',{lead:detail.value.name,reason:payload.reason||outcome,expected_modified:detail.value.modified,remarks:values.custom_remarks});
@@ -631,7 +657,7 @@ provide(ccDashboardKey, reactive({
   openRecovery, dashQueueRows, reminderRows, reminderBuckets, dashboardGroups, convertedRows, sameDayAppointments,
   olderLeadAppointments, sameDayConverted, olderConverted, showView, openDetail, load,
   journeyFlags, page, searching, queueOwner, queueFlag, matrixFilter, queueStatus,
-  queueCategory, queueSubStatus, queueSearch, applied, viewLead, callOutcomes, treatmentCategories,
+  queueCategory, queueSubStatus, queueSearch, applied, viewLead, callOutcomes, treatmentCategories, agentName,
   queuePageRows, pages, visibleLeads, filters, assignOwners, assignRecipients, query,
   sourceCounts, columns, enquiryDate, enquiryLabel, stages, apply,
   assignSearch, assignSelected, assignTo, assignBusy, assignError, autoTransferStatus, assignRows,
