@@ -1,0 +1,5 @@
+<script setup>
+defineProps({ open: Boolean });
+const emit = defineEmits(['close']);
+</script>
+<template><div v-if="open" class="stock-modal-backdrop" @click.self="emit('close')"><section class="stock-item-modal stock-toolbar-modal" role="dialog" aria-modal="true" aria-label="Stock dashboard help"><div class="stock-panel-head"><h2>💡 How to use Stock Dashboard</h2><button @click="emit('close')">× Close</button></div><ol><li>Select your authorized Branch or Stock Manager view.</li><li>Use dashboard filters for warehouse, category, and stock status.</li><li>Open Requests to review or approve material requests.</li><li>Use Purchase Order, Purchase Receipt, and Purchase Invoice to work with procurement records.</li><li>Open Settings to manage permitted item and therapy consumable controls.</li><li>Use Refresh to retrieve the latest data after a stock operation.</li></ol></section></div></template>
