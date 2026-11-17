@@ -39,18 +39,26 @@ export async function stockAction(action, payload = {}) {
 export function createSectionLoader() {
   const loaded = new Set();
   const pending = new Map();
+  let generation = 0;
   return {
     load(key, task) {
       if (loaded.has(key)) return Promise.resolve();
       if (pending.has(key)) return pending.get(key);
+      const started = generation;
       const current = Promise.resolve().then(task).then(result => {
-        loaded.add(key);
+        if (generation === started) loaded.add(key);
         return result;
-      }).finally(() => pending.delete(key));
+      }).finally(() => {
+        if (pending.get(key) === current) pending.delete(key);
+      });
       pending.set(key, current);
       return current;
     },
-    // Keep in-flight calls: refresh joins them instead of creating a duplicate.
-    clear() { loaded.clear(); },
+    clear() {
+      // Keep pending promises to join duplicate requests; prevent stale results
+      // from marking a section loaded after refresh.
+      generation += 1;
+      loaded.clear();
+    },
   };
 }
