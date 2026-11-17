@@ -134,6 +134,8 @@
   "report_master_api": "life_slimming.api.server_scripts.report_master_api.run",
   "roster_employees": "life_slimming.api.server_scripts.roster_employees.run",
   "life_stock_fast_requests": "life_slimming.api.server_scripts.life_stock_fast_requests.run",
+  "life_stock_request_controls": "life_slimming.api.server_scripts.life_stock_request_controls.run",
+  "life_item_master_control": "life_slimming.api.server_scripts.life_item_master_control.run",
   "stock_indent_360_api": "life_slimming.api.server_scripts.stock_indent_360_api.run",
   "create_po_from_indent360__0fdd830f": "life_slimming.api.server_scripts.create_po_from_indent360__0fdd830f.run",
   "create_client_request_complaint": "life_slimming.api.server_scripts.create_client_request_complaint.run",

@@ -109,13 +109,17 @@ function activity(event) {
     }
     return;
   }
-  if (event.data?.type !== "life-portal:loading" || event.data.module !== route.name || typeof event.data.busy !== "boolean") return;
+  if (event.data?.type !== "life-portal:loading" || event.data.module !== moduleName.value || typeof event.data.busy !== "boolean") return;
   receivedActivity = true;
   // Repeated activity must not reset the slow-request timer.
   if (busy.value !== event.data.busy) setLoading(event.data.busy);
 }
 window.addEventListener("message", activity);
 onUnmounted(() => { window.removeEventListener("message", activity); clearTimeout(loadWatchdog); finishLoading?.(); });
+const moduleName = computed(() => {
+  if (typeof route.query.module === "string") return route.query.module;
+  return route.name === "stock-native-dashboard" ? "stock" : route.name;
+});
 const source = computed(() => {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(route.query)) {
@@ -125,7 +129,7 @@ const source = computed(() => {
       }
     }
   }
-  query.set("module", typeof route.query.module === "string" ? route.query.module : route.name);
+  query.set("module", moduleName.value);
   query.set("embed", "1");
   return "/life_portal_module?" + query.toString();
 });

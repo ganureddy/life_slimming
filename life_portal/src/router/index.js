@@ -9,7 +9,7 @@ import portalPages from "../data/portalPages.json";
 import PortalSourcePage from "../pages/PortalSourcePage.vue";
 
 // The CC Dashboard uses native Vue tabs; other mapped modules retain their legacy pages.
-const nativeModules = new Set(["leads", "ccvisit"]);
+const nativeModules = new Set(["leads", "ccvisit", "stock"]);
 const keepLegacyModule = (id) => Boolean(portalPages[id]) && !nativeModules.has(id);
 
 const ccPages = {
@@ -151,6 +151,48 @@ export const routes = [
     path: "/stock-legacy", name: "stock-legacy",
     component: () => import("../pages/PortalSourcePage.vue"),
     meta: { title: "Stock dashboard legacy", accessModule: "stock" },
+  },
+  {
+    path: "/stock-native/dashboard", name: "stock-native-dashboard",
+    // Keep this canonical dashboard on the published live source until the
+    // Vue tabs reach full parity with the production Stock Dashboard.
+    component: () => import("../pages/PortalSourcePage.vue"),
+    meta: { title: "Stock Dashboard LIVE", accessModule: "stock" },
+  },
+  {
+    path: "/stock-native/requests", name: "stock-native-requests",
+    component: () => import("../pages/StockNativeRequestsPage.vue"),
+    meta: { title: "Stock Requests preview", accessModule: "stock" },
+  },
+  {
+    path: "/stock-native/reports", name: "stock-native-reports",
+    component: () => import("../pages/StockNativeReportsPage.vue"),
+    meta: { title: "Stock Reports preview", accessModule: "stock" },
+  },
+  {
+    path: "/stock-native/procurement", name: "stock-native-procurement",
+    component: () => import("../pages/StockNativeProcurementPage.vue"),
+    meta: { title: "Stock Purchasing preview", accessModule: "stock" },
+  },
+  {
+    path: "/stock-native/suppliers", name: "stock-native-suppliers",
+    component: () => import("../pages/StockNativeSuppliersPage.vue"),
+    meta: { title: "Stock Suppliers preview", accessModule: "stock" },
+  },
+  {
+    path: "/stock-native/intelligence", name: "stock-native-intelligence",
+    component: () => import("../pages/StockNativeIntelligencePage.vue"),
+    meta: { title: "Stock Intelligence preview", accessModule: "stock" },
+  },
+  {
+    path: "/stock-native/checklist", name: "stock-native-checklist",
+    component: () => import("../pages/StockNativeChecklistPage.vue"),
+    meta: { title: "Stock Check List preview", accessModule: "stock" },
+  },
+  {
+    path: "/stock-native/receipts", name: "stock-native-receipts",
+    component: () => import("../pages/StockNativeReceiptsPage.vue"),
+    meta: { title: "Stock Branch Receipts preview", accessModule: "stock" },
   },
   {
     path: "/native/pricelist", name: "pricelist-native",

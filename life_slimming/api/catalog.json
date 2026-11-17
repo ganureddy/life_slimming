@@ -1,7 +1,7 @@
 {
   "source": "ERP Portal / Server Script",
   "exported_on": "2026-09-19",
-  "count": 152,
+  "count": 154,
   "endpoints": [
     {
       "id": "accounts_command_centre_coa",
@@ -3459,6 +3459,34 @@
         "Employee"
       ],
       "notes": []
+    },
+    {
+      "id": "life_stock_request_controls",
+      "source_name": "LIFE Stock Request Controls API",
+      "legacy_method": "life_stock_request_controls",
+      "method": "life_slimming.api.server_scripts.life_stock_request_controls.run",
+      "source_modified": "2026-11-17",
+      "source_sha256": "05af17963adb266322d70fa8966a9d0440c938e81a41907aefd414ebc476de75",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": ["POST"],
+      "parameters": [],
+      "doctypes": ["LIFE Stock Request Settings"],
+      "notes": ["Ported from the live stock-dashboard dependency on 2026-11-17."]
+    },
+    {
+      "id": "life_item_master_control",
+      "source_name": "LIFE Item Master Control API",
+      "legacy_method": "life_item_master_control",
+      "method": "life_slimming.api.server_scripts.life_item_master_control.run",
+      "source_modified": "2026-11-17",
+      "source_sha256": "2afcb99848356b527812ddc19d44e47cabddc4773056f2e0452c04c10526d090",
+      "allow_guest": false,
+      "source_allow_guest": false,
+      "http_methods": ["POST"],
+      "parameters": ["action", "items"],
+      "doctypes": ["Bin", "Consumed Items Details", "Has Role", "Item", "Item Alternative", "Item Group", "LIFE Stock Request Settings", "Therapy Main Category", "Therapy Type", "User", "Warehouse"],
+      "notes": ["Ported from the live stock-dashboard dependency on 2026-11-17; writes require Stock Manager or System Manager."]
     },
     {
       "id": "life_stock_fast_requests",
