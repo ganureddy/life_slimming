@@ -1,41 +1,57 @@
 import { request } from './http';
 import { session } from '../lib/session';
 
-// All Stock tabs share this gateway. Join identical requests while one is
-// already in flight so mounting a page plus its tab does not hit Frappe twice.
+// Deduplicate identical concurrent requests. Do not cache business data here:
+// approvals, receipts and stock balances must always be refreshable.
 const inFlight = new Map();
+const CONTEXT_TTL_MS = 60_000;
 let contextCache = null;
 let contextCacheAt = 0;
+let contextUser = '';
+
+export function invalidateStockContext() {
+  contextCache = null;
+  contextCacheAt = 0;
+  contextUser = '';
+}
 
 export async function stockAction(action, payload = {}) {
-  if (action === 'get_context' && contextCache && Date.now() - contextCacheAt < 60_000) {
+  const actionName = String(action || '').trim();
+  const user = String(session.user || session.user_id || '');
+  if (actionName === 'get_context' && contextCache &&
+      contextUser === user && Date.now() - contextCacheAt < CONTEXT_TTL_MS) {
     return contextCache;
   }
+
   const payloadJson = JSON.stringify(payload || {});
-  const key = `${String(action || '').trim()}:${payloadJson}`;
+  const key = `${user}:${actionName}:${payloadJson}`;
   if (inFlight.has(key)) return inFlight.get(key);
 
   const task = request('life_stock_fast_requests', {
-    args: { action, payload: payloadJson },
+    args: { action: actionName, payload: payloadJson },
     csrfToken: session.csrf_token,
   }).then(response => {
     const result = response?.message;
     if (!result || result.ok === false) {
       throw new Error(result?.message || 'Stock service returned an invalid response.');
     }
-    if (action === 'get_context') {
+    if (actionName === 'get_context') {
       contextCache = result;
       contextCacheAt = Date.now();
+      contextUser = user;
     }
     return result;
   }).finally(() => {
-    inFlight.delete(key);
+    if (inFlight.get(key) === task) inFlight.delete(key);
   });
 
   inFlight.set(key, task);
   return task;
 }
 
+// Each dashboard section is loaded once until a deliberate refresh.
+// In-flight work is joined rather than repeated. The generation counter stops
+// old work from marking a newly refreshed section as already loaded.
 export function createSectionLoader() {
   const loaded = new Set();
   const pending = new Map();
@@ -46,7 +62,7 @@ export function createSectionLoader() {
       if (pending.has(key)) return pending.get(key);
       const started = generation;
       const current = Promise.resolve().then(task).then(result => {
-        if (generation === started) loaded.add(key);
+        if (started === generation) loaded.add(key);
         return result;
       }).finally(() => {
         if (pending.get(key) === current) pending.delete(key);
@@ -55,10 +71,10 @@ export function createSectionLoader() {
       return current;
     },
     clear() {
-      // Keep pending promises to join duplicate requests; prevent stale results
-      // from marking a section loaded after refresh.
       generation += 1;
       loaded.clear();
+      // Keep pending requests so refresh joins them, rather than duplicating
+      // their API calls. Their completion will not mark the new generation loaded.
     },
   };
 }
