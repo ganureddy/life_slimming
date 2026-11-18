@@ -31,7 +31,7 @@ const rows = ref([]), total = ref(0), page = ref(1), more = ref(false), searchin
 const queueOwner=ref('');
 const activeQuickRange=ref('today');
 const tlCollapsed=ref(false);
-const queueFlag=ref(''),journeys=ref({}),journeyError=ref(''),journeyLoading=ref(false);
+const queueFlag=ref(''),queueFlags=ref([]),journeys=ref({}),journeyError=ref(''),journeyLoading=ref(false);
 
 let journeyGeneration=0;
 onBeforeUnmount(()=>journeyGeneration++);
@@ -162,6 +162,12 @@ function tileNextAction(row){
   return action?(row.custom_next_followup_date?`${action} ${tileDate(row.custom_next_followup_date,true)}`:action):'';
 }
 function openTile(kind){
+  if(kind==='untouched'){
+    queueFlag.value='';
+    queueStatus.value='UNTOUCHED';
+    showView('queue');
+    return;
+  }
   const created=rows.value.filter(row=>createdIds.value.has(row.name));
   const apptToday=row=>String(row.custom_appointment_date_and_time||'').slice(0,10)===todayISO;
   const createdToday=row=>String(row.creation||'').slice(0,10)===todayISO;
@@ -352,7 +358,7 @@ const columns = [
 ];
 const queuePageRows=computed(()=>searching.value?visibleLeads.value:visibleLeads.value.slice((page.value-1)*10,page.value*10));
 const pages = computed(() => searching.value ? page.value + (more.value ? 1 : 0) : Math.max(1, Math.ceil(visibleLeads.value.length / 10)));
-const visibleLeads=computed(()=>rows.value.filter(row=>matchesJourney(journeys.value[row.name],queueFlag.value)&&matrixMatches(row)&&(!queueStatus.value||(row.custom_cc_stage||row.status)===queueStatus.value)&&(!queueOwner.value||row.lead_owner===queueOwner.value)&&(!queueSubStatus.value||(queueSubStatus.value==='No Response / Not Reachable'?['No Response','Not Reachable'].includes(row.custom_cc_sub_status):row.custom_cc_sub_status===queueSubStatus.value))&&(!queueCategory.value||String(row.custom_treatment_interests||'').toLowerCase().includes(queueCategory.value.toLowerCase()))&&(!queueSearch.value.trim()||[row.name,row.lead_name,row.mobile_no,row.branch,row.lead_owner].some(v=>String(v||'').toLowerCase().includes(queueSearch.value.trim().toLowerCase())))));
+const visibleLeads=computed(()=>rows.value.filter(row=>matchesJourney(journeys.value[row.name],queueFlag.value)&&(!queueFlags.value.length||queueFlags.value.some(flag=>matchesJourney(journeys.value[row.name],flag)))&&matrixMatches(row)&&(!queueStatus.value||(row.custom_cc_stage||row.status)===queueStatus.value)&&(!queueOwner.value||row.lead_owner===queueOwner.value)&&(!queueSubStatus.value||(queueSubStatus.value==='No Response / Not Reachable'?['No Response','Not Reachable'].includes(row.custom_cc_sub_status):row.custom_cc_sub_status===queueSubStatus.value))&&(!queueCategory.value||String(row.custom_treatment_interests||'').toLowerCase().includes(queueCategory.value.toLowerCase()))&&(!queueSearch.value.trim()||[row.name,row.lead_name,row.mobile_no,row.branch,row.lead_owner].some(v=>String(v||'').toLowerCase().includes(queueSearch.value.trim().toLowerCase())))));
 // Capture applied filters so changing a draft cannot mix pagination cohorts.
 watch([queueOwner,queueStatus,queueSubStatus,queueCategory,queueSearch],()=>{if(!searching.value)page.value=1;});
 watch(salesClientSearch,()=>salesClientPage.value=1);
@@ -574,7 +580,11 @@ async function saveFollowup(payload) {
     const values={...leadDraft.value,custom_cc_stage:stage,custom_cc_sub_status:outcome,custom_treatment_interests:(selectedCategories.value.length?selectedCategories.value:[...existingInterests,...existingEnquiries]).filter(Boolean).join('; '),custom_specific_interests:selectedInterests.value.join('; '),custom_next_followup_date:followup.value.next_followup,custom_conclusion_remark:followup.value.conclusion,custom_remarks:followup.value.remarks+"\n[CC_PROFILE_V1]"+JSON.stringify(payload.profile)+"[/CC_PROFILE_V1]"};
     if(actionType.value==='book'&&appointmentBranch&&!values.branch) values.branch=appointmentBranch;
     if(payload.result==='Not Connected'&&['No Response','Not Response','Not Reachable','Switch OFF','TNA','Call Disconnected','Appointment no response','Busy','Not Lifted'].includes(payload.reason||outcome)) {
-      const result=await ccCore('attempt',{lead:detail.value.name,reason:payload.reason||outcome,expected_modified:detail.value.modified,remarks:values.custom_remarks});
+      const isNoResponse=['No Response','Not Response'].includes(payload.reason||outcome);
+      const due=followup.value.next_followup?new Date(followup.value.next_followup):null;
+      if(isNoResponse&&(!due||Number.isNaN(due.getTime()))){actionError.value='Choose the next call date and time for No Response.';return;}
+      if(isNoResponse&&due.getTime()>Date.now()+24*60*60*1000){actionError.value='For No Response, schedule the next call within 24 hours.';return;}
+      const result=await ccCore('attempt',{lead:detail.value.name,reason:payload.reason||outcome,next_followup:followup.value.next_followup,expected_modified:detail.value.modified,remarks:values.custom_remarks});
       actionNotice.value=`Call attempt saved · ${result.streak} in a row · retry ${result.next_followup}${result.tl_review?' · TL review required':''}`;
       showSaveToast(actionNotice.value);
       stopCall();
@@ -656,7 +666,7 @@ provide(ccDashboardKey, reactive({
   repeatWebsiteRows, myLeads, openTile, stageCounts, agentRows, appointmentRows, recoveryFlags,
   openRecovery, dashQueueRows, reminderRows, reminderBuckets, dashboardGroups, convertedRows, sameDayAppointments,
   olderLeadAppointments, sameDayConverted, olderConverted, showView, openDetail, load,
-  journeyFlags, page, searching, queueOwner, queueFlag, matrixFilter, queueStatus,
+  journeyFlags, page, searching, queueOwner, queueFlag, queueFlags, matrixFilter, queueStatus,
   queueCategory, queueSubStatus, queueSearch, applied, viewLead, callOutcomes, treatmentCategories, agentName,
   queuePageRows, pages, visibleLeads, filters, assignOwners, assignRecipients, query,
   sourceCounts, columns, enquiryDate, enquiryLabel, stages, apply,

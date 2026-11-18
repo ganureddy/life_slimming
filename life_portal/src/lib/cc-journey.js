@@ -1,5 +1,5 @@
 export const milestoneNames = ['New','Contacted','Interested','Appointment Booked','Appointment Missed','Visited','Visited - Not Booked','Booked - Payment Pending','Joined Client'];
-export const journeyFlags = [['','All flags'],...milestoneNames.map(value=>[value,value]),['closed','Closed'],['failed','Last call failed'],['unreachable','Unreachable 3+'],['overdue','Follow-up overdue']];
+export const journeyFlags = [['','All flags'],...milestoneNames.map(value=>[value,value]),['Visited & Booked','Visited & Booked'],['closed','Closed'],['failed','Last call failed'],['unreachable','Unreachable 3+'],['overdue','Follow-up overdue']];
 export function matchesJourney(summary, flag, now = Date.now()) {
   if (!flag) return true;
   if (!summary) return false;
@@ -7,6 +7,11 @@ export function matchesJourney(summary, flag, now = Date.now()) {
   if (flag === 'failed') return !!summary.last_call_result && summary.last_call_result !== 'Connected';
   if (flag === 'unreachable') return Number(summary.unreachable_streak) >= 3;
   if (flag === 'overdue') return !!summary.next_action_due && new Date(summary.next_action_due.replace(' ', 'T') + '+05:30').getTime() < now;
+  // Appointment status is authoritative for a completed visit. The journey
+  // milestone may advance to payment-pending or joined after the visit.
+  if (flag === 'Visited & Booked') return summary.appt_status === 'Visited Booked';
+  // Callback/Get Back are work actions, not the main Interested status.
+  if (flag === 'Interested') return summary.milestone === 'Interested' && !['Callback: Scheduled', 'Get Back'].includes(summary.sub_status);
   return summary.milestone === flag;
 }
 export function parseLeadCsv(text) {

@@ -541,6 +541,15 @@ def run(**kwargs):
         t = get_track(lead)
         streak = int(t.get("unreachable_streak") or 0) + 1
         nf = fd.get("next_followup")
+        # A No Response disposition must have a concrete retry within one day.
+        # The portal asks the agent for this time; keep the same guarantee for
+        # other callers of this endpoint.
+        if reason in ["No Response", "Not Response"] and nf:
+            requested_retry = dt(nf)
+            if not requested_retry:
+                frappe.throw("Choose the next call date and time for No Response.")
+            if requested_retry > frappe.utils.add_to_date(now, hours=24):
+                frappe.throw("For No Response, schedule the next call within 24 hours.")
         appt_dt = dt(d.get("custom_appointment_date_and_time"))
         if not nf:
             nf = retry_time(streak)

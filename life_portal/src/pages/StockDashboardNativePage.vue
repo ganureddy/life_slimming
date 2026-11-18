@@ -17,6 +17,7 @@ import StockControlPanel from '../components/stock/StockControlPanel.vue';
 import StockBuyingPriceModal from '../components/stock/modals/StockBuyingPriceModal.vue';
 import StockNextOrdersModal from '../components/stock/modals/StockNextOrdersModal.vue';
 import StockHelpModal from '../components/stock/modals/StockHelpModal.vue';
+import StockBranchViewModal from '../components/stock/modals/StockBranchViewModal.vue';
 import StockSpecialClientPicker from '../components/stock/forms/StockSpecialClientPicker.vue';
 import StockAdvanceDeclarations from '../components/stock/forms/StockAdvanceDeclarations.vue';
 import StockSpecialTherapySelector from '../components/stock/forms/StockSpecialTherapySelector.vue';
@@ -63,19 +64,31 @@ const reportFrom = ref(inputDate(new Date())), reportTo = ref(inputDate(new Date
 const expanded = ref('');
 const currentTime = ref(new Date());
 const activeStockModal = ref('');
+const branchViewModalOpen = ref(false);
+const activeBranchScope = ref(null);
 let clockTimer;
 let controller;
 const sectionLoader = createSectionLoader();
 
-const isHo = computed(() => Boolean(context.value?.is_ho));
+const BRANCH_SCOPES = [
+  ['CN','Chandanagar'], ['SRN','S R Nagar'], ['MP','Madhapur'], ['BH','Banjara Hills'], ['HN','Himayathnagar'], ['DN','Dilsukhnagar'], ['GB','Gachibowli'], ['VW','Vijayawada'], ['VZ','Vizag'], ['NLR','Nellore'], ['KP','Kukatpally'],
+];
+const normalizeBranchKey = value => String(value || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '');
+const isHo = computed(() => Boolean(context.value?.is_ho) && !activeBranchScope.value);
 const isStockManager = computed(()=>isHo.value||Boolean(context.value?.roles?.some(role=>['Stock Manager','System Manager'].includes(role))));
-const allowedWarehouses = computed(()=> (context.value?.allowed_warehouses||[]).map(row=>typeof row==='string'?row:row?.name).filter(Boolean));
+const canSwitchDashboardView = computed(() => Boolean(context.value?.roles?.some(role => ['Stock Manager','System Manager'].includes(role))));
+const allAllowedWarehouses = computed(()=> (context.value?.allowed_warehouses||[]).map(row=>typeof row==='string'?row:row?.name).filter(Boolean));
+const branchScopes = computed(() => BRANCH_SCOPES.map(([code, name]) => ({
+  code, name,
+  warehouses: allAllowedWarehouses.value.filter(warehouse => normalizeBranchKey(warehouse).includes(normalizeBranchKey(name)) || normalizeBranchKey(warehouse).includes(normalizeBranchKey(code))),
+})).filter(scope => scope.warehouses.length));
+const allowedWarehouses = computed(()=> activeBranchScope.value?.warehouses || allAllowedWarehouses.value);
 // Matches the two navigation bars in the live Frappe page. The underlying
 // view ids stay stable so existing actions and API loaders are unchanged.
 const navItems = computed(() => isHo.value
   ? [['dashboard','🏢 Dashboard'],['intelligence','📈 Stock Intelligence'],['requests','📥 Requests & Approvals'],['reports','📑 Reports'],['procurement','📦 Purchase Order'],['procurement-receipt','📥 Purchase Receipt'],['procurement-invoice','🧾 Purchase Invoice'],['suppliers','🏷️ Suppliers']]
   : [['dashboard','📊 Dashboard'],['material-requests','📝 Material Requests'],['balance','📋 Stock Balance'],['checklist','✅ Check List'],['reports','📑 Reports'],['new-request','📦 Stock Request']]);
-const branchName = computed(() => context.value?.branch || 'Branch not assigned');
+const branchName = computed(() => activeBranchScope.value?.name || context.value?.branch || 'Branch not assigned');
 const requests = computed(() => requestData.value?.rows || []);
 const visibleRequests = computed(() => {
   const query = requestQuery.value.trim().toLowerCase();
@@ -133,6 +146,11 @@ const specialConsumableTotal = computed(()=>selectedSpecialConsumables.value.red
 async function loadContext() {
   const result=await stockAction('get_context');
   context.value=result;
+  if (!activeBranchScope.value && typeof window !== 'undefined') {
+    const savedCode = window.localStorage.getItem('life_stock_vue_selected_branch');
+    const savedScope = branchScopes.value.find(scope => scope.code === savedCode);
+    if (savedScope && canSwitchDashboardView.value) activeBranchScope.value = savedScope;
+  }
 }
 async function loadMonthlyIndentAccess(){try{const response=await request('life_monthly_indent_access',{args:{action:'get'},csrfToken:session.csrf_token});monthlyIndentException.value=Number(response?.message?.enabled||0)===1;}catch{monthlyIndentException.value=false;}}
 async function loadDashboardInventory(){
@@ -152,7 +170,7 @@ async function loadDashboardInventory(){
 async function loadRequests() {
   loading.value=true; error.value='';
   try {
-    const result=await stockAction('list_requests',{view:isHo.value?'ho':'branch',branch:context.value?.branch||'',group:requestGroup.value,page:page.value,page_size:100,limit:500});
+    const result=await stockAction('list_requests',{view:isHo.value?'ho':'branch',branch:activeBranchScope.value?.name||context.value?.branch||'',group:requestGroup.value,page:page.value,page_size:100,limit:500});
     requestData.value=result;
     for (const row of result.rows||[]) {
       if (!approvalQty.value[row.name]) approvalQty.value[row.name]=Object.fromEntries((row.items||[]).map(item=>[item.name||item.item_code,Number(item.custom_approved_qty??item.qty??0)]));
@@ -502,9 +520,26 @@ function setView(name) {
 }
 function closeOpenModals() {
   activeStockModal.value = '';
+  branchViewModalOpen.value = false;
   supplierDetail.value = null;
   itemEditor.value.open = false;
   reconciliationDetails.value = Object.fromEntries(Object.entries(reconciliationDetails.value).map(([key, value]) => [key, {...value, open: false}]));
+}
+function selectDashboardView(view) {
+  if (!canSwitchDashboardView.value) return;
+  if (view === 'ho') {
+    activeBranchScope.value = null;
+    window.localStorage.removeItem('life_stock_vue_selected_branch');
+    refresh();
+    return;
+  }
+  branchViewModalOpen.value = true;
+}
+function selectBranchScope(scope) {
+  activeBranchScope.value = scope;
+  branchViewModalOpen.value = false;
+  window.localStorage.setItem('life_stock_vue_selected_branch', scope.code);
+  refresh();
 }
 function openStockModal(name) {
   activeStockModal.value = name;
@@ -560,7 +595,7 @@ onBeforeUnmount(()=>{controller?.abort();if(clockTimer)window.clearInterval(cloc
 
 <template>
   <main class="stock-native" @keydown.esc="closeOpenModals">
-    <StockDashboardHeader :is-ho="isHo" :branch-name="branchName" :employee-name="context?.employee?.employee_name||context?.user" :refreshing="loading||dashboardInventoryLoading" :current-time="currentTime" @refresh="refresh" @settings="openStockModal('settings')" />
+    <StockDashboardHeader :is-ho="isHo" :branch-name="branchName" :employee-name="context?.employee?.employee_name||context?.user" :refreshing="loading||dashboardInventoryLoading" :current-time="currentTime" :can-switch-view="canSwitchDashboardView" @refresh="refresh" @select-view="selectDashboardView" @settings="openStockModal('settings')" />
     <StockDashboardToolbar :next-orders="(procurementData['Purchase Order'] || []).filter(row => Number(row.docstatus) !== 2 && Number(row.per_received || 0) < 100).length" @next-orders="openStockModal('next-orders')" @search-client="openStockModal('search-client')" @buying-price="openStockModal('buying-price')" @help="openStockModal('help')" @print-section="window.print()" @print-all="window.print()" />
     <StockOperationsStrip />
     <StockDashboardTabs :active="view" @select="setView" />
@@ -629,6 +664,7 @@ onBeforeUnmount(()=>{controller?.abort();if(clockTimer)window.clearInterval(cloc
     <StockBuyingPriceModal :open="activeStockModal==='buying-price'" @close="activeStockModal=''" />
     <StockNextOrdersModal :open="activeStockModal==='next-orders'" :orders="procurementData['Purchase Order'] || []" :loading="procurementLoading" @refresh="loadProcurement" @close="activeStockModal=''" />
     <StockHelpModal :open="activeStockModal==='help'" @close="activeStockModal=''" />
+    <StockBranchViewModal :open="branchViewModalOpen" :branches="branchScopes" :selected-code="activeBranchScope?.code || ''" @close="branchViewModalOpen=false" @select="selectBranchScope" />
     <StockSearchClientModal :open="activeStockModal==='search-client'" :rows="dashboardBins" @close="activeStockModal=''" @select="dashboardQuery=$event.item_code;activeStockModal=''" />
     <StockControlPanel :open="activeStockModal==='settings'" @close="activeStockModal=''" />
   </main>
