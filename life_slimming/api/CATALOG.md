@@ -147,6 +147,8 @@ Read `MIGRATION.md` for missing local schema and explicit behavior changes.
 | [report_master_api](server_scripts/report_master_api.py) | `report_master_api` | No |  |
 | [roster_employees](server_scripts/roster_employees.py) | `roster_employees` | No |  |
 | [life_stock_fast_requests](server_scripts/life_stock_fast_requests.py) | `life_stock_fast_requests` | No |  |
+| [life_stock_request_controls](server_scripts/life_stock_request_controls.py) | `life_stock_request_controls` | No | Live stock-dashboard settings dependency. |
+| [life_item_master_control](server_scripts/life_item_master_control.py) | `life_item_master_control` | No | Live Stock Control Panel item workflow; manager writes only. |
 | [stock_indent_360_api](server_scripts/stock_indent_360_api.py) | `stock_indent_360_api` | No |  |
 | [create_po_from_indent360__0fdd830f](server_scripts/create_po_from_indent360__0fdd830f.py) | `create_po_from_indent360` | No | Duplicate original API method: use this explicit local endpoint; no ambiguous alias. |
 | [create_client_request_complaint](server_scripts/create_client_request_complaint.py) | `create_client_request_complaint` | No |  |

@@ -89,6 +89,7 @@
   .cc-erp-root #page-followup .cc-bar-actions{min-width:0}
 }
 .cc-erp-root .lcx-hdr{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;font-size:12px;align-items:center}
+.cc-erp-root #followup-lead-banner.wf-banner-v3 .wf-age{width:104px!important;height:104px!important;font-size:12px!important}.cc-erp-root #followup-lead-banner.wf-banner-v3 .wf-age b{font-size:18px!important;line-height:1.15!important}.cc-erp-root #followup-lead-banner.wf-banner-v3 .wf-age i{font-size:10px!important}
 .cc-erp-root .lcx-hdr .h{border:1px solid #e3dccb;background:#fff;border-radius:8px;padding:3px 9px;white-space:normal}
 .cc-erp-root .lcx-hdr .h b{font-weight:700}
 .cc-erp-root .lcx-hdr .k{color:#777;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;margin-right:3px}

@@ -122,6 +122,8 @@
   transition:background .16s var(--ease),border-color .16s var(--ease),box-shadow .16s var(--ease);
 }
 .cc-erp-root .search-wrap input::placeholder{color:rgba(217,236,226,.68);font-weight:400;opacity:1}
+.cc-erp-root input#global-search,.cc-erp-root input#global-search:hover,.cc-erp-root input#global-search:focus{color:#fff!important;-webkit-text-fill-color:#fff!important;caret-color:#fff!important}
+.cc-erp-root #global-search:-webkit-autofill,.cc-erp-root #global-search:-webkit-autofill:hover,.cc-erp-root #global-search:-webkit-autofill:focus{-webkit-text-fill-color:#fff!important;caret-color:#fff;box-shadow:0 0 0 1000px #1b5b3d inset!important}
 .cc-erp-root .search-wrap input:hover{background:rgba(255,255,255,.14)}
 .cc-erp-root .search-wrap input:focus{
   border-color:var(--gold-l);background:rgba(255,255,255,.17);
@@ -375,6 +377,13 @@
 .cc-erp-root .s-red{background:linear-gradient(120deg,var(--crit-bg) 0%,#fff 62%)}
 .cc-erp-root .s-teal::before{background:linear-gradient(180deg,var(--teal),var(--teal-l))}
 .cc-erp-root .s-teal{background:linear-gradient(120deg,#E4F4F1 0%,#fff 62%)}
+.cc-erp-root .s-light::before{background:linear-gradient(180deg,#94A3B8,#CBD5E1)}
+.cc-erp-root .s-light{background:linear-gradient(120deg,#F1F5F9 0%,#fff 62%)}
+.cc-erp-root .cc-main-status-filter{position:relative;min-width:220px;border:1px solid var(--line,#d8d1c3);border-radius:10px;background:#fff;padding:10px 12px}
+.cc-erp-root .cc-main-status-filter summary{cursor:pointer;font-weight:700;color:var(--ink,#18352c)}
+.cc-erp-root .cc-main-status-filter>div{position:absolute;z-index:10;top:calc(100% + 6px);left:0;min-width:280px;padding:10px;background:#fff;border:1px solid var(--line,#d8d1c3);border-radius:10px;box-shadow:var(--sh-2)}
+.cc-erp-root .cc-main-status-filter label{display:block;padding:6px 4px;cursor:pointer;white-space:nowrap}
+.cc-erp-root .cc-masked-phone{border:0;background:none;padding:0;color:inherit;font:inherit;cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px}
 
 /* grouped drill-down tile */
 .cc-erp-root .stat-card.grp-card{border-style:dashed;border-color:var(--line-gg);background:var(--mint)}

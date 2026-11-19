@@ -57,12 +57,12 @@ async function initialize(){await action(async()=>{
   const boot=await billingCall('lifescc_billing_bootstrap');
   const scope=billingBranches(boot);if(!boot.modes?.some(m=>/razorpay/i.test(m.name)))boot.modes=[...(boot.modes || []),{name:'Razorpay Software Pvt Ltd -Link',type:'Bank'}];boot.modes.sort((a,b)=>(a.name==='Cash'?-1:b.name==='Cash'?1:/razorpay/i.test(a.name)?-1:/razorpay/i.test(b.name)?1:a.name.localeCompare(b.name)));bootstrap.value=boot;branches.value=scope.branches;headOffice.value=scope.headOffice;branch.value=scope.selected;
   if(!['billing','collections'].includes(view.value))await loadList();
-  if(route.query.invoice)openInvoice(String(route.query.invoice));refreshCounts();
+  if(route.query.invoice)openInvoice(String(route.query.invoice));refreshCounts({pending:view.value!=='billing'});
 });
 // Stock receipts are reminders only in the current Billing implementation.
 if(bootstrap.value){try{bootstrap.value.offers=await refreshBillingOffers(bootstrap.value.offers || [],indiaStamp().slice(0,10));}catch{offerWarning.value='Using bootstrap offers; live pricing rule refresh was unavailable.';}}
 if(bootstrap.value)try{const result=await billingCall('life_stock_fast_requests',{action:'billing_receipt_gate',payload:'{}'});stockReceipts.value=(result.overdue_receipts || []).filter(r=>!r.release_date || String(r.release_date)>='2026-08-01');if(stockReceipts.value.length)warning.value='Overdue stock receipts need attention. Billing remains available.';}catch{warning.value='Stock receipt reminder could not be checked.';}}
-function switchView(id){if(busy.value)return;cancelSearch();notice.value='';client.value=null;view.value=id;invoice.value='';editing.value=false;registering.value=false;status.value='';listQuery.value='';[from.value,to.value]=dateRange(id==='recent'?'today':'month');router.replace({query:{...route.query,view:id,invoice:undefined}});if(!['billing','collections'].includes(id))action(()=>loadList());}
+function switchView(id){if(busy.value)return;cancelSearch();notice.value='';client.value=null;view.value=id;invoice.value='';editing.value=false;registering.value=false;status.value='';listQuery.value='';[from.value,to.value]=dateRange(id==='recent'?'today':'month');router.replace({query:{...route.query,view:id,invoice:undefined}});refreshCounts({pending:id!=='billing'});if(!['billing','collections'].includes(id))action(()=>loadList());}
 function resetDates(){[from.value,to.value]=dateRange('month');action(()=>loadList());}
 function recentPreset(id){[from.value,to.value]=recentBillingRange(id,indiaStamp().slice(0,10));action(()=>loadList());}
 function cancelSearch(){clearTimeout(searchTimer);searchGeneration++;searchController?.abort();searching.value=false;clients.value=[];searchPerformed.value=false;}
@@ -88,7 +88,7 @@ function queueSearch(){cancelSearch();if(query.value.trim().length>=3)searchTime
 function backToSearch(){cancelSearch();client.value=null;rows.value=[];clientTotals.value=null;query.value='';}
 function openInvoice(name,action=''){if(!name)return;invoiceAction.value=action;invoice.value=name;}
 function viewInvoiceBill(name){if(!name)return;window.open(invoicePrintViewUrl(name,bootstrap.value?.latest_invoice_print_format || 'Consultaion Patient Sales Invoice'),'_blank','noopener,noreferrer');}
-async function refreshCounts(){const token=++countGeneration;try{const [pending,approvals]=await Promise.all([billingCall('frappe.client.get_count',{doctype:'Sales Invoice',filters:[['docstatus','=',1],['outstanding_amount','>',0],...scopeFilters.value]}),billingCall('frappe.client.get_count',{doctype:'Discount Approval Request',filters:[['status','=','Pending'],...scopeFilters.value]})]);if(token===countGeneration)counts.value={pending:Number(pending),approvals:Number(approvals)};}catch{if(token===countGeneration)counts.value={pending:null,approvals:null};}}
+async function refreshCounts({pending=true}={}){const token=++countGeneration;try{const approvals=billingCall('frappe.client.get_count',{doctype:'Discount Approval Request',filters:[['status','=','Pending'],...scopeFilters.value]});const due=pending?billingCall('frappe.client.get_count',{doctype:'Sales Invoice',filters:[['docstatus','=',1],['outstanding_amount','>',0],...scopeFilters.value]}):null;const [approvalCount,pendingCount]=await Promise.all([approvals,due]);if(token===countGeneration)counts.value={pending:pending?Number(pendingCount):counts.value.pending,approvals:Number(approvalCount)};}catch{if(token===countGeneration)counts.value={pending:pending?null:counts.value.pending,approvals:null};}}
 function selectClient(name){cancelSearch();return action(async()=>{
   client.value=null;rows.value=[];clientTotals.value=null;editing.value=false;registering.value=false;
   const filters=[['patient','=',name],...scopeFilters.value];
@@ -105,8 +105,8 @@ function created(name){invoiceAction.value='';editing.value=false;invoice.value=
 function closeInvoice(){invoice.value='';if(client.value && view.value==='billing')selectClient(client.value.name);if(route.query.invoice)router.replace({query:{...route.query,invoice:undefined}});}
 watch(()=>route.query.invoice,name=>{invoice.value=name?String(name):'';});
 watch(()=>route.query.view,id=>{const next=tabs.some(([key])=>key===id)?id:'billing';if(next!==view.value)switchView(next);});
-function changed(){refreshCounts();overviewVersion.value++;notice.value='Billing records updated.';if(view.value!=='billing' && view.value!=='collections')action(()=>loadList());}
-function changeBranch(){cancelSearch();notice.value='';refreshCounts();client.value=null;invoice.value='';editing.value=false;registering.value=false;clients.value=[];if(!['billing','collections'].includes(view.value))action(()=>loadList());}
+function changed(){refreshCounts({pending:view.value!=='billing'});overviewVersion.value++;notice.value='Billing records updated.';if(view.value!=='billing' && view.value!=='collections')action(()=>loadList());}
+function changeBranch(){cancelSearch();notice.value='';counts.value={pending:null,approvals:null};refreshCounts({pending:view.value!=='billing'});client.value=null;invoice.value='';editing.value=false;registering.value=false;clients.value=[];if(!['billing','collections'].includes(view.value))action(()=>loadList());}
 onMounted(initialize);onBeforeUnmount(()=>{generation++;countGeneration++;cancelSearch();controller?.abort();});
 </script>
 <template>

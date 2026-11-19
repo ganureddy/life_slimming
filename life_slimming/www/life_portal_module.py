@@ -30,6 +30,35 @@ def adapt_source(code, name):
         # The current source omits its old clock element but still updates it.
         code = code.replace('portalElementById("clk").textContent=',
                             'if (portalElementById("clk")) portalElementById("clk").textContent=')
+    if name == "stock-dashboard":
+        # The header may run before the optional gateway helper is registered.
+        # Use Frappe's native call as a safe equivalent in that short window;
+        # otherwise the missing helper aborts the entire stock page.
+        code = code.replace(
+            "window.LifeStockGateway.compat({",
+            "(window.LifeStockGateway && typeof window.LifeStockGateway.compat === 'function' "
+            "? window.LifeStockGateway.compat : frappe.call)({",
+        )
+        # The dashboard can initialise two visual blocks at nearly the same
+        # time. Coalesce identical gateway calls while one is in progress;
+        # this is intentionally in-flight only, so completed reads are never
+        # stale after a stock mutation.
+        code = code.replace(
+            'async function invoke(method,args,options){',
+            'var lifeStockInFlightInvokes={};\n'
+            'async function invoke(method,args,options){\n'
+            'var lifeStockInvokeKey=String(method||"")+"::"+JSON.stringify(args||{});\n'
+            'if(lifeStockInFlightInvokes[lifeStockInvokeKey]){return lifeStockInFlightInvokes[lifeStockInvokeKey];}\n'
+            'var lifeStockInvokePromise=(async function(){',
+        ).replace(
+            'return result.data;\n}\n\nfunction compat(options){',
+            'return result.data;\n'
+            '})().finally(function(){delete lifeStockInFlightInvokes[lifeStockInvokeKey];});\n'
+            'lifeStockInFlightInvokes[lifeStockInvokeKey]=lifeStockInvokePromise;\n'
+            'return lifeStockInvokePromise;\n'
+            '}\n\nfunction compat(options){',
+            1,
+        )
     return code
 
 
@@ -37,7 +66,25 @@ def adapt_source(code, name):
 def prepared_source(path, modified_ns):
     """Cache only static page markup; file timestamps invalidate edited sources."""
     source = json.loads(Path(path).read_text())
+    if source["name"] == "stock-dashboard":
+        # Stock is still being migrated from the published ERP Web Page. Read
+        # the current approved page so the native migration always compares
+        # against the live design, while retaining the checked-in export as a
+        # safe fallback for development/offline environments.
+        try:
+            live = frappe.get_doc("Web Page", "stock-dashboard")
+            if live.published and live.main_section_html:
+                source.update({
+                    "modified": str(live.modified),
+                    "title": live.title or source["title"],
+                    "html": live.main_section_html,
+                    "css": live.css or "",
+                    "javascript": live.javascript or "",
+                })
+        except Exception:
+            pass
     soup = BeautifulSoup(adapt_source(source["html"], source["name"]), "html.parser")
+    source["javascript"] = adapt_source(source.get("javascript", ""), source["name"])
     scripts = []
     for script in soup.find_all("script"):
         scripts.append(str(script))
@@ -68,7 +115,15 @@ def get_context(context):
         frappe.local.flags.redirect_location = "/life_portal/" + quote(module, safe="") + ("?" + query if query else "")
         raise frappe.Redirect(http_status_code=302)
     source_path = root / "portal_pages" / (entry["source"] + ".json")
-    source, module_html, module_scripts = prepared_source(str(source_path), source_path.stat().st_mtime_ns)
+    source_version = source_path.stat().st_mtime_ns
+    if module == "stock":
+        # Include the live document version in the cache key. A Web Page edit
+        # is therefore reflected on the next request without a deploy.
+        try:
+            source_version = f"{source_version}:{frappe.db.get_value('Web Page', 'stock-dashboard', 'modified') or ''}"
+        except Exception:
+            pass
+    source, module_html, module_scripts = prepared_source(str(source_path), source_version)
     catalog = json.loads((root / "api" / "catalog.json").read_text())
     counts = Counter(item["legacy_method"] for item in catalog["endpoints"])
     # Do not silently choose between two APIs that share a legacy method name.

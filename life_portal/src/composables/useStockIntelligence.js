@@ -1,0 +1,11 @@
+import { computed, ref } from 'vue';
+import { stockAction } from '../api/stock';
+const cache = new Map(); const pending = new Map();
+const date = value => `${value.getFullYear()}-${String(value.getMonth()+1).padStart(2,'0')}-${String(value.getDate()).padStart(2,'0')}`;
+export function useStockIntelligence() {
+  const now=new Date(), from=ref(date(new Date(now.getFullYear(),now.getMonth(),1))), to=ref(date(now));
+  const loading=ref(false), error=ref(''), data=ref({}), failed=ref([]), warehouse=ref(''), query=ref('');
+  const tables=computed(()=>Object.entries(data.value||{}).map(([key,value])=>{const rows=Array.isArray(value)?value:(value?.result||value?.message?.result||[]);const filtered=rows.filter(Boolean).filter(row=>(!warehouse.value||!row?.warehouse||row.warehouse===warehouse.value)&&(!query.value||JSON.stringify(row).toLowerCase().includes(query.value.toLowerCase())));const columns=Array.isArray(value?.columns)?value.columns:filtered.length?Object.keys(filtered[0]||{}).map(fieldname=>({fieldname,label:fieldname.replaceAll('_',' ')})):[];return {key,rows:filtered,columns};}));
+  async function load({force=false}={}) { const key=`${from.value}:${to.value}`; if(!force&&cache.has(key)){({data:data.value,failed:failed.value}=cache.get(key));return;} if(!force&&pending.has(key))return pending.get(key); loading.value=true;error.value=''; const start=new Date(`${from.value}T00:00:00`), end=new Date(`${to.value}T00:00:00`), days=Math.max(1,Math.floor((end-start)/86400000)+1), prevEnd=new Date(start-86400000),prevStart=new Date(prevEnd-(days-1)*86400000);const payload={from_date:from.value,to_date:to.value,prev_from_date:date(prevStart),prev_to_date:date(prevEnd),ledger_from_date:from.value,ledger_to_date:to.value}; const task=Promise.all([stockAction('stock_intelligence',{...payload,phase:'core'}),stockAction('stock_intelligence',{...payload,phase:'trends'})]).then(([core,trends])=>{const next={data:{...(core.data||{}),...(trends.data||{})},failed:[...(core.failed||[]),...(trends.failed||[])]};cache.set(key,next);data.value=next.data;failed.value=next.failed;}).catch(cause=>{error.value=cause.message||'Could not load Stock Intelligence.';}).finally(()=>{loading.value=false;pending.delete(key);});pending.set(key,task);return task; }
+  return {from,to,loading,error,warehouse,query,tables,failed,load};
+}

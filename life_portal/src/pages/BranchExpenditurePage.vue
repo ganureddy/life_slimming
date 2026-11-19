@@ -5,7 +5,7 @@ import {billUrl,displayDate,money,rowFlow} from '../lib/expenditure-domain';
 import ExpenditureJournalDialog from '../components/native/ExpenditureJournalDialog.vue';
 const {ledgers,config,booting,staff,staffLoading,entries,summary,loading,busy,exporting,error,notice,hasMore,finished,unsaved,quick,clock,filters,applied,rows,form,total,grandTotal,accounts,disabled,journalOpen,journal,journalLoading,journalBusy,journalError,journalNotice,journalDate,initialize,addRow,clearForm,typeChanged,removeRow,billChanged,fileChanged,loadStaff,loadHistory,chooseRange,save,openDraft,exportCsv,viewJournal,changeJournalDate}=useBranchExpenditure();
 const dateText=computed(()=>clock.value.toLocaleDateString('en-GB',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',year:'2-digit'}).replace(/ /g,'-'));
-const timeText=computed(()=>clock.value.toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}));
+const timeText=computed(()=>clock.value.toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',hour12:true}));
 const options=row=>ledgers.LM_OPTIONS[row.type]||[ledgers.LM[row.type]].filter(Boolean);
 const partyRequired=row=>['Receivable','Payable'].includes(config.value?.accounts.find(a=>a.name===row.account)?.account_type);
 const historyRows=computed(()=>entries.value.flatMap(e=>e.items.map((item,index)=>({entry:e,item,first:index===0}))));

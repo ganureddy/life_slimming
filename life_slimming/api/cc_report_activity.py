@@ -99,7 +99,15 @@ def run(from_date=None, to_date=None, agents=None, gap=15, channel=None, **kwarg
     updates = []
     timeline_available = date_diff(end, start) <= 6
     if timeline_available and allowed:
-        versions = frappe.get_all('Version', filters={'ref_doctype':'Lead', 'owner':['in',list(allowed)], 'creation':period, 'data':['like','%custom_cc_sub_status%']},
+        # Count update events, not distinct leads. A Lead saved three times
+        # during the period must contribute three updates.
+        update_fields = ('status', 'lead_owner', 'custom_cc_stage',
+            'custom_cc_sub_status', 'custom_next_followup_date',
+            'custom_appointment_date_and_time', 'custom_appointment_status',
+            'custom_call_count', 'custom_last_call_time',
+            'custom_cc_chat_returned', 'custom_convox_call_status',
+            'custom_convox_disposition')
+        versions = frappe.get_all('Version', filters={'ref_doctype':'Lead', 'owner':['in',list(allowed)], 'creation':period},
             fields=['name','owner','docname','creation','data'], order_by='creation asc', limit_page_length=30001)
         capped = capped or len(versions) > 30000
         for version in versions[:30000]:
@@ -107,7 +115,7 @@ def run(from_date=None, to_date=None, agents=None, gap=15, channel=None, **kwarg
                 changed = json.loads(version.data or '{}').get('changed', [])
             except (ValueError, TypeError):
                 continue
-            if any(item[0] == 'custom_cc_sub_status' for item in changed):
+            if any(isinstance(item, (list, tuple)) and item and item[0] in update_fields for item in changed):
                 updates.append(dict(agent=version.owner, channel='update', lead=version.docname, at=str(version.creation), status='Lead outcome updated', talk=0))
     if channel == "convox":
         events = [e for e in events if e["channel"] == "convox"]
@@ -140,6 +148,8 @@ def run(from_date=None, to_date=None, agents=None, gap=15, channel=None, **kwarg
             row.setdefault(key, 0)
         row['appointment_without_booking'] = len({event.get('lead') for event in row['events'] if event.get('lead') in appointment_state and not appointment_state[event['lead']] and any(word in str(event.get('disposition') or '').lower() for word in ('appointment', 'appt', 'walk-in', 'walkin'))})
         row['name'] = allowed[row['agent']].full_name or row['agent']
+        row['total_lead_updates'] = row['updates']
+        row['total_lead_call_updates'] = row['updates']
         if not timeline_available:
             for key in ('idle_minutes','longest_gap','updated_no_call','talked_no_update'):
                 row[key] = None

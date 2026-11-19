@@ -509,6 +509,7 @@ scheduler_events = {"hourly": ["life_slimming.cc_lead_lifecycle.rotate_untouched
                     "cron": {"*/5 * * * *": ["life_slimming.cc_autoshuffle.run"]}}
 
 after_migrate = [
+    "life_slimming.api.stock_request_settings_setup.execute",
     "life_slimming.cc_lead_lifecycle.install_fields",
     "life_slimming.convox_lead_sync.install_fields",
     "life_slimming.api.cc_appointment_setup.execute",

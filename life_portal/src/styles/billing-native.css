@@ -254,6 +254,135 @@
   body:has(.billing-review-panel) .billing-review-panel .table-wrap { overflow: visible; }
 }
 
+/* Billing workspace polish: shared spacing and visual hierarchy for every
+   native billing component.  This deliberately does not alter invoice,
+   discount, or payment calculations. */
+.billing-native {
+  --bill-surface: #ffffff;
+  --bill-wash: #f5faf7;
+  --bill-ink: #173d30;
+  --bill-soft-ink: #60776a;
+  --bill-focus: #1d754b;
+}
+.billing-native > .billing-notice,
+.billing-native > [role=alert] {
+  border-radius: 10px;
+}
+.billing-native :is(.billing-panel, .billing-collections, .billing-list-head, .billing-client-summary) {
+  box-shadow: 0 8px 24px rgba(21, 64, 43, .055);
+}
+.billing-native :is(.billing-panel, .billing-collections) {
+  border-color: #d9e7dc;
+}
+.billing-native :is(.billing-section-head, .billing-list-head, .billing-invoice-head) {
+  gap: 14px;
+}
+.billing-native :is(.billing-section-head, .billing-list-head) h2,
+.billing-native :is(.billing-section-head, .billing-list-head) h3 {
+  letter-spacing: -.012em;
+}
+.billing-native :is(input, select, textarea) {
+  border-color: #bdd3c3;
+}
+.billing-native :is(input, select, textarea):focus {
+  border-color: var(--bill-focus);
+  box-shadow: 0 0 0 3px rgba(29, 117, 75, .14);
+}
+.billing-native button {
+  transition: background .15s, border-color .15s, box-shadow .15s, transform .15s;
+}
+.billing-native button:not(:disabled):hover {
+  box-shadow: 0 3px 10px rgba(21, 64, 43, .11);
+}
+.billing-native :is(.billing-filter-bar, .billing-list-tools) {
+  border: 1px solid #dce9df;
+  border-radius: 12px;
+  background: var(--bill-wash);
+}
+.billing-native .billing-filter-bar {
+  padding: 14px;
+  gap: 12px;
+}
+.billing-native .billing-list-tools {
+  padding: 10px 12px;
+}
+.billing-native .billing-list-tools p {
+  color: var(--bill-soft-ink);
+  font-size: 12px;
+}
+.billing-native .billing-kpi {
+  min-height: 132px;
+  border-color: #dbe8de;
+  box-shadow: 0 4px 13px rgba(21, 64, 43, .045);
+}
+.billing-native .billing-kpi strong {
+  line-height: 1.15;
+  letter-spacing: -.025em;
+}
+.billing-native .billing-kpi p {
+  line-height: 1.45;
+}
+.billing-native .billing-client-actions,
+.billing-native .billing-invoice-actions,
+.billing-native .billing-review-panel footer {
+  gap: 10px;
+}
+.billing-native .billing-client-actions {
+  padding: 12px;
+  border: 1px solid #dce9df;
+  border-radius: 11px;
+  background: var(--bill-wash);
+}
+.billing-native .billing-month {
+  overflow: hidden;
+  border: 1px solid #dce9df;
+  border-radius: 12px;
+  background: var(--bill-surface);
+  box-shadow: 0 4px 14px rgba(21, 64, 43, .035);
+}
+.billing-native .billing-month + .billing-month { margin-top: 14px; }
+.billing-native .billing-month-head {
+  min-height: 52px;
+  padding: 10px 14px;
+  background: linear-gradient(180deg, #fcfefd, #f3f8f4);
+}
+.billing-native .billing-month .table-wrap { margin: 0; border: 0; border-radius: 0; }
+.billing-native .billing-invoice-amounts { margin: 4px 0 20px; }
+.billing-native .billing-invoice > .billing-panel {
+  padding: 16px;
+  background: #fcfefd;
+}
+.billing-native .billing-approval-entry {
+  border-radius: 10px;
+  background: #fbfdfb;
+}
+.billing-native .billing-sticky-summary {
+  scrollbar-width: thin;
+}
+.billing-native .billing-sticky-summary > button {
+  min-height: 43px;
+  font-weight: 800;
+}
+.billing-native .billing-review-panel {
+  box-shadow: 0 14px 38px rgba(21, 64, 43, .1);
+}
+.billing-native .billing-registration-form h3 {
+  margin: 6px 0 0;
+  color: var(--bill-ink);
+}
+.billing-native .billing-loan-video,
+.billing-native .billing-video-review {
+  background: #f7fbf8;
+}
+@media (max-width: 600px) {
+  .billing-native .billing-filter-bar { padding: 11px; }
+  .billing-native .billing-kpi { min-height: 116px; }
+  .billing-native .billing-client-actions { align-items: stretch; }
+  .billing-native .billing-client-actions button,
+  .billing-native .billing-invoice-actions button { flex: 1 1 145px; }
+  .billing-native .billing-month-head { align-items: flex-start; }
+}
+
 /* Match the live summary: keep totals visible while middle calculations scroll. */
 .billing-sticky-summary .billing-summary-breakdown { min-width: 0; padding: 12px; }
 .billing-sticky-summary .billing-summary-breakdown dl {

@@ -1,4 +1,4 @@
-"""Native V26-4 lead journey and distribution API, with owner-scoped reads."""
+"""Native V26-4 lead journey and distribution API."""
 import json
 import re
 import frappe
@@ -457,11 +457,6 @@ def run(**kwargs):
         return out
 
 
-    def owner_check(lead_doc):
-        if lead_doc.lead_owner != user and not can_move(user):
-            frappe.throw("This lead belongs to another agent.")
-
-
     # Authorize every action before using permission-bypassing aggregate queries.
     try:
         require_module("leads")
@@ -475,12 +470,9 @@ def run(**kwargs):
     manager_actions = {"rank", "dist_preview", "dist_move", "dist_undo", "agents", "settings_save", "bulk_meta", "bulk_check", "bulk_create", "rules", "rule_save", "credit", "agent_stats"}
     if action in manager_actions and not management:
         frappe.throw("Lead distribution requires manager access.", frappe.PermissionError)
-    if action in {"header", "timeline", "attempt", "connected", "match", "match_verify", "add_number", "save_connected"}:
-        access_doc = frappe.get_doc("Lead", fd.get("lead"))
-        owner_check(access_doc)
-    if action == "summary" and not management:
-        for lead_id in jl(fd.get("leads"))[:500]:
-            owner_check(frappe.get_doc("Lead", lead_id))
+    # CC agents collaborate on the same queue: any authorized Call Centre
+    # user may view and update any lead.  Reassignment remains restricted by
+    # cc_update_lead, and Joined Client / conflict safeguards still apply.
     if action in {"report", "cal"} and not management:
         fd["owners"] = json.dumps([user])
 
@@ -543,13 +535,21 @@ def run(**kwargs):
         if reason not in FAILED:
             frappe.throw("Not a failed-call reason: " + reason)
         d = frappe.get_doc("Lead", lead)
-        owner_check(d)
         exp = fd.get("expected_modified")
         if exp and str(d.modified) != str(exp):
             frappe.throw("This lead was changed by someone else. Refresh and try again.")
         t = get_track(lead)
         streak = int(t.get("unreachable_streak") or 0) + 1
         nf = fd.get("next_followup")
+        # A No Response disposition must have a concrete retry within one day.
+        # The portal asks the agent for this time; keep the same guarantee for
+        # other callers of this endpoint.
+        if reason in ["No Response", "Not Response"] and nf:
+            requested_retry = dt(nf)
+            if not requested_retry:
+                frappe.throw("Choose the next call date and time for No Response.")
+            if requested_retry > frappe.utils.add_to_date(now, hours=24):
+                frappe.throw("For No Response, schedule the next call within 24 hours.")
         appt_dt = dt(d.get("custom_appointment_date_and_time"))
         if not nf:
             nf = retry_time(streak)
@@ -594,7 +594,6 @@ def run(**kwargs):
     elif action == "connected":
         lead = fd.get("lead")
         d = frappe.get_doc("Lead", lead)
-        owner_check(d)
         vals = {"last_call_result": "Connected", "last_call_at": now, "unreachable_streak": 0, "last_connected_at": now}
         if fd.get("next_action"):
             vals["next_action"] = fd.get("next_action")
@@ -812,7 +811,7 @@ def run(**kwargs):
                     "visit": visit, "summary": sm})
 
     elif action == "agent_stats":
-        # per agent: follow-ups due today / overdue, untouched, avg appointments & walk-ins per day (this business month vs last)
+        # Per agent: current workload plus selected-period assignment/update totals.
         ags = jl(fd.get("agents"))[:60]
         td = frappe.utils.getdate(now)
         if td.day >= 6:
@@ -852,7 +851,22 @@ def run(**kwargs):
             st[a] = {"fu_today": fu.get(a, 0), "overdue": od.get(a, 0), "untouched": un.get(a, 0),
                      "appt_day": round(float(ap_t.get(a, 0)) / d_this, 1), "appt_day_lm": round(float(ap_l.get(a, 0)) / d_last, 1),
                      "walk_day": round(float(wk_t.get(a, 0)) / d_this, 1), "walk_day_lm": round(float(wk_l.get(a, 0)) / d_last, 1)}
-        res.update({"stats": st, "this_from": str(cs), "last_from": str(ls_), "last_to": str(le), "days_this": d_this, "days_last": d_last})
+        period = {}
+        start, end = fd.get("from_date"), fd.get("to_date")
+        if start and end:
+            start_date, end_date = frappe.utils.getdate(start), frappe.utils.getdate(end)
+            if start_date > end_date or frappe.utils.date_diff(end_date, start_date) > 366:
+                frappe.throw("Choose a valid date range of up to 367 days.")
+            first_assigned = "custom_cc_first_assigned_at" if frappe.get_meta("Lead").get_field("custom_cc_first_assigned_at") else "creation"
+            period_filter = [str(start_date) + " 00:00:00", str(end_date) + " 23:59:59"]
+            for metric, field in (("assigned", first_assigned), ("updated", "modified")):
+                for row in frappe.get_all("Lead", filters={field: ["between", period_filter]},
+                                          fields=["lead_owner", "count(name) as n"], group_by="lead_owner", limit_page_length=1000):
+                    if not row.lead_owner:
+                        continue
+                    item = period.setdefault(row.lead_owner, {"name": person(row.lead_owner), "assigned": 0, "updated": 0})
+                    item[metric] = row.n
+        res.update({"stats": st, "period": period, "this_from": str(cs), "last_from": str(ls_), "last_to": str(le), "days_this": d_this, "days_last": d_last})
 
     elif action == "match":
         # find branch patients whose number matches ANY number on this lead (main, alternate, added numbers)
@@ -902,7 +916,6 @@ def run(**kwargs):
     elif action == "add_number":
         lead = fd.get("lead")
         d = frappe.get_doc("Lead", lead)
-        owner_check(d)
         n = digits10(fd.get("number"))
         if len(n) != 10:
             frappe.throw("Enter a 10-digit mobile number")

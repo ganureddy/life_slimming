@@ -256,6 +256,7 @@
 .cc-dashboard-vue .tbl-wrap{max-width:100%;overflow-x:auto}
 .cc-dashboard-vue .cc-queue-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:center;max-width:100%}
 .cc-dashboard-vue .cc-queue-filters input,.cc-dashboard-vue .cc-queue-filters select{width:100%;min-width:0;max-width:100%;box-sizing:border-box}.cc-dashboard-vue .cc-queue-filters button{justify-self:start}
+.cc-dashboard-vue .cc-main-status-filter{position:relative;min-width:0;border:1px solid #d8d1c3;border-radius:10px;background:#fff;padding:10px 12px;box-sizing:border-box}.cc-dashboard-vue .cc-main-status-filter summary{cursor:pointer;font-weight:700;color:var(--ink,#18352c);list-style-position:inside}.cc-dashboard-vue .cc-main-status-filter>div{position:absolute;z-index:30;top:calc(100% + 6px);left:0;width:max-content;min-width:280px;max-width:min(360px,calc(100vw - 32px));padding:10px;background:#fff;border:1px solid #d8d1c3;border-radius:10px;box-shadow:0 10px 28px #102c2230;box-sizing:border-box}.cc-dashboard-vue .cc-main-status-filter label{display:flex;align-items:center;gap:8px;padding:7px 4px;cursor:pointer;white-space:normal;line-height:1.35}.cc-dashboard-vue .cc-main-status-filter input{width:auto!important;flex:0 0 auto}
 .cc-dashboard-vue #cc-quick-range .cc-qr-btn.active{background:#17663d!important;color:#fff!important;border-color:#17663d!important;box-shadow:0 2px 7px #17663d45}
 .cc-dashboard-vue .cc-sales-report header,.cc-dashboard-vue .cc-card>header{min-width:0;flex-wrap:wrap;gap:8px}
 .cc-dashboard-vue #wf-panel header{min-width:0;overflow-wrap:anywhere}
@@ -329,3 +330,27 @@
 .cc-erp-root .cc-la-select-box input:disabled+span{opacity:.45;cursor:not-allowed}
 .cc-erp-root:has(#page-lead-assign.active) #cc-quick-range.cc-rangebar,.cc-erp-root:has(#page-lead-assign.active) .cc-toolbar{display:none!important}
 .cc-erp-root:has(#page-testing.active) #cc-quick-range.cc-rangebar,.cc-erp-root:has(#page-testing.active) .cc-toolbar{display:none!important}
+
+/* Final queue layout: compact controls, readable status menu and lead age. */
+.cc-dashboard-vue .cc-queue-filters{grid-template-columns:minmax(190px,1.15fr) repeat(4,minmax(150px,1fr)) auto!important;gap:8px!important;align-items:stretch!important}
+.cc-dashboard-vue .cc-main-status-filter{min-width:190px!important;min-height:46px!important;padding:8px 10px!important;display:flex;align-items:center}
+.cc-dashboard-vue .cc-main-status-filter summary{font-size:13px;white-space:nowrap}
+.cc-dashboard-vue .cc-main-status-filter>div{min-width:250px!important;padding:8px!important}
+.cc-dashboard-vue .cc-main-status-filter label{font-size:13px;padding:6px 4px}
+.cc-erp-root #followup-lead-banner.wf-banner-v3 .wf-age.cc-lead-age-circle{width:92px!important;height:92px!important;min-width:92px!important;font-size:11px!important}
+.cc-erp-root #followup-lead-banner.wf-banner-v3 .wf-age.cc-lead-age-circle b{font-size:17px!important;line-height:1.15!important}
+.cc-erp-root #followup-lead-banner.wf-banner-v3 .wf-age.cc-lead-age-circle i{font-size:9px!important}
+.cc-erp-root #oct-back{display:none!important}
+@media(max-width:1100px){.cc-dashboard-vue .cc-queue-filters{grid-template-columns:repeat(3,minmax(150px,1fr))!important}}
+@media(max-width:700px){.cc-dashboard-vue .cc-queue-filters{grid-template-columns:1fr!important}.cc-dashboard-vue .cc-main-status-filter{min-width:0!important}}
+.cc-dashboard-vue .cc-main-status-filter>div label{display:flex!important;flex-direction:row!important;align-items:center!important;gap:8px!important;width:100%!important;min-height:30px!important;justify-content:flex-start!important;text-align:left!important}
+.cc-dashboard-vue .cc-main-status-filter>div label span{display:block!important;flex:1!important;line-height:1.25!important;white-space:nowrap!important}
+.cc-dashboard-vue .cc-main-status-select{width:100%;min-width:190px;min-height:46px;padding:8px 10px;border:1px solid #d8d1c3;border-radius:10px;background:#fff;font-size:13px;font-weight:700;color:#18352c}
+.cc-erp-root #cc-quick-range.cc-rangebar{flex-wrap:nowrap!important;gap:6px!important;padding:8px 10px!important;white-space:nowrap!important}
+.cc-erp-root #cc-quick-range.cc-rangebar>strong{font-size:13px!important}
+.cc-erp-root #cc-quick-range.cc-rangebar>strong{font-size:0!important}.cc-erp-root #cc-quick-range.cc-rangebar>strong::after{content:'📅 Date';font-size:13px!important}
+.cc-erp-root #cc-quick-range.cc-rangebar .cc-qr-btn{padding:0 8px!important;font-size:11px!important}
+.cc-erp-root #cc-quick-range.cc-rangebar input[type=date]{width:116px!important;font-size:12px!important}
+.cc-erp-root #cc-quick-range.cc-rangebar #cc-date-mode{min-width:90px!important;font-size:12px!important}
+.cc-erp-root #cc-quick-range.cc-rangebar button[data-range=apply]{margin-left:0!important}
+@media(max-width:1150px){.cc-erp-root #cc-quick-range.cc-rangebar{flex-wrap:wrap!important;white-space:normal!important}}

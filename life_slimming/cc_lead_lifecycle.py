@@ -25,9 +25,14 @@ def before_save(doc, method=None):
     previous_stage = (old.get('custom_cc_stage') if old else None) or doc.get('custom_cc_stage')
     previous_status = str((old or doc).get('status') or '').strip().lower()
     appointment = str((old or doc).get('custom_appointment_status') or '').strip().lower()
+    terminal_outcomes = {'not enquired', 'junk/wrong call', 'invalid number', 'wrong number',
+                         'not in service', 'tna', 'nid', 'job enquiry', 'franchise lead',
+                         'not interested', 'other clinic', 'joined competition', 'do not contact',
+                         'existing client'}
+    previous_sub_status = str((old or doc).get('custom_cc_sub_status') or '').strip().lower()
     protected = previous_stage in ('FOLLOW-UP', 'SUCCESS', 'LOST', 'INVALID') or previous_status in {
-        'followup', 'appointment booked', 'converted', 'do not contact', 'existing client', 'dnd'
-    } or appointment in ('booked', 'visited booked')
+        'followup', 'appointment booked', 'converted', 'do not contact', 'existing client', 'dnd', *terminal_outcomes
+    } or previous_sub_status in terminal_outcomes or appointment in ('booked', 'visited booked')
     if protected and old:
         doc.lead_owner = old.get('lead_owner')
         doc.custom_cc_stage = previous_stage
