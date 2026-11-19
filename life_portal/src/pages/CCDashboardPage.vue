@@ -162,6 +162,13 @@ function tileNextAction(row){
   return action?(row.custom_next_followup_date?`${action} ${tileDate(row.custom_next_followup_date,true)}`:action):'';
 }
 function openTile(kind){
+  if(kind==='repeat'){
+    tileTitle.value='Repeat Website Enquiries';
+    tileRows.value=repeatWebsiteRows.value;
+    tileOwner.value='';
+    nextTick(()=>tileDialog.value?.showModal());
+    return;
+  }
   if(kind==='untouched'){
     queueFlag.value='';
     queueStatus.value='UNTOUCHED';
