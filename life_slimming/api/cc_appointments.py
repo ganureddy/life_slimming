@@ -75,11 +75,28 @@ def mapped_branches(doctype, name, primary, table_field, extra=''):
 
 
 def today_checkins(employees):
-    """Return a scheduling badge only; do not expose raw HR punch records."""
+    """Return today's Attendance check-in/out times for scheduling badges."""
     day = now_datetime().date()
     employees = list(set(filter(None, employees)))
     result = {employee: dict(date=str(day), status='Unavailable') for employee in employees}
-    if not employees or not frappe.db.exists('DocType', 'Employee Checkin'):
+    if not employees:
+        return result
+    def display_time(value):
+        if not value:
+            return ''
+        try:
+            return get_datetime(value).strftime('%I:%M %p').lstrip('0')
+        except (TypeError, ValueError):
+            return str(value)[:5]
+    if frappe.db.exists('DocType', 'Attendance'):
+        meta = frappe.get_meta('Attendance')
+        fields = ['employee', 'attendance_date'] + [field for field in ('custom_check_in_time', 'custom_check_out_time') if meta.has_field(field)]
+        records = frappe.get_all('Attendance', filters={'employee': ['in', employees], 'attendance_date': day}, fields=fields, limit_page_length=0)
+        for record in records:
+            check_in, check_out = record.get('custom_check_in_time'), record.get('custom_check_out_time')
+            if check_in or check_out:
+                result[record.employee].update(status='Checked out' if check_out else 'Checked in', in_time=display_time(check_in), out_time=display_time(check_out))
+    if not frappe.db.exists('DocType', 'Employee Checkin'):
         return result
     punches = frappe.get_all('Employee Checkin', filters={
         'employee': ['in', employees],
@@ -92,8 +109,8 @@ def today_checkins(employees):
         if punch.employee in seen:
             continue
         seen.add(punch.employee)
-        result[punch.employee]['status'] = {'IN': 'Checked in', 'OUT': 'Checked out'}.get(
-            punch.log_type, 'Punch recorded · direction unknown')
+        if result[punch.employee]['status'] in ('Unavailable', 'No check-in recorded'):
+            result[punch.employee]['status'] = {'IN': 'Checked in', 'OUT': 'Checked out'}.get(punch.log_type, 'Punch recorded · direction unknown')
     return result
 
 

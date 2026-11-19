@@ -22,6 +22,7 @@ function openMainFlag(flag) {
   queueFlag.value = flag;
   showView.value('queue');
 }
+const interestedAndFollowups = computed(() => (mainLeadFlags.value.find(item => item.flag === 'Interested')?.count || 0) + dashboardGroups.value.followup.length);
 </script>
 
 <template>
@@ -30,8 +31,8 @@ function openMainFlag(flag) {
       <button class="stat-card s-blue" @click="openTile('mine')"><div class="sl">👤 My Leads</div><div class="sv">{{myLeads.length}}</div><div class="ss">Owned by you · selected date range · click to view</div></button>
       <button class="stat-card s-gold" @click="openTile('untouched')"><div class="sl">⚪ Untouched</div><div class="sv">{{stageCounts.UNTOUCHED||0}}</div><div class="ss">Call now · opens My Lead Queue</div></button>
       <button class="stat-card s-teal" @click="openTile('repeat')" aria-label="View repeat website enquiries"><div class="sl">🔁 Repeat Website Enquiries</div><div class="sv">{{repeatWebsiteRows.length}}</div><div class="ss">Existing leads · selected dates · click to view</div></button>
-      <button v-for="item in mainLeadFlags" :key="item.flag" class="stat-card" :class="item.tone" @click="openMainFlag(item.flag)"><div class="sl">{{item.label}}</div><div class="sv">{{item.count}}</div><div class="ss">{{item.hint}} · click to view</div></button>
-      <button class="stat-card s-teal" @click="openTile('followup')"><div class="sl">FOLLOW UPS</div><div class="sv">{{dashboardGroups.followup.length}}</div><div class="ss">Call back · Get back</div></button>
+      <button class="stat-card s-teal" @click="openTile('followup')"><div class="sl">💬 INTERESTED &amp; FOLLOW UPS</div><div class="sv">{{interestedAndFollowups}}</div><div class="ss">Interested {{mainLeadFlags.find(item=>item.flag==='Interested')?.count||0}} · Follow-ups {{dashboardGroups.followup.length}} · click to view</div></button>
+      <button v-for="item in mainLeadFlags.filter(item=>item.flag!=='Interested')" :key="item.flag" class="stat-card" :class="item.tone" @click="openMainFlag(item.flag)"><div class="sl">{{item.label}}</div><div class="sv">{{item.count}}</div><div class="ss">{{item.hint}} · click to view</div></button>
       <button class="stat-card s-gold" @click="openTile('norespnotreach')"><div class="sl">NOT RESPONDING / NOT REACHABLE</div><div class="sv">{{dashboardGroups.norespnotreach.length}}</div><div class="ss">Not responding · Switch off · Not reachable</div></button>
       <button class="stat-card s-red" @click="openTile('invalid')"><div class="sl">INVALID</div><div class="sv">{{dashboardGroups.invalid.length}}</div><div class="ss">Not in service · Invalid number · Not enquired · Wrong no · Not interested · TNA</div></button>
       <button class="stat-card s-red" @click="openTile('nid')"><div class="sl">NID</div><div class="sv">{{dashboardGroups.nid.length}}</div><div class="ss">Non local</div></button>

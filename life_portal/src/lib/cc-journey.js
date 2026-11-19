@@ -9,10 +9,12 @@ export function matchesJourney(summary, flag, now = Date.now()) {
   if (flag === 'overdue') return !!summary.next_action_due && new Date(summary.next_action_due.replace(' ', 'T') + '+05:30').getTime() < now;
   // Appointment status is authoritative for a completed visit. The journey
   // milestone may advance to payment-pending or joined after the visit.
-  if (flag === 'Visited & Booked') return summary.appt_status === 'Visited Booked';
+  if (flag === 'Visited & Booked') return ['Visited Booked','Joined Client','Booked - Payment Pending'].includes(summary.appt_status) || ['Joined Client','Booked - Payment Pending'].includes(summary.milestone);
+  if (flag === 'Appointment Booked') return summary.milestone === flag && !/missed|not visited/i.test(String(summary.appt_status || ''));
   // Callback/Get Back are work actions, not the main Interested status.
-  if (flag === 'Interested') return summary.milestone === 'Interested' && !['Callback: Scheduled', 'Get Back'].includes(summary.sub_status);
-  return summary.milestone === flag;
+  const milestone = summary.milestone || summary.main_status || summary.stage;
+  if (flag === 'Interested') return milestone === 'Interested' && !['Callback: Scheduled', 'Get Back'].includes(summary.sub_status);
+  return milestone === flag;
 }
 export function parseLeadCsv(text) {
   const rows = []; let row = [], value = '', quoted = false;

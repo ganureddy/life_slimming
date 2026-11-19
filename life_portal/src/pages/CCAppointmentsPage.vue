@@ -39,8 +39,8 @@ function checkinBadge(person) {
  if(date.value!==today.value) return {text:'Check-in available on appointment day',tone:'pending'};
  if(!checkin || checkin.date!==date.value || checkin.status==='Unavailable') return {text:'Check-in status unavailable',tone:'pending'};
  if(checkin.status==='No check-in recorded') return {text:'No check-in today',tone:'absent'};
- if(checkin.status==='Checked in') return {text:'Checked in today',tone:'present'};
- if(checkin.status==='Checked out') return {text:'Checked out today',tone:'pending'};
+ if(checkin.status==='Checked in') return {text:`Check-in ${checkin.in_time||'recorded'}`,tone:'present'};
+ if(checkin.status==='Checked out') return {text:`Check-in ${checkin.in_time||'recorded'} · Check-out ${checkin.out_time||'recorded'}`,tone:'pending'};
  return {text:checkin.status,tone:'pending'};
 }
 const bookedCount=computed(()=>visible.value.reduce((count,s)=>count+s.events.length,0));
@@ -136,7 +136,7 @@ onUnmounted(()=>{mounted=false;generation++;searchGeneration++;clearTimeout(time
 </section>
 </template>
 <style scoped>
-.checkin-badge{display:inline-block;margin-top:7px;padding:4px 7px;border-radius:6px;font-size:11px;line-height:1.35;font-weight:600;text-transform:none;white-space:normal}.checkin-badge.absent{background:#fff0ed;color:#a33324}.checkin-badge.present{background:#dcfce7;color:#166534}.checkin-badge.pending{background:#edf0f4;color:#576574}
+.checkin-badge{display:inline-block;margin-top:8px;padding:5px 8px;border-radius:7px;font-size:11px;line-height:1.4;font-weight:600;text-transform:none;white-space:normal;letter-spacing:0}.checkin-badge.absent{background:#fff0ed;color:#a33324}.checkin-badge.present{background:#dcfce7;color:#166534}.checkin-badge.pending{background:#edf0f4;color:#576574}
 
 .summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.summary>div{background:white;border:1px solid #d9e4db;border-radius:12px;padding:16px}.summary span,.summary strong{display:block}.summary span{font-size:12px}.summary strong{font-size:26px;margin-top:8px}.cc-scheduler{width:100%;min-width:0;margin:auto;padding:16px;box-sizing:border-box;background:#f0f4f8;color:#214638}.cc-scheduler header{display:flex;justify-content:space-between;gap:18px;align-items:center;flex-wrap:wrap}h1{margin:10px 0;font-size:28px}h2{font-size:19px;margin:0 0 16px}h2 small{font-size:13px;color:#64796a;margin-left:10px}p{color:#657369}.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}fieldset,.staff-calendar,.booking,.agenda{border:1px solid #d9e4db;padding:20px;border-radius:12px;background:white;margin:20px 0}label{display:flex;flex-direction:column;gap:8px;font-size:13px}input,select,button{font:inherit;padding:10px;border:1px solid #c8d8ce;border-radius:7px;background:white;color:#214638;max-width:100%}button{cursor:pointer}button:disabled{cursor:not-allowed;background:#edf0ee;color:#78837d}.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}.slots button:not(:disabled){background:#f1faf3;border-color:#a5cbb0}.slots button.chosen{background:#1d603e;color:white}.slots strong,.slots small{display:block}.slots small{margin-top:5px}.legend{display:flex;gap:20px;flex-wrap:wrap;font-size:12px;color:#597161}.booking{border:2px solid #27734b}.booking fieldset{border:0;padding:0;display:grid;gap:14px}.error{background:#fff0ef;color:#a22722;padding:14px;border-radius:8px}.success{background:#e9f8ec;color:#22603b;padding:14px;border-radius:8px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;text-align:left;font-size:13px}td,th{padding:12px;border-bottom:1px solid #e4ece5}a{color:#216345}@media(max-width:600px){fieldset,.staff-calendar,.booking,.agenda{padding:14px}.slots{grid-template-columns:repeat(2,minmax(0,1fr))}}
 

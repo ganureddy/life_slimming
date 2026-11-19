@@ -176,7 +176,11 @@ function openTile(kind){
     repeat:['Repeat Website Enquiries',repeatWebsiteRows.value],
     mine:['My Leads — selected date range',myLeads.value],
     untouched:['Untouched Leads',created.filter(isUntouched)],
-    followup:['FOLLOW UPS',dashboardGroups.value.followup],
+    followup:['INTERESTED & FOLLOW UPS',rows.value.filter(row=>{
+      const summary=journeys.value[row.name];
+      const interested=summary?.milestone==='Interested'&&!['Callback: Scheduled','Get Back'].includes(summary?.sub_status);
+      return interested||dashboardGroups.value.followup.some(item=>item.name===row.name);
+    })],
     norespnotreach:['NOT RESPONDING / NOT REACHABLE',dashboardGroups.value.norespnotreach],
     invalid:['INVALID',dashboardGroups.value.invalid],
     nid:['NID',dashboardGroups.value.nid],
@@ -188,7 +192,9 @@ function openTile(kind){
     convsame:['Created & Converted Today',convertedRows.value.filter(row=>apptToday(row)&&createdToday(row))],
     convdiff:['Older Lead Converted',convertedRows.value.filter(row=>apptToday(row)&&!createdToday(row))],
   };
-  tileOwner.value='';[tileTitle.value,tileRows.value]=groups[kind];nextTick(()=>tileDialog.value?.showModal());
+  const directStatus={untouched:'UNTOUCHED',norespnotreach:'FOLLOW-UP',invalid:'INVALID',nid:'INVALID',success:'SUCCESS'}[kind];
+  const directFlag={appts:'Appointment Booked',apptsame:'Appointment Booked',apptdiff:'Appointment Booked',converted:'Visited & Booked',convsame:'Visited & Booked',convdiff:'Visited & Booked'}[kind];
+  queueFlag.value=kind==='followup'?'INTERESTED_FOLLOWUP':''; queueFlags.value=directFlag?[directFlag]:[]; queueStatus.value=directStatus||''; queueOwner.value=''; queueSubStatus.value=''; queueCategory.value=''; matrixFilter.value=null; page.value=1; showView('queue');
 }
 const knowledgeTab = ref('scripts'), faqSearch = ref(''), doctorRows = ref([]), doctorLoading = ref(false), doctorError = ref(''), copyNotice = ref(''), doctorBranches = ref([]), doctorBranch = ref('');
 const scripts = ccReference.CALL_SCRIPTS, objections = ccReference.OBJECTIONS, faqs = ccReference.FAQS, treatments = ccReference.TREATMENT_KB, branches = ccReference.BRANCHES;
@@ -358,7 +364,7 @@ const columns = [
 ];
 const queuePageRows=computed(()=>searching.value?visibleLeads.value:visibleLeads.value.slice((page.value-1)*10,page.value*10));
 const pages = computed(() => searching.value ? page.value + (more.value ? 1 : 0) : Math.max(1, Math.ceil(visibleLeads.value.length / 10)));
-const visibleLeads=computed(()=>rows.value.filter(row=>matchesJourney(journeys.value[row.name],queueFlag.value)&&(!queueFlags.value.length||queueFlags.value.some(flag=>matchesJourney(journeys.value[row.name],flag)))&&matrixMatches(row)&&(!queueStatus.value||(row.custom_cc_stage||row.status)===queueStatus.value)&&(!queueOwner.value||row.lead_owner===queueOwner.value)&&(!queueSubStatus.value||(queueSubStatus.value==='No Response / Not Reachable'?['No Response','Not Reachable'].includes(row.custom_cc_sub_status):row.custom_cc_sub_status===queueSubStatus.value))&&(!queueCategory.value||String(row.custom_treatment_interests||'').toLowerCase().includes(queueCategory.value.toLowerCase()))&&(!queueSearch.value.trim()||[row.name,row.lead_name,row.mobile_no,row.branch,row.lead_owner].some(v=>String(v||'').toLowerCase().includes(queueSearch.value.trim().toLowerCase())))));
+const visibleLeads=computed(()=>rows.value.filter(row=>{const summary=journeys.value[row.name];const combined=queueFlag.value==='INTERESTED_FOLLOWUP';const isInterested=summary?.milestone==='Interested'&&!['Callback: Scheduled','Get Back'].includes(summary?.sub_status);const isFollowup=(row.custom_cc_stage||row.status)==='FOLLOW-UP';return (combined?(isInterested||isFollowup):matchesJourney(summary,queueFlag.value))&&(!queueFlags.value.length||queueFlags.value.some(flag=>matchesJourney(summary,flag)))&&matrixMatches(row)&&(!queueStatus.value||combined||(row.custom_cc_stage||row.status)===queueStatus.value)&&(!queueOwner.value||row.lead_owner===queueOwner.value)&&(!queueSubStatus.value||(queueSubStatus.value==='No Response / Not Reachable'?['No Response','Not Reachable'].includes(row.custom_cc_sub_status):row.custom_cc_sub_status===queueSubStatus.value))&&(!queueCategory.value||String(row.custom_treatment_interests||'').toLowerCase().includes(queueCategory.value.toLowerCase()))&&(!queueSearch.value.trim()||[row.name,row.lead_name,row.mobile_no,row.branch,row.lead_owner].some(v=>String(v||'').toLowerCase().includes(queueSearch.value.trim().toLowerCase())))}));
 // Capture applied filters so changing a draft cannot mix pagination cohorts.
 watch([queueOwner,queueStatus,queueSubStatus,queueCategory,queueSearch],()=>{if(!searching.value)page.value=1;});
 watch(salesClientSearch,()=>salesClientPage.value=1);

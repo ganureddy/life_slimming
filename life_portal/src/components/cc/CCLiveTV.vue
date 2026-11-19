@@ -19,7 +19,7 @@ const agents = computed(() => data.value ? leaderboard(data.value) : []);
 const totals = computed(() => agents.value.reduce((sum, agent) => { for (const key in sum) sum[key] += agent.today[key]; return sum; }, {leads:0, booked:0, walkins:0, visitedBooked:0}));
 const latest = computed(() => data.value?.rows.slice().sort((a,b) => b.creation.localeCompare(a.creation))[0]);
 const zone = computed(() => data.value?.timezone || 'Asia/Kolkata');
-const timeText = computed(() => clock.value.toLocaleTimeString('en-IN', { timeZone: zone.value, hour:'2-digit', minute:'2-digit' }));
+const timeText = computed(() => clock.value.toLocaleTimeString('en-IN', { timeZone: zone.value, hour:'2-digit', minute:'2-digit', hour12:true }));
 const dateText = computed(() => clock.value.toLocaleDateString('en-IN', { timeZone: zone.value, weekday:'long', day:'numeric', month:'short', year:'numeric' }));
 const stale = computed(() => !lastUpdated.value || clock.value - lastUpdated.value > 15000);
 const failedImages = ref(new Set());
@@ -171,7 +171,7 @@ onUnmounted(() => {
       <div v-if="active" class="overlay" :style="{'--oc':kinds[active.type].color}"><div><div v-if="active.type==='champ'" class="ph"><img v-if="agentImage(active.agentId)" :src="agentImage(active.agentId)" :alt="active.agent" @error="imageFailed"><span v-else>{{ initials(active.agent) }}</span></div><div v-else class="ico">{{ kinds[active.type].icon }}</div><div class="big">{{ kinds[active.type].title }}</div><h2>{{ active.client }}</h2><p>{{ active.agent }} {{ active.branch ? ' · '+active.branch : '' }}</p><p v-if="active.type!=='champ'" class="visit-status">Appointment Status: {{ active.appointmentStatus || 'Not set' }}</p><p v-if="active.type==='lead'">{{ [active.source,active.treatment].filter(Boolean).join(' · ') }} · CALL NOW!</p><button @click="dismiss">Dismiss</button></div>
         <div v-if="['booked','walkin','champ'].includes(active.type)" class="confetti" aria-hidden="true"><i v-for="n in 65" :key="n" :style="{left:`${(n*37)%100}%`,animationDelay:`${(n%11)*.13}s`,background:['#f5c542','#2ecc71','#4da3ff','#ff6b9d'][n%4]}" /></div>
       </div>
-      <footer><span role="status">{{ error || (data ? (data.restricted_to_owner ? 'Your assigned leads' : 'All CC leads') + ' · Refreshes every 5 seconds · Visits by appointment date' : 'Connecting to live data…') }}<template v-if="lastUpdated"> · Updated {{ lastUpdated.toLocaleTimeString('en-IN', {timeZone:zone}) }}</template></span><span role="status">{{ soundError }}</span><RouterLink :to="{name:'leads-native'}">Dashboard</RouterLink><button @click="fullscreen">⛶ Fullscreen</button><button :aria-pressed="sound" @click="toggleSound">{{ sound ? '🔊 Sound on' : '🔇 Enable sound' }}</button></footer>
+      <footer><span role="status">{{ error || (data ? (data.restricted_to_owner ? 'Your assigned leads' : 'All CC leads') + ' · Refreshes every 5 seconds · Visits by appointment date' : 'Connecting to live data…') }}<template v-if="lastUpdated"> · Updated {{ lastUpdated.toLocaleTimeString('en-IN', {timeZone:zone,hour:'2-digit',minute:'2-digit',hour12:true}) }}</template></span><span role="status">{{ soundError }}</span><RouterLink :to="{name:'leads-native'}">Dashboard</RouterLink><button @click="fullscreen">⛶ Fullscreen</button><button :aria-pressed="sound" @click="toggleSound">{{ sound ? '🔊 Sound on' : '🔇 Enable sound' }}</button></footer>
     </div>
   </div>
 </template>
