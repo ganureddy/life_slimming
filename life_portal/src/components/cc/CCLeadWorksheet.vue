@@ -200,7 +200,7 @@ function submit(checkOnly=false) {
   else if (!phones.value.filter(Boolean).length || phones.value.some(number=>number && number.length!==10)) validation.value = 'Each phone number must be exactly 10 digits.';
   else if (new Set(phones.value.filter(Boolean)).size !== phones.value.filter(Boolean).length) validation.value = 'Duplicate phone number. Each contact must be unique.';
   else if (needsDate.value && !followup.value.next_followup) validation.value = 'Choose the next follow-up date and time.';
-  else if (needsDate.value && (new Date(followup.value.next_followup) < new Date() || new Date(followup.value.next_followup) > new Date(Date.now()+24*60*60*1000))) validation.value = 'For this outcome, choose a follow-up within the next 24 hours.';
+  else if (result.value === 'Not Connected' && choice.value === 'No Response' && (new Date(followup.value.next_followup) < new Date() || new Date(followup.value.next_followup) > new Date(Date.now()+24*60*60*1000))) validation.value = 'For No Response, choose a follow-up within the next 24 hours.';
   else if ([...wf.LOST,...wf.INVALID].includes(choice.value) && followup.value.conclusion.trim().length<5) validation.value = 'Give the specific reason in Conclusion Remark before closing (at least 5 characters).';
   else if (['Price Negotiation','Walked In: Not Booked'].includes(choice.value) && followup.value.remarks.trim().length<5) validation.value='Write the pricing discussion or counsellor reason in Agent Notes.';
   else if (canReopen.value && followup.value.remarks.trim().length<10) validation.value='Manager reopen requires an audit reason of at least 10 characters in Agent Notes.';

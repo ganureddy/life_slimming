@@ -429,19 +429,12 @@ async function load(nextPage,{preserveRows=false,preserveSelection=false}={}) {
         [filters.date_mode,...['followup','appointment',...(filters.date_mode==='created'?['posting']:[])].filter(value=>value!==filters.date_mode)];
       const cohorts=await Promise.all(cohortModes.map(loadCohort));
       if(token!==generation)return;
-      let createdCohort=cohorts[cohortModes.indexOf(filters.date_mode)]||null;
-      if(filters.date_mode==='created' && !assignmentLoad && createdCohort){
-        const repeatRows=cohorts[cohortModes.indexOf('posting')]?.rows||[];
-        const enquiryRows=mergeEnquiryRows(createdCohort.rows,repeatRows,filters.from_date,filters.to_date);
-        createdCohort={...createdCohort,rows:enquiryRows,total:enquiryRows.length};
-        cohorts[cohortModes.indexOf(filters.date_mode)]=createdCohort;
-        // Posting results outside this cohort must not leak into the queue.
-        const postingIndex=cohortModes.indexOf('posting');
-        if(postingIndex>=0)cohorts[postingIndex]={...cohorts[postingIndex],rows:[]};
-      }
+      const createdCohort=cohorts[cohortModes.indexOf(filters.date_mode)]||null;
       createdIds.value=new Set((createdCohort?.rows||[]).map(row=>row.name));
       appointmentCohort.value=cohorts[cohortModes.indexOf('appointment')]?.rows||[];
-      data={...(createdCohort||cohorts[0]),rows:[...new Map(cohorts.flatMap(cohort=>cohort.rows||[]).map(row=>[row.name,row])).values()]};
+      // The selected date mode is authoritative. Do not merge follow-up,
+      // appointment, posting, or other cohorts into the visible queue.
+      data={...(createdCohort||cohorts[0]),rows:createdCohort?.rows||[]};
       incomplete.value=cohorts.some(cohort=>cohort.truncated);
       if(incomplete.value) error.value='The selected range exceeds the lead limit. Choose a shorter range to view all leads.';
     }

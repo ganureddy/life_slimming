@@ -551,7 +551,11 @@ def run(**kwargs):
             if requested_retry > frappe.utils.add_to_date(now, hours=24):
                 frappe.throw("For No Response, schedule the next call within 24 hours.")
         appt_dt = dt(d.get("custom_appointment_date_and_time"))
-        if not nf:
+        # Only an unanswered/no-response call gets an automatic retry. Other
+        # failed outcomes must not silently receive the same 24-hour follow-up
+        # date.
+        is_no_response = reason in ["No Response", "Not Response"]
+        if not nf and is_no_response:
             nf = retry_time(streak)
             if appt_dt and appt_dt > now and (d.get("custom_appointment_status") or "") == "Booked":
                 nf = max(now, min(dt(nf), frappe.utils.add_to_date(appt_dt, hours=-2)))
