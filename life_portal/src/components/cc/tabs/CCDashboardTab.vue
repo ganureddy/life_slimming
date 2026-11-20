@@ -14,7 +14,7 @@ const mainLeadFlags = computed(() => [
 ].map(item => ({ ...item, count: rows.value.filter(row => {
   const summary = journeys.value[row.name];
   if (item.flag === 'Visited & Booked') return summary?.appt_status === 'Visited Booked';
-  if (item.flag === 'Interested') return summary?.milestone === item.flag && !['Callback: Scheduled', 'Get Back'].includes(summary?.sub_status);
+  if (item.flag === 'Interested') return summary?.milestone === item.flag;
   return summary?.milestone === item.flag;
 }).length })));
 

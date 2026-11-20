@@ -6,7 +6,7 @@ export function ccDashboardGroup(row) {
   for (const value of values) {
     const status = String(value || '').trim().toLowerCase().replace(/[-_]+/g, ' ').replace(/\s+/g, ' ');
     if (['call back', 'callback', 'callback: scheduled', 'get back'].includes(status)) return 'followup';
-    if (['not responding', 'no response', 'not response', 'switch off', 'not reachable'].includes(status)) return 'norespnotreach';
+    if (['not responding', 'no response', 'not response', 'switch off', 'not reachable', 'call disconnected', 'busy', 'not lifted', 'appointment no response'].includes(status)) return 'norespnotreach';
     if (['not in service', 'invalid number', 'not enquired', 'wrong no', 'wrong no.', 'wrong number', 'not interested', 'tna'].includes(status)) return 'invalid';
     if (['nid', 'distance', 'non local', 'nonlocal'].includes(status)) return 'nid';
     // Only empty/default values may fall back to the saved Lead status.
