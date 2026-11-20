@@ -18,7 +18,7 @@ function clearFilters() { queueFlag.value=''; queueFlags.value=[]; matrixFilter.
     <select class="cc-main-status-select" v-model="queueFlag" aria-label="Main status"><option value="">🚩 All main statuses</option><option v-for="[value,label] in mainFlags" :key="value" :value="value">{{label}}</option></select>
     <select id="cc-ml-owner" v-model="queueOwner" aria-label="Filter by agent"><option value="">All Agents</option><option v-for="owner in assignOwners" :key="owner.id" :value="owner.id">{{owner.name}}</option></select>
     <select id="cc-ml-status" v-model="queueStatus" aria-label="Lead status"><option value="">All Status</option><option>UNTOUCHED</option><option>FOLLOW-UP</option><option>SUCCESS</option><option>LOST</option><option>INVALID</option></select>
-    <select v-model="queueSubStatus" aria-label="Call result"><option value="">All Call Results</option><option>No Response / Not Reachable</option><option v-for="result in callOutcomes" :key="result">{{result}}</option></select>
+    <select v-model="queueSubStatus" aria-label="Call result"><option value="">All Call Results</option><option value="NOT_RESPONDING">No Response / Not Reachable / Disconnected</option><option v-for="result in callOutcomes" :key="result">{{result}}</option></select>
     <select v-model="queueCategory" aria-label="Treatment category"><option value="">All Categories</option><option v-for="category in treatmentCategories" :key="category">{{category}}</option></select>
     <button class="btn btn-gy btn-sm" @click="clearFilters">Clear</button>
   </div>

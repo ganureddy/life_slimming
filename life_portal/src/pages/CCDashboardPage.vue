@@ -162,6 +162,13 @@ function tileNextAction(row){
   return action?(row.custom_next_followup_date?`${action} ${tileDate(row.custom_next_followup_date,true)}`:action):'';
 }
 function openTile(kind){
+  if(kind==='repeat'){
+    tileTitle.value='Repeat Website Enquiries';
+    tileRows.value=repeatWebsiteRows.value;
+    tileOwner.value='';
+    nextTick(()=>tileDialog.value?.showModal());
+    return;
+  }
   if(kind==='untouched'){
     queueFlag.value='';
     queueStatus.value='UNTOUCHED';
@@ -178,7 +185,7 @@ function openTile(kind){
     untouched:['Untouched Leads',created.filter(isUntouched)],
     followup:['INTERESTED & FOLLOW UPS',rows.value.filter(row=>{
       const summary=journeys.value[row.name];
-      const interested=summary?.milestone==='Interested'&&!['Callback: Scheduled','Get Back'].includes(summary?.sub_status);
+      const interested=summary?.milestone==='Interested';
       return interested||dashboardGroups.value.followup.some(item=>item.name===row.name);
     })],
     norespnotreach:['NOT RESPONDING / NOT REACHABLE',dashboardGroups.value.norespnotreach],
@@ -192,9 +199,9 @@ function openTile(kind){
     convsame:['Created & Converted Today',convertedRows.value.filter(row=>apptToday(row)&&createdToday(row))],
     convdiff:['Older Lead Converted',convertedRows.value.filter(row=>apptToday(row)&&!createdToday(row))],
   };
-  const directStatus={untouched:'UNTOUCHED',norespnotreach:'FOLLOW-UP',invalid:'INVALID',nid:'INVALID',success:'SUCCESS'}[kind];
+  const directStatus={untouched:'UNTOUCHED',invalid:'INVALID',nid:'INVALID',success:'SUCCESS'}[kind];
   const directFlag={appts:'Appointment Booked',apptsame:'Appointment Booked',apptdiff:'Appointment Booked',converted:'Visited & Booked',convsame:'Visited & Booked',convdiff:'Visited & Booked'}[kind];
-  queueFlag.value=kind==='followup'?'INTERESTED_FOLLOWUP':''; queueFlags.value=directFlag?[directFlag]:[]; queueStatus.value=directStatus||''; queueOwner.value=''; queueSubStatus.value=''; queueCategory.value=''; matrixFilter.value=null; page.value=1; showView('queue');
+  queueFlag.value=kind==='followup'?'INTERESTED_FOLLOWUP':''; queueFlags.value=directFlag?[directFlag]:[]; queueStatus.value=directStatus||''; queueOwner.value=''; queueSubStatus.value=kind==='norespnotreach'?'NOT_RESPONDING':''; queueCategory.value=''; matrixFilter.value=null; page.value=1; showView('queue');
 }
 const knowledgeTab = ref('scripts'), faqSearch = ref(''), doctorRows = ref([]), doctorLoading = ref(false), doctorError = ref(''), copyNotice = ref(''), doctorBranches = ref([]), doctorBranch = ref('');
 const scripts = ccReference.CALL_SCRIPTS, objections = ccReference.OBJECTIONS, faqs = ccReference.FAQS, treatments = ccReference.TREATMENT_KB, branches = ccReference.BRANCHES;
@@ -364,7 +371,7 @@ const columns = [
 ];
 const queuePageRows=computed(()=>searching.value?visibleLeads.value:visibleLeads.value.slice((page.value-1)*10,page.value*10));
 const pages = computed(() => searching.value ? page.value + (more.value ? 1 : 0) : Math.max(1, Math.ceil(visibleLeads.value.length / 10)));
-const visibleLeads=computed(()=>rows.value.filter(row=>{const summary=journeys.value[row.name];const combined=queueFlag.value==='INTERESTED_FOLLOWUP';const isInterested=summary?.milestone==='Interested'&&!['Callback: Scheduled','Get Back'].includes(summary?.sub_status);const isFollowup=(row.custom_cc_stage||row.status)==='FOLLOW-UP';return (combined?(isInterested||isFollowup):matchesJourney(summary,queueFlag.value))&&(!queueFlags.value.length||queueFlags.value.some(flag=>matchesJourney(summary,flag)))&&matrixMatches(row)&&(!queueStatus.value||combined||(row.custom_cc_stage||row.status)===queueStatus.value)&&(!queueOwner.value||row.lead_owner===queueOwner.value)&&(!queueSubStatus.value||(queueSubStatus.value==='No Response / Not Reachable'?['No Response','Not Reachable'].includes(row.custom_cc_sub_status):row.custom_cc_sub_status===queueSubStatus.value))&&(!queueCategory.value||String(row.custom_treatment_interests||'').toLowerCase().includes(queueCategory.value.toLowerCase()))&&(!queueSearch.value.trim()||[row.name,row.lead_name,row.mobile_no,row.branch,row.lead_owner].some(v=>String(v||'').toLowerCase().includes(queueSearch.value.trim().toLowerCase())))}));
+const visibleLeads=computed(()=>rows.value.filter(row=>{const summary=journeys.value[row.name];const combined=queueFlag.value==='INTERESTED_FOLLOWUP';const isInterested=summary?.milestone==='Interested';const isFollowup=(row.custom_cc_stage||row.status)==='FOLLOW-UP';const nonResponseResults=['No Response','Not Response','Not Reachable','Switch OFF','Call Disconnected','Busy','Not Lifted','Appointment no response'];return (combined?(isInterested||isFollowup):matchesJourney(summary,queueFlag.value))&&(!queueFlags.value.length||queueFlags.value.some(flag=>matchesJourney(summary,flag)))&&matrixMatches(row)&&(!queueStatus.value||combined||(row.custom_cc_stage||row.status)===queueStatus.value)&&(!queueOwner.value||row.lead_owner===queueOwner.value)&&(!queueSubStatus.value||(queueSubStatus.value==='NOT_RESPONDING'?nonResponseResults.includes(row.custom_cc_sub_status):queueSubStatus.value==='No Response / Not Reachable'?['No Response','Not Reachable'].includes(row.custom_cc_sub_status):row.custom_cc_sub_status===queueSubStatus.value))&&(!queueCategory.value||String(row.custom_treatment_interests||'').toLowerCase().includes(queueCategory.value.toLowerCase()))&&(!queueSearch.value.trim()||[row.name,row.lead_name,row.mobile_no,row.branch,row.lead_owner].some(v=>String(v||'').toLowerCase().includes(queueSearch.value.trim().toLowerCase())))}));
 // Capture applied filters so changing a draft cannot mix pagination cohorts.
 watch([queueOwner,queueStatus,queueSubStatus,queueCategory,queueSearch],()=>{if(!searching.value)page.value=1;});
 watch(salesClientSearch,()=>salesClientPage.value=1);
@@ -429,19 +436,12 @@ async function load(nextPage,{preserveRows=false,preserveSelection=false}={}) {
         [filters.date_mode,...['followup','appointment',...(filters.date_mode==='created'?['posting']:[])].filter(value=>value!==filters.date_mode)];
       const cohorts=await Promise.all(cohortModes.map(loadCohort));
       if(token!==generation)return;
-      let createdCohort=cohorts[cohortModes.indexOf(filters.date_mode)]||null;
-      if(filters.date_mode==='created' && !assignmentLoad && createdCohort){
-        const repeatRows=cohorts[cohortModes.indexOf('posting')]?.rows||[];
-        const enquiryRows=mergeEnquiryRows(createdCohort.rows,repeatRows,filters.from_date,filters.to_date);
-        createdCohort={...createdCohort,rows:enquiryRows,total:enquiryRows.length};
-        cohorts[cohortModes.indexOf(filters.date_mode)]=createdCohort;
-        // Posting results outside this cohort must not leak into the queue.
-        const postingIndex=cohortModes.indexOf('posting');
-        if(postingIndex>=0)cohorts[postingIndex]={...cohorts[postingIndex],rows:[]};
-      }
+      const createdCohort=cohorts[cohortModes.indexOf(filters.date_mode)]||null;
       createdIds.value=new Set((createdCohort?.rows||[]).map(row=>row.name));
       appointmentCohort.value=cohorts[cohortModes.indexOf('appointment')]?.rows||[];
-      data={...(createdCohort||cohorts[0]),rows:[...new Map(cohorts.flatMap(cohort=>cohort.rows||[]).map(row=>[row.name,row])).values()]};
+      // The selected date mode is authoritative. Do not merge follow-up,
+      // appointment, posting, or other cohorts into the visible queue.
+      data={...(createdCohort||cohorts[0]),rows:createdCohort?.rows||[]};
       incomplete.value=cohorts.some(cohort=>cohort.truncated);
       if(incomplete.value) error.value='The selected range exceeds the lead limit. Choose a shorter range to view all leads.';
     }

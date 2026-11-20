@@ -45,8 +45,10 @@ const financialColumns = [
 ];
 const branches = computed(()=>[...new Set(rows.value.map(branchOf))].sort());
 const agents = computed(()=>[...new Set(rows.value.map(r=>r.lead_owner).filter(Boolean))].sort());
-const statuses = computed(()=>[...new Set(rows.value.map(visitStatus))].sort());
-const baseRows = computed(()=>rows.value.filter(r=>(!agent.value||r.lead_owner===agent.value)&&(!status.value||visitStatus(r)===status.value)&&(!search.value.trim()||[r.name,r.lead_name,branchOf(r),r.lead_owner].some(v=>String(v||'').toLowerCase().includes(search.value.trim().toLowerCase())))));
+const appointmentStatuses = ['Appointment Booked','Visited Booked','Visited Not Booked','Visited','Not Visited'];
+const reportStatus = row => ({'Appt Fixed':'Appointment Booked','Visited-BKD':'Visited Booked','Visited-Not BKD':'Visited Not Booked','Visited · Outcome pending':'Visited'})[visitStatus(row)] || visitStatus(row);
+const statuses = computed(()=>appointmentStatuses);
+const baseRows = computed(()=>rows.value.filter(r=>(!agent.value||r.lead_owner===agent.value)&&(!status.value||reportStatus(r)===status.value)&&(!search.value.trim()||[r.name,r.lead_name,branchOf(r),r.lead_owner].some(v=>String(v||'').toLowerCase().includes(search.value.trim().toLowerCase())))));
 const filtered = computed(()=>baseRows.value.filter(r=>!branch.value||branchOf(r)===branch.value).sort((a,b)=>String(sort.value==='branch'?branchOf(a):a.custom_appointment_date_and_time).localeCompare(String(sort.value==='branch'?branchOf(b):b.custom_appointment_date_and_time))||a.name.localeCompare(b.name)));
 const visible = computed(()=>filtered.value.slice((page.value-1)*40,page.value*40));
 const pages = computed(()=>Math.max(1,Math.ceil(filtered.value.length/40)));
